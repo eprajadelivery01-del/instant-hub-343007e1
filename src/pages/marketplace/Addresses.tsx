@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, MapPin, Plus, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -82,7 +83,6 @@ export default function Addresses() {
     } else {
       const { error } = await supabase.from('addresses').insert(payload);
       if (error) {
-        // Table might not exist yet - inform user
         toast.error('Erro ao salvar endereço: ' + error.message);
         return;
       }
@@ -206,6 +206,3 @@ export default function Addresses() {
     </MarketplaceLayout>
   );
 }
-
-// Need Badge import
-import { Badge } from '@/components/ui/badge';
