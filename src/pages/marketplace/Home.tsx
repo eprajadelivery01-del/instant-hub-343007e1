@@ -2,19 +2,24 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { Company } from '@/types/database';
-import { useAuth } from '@/contexts/AuthContext';
-import { useCart } from '@/contexts/CartContext';
 import MarketplaceLayout from '@/components/marketplace/MarketplaceLayout';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Search, Clock, MapPin, Store } from 'lucide-react';
+import { Search, MapPin, Star, Clock, ChevronRight, Store, Utensils, Coffee, Pizza, Cake, Sandwich } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+
+const categories = [
+  { icon: Utensils, label: 'Todos', value: '' },
+  { icon: Pizza, label: 'Pizza', value: 'pizza' },
+  { icon: Sandwich, label: 'Lanches', value: 'lanches' },
+  { icon: Coffee, label: 'Bebidas', value: 'bebidas' },
+  { icon: Cake, label: 'Doces', value: 'doces' },
+];
 
 export default function Home() {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [activeCategory, setActiveCategory] = useState('');
 
   useEffect(() => {
     const fetchCompanies = async () => {
@@ -35,87 +40,154 @@ export default function Home() {
 
   return (
     <MarketplaceLayout>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="space-y-2">
-          <h1 className="text-2xl font-bold text-foreground">Lojas disponíveis</h1>
-          <p className="text-muted-foreground">Escolha uma loja e faça seu pedido</p>
+      {/* Header - iFood style */}
+      <div className="bg-primary px-4 pt-4 pb-6">
+        <div className="max-w-lg mx-auto space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-primary-foreground">
+              <MapPin className="h-4 w-4" />
+              <div>
+                <p className="text-xs font-medium opacity-80">Entregar em</p>
+                <p className="text-sm font-bold flex items-center gap-1">
+                  Selecione um endereço
+                  <ChevronRight className="h-3 w-3" />
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar lojas e produtos..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="pl-10 bg-card border-0 shadow-lg shadow-black/10 h-11 rounded-xl"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-lg mx-auto px-4 -mt-2">
+        {/* Categories */}
+        <div className="flex gap-3 overflow-x-auto scrollbar-hide py-4">
+          {categories.map(cat => (
+            <button
+              key={cat.value}
+              onClick={() => setActiveCategory(cat.value)}
+              className={`flex flex-col items-center gap-1.5 min-w-[64px] transition-all ${
+                activeCategory === cat.value
+                  ? 'text-primary'
+                  : 'text-muted-foreground'
+              }`}
+            >
+              <div className={`h-14 w-14 rounded-2xl flex items-center justify-center transition-all ${
+                activeCategory === cat.value
+                  ? 'bg-primary/10 ring-2 ring-primary'
+                  : 'bg-card shadow-sm'
+              }`}>
+                <cat.icon className="h-6 w-6" />
+              </div>
+              <span className="text-[11px] font-medium whitespace-nowrap">{cat.label}</span>
+            </button>
+          ))}
         </div>
 
-        {/* Search */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar lojas..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="pl-10"
-          />
+        {/* Section title */}
+        <div className="flex items-center justify-between mt-2 mb-3">
+          <h2 className="text-lg font-bold text-foreground">Lojas próximas</h2>
+          <span className="text-xs text-muted-foreground">{filtered.length} lojas</span>
         </div>
 
-        {/* Store list */}
+        {/* Store list - iFood style */}
         {loading ? (
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-3">
             {[1, 2, 3, 4].map(i => (
-              <Card key={i} className="overflow-hidden">
-                <Skeleton className="h-32 w-full" />
-                <div className="p-4 space-y-2">
+              <div key={i} className="bg-card rounded-2xl overflow-hidden shadow-sm">
+                <Skeleton className="h-36 w-full" />
+                <div className="p-3 space-y-2">
                   <Skeleton className="h-5 w-3/4" />
                   <Skeleton className="h-4 w-1/2" />
                 </div>
-              </Card>
+              </div>
             ))}
           </div>
         ) : filtered.length === 0 ? (
-          <div className="flex flex-col items-center py-16 text-muted-foreground">
-            <Store className="h-12 w-12 mb-4" />
-            <p className="text-lg font-medium">Nenhuma loja encontrada</p>
-            <p className="text-sm">Tente buscar por outro nome</p>
+          <div className="flex flex-col items-center py-20 text-muted-foreground">
+            <div className="h-20 w-20 bg-muted rounded-full flex items-center justify-center mb-4">
+              <Store className="h-10 w-10" />
+            </div>
+            <p className="text-base font-semibold text-foreground">Nenhuma loja encontrada</p>
+            <p className="text-sm mt-1">Tente buscar por outro nome</p>
           </div>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-3 pb-4">
             {filtered.map(company => (
               <Link key={company.id} to={`/marketplace/store/${company.id}`}>
-                <Card className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer group">
-                  <div className="h-32 bg-muted relative overflow-hidden">
+                <div className="bg-card rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow active:scale-[0.99]">
+                  {/* Banner */}
+                  <div className="h-36 relative overflow-hidden">
                     {company.banner_url ? (
                       <img
                         src={company.banner_url}
                         alt={company.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        className="w-full h-full object-cover"
+                        loading="lazy"
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-accent">
-                        <Store className="h-10 w-10 text-accent-foreground/40" />
+                      <div className="w-full h-full bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
+                        <Store className="h-12 w-12 text-muted-foreground/30" />
                       </div>
                     )}
-                    {company.logo_url && (
-                      <img
-                        src={company.logo_url}
-                        alt=""
-                        className="absolute bottom-2 left-3 h-12 w-12 rounded-xl border-2 border-card bg-card object-cover shadow-md"
-                      />
-                    )}
-                  </div>
-                  <div className="p-4">
-                    <div className="flex items-center justify-between">
-                      <h3 className="font-semibold text-foreground">{company.name}</h3>
-                      <Badge variant="secondary" className="text-xs">
-                        <Clock className="h-3 w-3 mr-1" />
-                        30-45 min
-                      </Badge>
+                    {/* Promo badge */}
+                    <div className="absolute top-3 left-3">
+                      <span className="bg-primary text-primary-foreground text-[10px] font-bold px-2 py-1 rounded-md">
+                        ENTREGA GRÁTIS
+                      </span>
                     </div>
-                    {company.description && (
-                      <p className="text-sm text-muted-foreground mt-1 line-clamp-1">{company.description}</p>
-                    )}
-                    {company.city && (
-                      <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
-                        <MapPin className="h-3 w-3" />
-                        {company.city}{company.state ? `, ${company.state}` : ''}
-                      </p>
-                    )}
                   </div>
-                </Card>
+
+                  {/* Info */}
+                  <div className="p-3 flex gap-3">
+                    {/* Logo */}
+                    <div className="flex-shrink-0">
+                      {company.logo_url ? (
+                        <img
+                          src={company.logo_url}
+                          alt=""
+                          className="h-12 w-12 rounded-xl object-cover border border-border"
+                        />
+                      ) : (
+                        <div className="h-12 w-12 rounded-xl bg-muted flex items-center justify-center border border-border">
+                          <Store className="h-5 w-5 text-muted-foreground" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-bold text-foreground text-sm">{company.name}</h3>
+                      <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+                        <span className="flex items-center gap-0.5 text-warning font-semibold">
+                          <Star className="h-3 w-3 fill-current" />
+                          4.5
+                        </span>
+                        <span>•</span>
+                        <span className="flex items-center gap-0.5">
+                          <Clock className="h-3 w-3" />
+                          30-45 min
+                        </span>
+                        {company.city && (
+                          <>
+                            <span>•</span>
+                            <span className="truncate">{company.city}</span>
+                          </>
+                        )}
+                      </div>
+                      {company.description && (
+                        <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{company.description}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </Link>
             ))}
           </div>
