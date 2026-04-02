@@ -4,8 +4,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, Zap } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
+import logo from '@/assets/logo.jpeg';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -28,10 +29,10 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-card flex flex-col">
+    <div className="min-h-screen bg-[hsl(220,25%,6%)] flex flex-col">
       {/* Header */}
       <div className="px-4 py-3 flex items-center gap-3">
-        <button onClick={() => navigate('/marketplace')} className="h-9 w-9 rounded-full bg-muted flex items-center justify-center">
+        <button onClick={() => navigate('/marketplace')} className="h-9 w-9 rounded-full bg-white/10 flex items-center justify-center text-white">
           <ArrowLeft className="h-5 w-5" />
         </button>
       </div>
@@ -39,16 +40,14 @@ export default function Login() {
       <div className="flex-1 flex flex-col px-6 max-w-md mx-auto w-full">
         {/* Logo */}
         <div className="text-center py-8">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary shadow-lg shadow-primary/25">
-            <Zap className="h-8 w-8 text-primary-foreground" />
-          </div>
-          <h1 className="text-2xl font-extrabold text-foreground">É Pra Já</h1>
-          <p className="text-sm text-muted-foreground mt-1">Entre para fazer seus pedidos</p>
+          <img src={logo} alt="É Pra Já Delivery" className="mx-auto h-20 w-auto rounded-2xl mb-4" />
+          <h1 className="text-2xl font-extrabold text-white">Bem-vindo de volta!</h1>
+          <p className="text-sm text-white/60 mt-1">Entre para fazer seus pedidos</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4 flex-1">
           <div className="space-y-2">
-            <Label htmlFor="email" className="text-sm font-semibold">Email</Label>
+            <Label htmlFor="email" className="text-sm font-semibold text-white/80">Email</Label>
             <Input
               id="email"
               type="email"
@@ -56,11 +55,11 @@ export default function Login() {
               onChange={e => setEmail(e.target.value)}
               required
               placeholder="seu@email.com"
-              className="h-12 rounded-xl bg-muted border-0"
+              className="h-12 rounded-xl bg-white/10 border-white/10 text-white placeholder:text-white/40"
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password" className="text-sm font-semibold">Senha</Label>
+            <Label htmlFor="password" className="text-sm font-semibold text-white/80">Senha</Label>
             <Input
               id="password"
               type="password"
@@ -68,7 +67,7 @@ export default function Login() {
               onChange={e => setPassword(e.target.value)}
               required
               placeholder="••••••••"
-              className="h-12 rounded-xl bg-muted border-0"
+              className="h-12 rounded-xl bg-white/10 border-white/10 text-white placeholder:text-white/40"
             />
           </div>
           <Button type="submit" className="w-full h-12 rounded-xl text-base font-bold" disabled={loading}>
@@ -76,7 +75,7 @@ export default function Login() {
           </Button>
         </form>
 
-        <p className="py-6 text-center text-sm text-muted-foreground">
+        <p className="py-6 text-center text-sm text-white/50">
           Não tem conta?{' '}
           <Link to="/marketplace/signup" className="text-primary hover:underline font-bold">
             Cadastre-se
