@@ -170,7 +170,6 @@ export default function Checkout() {
           delivery_latitude: addr.latitude,
           delivery_longitude: addr.longitude,
           status: 'pending',
-          delivery_fee: deliveryFee || 0,
         });
       }
 

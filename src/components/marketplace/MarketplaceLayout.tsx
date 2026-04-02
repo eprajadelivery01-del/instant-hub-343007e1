@@ -2,6 +2,7 @@ import { ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
+import { useOrderNotifications } from '@/hooks/useOrderNotifications';
 import { Home, Search, ShoppingBag, ClipboardList, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -16,6 +17,9 @@ export default function MarketplaceLayout({ children, hideNav, hideHeader }: { c
   const location = useLocation();
   const { user } = useAuth();
   const { itemCount } = useCart();
+
+  // Listen for order status changes and show toast notifications
+  useOrderNotifications();
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
