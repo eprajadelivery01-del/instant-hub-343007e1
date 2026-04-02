@@ -6,20 +6,21 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import MarketplaceLayout from '@/components/marketplace/MarketplaceLayout';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Minus, Plus, ShoppingCart, Store as StoreIcon } from 'lucide-react';
+import { ArrowLeft, Minus, Plus, Star, Clock, Store as StoreIcon, Share2 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
 export default function StoreDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { items, addItem, updateQuantity, removeItem, company: cartCompany } = useCart();
+  const { items, addItem, updateQuantity, company: cartCompany } = useCart();
   const [company, setCompany] = useState<Company | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -37,9 +38,14 @@ export default function StoreDetail() {
 
   const categories = [...new Set(products.map(p => p.category))];
 
+  useEffect(() => {
+    if (categories.length > 0 && !activeCategory) {
+      setActiveCategory(categories[0]);
+    }
+  }, [categories]);
+
   const getItemQty = (productId: string) => {
-    const item = items.find(i => i.product.id === productId);
-    return item?.quantity || 0;
+    return items.find(i => i.product.id === productId)?.quantity || 0;
   };
 
   const handleAdd = (product: Product) => {
@@ -57,9 +63,9 @@ export default function StoreDetail() {
   if (loading) {
     return (
       <MarketplaceLayout>
-        <Skeleton className="h-40 w-full rounded-xl" />
-        <div className="mt-4 space-y-3">
-          {[1, 2, 3].map(i => <Skeleton key={i} className="h-24 w-full rounded-xl" />)}
+        <Skeleton className="h-56 w-full" />
+        <div className="p-4 space-y-3">
+          {[1, 2, 3].map(i => <Skeleton key={i} className="h-24 w-full rounded-2xl" />)}
         </div>
       </MarketplaceLayout>
     );
@@ -75,78 +81,149 @@ export default function StoreDetail() {
 
   return (
     <MarketplaceLayout>
-      <div className="space-y-6">
-        {/* Back + Banner */}
-        <div className="relative">
-          <Button variant="ghost" size="icon" onClick={() => navigate('/marketplace')} className="absolute top-2 left-2 z-10 bg-card/80 backdrop-blur-sm rounded-full shadow">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div className="h-40 rounded-xl overflow-hidden bg-muted">
-            {company.banner_url ? (
-              <img src={company.banner_url} alt={company.name} className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center bg-accent">
-                <StoreIcon className="h-12 w-12 text-accent-foreground/30" />
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Store info */}
-        <div className="flex items-center gap-4">
-          {company.logo_url && (
-            <img src={company.logo_url} alt="" className="h-16 w-16 rounded-2xl border-2 border-border object-cover shadow-md" />
+      {/* Hero banner */}
+      <div className="relative">
+        <div className="h-56 overflow-hidden">
+          {company.banner_url ? (
+            <img src={company.banner_url} alt={company.name} className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+              <StoreIcon className="h-16 w-16 text-primary/30" />
+            </div>
           )}
-          <div>
-            <h2 className="text-xl font-bold text-foreground">{company.name}</h2>
-            {company.description && <p className="text-sm text-muted-foreground mt-1">{company.description}</p>}
-          </div>
+          {/* Gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20" />
         </div>
 
-        {/* Products by category */}
+        {/* Nav buttons */}
+        <div className="absolute top-4 left-4 right-4 flex justify-between">
+          <button
+            onClick={() => navigate('/marketplace')}
+            className="h-10 w-10 rounded-full bg-card/90 backdrop-blur-sm flex items-center justify-center shadow-md"
+          >
+            <ArrowLeft className="h-5 w-5 text-foreground" />
+          </button>
+          <button className="h-10 w-10 rounded-full bg-card/90 backdrop-blur-sm flex items-center justify-center shadow-md">
+            <Share2 className="h-5 w-5 text-foreground" />
+          </button>
+        </div>
+
+        {/* Store info overlay */}
+        <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
+          <div className="flex items-end gap-3">
+            {company.logo_url && (
+              <img src={company.logo_url} alt="" className="h-16 w-16 rounded-2xl object-cover border-2 border-white shadow-lg flex-shrink-0" />
+            )}
+            <div className="flex-1 min-w-0">
+              <h1 className="text-xl font-bold drop-shadow-lg">{company.name}</h1>
+              <div className="flex items-center gap-2 mt-1 text-sm opacity-90">
+                <span className="flex items-center gap-0.5">
+                  <Star className="h-3 w-3 fill-current text-yellow-400" />
+                  4.5
+                </span>
+                <span>•</span>
+                <span className="flex items-center gap-0.5">
+                  <Clock className="h-3 w-3" />
+                  30-45 min
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Description */}
+      {company.description && (
+        <div className="px-4 py-3 bg-card border-b border-border">
+          <p className="text-sm text-muted-foreground">{company.description}</p>
+        </div>
+      )}
+
+      {/* Category tabs */}
+      {categories.length > 1 && (
+        <div className="sticky top-0 z-30 bg-card border-b border-border">
+          <div className="flex overflow-x-auto scrollbar-hide px-4 gap-1">
+            {categories.map(cat => (
+              <button
+                key={cat}
+                onClick={() => setActiveCategory(cat)}
+                className={cn(
+                  'px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors',
+                  activeCategory === cat
+                    ? 'border-primary text-primary'
+                    : 'border-transparent text-muted-foreground hover:text-foreground'
+                )}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Products by category */}
+      <div className="max-w-lg mx-auto">
         {categories.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground">
-            <p>Nenhum produto disponível</p>
+          <div className="text-center py-16 text-muted-foreground">
+            <p className="font-medium">Nenhum produto disponível</p>
           </div>
         ) : (
           categories.map(cat => (
-            <div key={cat}>
-              <h3 className="text-lg font-semibold text-foreground mb-3">{cat}</h3>
-              <div className="space-y-3">
+            <div key={cat} className="px-4 py-4">
+              <h3 className="text-base font-bold text-foreground mb-3">{cat}</h3>
+              <div className="space-y-2">
                 {products.filter(p => p.category === cat).map(product => {
                   const qty = getItemQty(product.id);
                   return (
-                    <Card key={product.id} className="p-4 flex gap-4">
+                    <div
+                      key={product.id}
+                      className="bg-card rounded-2xl p-3 flex gap-3 shadow-sm active:bg-muted/50 transition-colors"
+                    >
+                      <div className="flex-1 min-w-0 flex flex-col justify-between">
+                        <div>
+                          <h4 className="font-semibold text-foreground text-sm">{product.name}</h4>
+                          {product.description && (
+                            <p className="text-xs text-muted-foreground line-clamp-2 mt-1 leading-relaxed">{product.description}</p>
+                          )}
+                        </div>
+                        <div className="flex items-center justify-between mt-2">
+                          <p className="text-sm font-bold text-foreground">
+                            R$ {(product.price || 0).toFixed(2).replace('.', ',')}
+                          </p>
+                          {qty === 0 ? (
+                            <button
+                              onClick={() => handleAdd(product)}
+                              className="h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-sm active:scale-90 transition-transform"
+                            >
+                              <Plus className="h-4 w-4" />
+                            </button>
+                          ) : (
+                            <div className="flex items-center gap-1">
+                              <button
+                                className="h-7 w-7 rounded-full border border-primary text-primary flex items-center justify-center active:scale-90 transition-transform"
+                                onClick={() => updateQuantity(product.id, qty - 1)}
+                              >
+                                <Minus className="h-3 w-3" />
+                              </button>
+                              <span className="font-bold text-sm w-6 text-center">{qty}</span>
+                              <button
+                                className="h-7 w-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center active:scale-90 transition-transform"
+                                onClick={() => handleAdd(product)}
+                              >
+                                <Plus className="h-3 w-3" />
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
                       {product.image_url && (
-                        <img src={product.image_url} alt={product.name || ''} className="h-20 w-20 rounded-xl object-cover flex-shrink-0" />
+                        <img
+                          src={product.image_url}
+                          alt={product.name || ''}
+                          className="h-24 w-24 rounded-xl object-cover flex-shrink-0"
+                        />
                       )}
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-medium text-foreground">{product.name}</h4>
-                        {product.description && (
-                          <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{product.description}</p>
-                        )}
-                        <p className="text-primary font-bold mt-2">
-                          R$ {(product.price || 0).toFixed(2).replace('.', ',')}
-                        </p>
-                      </div>
-                      <div className="flex flex-col items-end justify-end">
-                        {qty === 0 ? (
-                          <Button size="sm" onClick={() => handleAdd(product)}>
-                            <Plus className="h-4 w-4" />
-                          </Button>
-                        ) : (
-                          <div className="flex items-center gap-2">
-                            <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => updateQuantity(product.id, qty - 1)}>
-                              <Minus className="h-3 w-3" />
-                            </Button>
-                            <span className="font-medium w-6 text-center">{qty}</span>
-                            <Button size="icon" className="h-8 w-8" onClick={() => handleAdd(product)}>
-                              <Plus className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        )}
-                      </div>
-                    </Card>
+                    </div>
                   );
                 })}
               </div>

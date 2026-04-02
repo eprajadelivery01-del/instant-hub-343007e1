@@ -4,8 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Zap } from 'lucide-react';
+import { ArrowLeft, Zap } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function Login() {
@@ -29,37 +28,61 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary">
-            <Zap className="h-7 w-7 text-primary-foreground" />
+    <div className="min-h-screen bg-card flex flex-col">
+      {/* Header */}
+      <div className="px-4 py-3 flex items-center gap-3">
+        <button onClick={() => navigate('/marketplace')} className="h-9 w-9 rounded-full bg-muted flex items-center justify-center">
+          <ArrowLeft className="h-5 w-5" />
+        </button>
+      </div>
+
+      <div className="flex-1 flex flex-col px-6 max-w-md mx-auto w-full">
+        {/* Logo */}
+        <div className="text-center py-8">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary shadow-lg shadow-primary/25">
+            <Zap className="h-8 w-8 text-primary-foreground" />
           </div>
-          <CardTitle className="text-2xl">É Pra Já Delivery</CardTitle>
-          <CardDescription>Entre na sua conta para fazer pedidos</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" value={email} onChange={e => setEmail(e.target.value)} required placeholder="seu@email.com" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Senha</Label>
-              <Input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} required placeholder="••••••••" />
-            </div>
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Entrando...' : 'Entrar'}
-            </Button>
-          </form>
-          <p className="mt-4 text-center text-sm text-muted-foreground">
-            Não tem conta?{' '}
-            <Link to="/marketplace/signup" className="text-primary hover:underline font-medium">
-              Cadastre-se
-            </Link>
-          </p>
-        </CardContent>
-      </Card>
+          <h1 className="text-2xl font-extrabold text-foreground">É Pra Já</h1>
+          <p className="text-sm text-muted-foreground mt-1">Entre para fazer seus pedidos</p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4 flex-1">
+          <div className="space-y-2">
+            <Label htmlFor="email" className="text-sm font-semibold">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              required
+              placeholder="seu@email.com"
+              className="h-12 rounded-xl bg-muted border-0"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="password" className="text-sm font-semibold">Senha</Label>
+            <Input
+              id="password"
+              type="password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              required
+              placeholder="••••••••"
+              className="h-12 rounded-xl bg-muted border-0"
+            />
+          </div>
+          <Button type="submit" className="w-full h-12 rounded-xl text-base font-bold" disabled={loading}>
+            {loading ? 'Entrando...' : 'Entrar'}
+          </Button>
+        </form>
+
+        <p className="py-6 text-center text-sm text-muted-foreground">
+          Não tem conta?{' '}
+          <Link to="/marketplace/signup" className="text-primary hover:underline font-bold">
+            Cadastre-se
+          </Link>
+        </p>
+      </div>
     </div>
   );
 }
