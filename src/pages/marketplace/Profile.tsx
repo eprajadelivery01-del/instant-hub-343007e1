@@ -11,7 +11,7 @@ import {
   LogOut, MapPin, User, ChevronRight, CreditCard, 
   HelpCircle, Bell, MessageCircle, FileText, Gem, 
   Link2, Store, Wallet, Trash2, AlertTriangle, X, Camera, Loader2,
-  Heart, Handshake, Bike, Shield, Ticket, Clock
+  Heart, Handshake, Bike, Shield, Ticket, Clock, Settings
 } from 'lucide-react';
 import { 
   AlertDialog, 
