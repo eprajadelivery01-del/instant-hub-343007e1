@@ -232,8 +232,7 @@ export default function Home() {
                   <p className="text-[10px] text-white/60 mb-4 relative z-10">Multiplique suas vendas com nossa tecnologia.</p>
                   <Button 
                     onClick={() => setPartnershipType('merchant')}
-                    variant="outline" 
-                    className="h-9 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest border-white/20 text-white hover:bg-white hover:text-slate-900 transition-colors relative z-10"
+                    className="h-9 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest bg-white text-slate-900 hover:bg-slate-100 transition-colors relative z-10 shadow-sm"
                   >
                      Quero ser parceiro
                   </Button>
@@ -245,7 +244,7 @@ export default function Home() {
                   <p className="text-[10px] text-slate-400 mb-4 relative z-10">Faça seu próprio horário e ganhe por entrega.</p>
                   <Button 
                     onClick={() => setPartnershipType('driver')}
-                    className="h-9 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest bg-primary text-white relative z-10"
+                    className="h-9 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest bg-sunset text-white hover:bg-orange-600 transition-colors relative z-10 shadow-lg shadow-orange-500/10"
                   >
                      Cadastrar agora
                   </Button>
@@ -337,7 +336,7 @@ export default function Home() {
                           toast.success('Recebemos seu interesse! Entraremos em contato em breve.');
                           setPartnershipType(null);
                         }}
-                        className="w-full h-14 rounded-2xl font-black uppercase tracking-widest text-xs bg-primary shadow-xl shadow-primary/20"
+                        className="w-full h-14 rounded-2xl font-black uppercase tracking-widest text-xs bg-sunset text-white hover:bg-orange-600 shadow-xl shadow-orange-500/20 transition-all active:scale-[0.98]"
                       >
                          Enviar interesse
                       </Button>

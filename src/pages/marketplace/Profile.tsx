@@ -371,7 +371,7 @@ export default function Profile() {
                           toast.success('Recebemos seu interesse! Entraremos em contato em breve.');
                           setPartnershipType(null);
                         }}
-                        className="w-full h-12 rounded-2xl font-black uppercase tracking-widest text-[10px] bg-primary shadow-xl shadow-primary/20"
+                        className="w-full h-12 rounded-2xl font-black uppercase tracking-widest text-[10px] bg-sunset text-white hover:bg-orange-600 shadow-xl shadow-orange-500/20 transition-all active:scale-[0.98]"
                       >
                          Enviar interesse
                       </Button>
