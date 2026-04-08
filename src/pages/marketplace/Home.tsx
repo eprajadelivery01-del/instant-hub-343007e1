@@ -9,6 +9,7 @@ import MarketplaceLayout from '@/components/marketplace/MarketplaceLayout';
 import { HeroMapSection } from '@/components/shared/HeroMapSection';
 import { Input } from '@/components/ui/input';
 import { StoreTabCard } from '@/components/marketplace/StoreTabCard';
+import { MarketplaceMenu } from '@/components/marketplace/MarketplaceMenu';
 import { Search, MapPin, Star, Clock, ChevronDown, Store, Utensils, Coffee, Pizza, Cake, Sandwich, User } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -74,13 +75,15 @@ export default function Home() {
            </div>
            
            <div className="flex items-center gap-4">
-              <div className="h-10 w-10 rounded-full bg-gradient-to-tr from-primary/20 to-primary/10 border-2 border-primary/20 flex items-center justify-center overflow-hidden">
-                {user?.avatar_url ? (
-                  <img src={user.avatar_url} alt="" className="h-full w-full object-cover" />
-                ) : (
-                  <User className="h-5 w-5 text-primary" />
-                )}
-              </div>
+              <MarketplaceMenu>
+                <div className="h-10 w-10 rounded-full bg-gradient-to-tr from-primary/20 to-primary/10 border-2 border-primary/20 flex items-center justify-center overflow-hidden cursor-pointer active:scale-95 transition-all">
+                  {user?.avatar_url ? (
+                    <img src={user.avatar_url} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    <User className="h-5 w-5 text-primary" />
+                  )}
+                </div>
+              </MarketplaceMenu>
            </div>
         </div>
         
