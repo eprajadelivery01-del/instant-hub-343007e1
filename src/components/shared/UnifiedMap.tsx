@@ -32,6 +32,7 @@ export function UnifiedMap({ centerCity: propCenterCity, interactive = false, da
         : "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json",
       center: centerCity ? [centerCity.lng, centerCity.lat] : [-56.4462, -14.4087],
       zoom: 12,
+      attributionControl: false,
     });
 
     map.current.addControl(new maplibregl.NavigationControl(), "bottom-right");

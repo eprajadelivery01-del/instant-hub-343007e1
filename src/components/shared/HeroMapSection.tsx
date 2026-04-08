@@ -61,7 +61,6 @@ export function HeroMapSection() {
               
               {/* Floating Legend */}
               <div className="absolute bottom-6 left-6 right-6 md:right-auto md:w-80 bg-background/80 backdrop-blur-xl p-5 rounded-3xl shadow-2xl border border-white/20">
-                <h4 className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-4">Legenda do Mapa</h4>
                 <div className="grid grid-cols-1 gap-4">
                    <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-lg bg-success/20 flex items-center justify-center text-success"><ShoppingBag className="h-4 w-4" /></div>
@@ -72,7 +71,6 @@ export function HeroMapSection() {
             </div>
 
             <div className="p-4 bg-muted/30 border-t border-border flex justify-center">
-               <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em]">NexusPro Ecosystem • Interactive Hero Map</p>
             </div>
           </div>
         </div>
