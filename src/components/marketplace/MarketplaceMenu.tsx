@@ -2,6 +2,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { Utensils, ShoppingBag, Pill, Beer, Dog, Store, Tag, ChefHat, Star, Ticket, X, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 
 interface MenuTileProps {
   icon: any;
@@ -51,17 +52,25 @@ function MenuTile({ icon: Icon, label, badge, color, onClick, variant = 'square'
 interface MarketplaceMenuProps {
   children: React.ReactNode;
   onSelectCategory?: (category: string) => void;
+  onOpenPartnership?: (type: 'merchant' | 'driver') => void;
 }
 
-export function MarketplaceMenu({ children, onSelectCategory }: MarketplaceMenuProps) {
+export function MarketplaceMenu({ children, onSelectCategory, onOpenPartnership }: MarketplaceMenuProps) {
+  const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
 
   const handleCategoryClick = (category: string) => {
+    setIsOpen(false);
     if (onSelectCategory) {
       onSelectCategory(category);
     } else {
       navigate('/marketplace');
     }
+  };
+
+  const handlePartnershipClick = (type: 'merchant' | 'driver') => {
+    setIsOpen(false);
+    onOpenPartnership?.(type);
   };
 
   const categories = [
@@ -79,7 +88,7 @@ export function MarketplaceMenu({ children, onSelectCategory }: MarketplaceMenuP
   ];
 
   return (
-    <Sheet>
+    <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>
         {children}
       </SheetTrigger>
@@ -110,7 +119,7 @@ export function MarketplaceMenu({ children, onSelectCategory }: MarketplaceMenuP
                     icon={Ticket}
                     label="Cupons"
                     color="bg-sunset"
-                    onClick={() => navigate('/marketplace')}
+                    onClick={() => { setIsOpen(false); navigate('/marketplace'); }}
                     variant="wide"
                   />
               </div>
@@ -125,7 +134,7 @@ export function MarketplaceMenu({ children, onSelectCategory }: MarketplaceMenuP
                     {highlights.map((item) => (
                       <button 
                         key={item.label}
-                        onClick={() => navigate('/marketplace')}
+                        onClick={() => { setIsOpen(false); navigate('/marketplace'); }}
                         className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-100 hover:bg-white hover:shadow-md transition-all group overflow-hidden"
                       >
                          <div className="h-10 w-10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
@@ -145,7 +154,10 @@ export function MarketplaceMenu({ children, onSelectCategory }: MarketplaceMenuP
                        <p className="text-white/60 text-[11px] font-medium leading-relaxed max-w-[180px]">
                           Cadastre sua loja ou seja um entregador parceiro hoje mesmo.
                        </p>
-                       <button className="h-10 px-6 rounded-xl bg-primary text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-primary/20 active:scale-95 transition-all">
+                       <button 
+                         onClick={() => handlePartnershipClick('merchant')}
+                         className="h-10 px-6 rounded-xl bg-primary text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-primary/20 active:scale-95 transition-all"
+                       >
                           Saiba Mais
                        </button>
                     </div>
@@ -155,10 +167,8 @@ export function MarketplaceMenu({ children, onSelectCategory }: MarketplaceMenuP
            </div>
 
            <div className="p-8 border-t border-slate-50 mt-auto bg-white">
-              <div className="flex flex-col gap-2">
-                 <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">NexusPro App Framework • v4.2</span>
-                 <div className="h-1 w-12 bg-primary rounded-full" />
-              </div>
+            <div className="py-8 px-6 text-center border-t border-slate-50 mt-auto">
+            </div>
            </div>
         </div>
       </SheetContent>

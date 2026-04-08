@@ -10,8 +10,8 @@ import { toast } from 'sonner';
 import { 
   LogOut, MapPin, User, ChevronRight, CreditCard, 
   HelpCircle, Bell, MessageCircle, FileText, Gem, 
-  Ticket, Heart, Handshake, Bike, Settings, Shield, 
-  Link2, Store, Wallet, Trash2, AlertTriangle, X
+  Link2, Store, Wallet, Trash2, AlertTriangle, X, Camera, Loader2,
+  Heart, Handshake, Bike, Shield, Ticket, Clock
 } from 'lucide-react';
 import { 
   AlertDialog, 
@@ -32,6 +32,56 @@ export default function Profile() {
   const [phone, setPhone] = useState(profile?.phone || '');
   const [saving, setSaving] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [partnershipType, setPartnershipType] = useState<'merchant' | 'driver' | null>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    // Validate size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Imagem muito grande (máx 5MB)');
+      return;
+    }
+
+    setUploading(true);
+    const toastId = toast.loading('Enviando foto...');
+
+    try {
+      const fileExt = file.name.split('.').pop();
+      const filePath = `${user.id}-${Math.random()}.${fileExt}`;
+
+      // Upload to storage
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+
+      // Update database
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ avatar_url: publicUrl })
+        .eq('id', user.id);
+
+      if (updateError) throw updateError;
+
+      await refreshProfile();
+      toast.success('Foto atualizada!', { id: toastId });
+    } catch (error: any) {
+      console.error('Upload error:', error);
+      toast.error('Erro ao enviar foto: ' + (error.message || 'Erro desconhecido'), { id: toastId });
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleSave = async () => {
     if (!user) return;
@@ -63,32 +113,32 @@ export default function Profile() {
   const menuSections = [
     {
       items: [
-        { icon: MessageCircle, label: 'Conversas', onClick: () => {} },
-        { icon: Bell, label: 'Notificações', onClick: () => {} },
+        { icon: MessageCircle, label: 'Conversas', onClick: () => toast.info('Chat indisponível no momento.') },
+        { icon: Bell, label: 'Notificações', onClick: () => toast.info('Nenhuma notificação por enquanto.') },
         { icon: FileText, label: 'Dados da conta', onClick: () => setEditing(true) },
       ]
     },
     {
       items: [
-        { icon: Gem, label: 'Clube É Pra Já', onClick: () => {} },
-        { icon: Ticket, label: 'Cupons', onClick: () => {} },
+        { icon: Gem, label: 'Clube É Pra Já', onClick: () => toast.info('O Clube É Pra Já está em fase de testes.') },
+        { icon: Ticket, label: 'Cupons', onClick: () => navigate('/marketplace') },
       ]
     },
     {
       items: [
-        { icon: Heart, label: 'Favoritos', onClick: () => {} },
-        { icon: Handshake, label: 'Doações', onClick: () => {} },
+        { icon: Heart, label: 'Favoritos', onClick: () => navigate('/marketplace') },
+        { icon: Handshake, label: 'Doações', onClick: () => toast.info('Módulo de doações em breve.') },
         { icon: MapPin, label: 'Endereços', onClick: () => navigate('/marketplace/addresses') },
-        { icon: Bike, label: 'Seja um entregador', onClick: () => {} },
+        { icon: Bike, label: 'Seja um entregador', onClick: () => setPartnershipType('driver') },
       ]
     },
     {
       items: [
-        { icon: HelpCircle, label: 'Ajuda', onClick: () => {} },
-        { icon: Settings, label: 'Configurações', onClick: () => {} },
-        { icon: Shield, label: 'Segurança', onClick: () => {} },
-        { icon: Link2, label: 'Contas conectadas', onClick: () => {} },
-        { icon: Store, label: 'Sugerir restaurantes', onClick: () => {} },
+        { icon: HelpCircle, label: 'Ajuda', onClick: () => toast.info('Central de ajuda disponível em breve.') },
+        { icon: Settings, label: 'Configurações', onClick: () => toast.info('Módulo de configurações em breve.') },
+        { icon: Shield, label: 'Segurança', onClick: () => toast.info('Acesse segurança no site oficial.') },
+        { icon: Link2, label: 'Contas conectadas', onClick: () => toast.info('Acesse em breve.') },
+        { icon: Store, label: 'Sugerir restaurantes', onClick: () => toast.info('Obrigado pela indicação!') },
       ]
     }
   ];
@@ -98,15 +148,43 @@ export default function Profile() {
       <div className="bg-white min-h-screen pb-24">
         {/* Header - Large Avatar & Name */}
         <div className="px-6 pt-12 pb-8 flex items-center gap-6">
-          <div className="h-24 w-24 rounded-full bg-slate-100 border-4 border-white shadow-xl flex items-center justify-center overflow-hidden shrink-0">
-            {profile?.avatar_url ? (
-              <img src={profile.avatar_url} alt="" className="h-full w-full object-cover" />
-            ) : (
-              <div className="text-4xl font-black text-slate-300">
-                {profile?.full_name?.charAt(0) || user.email?.charAt(0).toUpperCase()}
+          <div className="relative group">
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              onChange={handlePhotoUpload} 
+              accept="image/*" 
+              className="hidden" 
+            />
+            <button 
+              disabled={uploading}
+              onClick={() => fileInputRef.current?.click()}
+              className={cn(
+                "h-24 w-24 rounded-full bg-slate-100 border-4 border-white shadow-xl flex items-center justify-center overflow-hidden shrink-0 relative",
+                "hover:brightness-90 transition-all",
+                uploading && "opacity-50"
+              )}
+            >
+              {profile?.avatar_url ? (
+                <img src={profile.avatar_url} alt="" className="h-full w-full object-cover" />
+              ) : (
+                <div className="text-4xl font-black text-slate-300">
+                  {profile?.full_name?.charAt(0) || user.email?.charAt(0).toUpperCase()}
+                </div>
+              )}
+              
+              <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                 {uploading ? <Loader2 className="h-8 w-10 text-white animate-spin" /> : <Camera className="h-8 w-8 text-white" />}
               </div>
+            </button>
+            
+            {uploading && (
+               <div className="absolute inset-0 flex items-center justify-center">
+                  <Loader2 className="h-8 w-8 text-primary animate-spin" />
+               </div>
             )}
           </div>
+          
           <div className="flex-1">
             <h2 className="text-2xl font-black text-slate-900 tracking-tight">{profile?.full_name || 'Usuário'}</h2>
             <button className="flex items-center gap-1 text-primary text-sm font-bold mt-1 group">
@@ -254,6 +332,55 @@ export default function Profile() {
           </div>
         </div>
       </div>
+
+      {/* Partnership Sheets - Same as Home for consistency */}
+      <AlertDialog open={!!partnershipType} onOpenChange={(open) => !open && setPartnershipType(null)}>
+        <AlertDialogContent className="h-[80vh] sm:max-w-md rounded-t-[40px] border-t-0 p-0 overflow-hidden bottom-0 fixed animate-in slide-in-from-bottom duration-500">
+          <div className="h-full flex flex-col bg-[#fdfdfd]">
+             <div className="p-8 pb-4 flex items-center justify-between">
+                <div>
+                   <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/50">Expansão É Pra Já</p>
+                   <h2 className="text-xl font-black text-slate-900 tracking-tight">
+                     Seja um {partnershipType === 'merchant' ? 'Parceiro' : 'Entregador'}
+                   </h2>
+                </div>
+                <button onClick={() => setPartnershipType(null)} className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400"><X className="h-5 w-5"/></button>
+             </div>
+
+             <div className="flex-1 overflow-y-auto px-8 pb-10 space-y-8 scrollbar-hide">
+                <div className={cn(
+                  "p-6 rounded-[32px] relative overflow-hidden",
+                  partnershipType === 'merchant' ? "bg-slate-900 text-white" : "bg-sunset text-white"
+                )}>
+                   <h4 className="text-lg font-black mb-1 relative z-10">
+                     {partnershipType === 'merchant' ? 'Sua loja em todo lugar' : 'Liberdade para ganhar'}
+                   </h4>
+                   <p className="text-[11px] opacity-80 leading-relaxed relative z-10">
+                     {partnershipType === 'merchant' 
+                       ? 'Acesse milhares de clientes e aumente seu faturamento com nossas ferramentas.' 
+                       : 'Seja seu próprio chefe. Entregue no seu ritmo e ganhe por cada rota.'}
+                   </p>
+                </div>
+
+                <div className="bg-slate-50 p-6 rounded-[32px] space-y-4">
+                   <div className="space-y-3">
+                      <Input placeholder="Seu nome" className="h-12 rounded-2xl bg-white border-transparent shadow-sm" />
+                      <Input placeholder={partnershipType === 'merchant' ? "Nome da sua Loja" : "Seu WhatsApp"} className="h-12 rounded-2xl bg-white border-transparent shadow-sm" />
+                      <Button 
+                        onClick={() => {
+                          toast.success('Recebemos seu interesse! Entraremos em contato em breve.');
+                          setPartnershipType(null);
+                        }}
+                        className="w-full h-12 rounded-2xl font-black uppercase tracking-widest text-[10px] bg-primary shadow-xl shadow-primary/20"
+                      >
+                         Enviar interesse
+                      </Button>
+                   </div>
+                </div>
+             </div>
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
     </MarketplaceLayout>
   );
 }
