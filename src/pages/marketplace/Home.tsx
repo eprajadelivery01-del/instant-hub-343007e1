@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
-import { Company } from '@/types/database';
+import { Company, Product } from '@/types/database';
 import { useAddress } from '@/contexts/AddressContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import MarketplaceLayout from '@/components/marketplace/MarketplaceLayout';
 import { HeroMapSection } from '@/components/shared/HeroMapSection';
 import { Input } from '@/components/ui/input';
+import { StoreTabCard } from '@/components/marketplace/StoreTabCard';
 import { Search, MapPin, Star, Clock, ChevronDown, Store, Utensils, Coffee, Pizza, Cake, Sandwich } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -24,7 +25,7 @@ const categories = [
 ];
 
 export default function Home() {
-  const [companies, setCompanies] = useState<Company[]>([]);
+  const [companies, setCompanies] = useState<(Company & { products: Product[] })[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('');
@@ -37,10 +38,17 @@ export default function Home() {
     const fetchCompanies = async () => {
       const { data } = await supabase
         .from('companies')
-        .select('*')
+        .select('*, products(*)')
         .eq('active', true)
         .order('name');
-      setCompanies(data || []);
+      
+      // Keep only first 4 products for preview
+      const processed = (data || []).map(c => ({
+        ...c,
+        products: (c.products || []).slice(0, 4)
+      }));
+      
+      setCompanies(processed as any);
       setLoading(false);
     };
     fetchCompanies();
@@ -226,18 +234,17 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Store list - Premium Vertical Redesign */}
+        {/* Store list - Browser Tab Grid Redesign */}
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-20">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 pb-20">
             {[1, 2, 3, 4, 5, 6].map(i => (
-              <div key={i} className="bg-white rounded-[32px] overflow-hidden shadow-sm border border-border">
-                <Skeleton className="h-44 w-full" />
-                <div className="p-5 flex gap-4">
-                  <Skeleton className="h-14 w-14 rounded-2xl shrink-0" />
-                  <div className="space-y-2 flex-1">
-                    <Skeleton className="h-6 w-3/4" />
-                    <Skeleton className="h-4 w-1/2" />
-                  </div>
+              <div key={i} className="bg-[#1c1c1e] rounded-[40px] overflow-hidden aspect-[1/1.2] animate-pulse">
+                <div className="h-14 bg-white/5 border-b border-white/10" />
+                <div className="p-4 grid grid-cols-2 gap-2">
+                   <div className="aspect-square bg-white/5 rounded-[24px]" />
+                   <div className="aspect-square bg-white/5 rounded-[24px]" />
+                   <div className="aspect-square bg-white/5 rounded-[24px]" />
+                   <div className="aspect-square bg-white/5 rounded-[24px]" />
                 </div>
               </div>
             ))}
@@ -254,72 +261,9 @@ export default function Home() {
             </Button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-24">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-6 pb-24">
             {filtered.map(company => (
-              <Link key={company.id} to={`/marketplace/store/${company.id}`} className="group outline-none">
-                <div className="bg-white rounded-[32px] overflow-hidden border border-border/50 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-400">
-                  <div className="h-40 relative overflow-hidden">
-                    {company.banner_url ? (
-                      <img 
-                        src={company.banner_url} 
-                        alt={company.name} 
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
-                        loading="lazy" 
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-muted/50 to-muted/20 flex items-center justify-center">
-                        <Store className="h-16 w-16 text-muted-foreground/10" />
-                      </div>
-                    )}
-                    <div className="absolute top-4 left-4 z-10 flex flex-col gap-2">
-                       <span className="bg-primary text-white text-[10px] font-black px-3 py-1.5 rounded-xl shadow-lg shadow-primary/30 uppercase tracking-widest flex items-center gap-1.5">
-                         🚀 Entrega Rápida
-                       </span>
-                    </div>
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  </div>
-                  
-                  <div className="p-5 flex gap-4">
-                    <div className="relative -mt-10 flex-shrink-0">
-                      {company.logo_url ? (
-                        <div className="p-1 bg-white rounded-2xl shadow-xl shadow-black/5 ring-1 ring-border">
-                          <img src={company.logo_url} alt="" className="h-14 w-14 rounded-xl object-cover" />
-                        </div>
-                      ) : (
-                        <div className="h-16 w-16 rounded-2xl bg-white shadow-xl shadow-black/5 border border-border flex items-center justify-center">
-                          <Store className="h-6 w-6 text-muted-foreground" />
-                        </div>
-                      )}
-                    </div>
-                    
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-2 mb-1">
-                        <h3 className="font-black text-foreground text-base truncate group-hover:text-primary transition-colors">{company.name}</h3>
-                        <div className="flex items-center gap-1 bg-yellow-500/10 text-yellow-600 px-2.5 py-1 rounded-xl">
-                          <Star className="h-3 w-3 fill-current" />
-                          <span className="text-[11px] font-black">4.5</span>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center flex-wrap gap-x-3 gap-y-1 text-[12px] font-bold text-muted-foreground/70">
-                        <span className="text-foreground/80">{activeCategory || 'Restaurante'}</span>
-                        <span className="text-muted-foreground/30">•</span>
-                        <span className="flex items-center gap-1.5">
-                          <Clock className="h-3.5 w-3.5" /> 30-45 min
-                        </span>
-                        <span className="text-muted-foreground/30">•</span>
-                        <span className="text-success font-black flex items-center gap-1.5">
-                           Frete Grátis
-                        </span>
-                      </div>
-                      
-                      {company.description && (
-                        <p className="text-[12px] text-muted-foreground mt-2 line-clamp-1 italic font-medium opacity-60">" {company.description} "</p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </Link>
+              <StoreTabCard key={company.id} company={company} />
             ))}
           </div>
         )}
