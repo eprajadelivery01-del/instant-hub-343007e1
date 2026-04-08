@@ -22,6 +22,7 @@ import Addresses from "./pages/marketplace/Addresses";
 import Profile from "./pages/marketplace/Profile";
 import PrivacyPolicy from "./pages/marketplace/PrivacyPolicy";
 import TermsOfService from "./pages/marketplace/TermsOfService";
+import Search from "./pages/marketplace/Search";
 import NotFound from "./pages/NotFound";
 
 const App = () => {
@@ -49,6 +50,7 @@ const App = () => {
                     <Route path="/marketplace/login" element={<Login />} />
                     <Route path="/marketplace/signup" element={<Signup />} />
                     <Route path="/marketplace" element={<Home />} />
+                    <Route path="/marketplace/search" element={<Search />} />
                     <Route path="/marketplace/store/:id" element={<StoreDetail />} />
                     <Route path="/marketplace/cart" element={<Cart />} />
                     <Route path="/marketplace/checkout" element={<RequireAuth><Checkout /></RequireAuth>} />

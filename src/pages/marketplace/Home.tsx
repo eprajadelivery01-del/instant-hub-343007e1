@@ -72,7 +72,7 @@ export default function Home() {
            </div>
            
            <div className="flex items-center gap-4">
-              <MarketplaceMenu>
+              <MarketplaceMenu onSelectCategory={(cat) => setActiveCategory(cat)}>
                 <div className="h-10 w-10 rounded-full bg-gradient-to-tr from-primary/20 to-primary/10 border-2 border-primary/20 flex items-center justify-center overflow-hidden cursor-pointer active:scale-95 transition-all">
                   {user?.avatar_url ? (
                     <img src={user.avatar_url} alt="" className="h-full w-full object-cover" />
@@ -198,14 +198,42 @@ export default function Home() {
             ))}
           </div>
         ) : filtered.length === 0 ? (
-          <div className="flex flex-col items-center py-32 text-center">
-            <div className="h-32 w-32 bg-muted/50 rounded-full flex items-center justify-center mb-6">
-              <Store className="h-16 w-16 text-muted-foreground/20" />
+          <div className="flex flex-col items-center py-20 text-center animate-in fade-in slide-in-from-bottom duration-700">
+            <div className="relative mb-8">
+               <div className="h-40 w-40 bg-sunset/10 rounded-full flex items-center justify-center">
+                 <Store className="h-20 w-20 text-primary/40 animate-pulse" />
+               </div>
+               <div className="absolute -bottom-2 -right-2 h-12 w-12 bg-white rounded-2xl shadow-xl flex items-center justify-center">
+                  <Star className="h-6 w-6 text-warning" />
+               </div>
             </div>
-            <h3 className="text-xl font-black mb-1">Nenhuma loja encontrada</h3>
-            <p className="text-muted-foreground max-w-[250px]">Não encontramos nada para "{activeCategory || search}".</p>
-            <Button onClick={() => { setSearch(''); setActiveCategory(''); }} variant="link" className="mt-4 font-bold text-primary">
-              Limpar filtros
+            
+            <h3 className="text-2xl font-black text-slate-800 mb-3 tracking-tight">O É Pra Já está chegando!</h3>
+            <p className="text-muted-foreground max-w-[320px] text-sm font-medium leading-relaxed mb-8">
+               Estamos preparando as melhores experiências em <span className="text-primary font-bold">{activeCategory || 'sua região'}</span>. Por enquanto, não há lojas nesta categoria.
+            </p>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-md">
+               <div className="p-6 rounded-[32px] bg-slate-900 text-white text-left relative overflow-hidden group">
+                  <h4 className="font-black text-lg mb-1 relative z-10">Tem uma loja?</h4>
+                  <p className="text-[10px] text-white/60 mb-4 relative z-10">Multiplique suas vendas com nossa tecnologia.</p>
+                  <Button variant="outline" className="h-9 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest border-white/20 text-white hover:bg-white hover:text-slate-900 transition-colors relative z-10">
+                     Quero ser parceiro
+                  </Button>
+                  <Utensils className="absolute -bottom-2 -right-2 h-16 w-16 text-white/5 -rotate-12 group-hover:rotate-0 transition-transform" />
+               </div>
+               
+               <div className="p-6 rounded-[32px] bg-white border border-slate-100 shadow-xl shadow-black/5 text-left relative overflow-hidden group">
+                  <h4 className="font-black text-lg mb-1 text-slate-800 relative z-10">Quer entregar?</h4>
+                  <p className="text-[10px] text-slate-400 mb-4 relative z-10">Faça seu próprio horário e ganhe por entrega.</p>
+                  <Button className="h-9 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest bg-primary text-white relative z-10">
+                     Cadastrar agora
+                  </Button>
+               </div>
+            </div>
+
+            <Button onClick={() => { setSearch(''); setActiveCategory(''); }} variant="ghost" className="mt-8 font-black text-[11px] uppercase tracking-[0.2em] text-muted-foreground hover:text-primary transition-colors">
+              Explorar outras categorias
             </Button>
           </div>
         ) : (

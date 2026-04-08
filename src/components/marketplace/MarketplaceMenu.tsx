@@ -3,53 +3,79 @@ import { Utensils, ShoppingBag, Pill, Beer, Dog, Store, Tag, ChefHat, Star, Tick
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 
-interface MenuCategoryProps {
+interface MenuTileProps {
   icon: any;
   label: string;
   badge?: string;
   color: string;
   onClick: () => void;
+  variant?: 'square' | 'wide';
 }
 
-function MenuCategory({ icon: Icon, label, badge, color, onClick }: MenuCategoryProps) {
+function MenuTile({ icon: Icon, label, badge, color, onClick, variant = 'square' }: MenuTileProps) {
   return (
-    <button onClick={onClick} className="w-full flex items-center justify-between py-3 px-1 group active:scale-95 transition-all">
-      <div className="flex items-center gap-4">
-        <div className={cn("h-11 w-11 rounded-2xl flex items-center justify-center shadow-lg shadow-black/5 border border-white/10 shrink-0 transform group-hover:rotate-6 transition-transform", color)}>
-           <Icon className="h-6 w-6 text-white" />
-        </div>
-        <div className="flex items-center gap-2">
-           <span className="text-sm font-bold text-slate-700">{label}</span>
-           {badge && (
-             <span className="bg-red-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-tighter shadow-sm">{badge}</span>
-           )}
-        </div>
+    <button 
+      onClick={onClick} 
+      className={cn(
+        "relative flex flex-col items-center justify-center gap-3 p-4 rounded-[32px] overflow-hidden group transition-all duration-300",
+        "bg-white border border-slate-100 shadow-sm hover:shadow-xl hover:border-primary/20 hover:-translate-y-1 active:scale-95",
+        variant === 'wide' ? "h-24 flex-row justify-start px-6 gap-6 col-span-2" : "aspect-square"
+      )}
+    >
+      <div className={cn(
+        "h-12 w-12 rounded-2xl flex items-center justify-center text-white shadow-lg transition-transform duration-500 group-hover:rotate-12",
+        color
+      )}>
+        <Icon className="h-6 w-6" />
       </div>
-      <ChevronRight className="h-4 w-4 text-slate-300 group-hover:translate-x-1 transition-transform" />
+      <div className="flex flex-col items-center">
+        <span className={cn(
+          "text-[12px] font-black uppercase tracking-widest text-slate-700 transition-colors group-hover:text-primary",
+          variant === 'wide' && "text-sm text-left items-start"
+        )}>
+          {label}
+        </span>
+        {badge && (
+          <span className="absolute top-3 right-3 bg-red-500 text-white text-[8px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-tighter shadow-lg animate-bounce">
+            {badge}
+          </span>
+        )}
+      </div>
+      
+      {/* Decorative Glow */}
+      <div className="absolute -bottom-4 -right-4 h-12 w-12 bg-primary/5 blur-2xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
     </button>
   );
 }
 
 interface MarketplaceMenuProps {
   children: React.ReactNode;
+  onSelectCategory?: (category: string) => void;
 }
 
-export function MarketplaceMenu({ children }: MarketplaceMenuProps) {
+export function MarketplaceMenu({ children, onSelectCategory }: MarketplaceMenuProps) {
   const navigate = useNavigate();
 
+  const handleCategoryClick = (category: string) => {
+    if (onSelectCategory) {
+      onSelectCategory(category);
+    } else {
+      navigate('/marketplace');
+    }
+  };
+
   const categories = [
-    { icon: Utensils, label: "Restaurantes", color: "bg-sunset" },
-    { icon: ShoppingBag, label: "Mercados", color: "bg-sunset" },
-    { icon: Pill, label: "Farmácias", color: "bg-sunset" },
-    { icon: Beer, label: "Bebidas", color: "bg-sunset" },
-    { icon: Dog, label: "Pet Shops", color: "bg-sunset" },
-    { icon: Store, label: "Shopping", color: "bg-sunset" },
+    { icon: Utensils, label: "Restaurantes", color: "bg-sunset", value: "restaurante" },
+    { icon: ShoppingBag, label: "Mercados", color: "bg-sunset", value: "mercado" },
+    { icon: Pill, label: "Farmácias", color: "bg-sunset", value: "farmacia" },
+    { icon: Beer, label: "Bebidas", color: "bg-sunset", value: "bebidas" },
+    { icon: Dog, label: "Pet Shops", color: "bg-sunset", value: "pet" },
+    { icon: Store, label: "Shopping", color: "bg-sunset", value: "shopping" },
   ];
 
   const highlights = [
-    { icon: Tag, label: "Promoções", badge: "Novo", color: "bg-sunset" },
+    { icon: Tag, label: "Ofertas", badge: "Novo", color: "bg-sunset" },
     { icon: ChefHat, label: "Gourmet", color: "bg-sunset" },
-    { icon: Star, label: "Super", color: "bg-sunset" },
   ];
 
   return (
@@ -57,63 +83,81 @@ export function MarketplaceMenu({ children }: MarketplaceMenuProps) {
       <SheetTrigger asChild>
         {children}
       </SheetTrigger>
-      <SheetContent side="left" className="w-[300px] sm:w-[350px] p-0 border-r-0 rounded-r-[32px] overflow-hidden">
-        <div className="h-full flex flex-col bg-white">
-           <div className="p-6 border-b border-slate-50 flex items-center justify-between">
+      <SheetContent side="left" className="w-full sm:w-[400px] p-0 border-r-0 rounded-r-[40px] overflow-hidden">
+        <div className="h-full flex flex-col bg-[#fdfdfd]">
+           <div className="px-8 pt-10 pb-6 flex items-center justify-between">
               <SheetHeader>
-                <SheetTitle className="text-left text-xl font-black text-slate-900 tracking-tight">
-                  Aproveite o <span className="text-primary">É Pra Já!</span>
+                <SheetTitle className="text-left flex flex-col items-start gap-1">
+                  <span className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/50">Discovery Hub</span>
+                  <span className="text-2xl font-black text-slate-900 tracking-tight">
+                    Aproveite o <span className="text-primary">É Pra Já!</span>
+                  </span>
                 </SheetTitle>
               </SheetHeader>
            </div>
 
-           <div className="flex-1 overflow-y-auto px-6 py-4 space-y-8 scrollbar-hide">
-              {/* Main Categories */}
-              <div className="space-y-4">
-                 <h4 className="text-[11px] font-black uppercase tracking-widest text-slate-400 px-1">Categorias</h4>
-                 <div className="divide-y divide-slate-50">
-                    {categories.map((cat) => (
-                      <MenuCategory 
-                        key={cat.label} 
-                        {...cat} 
-                        onClick={() => navigate('/marketplace')} 
-                      />
-                    ))}
-                 </div>
-              </div>
-
-              {/* Restaurant Highlights */}
-              <div className="space-y-4">
-                 <h4 className="text-[11px] font-black uppercase tracking-widest text-slate-400 px-1">Destaques em Restaurantes</h4>
-                 <div className="divide-y divide-slate-50">
-                    {highlights.map((item) => (
-                      <MenuCategory 
-                        key={item.label} 
-                        {...item} 
-                        onClick={() => navigate('/marketplace')} 
-                      />
-                    ))}
-                 </div>
-              </div>
-
-              {/* Platform Highlights */}
-              <div className="space-y-4">
-                 <h4 className="text-[11px] font-black uppercase tracking-widest text-slate-400 px-1">Destaques do É Pra Já</h4>
-                 <div className="divide-y divide-slate-50">
-                    <MenuCategory 
-                        icon={Ticket}
-                        label="Cupons"
-                        color="bg-sunset"
-                        onClick={() => navigate('/marketplace')} 
+           <div className="flex-1 overflow-y-auto px-8 pb-32 space-y-10 scrollbar-hide">
+              {/* Category Grid */}
+              <div className="grid grid-cols-2 gap-4">
+                  {categories.map((cat) => (
+                    <MenuTile 
+                      key={cat.label} 
+                      {...cat} 
+                      onClick={() => handleCategoryClick(cat.value)} 
                     />
+                  ))}
+                  <MenuTile 
+                    icon={Ticket}
+                    label="Cupons"
+                    color="bg-sunset"
+                    onClick={() => navigate('/marketplace')}
+                    variant="wide"
+                  />
+              </div>
+
+              {/* Highlights Section */}
+              <div className="space-y-4">
+                  <div className="flex items-center justify-between px-1">
+                    <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Experimente também</h4>
+                    <div className="h-px flex-1 bg-slate-100 ml-4" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    {highlights.map((item) => (
+                      <button 
+                        key={item.label}
+                        onClick={() => navigate('/marketplace')}
+                        className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-100 hover:bg-white hover:shadow-md transition-all group overflow-hidden"
+                      >
+                         <div className="h-10 w-10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                            <item.icon className="h-5 w-5" />
+                         </div>
+                         <span className="text-xs font-black uppercase tracking-wider text-slate-600">{item.label}</span>
+                      </button>
+                    ))}
+                  </div>
+              </div>
+
+              {/* Ecosystem Call to action */}
+              <div className="px-1">
+                 <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-[32px] p-6 relative overflow-hidden group">
+                    <div className="relative z-10 space-y-4">
+                       <h5 className="text-white font-black text-lg leading-tight">Quer faturar com o É Pra Já?</h5>
+                       <p className="text-white/60 text-[11px] font-medium leading-relaxed max-w-[180px]">
+                          Cadastre sua loja ou seja um entregador parceiro hoje mesmo.
+                       </p>
+                       <button className="h-10 px-6 rounded-xl bg-primary text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-primary/20 active:scale-95 transition-all">
+                          Saiba Mais
+                       </button>
+                    </div>
+                    <X className="absolute -bottom-4 -right-4 h-24 w-24 text-white/5 -rotate-12 group-hover:rotate-0 transition-transform duration-700" />
                  </div>
               </div>
            </div>
 
-           <div className="p-6 bg-slate-50 mt-auto">
-              <div className="flex items-center gap-4 opacity-40">
-                 <div className="h-2 w-2 rounded-full bg-slate-400 animate-pulse" />
-                 <span className="text-[10px] font-black uppercase tracking-widest text-slate-600">NexusPro App Framework • v4.2</span>
+           <div className="p-8 border-t border-slate-50 mt-auto bg-white">
+              <div className="flex flex-col gap-2">
+                 <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">NexusPro App Framework • v4.2</span>
+                 <div className="h-1 w-12 bg-primary rounded-full" />
               </div>
            </div>
         </div>
