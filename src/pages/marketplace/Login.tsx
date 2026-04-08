@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, ShoppingBag } from 'lucide-react';
 import { toast } from 'sonner';
 import logo from '@/assets/logo.jpeg';
 
@@ -29,25 +29,27 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-[hsl(220,25%,6%)] flex flex-col">
+    <div className="min-h-screen bg-[#f9fafb] flex flex-col">
       {/* Header */}
       <div className="px-4 py-3 flex items-center gap-3">
-        <button onClick={() => navigate('/marketplace')} className="h-9 w-9 rounded-full bg-white/10 flex items-center justify-center text-white">
+        <button onClick={() => navigate('/marketplace')} className="h-10 w-10 rounded-full bg-white shadow-sm flex items-center justify-center text-slate-600 border border-slate-200">
           <ArrowLeft className="h-5 w-5" />
         </button>
       </div>
 
       <div className="flex-1 flex flex-col px-6 max-w-md mx-auto w-full">
-        {/* Logo */}
-        <div className="text-center py-8">
-          <img src={logo} alt="É Pra Já Delivery" className="mx-auto h-20 w-auto rounded-2xl mb-4" />
-          <h1 className="text-2xl font-extrabold text-white">Bem-vindo de volta!</h1>
-          <p className="text-sm text-white/60 mt-1">Entre para fazer seus pedidos</p>
+        {/* Logo Section */}
+        <div className="text-center py-10">
+          <div className="h-20 w-20 bg-primary rounded-3xl mx-auto mb-6 flex items-center justify-center shadow-2xl shadow-primary/20 transform rotate-3">
+             <ShoppingBag className="h-10 w-10 text-white" />
+          </div>
+          <h1 className="text-3xl font-black text-slate-900 tracking-tight">Bem-vindo de volta!</h1>
+          <p className="text-sm text-slate-500 font-medium mt-2">Acesse sua conta para fazer pedidos</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4 flex-1">
           <div className="space-y-2">
-            <Label htmlFor="email" className="text-sm font-semibold text-white/80">Email</Label>
+            <Label htmlFor="email" className="text-sm font-bold text-slate-700 ml-1">Email</Label>
             <Input
               id="email"
               type="email"
@@ -55,11 +57,11 @@ export default function Login() {
               onChange={e => setEmail(e.target.value)}
               required
               placeholder="seu@email.com"
-              className="h-12 rounded-xl bg-white/10 border-white/10 text-white placeholder:text-white/40"
+              className="h-14 rounded-2xl bg-white border-slate-200 text-slate-900 placeholder:text-slate-400 focus:ring-primary/20"
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password" className="text-sm font-semibold text-white/80">Senha</Label>
+            <Label htmlFor="password" className="text-sm font-bold text-slate-700 ml-1">Senha</Label>
             <Input
               id="password"
               type="password"
@@ -67,18 +69,18 @@ export default function Login() {
               onChange={e => setPassword(e.target.value)}
               required
               placeholder="••••••••"
-              className="h-12 rounded-xl bg-white/10 border-white/10 text-white placeholder:text-white/40"
+              className="h-14 rounded-2xl bg-white border-slate-200 text-slate-900 placeholder:text-slate-400 focus:ring-primary/20"
             />
           </div>
-          <Button type="submit" className="w-full h-12 rounded-xl text-base font-bold" disabled={loading}>
-            {loading ? 'Entrando...' : 'Entrar'}
+          <Button type="submit" className="w-full h-14 rounded-2xl text-base font-black shadow-lg shadow-primary/20" disabled={loading}>
+            {loading ? 'Sincronizando...' : 'Entrar na conta'}
           </Button>
         </form>
 
-        <p className="py-6 text-center text-sm text-white/50">
-          Não tem conta?{' '}
-          <Link to="/marketplace/signup" className="text-primary hover:underline font-bold">
-            Cadastre-se
+        <p className="py-8 text-center text-sm text-slate-500 font-medium">
+          Ainda não tem conta?{' '}
+          <Link to="/marketplace/signup" className="text-primary font-black hover:opacity-80 decoration-2 transition-all">
+            Cadastrar agora
           </Link>
         </p>
       </div>
