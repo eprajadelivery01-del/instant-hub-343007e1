@@ -19,6 +19,8 @@ import Orders from "./pages/marketplace/Orders";
 import OrderDetail from "./pages/marketplace/OrderDetail";
 import Addresses from "./pages/marketplace/Addresses";
 import Profile from "./pages/marketplace/Profile";
+import PrivacyPolicy from "./pages/marketplace/PrivacyPolicy";
+import TermsOfService from "./pages/marketplace/TermsOfService";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -45,6 +47,8 @@ const App = () => (
                   <Route path="/marketplace/orders/:id" element={<RequireAuth><OrderDetail /></RequireAuth>} />
                   <Route path="/marketplace/addresses" element={<RequireAuth><Addresses /></RequireAuth>} />
                   <Route path="/marketplace/profile" element={<RequireAuth><Profile /></RequireAuth>} />
+                  <Route path="/marketplace/privacy" element={<PrivacyPolicy />} />
+                  <Route path="/marketplace/terms" element={<TermsOfService />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </BrowserRouter>

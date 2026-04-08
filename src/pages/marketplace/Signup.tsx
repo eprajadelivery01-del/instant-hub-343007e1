@@ -13,12 +13,17 @@ export default function Signup() {
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [loading, setLoading] = useState(false);
   const { signUp } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!acceptedTerms) {
+      toast.error('Você precisa aceitar os termos e a política de privacidade');
+      return;
+    }
     setLoading(true);
     try {
       await signUp(email, password, fullName, phone);
@@ -65,7 +70,24 @@ export default function Signup() {
             <Label htmlFor="password" className="text-sm font-bold text-slate-700 ml-1">Senha</Label>
             <Input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={6} placeholder="Mínimo 6 caracteres" className="h-14 rounded-2xl bg-white border-slate-200 text-slate-900 placeholder:text-slate-400" />
           </div>
-          <Button type="submit" className="w-full h-14 rounded-2xl text-base font-black shadow-lg shadow-primary/20 mt-4" disabled={loading}>
+          <div className="flex items-start gap-3 px-1 py-4">
+            <input 
+              type="checkbox" 
+              id="terms" 
+              checked={acceptedTerms}
+              onChange={(e) => setAcceptedTerms(e.target.checked)}
+              className="mt-1 h-5 w-5 rounded-lg border-slate-300 text-primary focus:ring-primary/20 accent-primary"
+            />
+            <Label htmlFor="terms" className="text-[11px] font-medium text-slate-500 leading-relaxed cursor-pointer selection:bg-transparent">
+              Li e concordo com os{' '}
+              <Link to="/marketplace/terms" className="text-primary font-black hover:underline">Termos de Uso</Link> 
+              {' '}e com a{' '}
+              <Link to="/marketplace/privacy" className="text-primary font-black hover:underline">Política de Privacidade</Link> 
+              {' '}do É Pra Já.
+            </Label>
+          </div>
+
+          <Button type="submit" className="w-full h-14 rounded-2xl text-base font-black shadow-lg shadow-primary/20 mt-4" disabled={loading || !acceptedTerms}>
             {loading ? 'Preparando tudo...' : 'Criar minha conta'}
           </Button>
         </form>

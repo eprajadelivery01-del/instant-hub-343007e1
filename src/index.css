@@ -103,10 +103,6 @@
     display: none;
   }
   
-  .bg-sunset {
-    @apply bg-sunset border-0;
-  }
-  
   .text-sunset {
     @apply bg-sunset bg-clip-text text-transparent;
   }

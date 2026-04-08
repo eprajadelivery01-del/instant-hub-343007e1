@@ -37,6 +37,7 @@ export default function Home() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    const fetchCompanies = async () => {
       const { data } = await supabase
         .from('companies')
         .select('*, products(*)')

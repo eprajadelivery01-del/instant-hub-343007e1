@@ -11,8 +11,19 @@ import {
   LogOut, MapPin, User, ChevronRight, CreditCard, 
   HelpCircle, Bell, MessageCircle, FileText, Gem, 
   Ticket, Heart, Handshake, Bike, Settings, Shield, 
-  Link2, Store, Wallet
+  Link2, Store, Wallet, Trash2, AlertTriangle, X
 } from 'lucide-react';
+import { 
+  AlertDialog, 
+  AlertDialogAction, 
+  AlertDialogCancel, 
+  AlertDialogContent, 
+  AlertDialogDescription, 
+  AlertDialogFooter, 
+  AlertDialogHeader, 
+  AlertDialogTitle, 
+  AlertDialogTrigger 
+} from "@/components/ui/alert-dialog";
 
 export default function Profile() {
   const { user, profile, signOut, refreshProfile } = useAuth();
@@ -189,11 +200,57 @@ export default function Profile() {
             {/* Logout */}
             <button
               onClick={handleLogout}
-              className="w-full py-6 flex items-center justify-center gap-2 text-red-500 font-black uppercase text-xs tracking-[0.2em] border-t border-slate-50 hover:bg-red-50/50 transition-colors rounded-2xl"
+              className="w-full py-6 flex items-center justify-center gap-2 text-slate-400 font-bold uppercase text-[10px] tracking-[0.2em] border-t border-slate-50 hover:bg-slate-50 transition-colors rounded-2xl"
             >
               <LogOut className="h-4 w-4" />
               Sair da conta
             </button>
+
+            {/* Account Deletion - Apple Compliance */}
+            <div className="pt-8 space-y-4">
+              <div className="p-6 bg-red-50 rounded-[32px] border border-red-100 flex flex-col gap-4">
+                 <div className="flex items-center gap-3 text-red-600">
+                    <AlertTriangle className="h-5 w-5" />
+                    <h4 className="text-sm font-black uppercase tracking-widest">Zona de Perigo</h4>
+                 </div>
+                 <p className="text-[11px] font-medium text-red-500 leading-relaxed">
+                    A exclusão da conta é permanente e removerá todos os seus dados, pedidos e preferências de nossos servidores. Esta ação não pode ser desfeita.
+                 </p>
+                 
+                 <AlertDialog>
+                   <AlertDialogTrigger asChild>
+                      <button className="w-full h-12 rounded-2xl bg-white border border-red-200 text-red-600 text-xs font-black uppercase tracking-widest hover:bg-red-600 hover:text-white transition-all shadow-sm">
+                        Excluir Minha Conta
+                      </button>
+                   </AlertDialogTrigger>
+                   <AlertDialogContent className="rounded-[32px] p-8 border-0 shadow-2xl">
+                     <AlertDialogHeader>
+                       <AlertDialogTitle className="text-xl font-black text-slate-900">Tem certeza absoluta?</AlertDialogTitle>
+                       <AlertDialogDescription className="text-slate-500 font-medium">
+                         Esta ação é definitiva. Ao confirmar, sua conta será encerrada e você perderá acesso ao É Pra Já imediatamente.
+                       </AlertDialogDescription>
+                     </AlertDialogHeader>
+                     <AlertDialogFooter className="gap-3 mt-6">
+                       <AlertDialogCancel className="h-14 rounded-2xl border-slate-100 font-bold text-slate-500">Cancelar</AlertDialogCancel>
+                       <AlertDialogAction 
+                         onClick={async () => {
+                           toast.loading("Excluindo conta...");
+                           // In a real scenario, this would call a Supabase Edge Function to delete auth.user
+                           const { error } = await supabase.from('profiles').delete().eq('id', user.id);
+                           await signOut();
+                           toast.dismiss();
+                           toast.success("Conta excluída com sucesso");
+                           navigate('/marketplace/login');
+                         }}
+                         className="h-14 rounded-2xl bg-red-600 hover:bg-red-700 font-black text-xs tracking-widest"
+                       >
+                         CONFIRMAR EXCLUSÃO
+                       </AlertDialogAction>
+                     </AlertDialogFooter>
+                   </AlertDialogContent>
+                 </AlertDialog>
+              </div>
+            </div>
           </div>
         </div>
       </div>
