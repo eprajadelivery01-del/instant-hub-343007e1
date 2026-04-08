@@ -105,30 +105,41 @@ export default function OrderDetail() {
     // Delivery destination marker
     if (delivery.delivery_latitude && delivery.delivery_longitude) {
       const el = document.createElement('div');
-      el.innerHTML = '📍';
-      el.style.fontSize = '28px';
+      el.innerHTML = `
+        <div style="width: 38px; height: 38px; border-radius: 50%; background: #ea1d2c; border: 3px solid white; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(234, 29, 44, 0.4); font-size: 20px;">
+          🏠
+        </div>
+      `;
       new maplibregl.Marker({ element: el })
         .setLngLat([delivery.delivery_longitude, delivery.delivery_latitude])
-        .setPopup(new maplibregl.Popup().setText('Seu endereço'))
+        .setPopup(new maplibregl.Popup({ offset: 15 }).setHTML('<div style="font-weight: bold; padding: 4px;">Seu Endereço</div>'))
         .addTo(map);
     }
 
     // Pickup marker
     if (delivery.pickup_latitude && delivery.pickup_longitude) {
       const el = document.createElement('div');
-      el.innerHTML = '🏪';
-      el.style.fontSize = '24px';
+      el.innerHTML = `
+        <div style="width: 32px; height: 32px; border-radius: 10px; background: #22c55e; border: 2px solid white; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(34, 197, 94, 0.3); font-size: 16px;">
+          🏪
+        </div>
+      `;
       new maplibregl.Marker({ element: el })
         .setLngLat([delivery.pickup_longitude, delivery.pickup_latitude])
-        .setPopup(new maplibregl.Popup().setText('Loja'))
+        .setPopup(new maplibregl.Popup({ offset: 15 }).setHTML(`<div style="font-weight: bold; padding: 4px;">${order?.company?.name || 'Loja'}</div>`))
         .addTo(map);
     }
 
     // Driver marker
     if (delivery.current_latitude && delivery.current_longitude) {
       const el = document.createElement('div');
-      el.innerHTML = '🛵';
-      el.style.fontSize = '28px';
+      el.innerHTML = `
+        <div style="width: 42px; height: 42px; border-radius: 50%; background: #ea1d2c; border: 4px solid white; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 20px rgba(234, 29, 44, 0.5); font-size: 22px; position: relative;">
+          🛵
+          <div style="position: absolute; inset: -4px; border-radius: 50%; border: 2px solid #ea1d2c; animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>
+        </div>
+        <style>@keyframes ping { 75%, 100% { transform: scale(1.5); opacity: 0; } }</style>
+      `;
       const marker = new maplibregl.Marker({ element: el })
         .setLngLat([delivery.current_longitude, delivery.current_latitude])
         .addTo(map);

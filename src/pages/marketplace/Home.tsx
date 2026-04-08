@@ -6,6 +6,7 @@ import { useAddress } from '@/contexts/AddressContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import MarketplaceLayout from '@/components/marketplace/MarketplaceLayout';
+import { HeroMapSection } from '@/components/shared/HeroMapSection';
 import { Input } from '@/components/ui/input';
 import { Search, MapPin, Star, Clock, ChevronDown, Store, Utensils, Coffee, Pizza, Cake, Sandwich } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -185,6 +186,9 @@ export default function Home() {
             </div>
           ))}
         </div>
+
+        {/* Interactive Map Hero */}
+        <HeroMapSection />
 
         {/* Categories Circle Slider */}
         <div className="flex gap-5 overflow-x-auto scrollbar-hide py-4 mb-4">
