@@ -66,13 +66,8 @@ export default function Home() {
       {/* minimalist Header - Google Style */}
       <div className="bg-white border-b border-border/10 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-           <div className="flex items-center gap-1">
-              <span className="text-2xl font-black tracking-tighter text-blue-500">É</span>
-              <span className="text-2xl font-black tracking-tighter text-red-500">P</span>
-              <span className="text-2xl font-black tracking-tighter text-yellow-500">r</span>
-              <span className="text-2xl font-black tracking-tighter text-blue-500">a</span>
-              <span className="text-2xl font-black tracking-tighter text-green-500">J</span>
-              <span className="text-2xl font-black tracking-tighter text-red-500">á</span>
+           <div className="flex items-center gap-1 group cursor-pointer" onClick={() => navigate('/marketplace')}>
+              <span className="text-3xl font-black tracking-tighter bg-sunset bg-clip-text text-transparent transform group-hover:scale-110 transition-transform">É Pra Já</span>
            </div>
            
            <div className="flex items-center gap-4">
@@ -181,7 +176,7 @@ export default function Home() {
             </h2>
             <p className="text-[10px] uppercase tracking-widest font-black text-muted-foreground/50 mt-1">Baseado em avaliações reais</p>
           </div>
-          <div className="flex items-center gap-1 px-3 py-1.5 bg-success/10 rounded-xl text-[11px] font-black text-success uppercase tracking-widest">
+          <div className="flex items-center gap-1 px-4 py-1.5 bg-sunset rounded-xl text-[11px] font-black text-white uppercase tracking-widest shadow-lg shadow-orange-500/20">
             {filtered.length} Resultados
           </div>
         </div>

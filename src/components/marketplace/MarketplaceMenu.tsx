@@ -38,18 +38,18 @@ export function MarketplaceMenu({ children }: MarketplaceMenuProps) {
   const navigate = useNavigate();
 
   const categories = [
-    { icon: Utensils, label: "Restaurantes", color: "bg-gradient-to-br from-orange-400 to-red-500" },
-    { icon: ShoppingBag, label: "Mercados", color: "bg-gradient-to-br from-emerald-400 to-teal-600" },
-    { icon: Pill, label: "Farmácias", color: "bg-gradient-to-br from-blue-400 to-indigo-600" },
-    { icon: Beer, label: "Bebidas", color: "bg-gradient-to-br from-yellow-400 to-orange-500" },
-    { icon: Dog, label: "Pet Shops", color: "bg-gradient-to-br from-rose-400 to-pink-600" },
-    { icon: Store, label: "Shopping", color: "bg-gradient-to-br from-purple-400 to-violet-600" },
+    { icon: Utensils, label: "Restaurantes", color: "bg-sunset" },
+    { icon: ShoppingBag, label: "Mercados", color: "bg-sunset" },
+    { icon: Pill, label: "Farmácias", color: "bg-sunset" },
+    { icon: Beer, label: "Bebidas", color: "bg-sunset" },
+    { icon: Dog, label: "Pet Shops", color: "bg-sunset" },
+    { icon: Store, label: "Shopping", color: "bg-sunset" },
   ];
 
   const highlights = [
-    { icon: Tag, label: "Promoções", badge: "Novo", color: "bg-red-500" },
-    { icon: ChefHat, label: "Gourmet", color: "bg-slate-800" },
-    { icon: Star, label: "Super", color: "bg-yellow-500" },
+    { icon: Tag, label: "Promoções", badge: "Novo", color: "bg-sunset" },
+    { icon: ChefHat, label: "Gourmet", color: "bg-sunset" },
+    { icon: Star, label: "Super", color: "bg-sunset" },
   ];
 
   return (
@@ -103,7 +103,7 @@ export function MarketplaceMenu({ children }: MarketplaceMenuProps) {
                     <MenuCategory 
                         icon={Ticket}
                         label="Cupons"
-                        color="bg-gradient-to-r from-teal-400 to-emerald-500"
+                        color="bg-sunset"
                         onClick={() => navigate('/marketplace')} 
                     />
                  </div>
