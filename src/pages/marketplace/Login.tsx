@@ -76,9 +76,12 @@ export default function Login() {
             {loading ? 'Sincronizando...' : 'Entrar na conta'}
           </Button>
         </form>
-
+        <p className="py-8 text-center text-sm text-slate-500 font-medium">
+          Ainda não tem conta?{' '}
+          <Link to="/marketplace/signup" className="text-primary font-black hover:opacity-80 decoration-2 transition-all">
+            Cadastrar agora
+          </Link>
         </p>
-
         {/* Global Branding Footer */}
         <div className="w-full py-6 mt-auto flex justify-center opacity-10 pointer-events-none select-none">
           <p className="text-[10px] font-black tracking-[0.3em] text-muted-foreground/50 uppercase">
