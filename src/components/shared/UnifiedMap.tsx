@@ -146,7 +146,7 @@ export function UnifiedMap({ regions = [], centerCity: propCenterCity, interacti
     (drivers ?? []).forEach((driver) => {
       if (!driver.latitude || !driver.longitude) return;
       const el = document.createElement("div");
-      el.innerHTML = `<div style="width: 34px; height: 34px; border-radius: 50%; background: #ea1d2c; border: 2px solid white; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); font-size: 16px;">🛵</div>`;
+      el.innerHTML = `<div style="width: 34px; height: 34px; border-radius: 50%; background: #f97316; border: 2px solid white; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); font-size: 16px;">🛵</div>`;
       
       const marker = new maplibregl.Marker({ element: el })
         .setLngLat([driver.longitude, driver.latitude])

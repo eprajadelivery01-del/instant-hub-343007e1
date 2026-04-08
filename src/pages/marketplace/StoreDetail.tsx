@@ -100,7 +100,7 @@ export default function StoreDetail() {
           {company.banner_url ? (
             <img src={company.banner_url} alt={company.name} className="w-full h-full object-cover" />
           ) : (
-            <div className="w-full h-full bg-gradient-to-br from-[#ea1d2c] to-[#ea1d2c]/80 flex items-center justify-center">
+            <div className="w-full h-full bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center">
               <StoreIcon className="h-16 w-16 text-white/20" />
             </div>
           )}
@@ -274,7 +274,7 @@ export default function StoreDetail() {
         <div className="fixed bottom-24 left-0 right-0 px-4 z-40 animate-in slide-in-from-bottom duration-500">
            <button
              onClick={() => navigate('/marketplace/cart')}
-             className="max-w-lg mx-auto w-full h-16 bg-[#ea1d2c] rounded-2xl shadow-[0_12px_40px_rgba(234,29,44,0.4)] flex items-center justify-between px-6 text-white active:scale-[0.98] transition-transform"
+             className="max-w-lg mx-auto w-full h-16 bg-primary rounded-2xl shadow-[0_12px_40px_rgba(249,115,22,0.4)] flex items-center justify-between px-6 text-white active:scale-[0.98] transition-transform"
            >
               <div className="flex items-center gap-4">
                  <div className="h-10 w-10 bg-white/20 rounded-xl flex items-center justify-center font-black">

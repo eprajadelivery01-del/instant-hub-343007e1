@@ -106,7 +106,7 @@ export default function OrderDetail() {
     if (delivery.delivery_latitude && delivery.delivery_longitude) {
       const el = document.createElement('div');
       el.innerHTML = `
-        <div style="width: 38px; height: 38px; border-radius: 50%; background: #ea1d2c; border: 3px solid white; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(234, 29, 44, 0.4); font-size: 20px;">
+        <div style="width: 38px; height: 38px; border-radius: 50%; background: #f97316; border: 3px solid white; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(249, 115, 22, 0.4); font-size: 20px;">
           🏠
         </div>
       `;
@@ -134,9 +134,9 @@ export default function OrderDetail() {
     if (delivery.current_latitude && delivery.current_longitude) {
       const el = document.createElement('div');
       el.innerHTML = `
-        <div style="width: 42px; height: 42px; border-radius: 50%; background: #ea1d2c; border: 4px solid white; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 20px rgba(234, 29, 44, 0.5); font-size: 22px; position: relative;">
+        <div style="width: 42px; height: 42px; border-radius: 50%; background: #f97316; border: 4px solid white; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 20px rgba(249, 115, 22, 0.5); font-size: 22px; position: relative;">
           🛵
-          <div style="position: absolute; inset: -4px; border-radius: 50%; border: 2px solid #ea1d2c; animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>
+          <div style="position: absolute; inset: -4px; border-radius: 50%; border: 2px solid #f97316; animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>
         </div>
         <style>@keyframes ping { 75%, 100% { transform: scale(1.5); opacity: 0; } }</style>
       `;

@@ -53,12 +53,12 @@ export default function MarketplaceLayout({ children, hideNav, hideHeader }: { c
                   onClick={handleClick}
                   className={cn(
                     'flex flex-col items-center justify-center gap-1.5 py-1 px-6 relative transition-all duration-300 group',
-                    active ? 'text-[#ea1d2c]' : 'text-muted-foreground/60 hover:text-foreground'
+                    active ? 'text-primary' : 'text-muted-foreground/60 hover:text-foreground'
                   )}
                 >
                   <div className={cn(
                     "p-1 rounded-xl transition-all duration-300",
-                    active ? "bg-red-50 text-[#ea1d2c]" : "group-hover:bg-muted"
+                    active ? "bg-orange-50 text-primary" : "group-hover:bg-muted"
                   )}>
                     <item.icon className={cn("h-5 w-5 transition-transform", active ? "scale-110" : "group-hover:scale-105")} />
                   </div>
@@ -80,7 +80,7 @@ export default function MarketplaceLayout({ children, hideNav, hideHeader }: { c
         <div className="fixed bottom-20 left-0 right-0 px-4 z-40 animate-in slide-in-from-bottom duration-500">
            <Link
              to="/marketplace/cart"
-             className="max-w-lg mx-auto w-full h-14 bg-[#ea1d2c] rounded-2xl shadow-[0_12px_40px_rgba(234,29,44,0.4)] flex items-center justify-between px-6 text-white active:scale-[0.98] transition-transform"
+             className="max-w-lg mx-auto w-full h-14 bg-primary rounded-2xl shadow-[0_12px_40px_rgba(249,115,22,0.4)] flex items-center justify-between px-6 text-white active:scale-[0.98] transition-transform"
            >
               <div className="flex items-center gap-4">
                  <div className="h-9 w-9 bg-white/20 rounded-xl flex items-center justify-center font-black text-sm">

@@ -40,7 +40,7 @@ export function HeroMapSection() {
           <div className="absolute inset-4 md:inset-10 bg-background rounded-[40px] shadow-2xl overflow-hidden border border-border flex flex-col">
             <div className="p-6 border-b border-border flex items-center justify-between bg-card text-card-foreground">
               <div className="flex items-center gap-4">
-                 <div className="h-12 w-12 rounded-2xl bg-[#ea1d2c]/10 flex items-center justify-center text-[#ea1d2c]">
+                 <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
                     <MapIcon className="h-6 w-6" />
                  </div>
                  <div>
@@ -69,7 +69,7 @@ export function HeroMapSection() {
                       <span className="text-xs font-bold">Lojas Abertas</span>
                    </div>
                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-[#ea1d2c]/20 flex items-center justify-center text-[#ea1d2c]"><Navigation className="h-4 w-4" /></div>
+                      <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center text-primary"><Navigation className="h-4 w-4" /></div>
                       <span className="text-xs font-bold">Entregadores</span>
                    </div>
                    <div className="flex items-center gap-3">

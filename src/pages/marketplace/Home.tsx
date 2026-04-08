@@ -54,7 +54,7 @@ export default function Home() {
   return (
     <MarketplaceLayout>
       {/* Header - Premium iFood Style */}
-      <div className="bg-[#ea1d2c] sticky top-0 z-50 transition-all duration-300">
+      <div className="bg-primary sticky top-0 z-50 transition-all duration-300">
         <div className="max-w-7xl mx-auto px-4 py-3 space-y-3">
           {/* Address selector */}
           <div className="flex items-center justify-between">
@@ -88,7 +88,7 @@ export default function Home() {
                       </div>
                       <h3 className="text-lg font-bold mb-2">Acesse sua conta</h3>
                       <p className="text-sm text-muted-foreground mb-6">Para ver seus endereços salvos e aproveitar ofertas exclusivas.</p>
-                      <Button onClick={() => navigate('/marketplace/login')} className="w-full h-12 rounded-2xl font-bold bg-[#ea1d2c] hover:bg-[#d01927]">
+                      <Button onClick={() => navigate('/marketplace/login')} className="w-full h-12 rounded-2xl font-bold bg-primary hover:bg-primary/90">
                         Fazer login ou cadastrar
                       </Button>
                     </div>
@@ -96,7 +96,7 @@ export default function Home() {
                     <div className="text-center py-10">
                       <MapPin className="h-12 w-12 mx-auto text-muted-foreground/30 mb-4" />
                       <p className="text-sm text-muted-foreground mb-6">Você ainda não tem endereços cadastrados.</p>
-                      <Button onClick={() => { setAddressSheetOpen(false); navigate('/marketplace/addresses'); }} className="w-full h-12 rounded-2xl font-bold bg-[#ea1d2c]">
+                      <Button onClick={() => { setAddressSheetOpen(false); navigate('/marketplace/addresses'); }} className="w-full h-12 rounded-2xl font-bold bg-primary">
                         Cadastrar novo endereço
                       </Button>
                     </div>
@@ -272,7 +272,7 @@ export default function Home() {
                       </div>
                     )}
                     <div className="absolute top-4 left-4 z-10 flex flex-col gap-2">
-                       <span className="bg-[#ea1d2c] text-white text-[10px] font-black px-3 py-1.5 rounded-xl shadow-lg shadow-red-500/30 uppercase tracking-widest flex items-center gap-1.5">
+                       <span className="bg-primary text-white text-[10px] font-black px-3 py-1.5 rounded-xl shadow-lg shadow-primary/30 uppercase tracking-widest flex items-center gap-1.5">
                          🚀 Entrega Rápida
                        </span>
                     </div>
