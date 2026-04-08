@@ -35,9 +35,9 @@ const App = () => (
                 <Route path="/" element={<Navigate to="/marketplace" replace />} />
                 <Route path="/marketplace/login" element={<Login />} />
                 <Route path="/marketplace/signup" element={<Signup />} />
-                <Route path="/marketplace" element={<RequireAuth><Home /></RequireAuth>} />
-                <Route path="/marketplace/store/:id" element={<RequireAuth><StoreDetail /></RequireAuth>} />
-                <Route path="/marketplace/cart" element={<RequireAuth><Cart /></RequireAuth>} />
+                <Route path="/marketplace" element={<Home />} />
+                <Route path="/marketplace/store/:id" element={<StoreDetail />} />
+                <Route path="/marketplace/cart" element={<Cart />} />
                 <Route path="/marketplace/checkout" element={<RequireAuth><Checkout /></RequireAuth>} />
                 <Route path="/marketplace/orders" element={<RequireAuth><Orders /></RequireAuth>} />
                 <Route path="/marketplace/orders/:id" element={<RequireAuth><OrderDetail /></RequireAuth>} />

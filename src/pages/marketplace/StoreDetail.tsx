@@ -7,7 +7,7 @@ import { useCart } from '@/contexts/CartContext';
 import MarketplaceLayout from '@/components/marketplace/MarketplaceLayout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Minus, Plus, Star, Clock, Store as StoreIcon, Share2 } from 'lucide-react';
+import { ArrowLeft, Minus, Plus, Star, Clock, Store as StoreIcon, Share2, Utensils } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -16,7 +16,7 @@ export default function StoreDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { items, addItem, updateQuantity, company: cartCompany } = useCart();
+  const { items, addItem, updateQuantity, company: cartCompany, itemCount, subtotal } = useCart();
   const [company, setCompany] = useState<Company | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -49,13 +49,10 @@ export default function StoreDetail() {
   };
 
   const handleAdd = (product: Product) => {
-    if (!user) {
-      toast.error('Faça login para adicionar itens');
-      navigate('/marketplace/login');
-      return;
-    }
+    // Guest mode allowed now
     if (cartCompany && cartCompany.id !== company?.id) {
-      toast('Carrinho limpo! Itens de outra loja foram removidos.');
+       addItem(product, company!);
+       return;
     }
     addItem(product, company!);
   };
@@ -63,9 +60,16 @@ export default function StoreDetail() {
   if (loading) {
     return (
       <MarketplaceLayout>
-        <Skeleton className="h-56 w-full" />
-        <div className="p-4 space-y-3">
-          {[1, 2, 3].map(i => <Skeleton key={i} className="h-24 w-full rounded-2xl" />)}
+        <div className="animate-pulse">
+           <div className="h-64 bg-muted w-full" />
+           <div className="p-6 space-y-4">
+              <div className="h-20 w-20 bg-muted rounded-2xl -mt-14 border-4 border-white mx-auto shadow-lg" />
+              <div className="h-8 bg-muted w-1/2 mx-auto rounded-lg" />
+              <div className="h-4 bg-muted w-1/3 mx-auto rounded-lg" />
+           </div>
+           <div className="px-4 space-y-3">
+              {[1, 2, 3].map(i => <div key={i} className="h-28 bg-muted w-full rounded-2xl" />)}
+           </div>
         </div>
       </MarketplaceLayout>
     );
@@ -74,81 +78,104 @@ export default function StoreDetail() {
   if (!company) {
     return (
       <MarketplaceLayout>
-        <div className="text-center py-16 text-muted-foreground">Loja não encontrada</div>
+        <div className="text-center py-24 px-6">
+          <div className="h-20 w-20 bg-muted rounded-full flex items-center justify-center mx-auto mb-6">
+             <StoreIcon className="h-10 w-10 text-muted-foreground" />
+          </div>
+          <h2 className="text-xl font-black mb-2">Loja não encontrada</h2>
+          <Button onClick={() => navigate('/marketplace')} variant="link" className="font-bold">
+             Voltar para o marketplace
+          </Button>
+        </div>
       </MarketplaceLayout>
     );
   }
 
   return (
     <MarketplaceLayout>
-      {/* Hero banner */}
+      {/* Header - iFood Store Style */}
       <div className="relative">
-        <div className="h-56 overflow-hidden">
+        {/* Banner with Nav */}
+        <div className="h-44 relative overflow-hidden">
           {company.banner_url ? (
             <img src={company.banner_url} alt={company.name} className="w-full h-full object-cover" />
           ) : (
-            <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
-              <StoreIcon className="h-16 w-16 text-primary/30" />
+            <div className="w-full h-full bg-gradient-to-br from-[#ea1d2c] to-[#ea1d2c]/80 flex items-center justify-center">
+              <StoreIcon className="h-16 w-16 text-white/20" />
             </div>
           )}
-          {/* Gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20" />
+          <div className="absolute inset-0 bg-black/20" />
+          <div className="absolute top-4 left-4 right-4 flex justify-between">
+            <button
+              onClick={() => navigate('/marketplace')}
+              className="h-10 w-10 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center shadow-lg border border-white/20 transition-all hover:bg-white hover:text-primary"
+            >
+              <ArrowLeft className="h-5 w-5 text-white group-hover:text-primary" />
+            </button>
+            <button className="h-10 w-10 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center shadow-lg border border-white/20 transition-all hover:bg-white hover:text-primary">
+              <Share2 className="h-5 w-5 text-white" />
+            </button>
+          </div>
         </div>
 
-        {/* Nav buttons */}
-        <div className="absolute top-4 left-4 right-4 flex justify-between">
-          <button
-            onClick={() => navigate('/marketplace')}
-            className="h-10 w-10 rounded-full bg-card/90 backdrop-blur-sm flex items-center justify-center shadow-md"
-          >
-            <ArrowLeft className="h-5 w-5 text-foreground" />
-          </button>
-          <button className="h-10 w-10 rounded-full bg-card/90 backdrop-blur-sm flex items-center justify-center shadow-md">
-            <Share2 className="h-5 w-5 text-foreground" />
-          </button>
-        </div>
-
-        {/* Store info overlay */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
-          <div className="flex items-end gap-3">
-            {company.logo_url && (
-              <img src={company.logo_url} alt="" className="h-16 w-16 rounded-2xl object-cover border-2 border-white shadow-lg flex-shrink-0" />
-            )}
-            <div className="flex-1 min-w-0">
-              <h1 className="text-xl font-bold drop-shadow-lg">{company.name}</h1>
-              <div className="flex items-center gap-2 mt-1 text-sm opacity-90">
-                <span className="flex items-center gap-0.5">
-                  <Star className="h-3 w-3 fill-current text-yellow-400" />
-                  4.5
-                </span>
-                <span>•</span>
-                <span className="flex items-center gap-0.5">
-                  <Clock className="h-3 w-3" />
-                  30-45 min
-                </span>
-              </div>
-            </div>
+        {/* Store Profile Section */}
+        <div className="px-6 pb-6 bg-white relative">
+          <div className="flex flex-col items-center -mt-12 text-center">
+             <div className="relative">
+                {company.logo_url ? (
+                  <img src={company.logo_url} alt="" className="h-24 w-24 rounded-[28px] object-cover border-4 border-white shadow-2xl" />
+                ) : (
+                  <div className="h-24 w-24 rounded-[28px] bg-white border-4 border-white shadow-2xl flex items-center justify-center">
+                    <StoreIcon className="h-10 w-10 text-muted-foreground" />
+                  </div>
+                )}
+                <div className="absolute -bottom-1 -right-1 h-8 w-8 bg-success rounded-full border-4 border-white flex items-center justify-center shadow-lg">
+                   <div className="h-2 w-2 bg-white rounded-full animate-pulse" />
+                </div>
+             </div>
+             
+             <div className="mt-4 space-y-1">
+                <h1 className="text-2xl font-black text-foreground tracking-tight">{company.name}</h1>
+                <div className="flex items-center justify-center gap-4 text-sm font-bold text-muted-foreground/80">
+                   <div className="flex items-center gap-1 text-warning">
+                      <Star className="h-4 w-4 fill-current" />
+                      <span>4.5</span>
+                      <span className="text-muted-foreground font-medium">• 50+ avaliações</span>
+                   </div>
+                   <div className="flex items-center gap-1.5">
+                      <Clock className="h-4 w-4" />
+                      <span>30-45 min</span>
+                   </div>
+                </div>
+                {company.description && (
+                   <p className="text-sm text-muted-foreground mt-2 px-6 italic font-medium opacity-70 leading-relaxed">
+                     "{company.description}"
+                   </p>
+                )}
+             </div>
+             
+             <div className="flex items-center gap-3 mt-6">
+                <Badge variant="outline" className="h-9 px-4 rounded-xl border-dashed border-2 border-primary/30 text-primary font-bold">
+                   🎟️ Cupons disponíveis
+                </Badge>
+                <Badge variant="outline" className="h-9 px-4 rounded-xl border-dashed border-2 border-success/30 text-success font-bold">
+                   🚚 Entrega Grátis
+                </Badge>
+             </div>
           </div>
         </div>
       </div>
 
-      {/* Description */}
-      {company.description && (
-        <div className="px-4 py-3 bg-card border-b border-border">
-          <p className="text-sm text-muted-foreground">{company.description}</p>
-        </div>
-      )}
-
-      {/* Category tabs */}
-      {categories.length > 1 && (
-        <div className="sticky top-0 z-30 bg-card border-b border-border">
-          <div className="flex overflow-x-auto scrollbar-hide px-4 gap-1">
+      {/* Category Navigation - iFood Sliding Scroll */}
+      {categories.length > 0 && (
+        <div className="sticky top-0 z-40 bg-white border-b border-border transition-all shadow-sm overflow-hidden">
+          <div className="flex overflow-x-auto scrollbar-hide px-6">
             {categories.map(cat => (
               <button
                 key={cat}
                 onClick={() => setActiveCategory(cat)}
                 className={cn(
-                  'px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors',
+                  'px-5 py-4 text-sm font-black whitespace-nowrap transition-all border-b-4',
                   activeCategory === cat
                     ? 'border-primary text-primary'
                     : 'border-transparent text-muted-foreground hover:text-foreground'
@@ -161,67 +188,77 @@ export default function StoreDetail() {
         </div>
       )}
 
-      {/* Products by category */}
-      <div className="max-w-lg mx-auto">
+      {/* Product List - iFood Style Cards */}
+      <div className="max-w-7xl mx-auto px-4 pb-32">
         {categories.length === 0 ? (
-          <div className="text-center py-16 text-muted-foreground">
-            <p className="font-medium">Nenhum produto disponível</p>
+          <div className="py-20 flex flex-col items-center gap-4 text-muted-foreground opacity-50">
+             <Utensils className="h-16 w-16" />
+             <p className="font-bold">Nenhum prato disponível no cardápio</p>
           </div>
         ) : (
           categories.map(cat => (
-            <div key={cat} className="px-4 py-4">
-              <h3 className="text-base font-bold text-foreground mb-3">{cat}</h3>
-              <div className="space-y-2">
+            <div key={cat} id={cat} className="mt-8">
+              <h3 className="text-xl font-black text-foreground px-2 mb-4 tracking-tight">{cat}</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {products.filter(p => p.category === cat).map(product => {
                   const qty = getItemQty(product.id);
                   return (
                     <div
                       key={product.id}
-                      className="bg-card rounded-2xl p-3 flex gap-3 shadow-sm active:bg-muted/50 transition-colors"
+                      className="group bg-white rounded-[28px] border border-border/50 p-4 flex gap-4 shadow-sm hover:shadow-xl hover:border-primary/20 transition-all cursor-pointer active:scale-[0.98]"
+                      onClick={() => handleAdd(product)}
                     >
-                      <div className="flex-1 min-w-0 flex flex-col justify-between">
+                      <div className="flex-1 min-w-0 flex flex-col justify-between py-1">
                         <div>
-                          <h4 className="font-semibold text-foreground text-sm">{product.name}</h4>
+                          <h4 className="font-black text-foreground text-[15px] leading-tight group-hover:text-primary transition-colors">{product.name}</h4>
                           {product.description && (
-                            <p className="text-xs text-muted-foreground line-clamp-2 mt-1 leading-relaxed">{product.description}</p>
+                            <p className="text-[12px] text-muted-foreground font-medium line-clamp-2 mt-2 leading-relaxed opacity-70 italic">
+                              {product.description}
+                            </p>
                           )}
                         </div>
-                        <div className="flex items-center justify-between mt-2">
-                          <p className="text-sm font-bold text-foreground">
-                            R$ {(product.price || 0).toFixed(2).replace('.', ',')}
-                          </p>
-                          {qty === 0 ? (
-                            <button
-                              onClick={() => handleAdd(product)}
-                              className="h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-sm active:scale-90 transition-transform"
-                            >
-                              <Plus className="h-4 w-4" />
-                            </button>
-                          ) : (
-                            <div className="flex items-center gap-1">
+                        <div className="flex items-center justify-between mt-3">
+                          <div className="flex flex-col">
+                             <span className="text-[10px] font-black text-primary uppercase tracking-widest leading-none mb-0.5">Preço</span>
+                             <p className="text-lg font-black text-foreground">
+                                R$ {Number(product.price || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                             </p>
+                          </div>
+                          
+                          {qty > 0 && (
+                            <div className="flex items-center bg-muted/50 rounded-2xl p-1 gap-2 border border-border">
                               <button
-                                className="h-7 w-7 rounded-full border border-primary text-primary flex items-center justify-center active:scale-90 transition-transform"
-                                onClick={() => updateQuantity(product.id, qty - 1)}
+                                className="h-8 w-8 rounded-xl bg-white text-muted-foreground flex items-center justify-center shadow-sm active:scale-90 transition-transform"
+                                onClick={(e) => { e.stopPropagation(); updateQuantity(product.id, qty - 1); }}
                               >
-                                <Minus className="h-3 w-3" />
+                                <Minus className="h-4 w-4" />
                               </button>
-                              <span className="font-bold text-sm w-6 text-center">{qty}</span>
+                              <span className="font-black text-sm w-6 text-center">{qty}</span>
                               <button
-                                className="h-7 w-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center active:scale-90 transition-transform"
-                                onClick={() => handleAdd(product)}
+                                className="h-8 w-8 rounded-xl bg-primary text-white flex items-center justify-center shadow-lg shadow-primary/20 active:scale-90 transition-transform"
+                                onClick={(e) => { e.stopPropagation(); handleAdd(product); }}
                               >
-                                <Plus className="h-3 w-3" />
+                                <Plus className="h-4 w-4" />
                               </button>
                             </div>
                           )}
+                          
+                          {qty === 0 && (
+                             <div className="h-10 w-10 rounded-2xl bg-muted group-hover:bg-primary group-hover:text-white flex items-center justify-center transition-colors shadow-sm">
+                                <Plus className="h-5 w-5" />
+                             </div>
+                          )}
                         </div>
                       </div>
+                      
                       {product.image_url && (
-                        <img
-                          src={product.image_url}
-                          alt={product.name || ''}
-                          className="h-24 w-24 rounded-xl object-cover flex-shrink-0"
-                        />
+                        <div className="h-28 w-28 rounded-2xl overflow-hidden shrink-0 shadow-lg group-hover:rotate-1 transition-transform">
+                          <img
+                            src={product.image_url}
+                            alt={product.name || ''}
+                            className="h-full w-full object-cover"
+                          />
+                        </div>
                       )}
                     </div>
                   );
@@ -231,6 +268,30 @@ export default function StoreDetail() {
           ))
         )}
       </div>
+
+      {/* Floating Cart - iFood Style */}
+      {itemCount > 0 && (
+        <div className="fixed bottom-24 left-0 right-0 px-4 z-40 animate-in slide-in-from-bottom duration-500">
+           <button
+             onClick={() => navigate('/marketplace/cart')}
+             className="max-w-lg mx-auto w-full h-16 bg-[#ea1d2c] rounded-2xl shadow-[0_12px_40px_rgba(234,29,44,0.4)] flex items-center justify-between px-6 text-white active:scale-[0.98] transition-transform"
+           >
+              <div className="flex items-center gap-4">
+                 <div className="h-10 w-10 bg-white/20 rounded-xl flex items-center justify-center font-black">
+                    {itemCount}
+                 </div>
+                 <div className="text-left">
+                    <p className="text-[10px] font-black opacity-80 uppercase tracking-widest leading-none">Ver carrinho</p>
+                    <p className="text-sm font-black">Finalizar pedido</p>
+                 </div>
+              </div>
+              <div className="text-right">
+                 <p className="text-[10px] font-black opacity-80 uppercase tracking-widest leading-none">Total</p>
+                 <p className="text-lg font-black">R$ {subtotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+              </div>
+           </button>
+        </div>
+      )}
     </MarketplaceLayout>
   );
 }
