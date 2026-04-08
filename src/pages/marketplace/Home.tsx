@@ -9,7 +9,7 @@ import MarketplaceLayout from '@/components/marketplace/MarketplaceLayout';
 import { HeroMapSection } from '@/components/shared/HeroMapSection';
 import { Input } from '@/components/ui/input';
 import { StoreTabCard } from '@/components/marketplace/StoreTabCard';
-import { Search, MapPin, Star, Clock, ChevronDown, Store, Utensils, Coffee, Pizza, Cake, Sandwich } from 'lucide-react';
+import { Search, MapPin, Star, Clock, ChevronDown, Store, Utensils, Coffee, Pizza, Cake, Sandwich, User } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger
@@ -25,7 +25,7 @@ const categories = [
 ];
 
 export default function Home() {
-  const [companies, setCompanies] = useState<(Company & { products: Product[] })[]>([]);
+  const [companies, setCompanies] = useState<(Company & { products: Product[], rating: number, isPremium?: boolean })[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('');
@@ -35,18 +35,18 @@ export default function Home() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchCompanies = async () => {
       const { data } = await supabase
         .from('companies')
         .select('*, products(*)')
-        .eq('active', true)
-        .order('name');
+        .eq('active', true);
       
-      // Keep only first 4 products for preview
-      const processed = (data || []).map(c => ({
+      // Process data: add mock ratings and premium status
+      const processed = (data || []).map((c, index) => ({
         ...c,
-        products: (c.products || []).slice(0, 4)
-      }));
+        products: (c.products || []).slice(0, 4),
+        rating: 4.0 + Math.random(), // Mock rating 4.0 - 5.0
+        isPremium: index < 5 // First 5 are premium for demo
+      })).sort((a, b) => b.rating - a.rating); // Sort by rating
       
       setCompanies(processed as any);
       setLoading(false);
@@ -61,139 +61,80 @@ export default function Home() {
 
   return (
     <MarketplaceLayout>
-      {/* Header - Premium iFood Style */}
-      <div className="bg-primary sticky top-0 z-50 transition-all duration-300">
-        <div className="max-w-7xl mx-auto px-4 py-3 space-y-3">
-          {/* Address selector */}
-          <div className="flex items-center justify-between">
-            <Sheet open={addressSheetOpen} onOpenChange={setAddressSheetOpen}>
-              <SheetTrigger asChild>
-                <button className="flex items-center gap-2 text-white group outline-none">
-                  <div className="flex flex-col items-start">
-                    <div className="flex items-center gap-1">
-                      <span className="text-[11px] font-bold opacity-80 uppercase tracking-widest text-white/90">Entregar em</span>
-                      <ChevronDown className="h-3 w-3 opacity-70 group-hover:translate-y-0.5 transition-transform" />
-                    </div>
-                    <p className="text-sm font-black truncate max-w-[200px]">
-                      {selectedAddress
-                        ? `${selectedAddress.street}, ${selectedAddress.number}`
-                        : user ? 'Escolha um endereço' : 'Adicione um endereço'}
-                    </p>
-                  </div>
-                </button>
-              </SheetTrigger>
-              <SheetContent side="bottom" className="rounded-t-[32px] max-h-[85vh] p-0 overflow-hidden border-t-0 shadow-2xl">
-                <div className="p-6 pb-2 border-b border-border bg-card">
-                  <SheetHeader>
-                    <SheetTitle className="text-left text-xl font-black">Onde você quer receber seu pedido?</SheetTitle>
-                  </SheetHeader>
-                </div>
-                <div className="p-6 space-y-4 overflow-y-auto max-h-[60vh] bg-background">
-                  {!user ? (
-                    <div className="text-center py-10">
-                      <div className="h-20 w-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <MapPin className="h-10 w-10 text-primary" />
-                      </div>
-                      <h3 className="text-lg font-bold mb-2">Acesse sua conta</h3>
-                      <p className="text-sm text-muted-foreground mb-6">Para ver seus endereços salvos e aproveitar ofertas exclusivas.</p>
-                      <Button onClick={() => navigate('/marketplace/login')} className="w-full h-12 rounded-2xl font-bold bg-primary hover:bg-primary/90">
-                        Fazer login ou cadastrar
-                      </Button>
-                    </div>
-                  ) : addresses.length === 0 ? (
-                    <div className="text-center py-10">
-                      <MapPin className="h-12 w-12 mx-auto text-muted-foreground/30 mb-4" />
-                      <p className="text-sm text-muted-foreground mb-6">Você ainda não tem endereços cadastrados.</p>
-                      <Button onClick={() => { setAddressSheetOpen(false); navigate('/marketplace/addresses'); }} className="w-full h-12 rounded-2xl font-bold bg-primary">
-                        Cadastrar novo endereço
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {addresses.map(addr => (
-                        <button
-                          key={addr.id}
-                          onClick={() => { setSelectedAddressId(addr.id); setAddressSheetOpen(false); }}
-                          className={`w-full text-left p-4 rounded-2xl border-2 transition-all flex items-center gap-4 ${
-                            selectedAddress?.id === addr.id
-                              ? 'border-primary bg-primary/5'
-                              : 'border-transparent bg-muted/30 hover:bg-muted/50'
-                          }`}
-                        >
-                          <div className={`h-10 w-10 rounded-xl flex items-center justify-center shrink-0 ${
-                            selectedAddress?.id === addr.id ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'bg-card text-muted-foreground'
-                          }`}>
-                            <MapPin className="h-5 w-5" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-black text-sm text-foreground truncate">{addr.street}, {addr.number}</p>
-                            <p className="text-xs text-muted-foreground truncate">{addr.neighborhood}, {addr.city}</p>
-                          </div>
-                        </button>
-                      ))}
-                      <Button
-                        variant="ghost"
-                        className="w-full h-12 rounded-2xl font-bold text-primary hover:bg-primary/5 mt-2"
-                        onClick={() => { setAddressSheetOpen(false); navigate('/marketplace/addresses'); }}
-                      >
-                        Gerenciar endereços
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              </SheetContent>
-            </Sheet>
-
-            {!user && (
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => navigate('/marketplace/login')}
-                className="text-white hover:bg-white/10 font-bold px-4 h-9 rounded-xl border border-white/20"
-              >
-                Entrar
-              </Button>
-            )}
-          </div>
-
-          {/* Search bar */}
-          <div className="relative group">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground transition-colors group-focus-within:text-primary" />
-            <Input
-              placeholder="Buscar lojas ou pratos"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              className="pl-12 bg-white border-0 shadow-2xl shadow-black/10 h-12 rounded-2xl text-base placeholder:text-muted-foreground/60 focus-visible:ring-0"
-            />
-          </div>
+      {/* minimalist Header - Google Style */}
+      <div className="bg-white border-b border-border/10 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+           <div className="flex items-center gap-1">
+              <span className="text-2xl font-black tracking-tighter text-blue-500">É</span>
+              <span className="text-2xl font-black tracking-tighter text-red-500">P</span>
+              <span className="text-2xl font-black tracking-tighter text-yellow-500">r</span>
+              <span className="text-2xl font-black tracking-tighter text-blue-500">a</span>
+              <span className="text-2xl font-black tracking-tighter text-green-500">J</span>
+              <span className="text-2xl font-black tracking-tighter text-red-500">á</span>
+           </div>
+           
+           <div className="flex items-center gap-4">
+              <div className="h-10 w-10 rounded-full bg-gradient-to-tr from-primary/20 to-primary/10 border-2 border-primary/20 flex items-center justify-center overflow-hidden">
+                {user?.avatar_url ? (
+                  <img src={user.avatar_url} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  <User className="h-5 w-5 text-primary" />
+                )}
+              </div>
+           </div>
+        </div>
+        
+        {/* Address selector - Google Subheader style */}
+        <div className="px-6 pb-4">
+          <button onClick={() => setAddressSheetOpen(true)} className="flex items-center gap-2 group outline-none">
+             <MapPin className="h-4 w-4 text-primary" />
+             <span className="text-[13px] font-bold text-foreground/80 truncate max-w-[200px]">
+                {selectedAddress ? `${selectedAddress.street}, ${selectedAddress.number}` : 'Definir endereço'}
+             </span>
+             <ChevronDown className="h-3 w-3 text-muted-foreground" />
+          </button>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4">
-        {/* Promotional Banners Carousel (Mock) */}
-        <div className="flex gap-4 overflow-x-auto scrollbar-hide py-6 -mx-4 px-4">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className={`min-w-[85%] md:min-w-[400px] h-44 rounded-[28px] overflow-hidden shadow-xl shadow-black/5 relative group cursor-pointer active:scale-[0.98] transition-transform ${
-              i === 1 ? 'bg-gradient-to-br from-orange-500 to-red-600' :
-              i === 2 ? 'bg-gradient-to-br from-blue-600 to-indigo-700' :
-              'bg-gradient-to-br from-emerald-500 to-teal-600'
-            }`}>
-              <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors" />
-              <div className="absolute inset-0 p-6 flex flex-col justify-center gap-1">
-                <span className="bg-white/20 backdrop-blur-md text-white text-[10px] font-black px-2 py-1 rounded-full w-fit uppercase tracking-wider">Oferta do dia</span>
-                <h3 className="text-white text-2xl font-black leading-tight max-w-[70%]">
-                  {i === 1 ? 'Pratos com frete grátis!' : 
-                   i === 2 ? 'Cupom de R$ 10 no primeiro pedido' : 
-                   'Os melhores hambúrgueres da cidade'}
-                </h3>
-                <p className="text-white/80 text-sm font-bold">Confira as lojas participantes</p>
-              </div>
-              <div className="absolute bottom-0 right-0 p-4 opacity-20">
-                <Store className="h-24 w-24 text-white rotate-12" />
-              </div>
-            </div>
-          ))}
+      <div className="max-w-7xl mx-auto px-4 mt-6">
+        {/* Search bar - Google Home style */}
+        <div className="relative group mb-8">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground/40" />
+          <Input
+            placeholder="Buscar lojas ou pratos"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="pl-12 bg-white border border-border/50 shadow-xl shadow-black/5 h-14 rounded-full text-base placeholder:text-muted-foreground/40 focus-visible:ring-1 focus-visible:ring-primary/20"
+          />
         </div>
+
+        {/* Premium Merchants Widgets (Google News Widgets style) */}
+        <div className="mb-8">
+           <div className="flex items-center justify-between mb-4 px-2">
+              <h4 className="text-[11px] font-black uppercase tracking-widest text-muted-foreground">Promovidos</h4>
+           </div>
+           <div className="flex gap-3 overflow-x-auto scrollbar-hide -mx-4 px-4">
+              {companies.filter(c => c.isPremium).map(c => (
+                <button key={c.id} onClick={() => navigate(`/marketplace/store/${c.id}`)} className="flex flex-col gap-2 min-w-[140px] bg-white border border-border/40 p-3 rounded-3xl shadow-sm active:scale-95 transition-all">
+                   <div className="flex items-center gap-2">
+                      <div className="h-6 w-6 rounded-lg bg-primary/10 flex items-center justify-center p-1 overflow-hidden shrink-0">
+                         {c.logo_url ? <img src={c.logo_url} className="w-full h-full object-contain" /> : <Store className="h-3 w-3 text-primary" />}
+                      </div>
+                      <span className="text-[11px] font-black truncate text-slate-800">{c.name}</span>
+                   </div>
+                   <div className="h-16 w-full rounded-2xl overflow-hidden bg-slate-50 relative">
+                      {c.banner_url ? (
+                        <img src={c.banner_url} className="w-full h-full object-cover opacity-60" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center"><Store className="h-4 w-4 text-slate-200" /></div>
+                      )}
+                      <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-white to-transparent" />
+                   </div>
+                </button>
+              ))}
+           </div>
+        </div>
+o px-4">
 
         {/* Interactive Map Hero */}
         <HeroMapSection />
@@ -224,13 +165,16 @@ export default function Home() {
           ))}
         </div>
 
-        {/* Featured Section */}
-        <div className="flex items-center justify-between mt-6 mb-4">
-          <h2 className="text-xl font-black text-foreground tracking-tight flex items-center gap-2">
-            Lojas {activeCategory ? `de ${activeCategory}` : 'próximas'}
-          </h2>
-          <div className="flex items-center gap-1 px-3 py-1.5 bg-muted rounded-xl text-[11px] font-bold text-muted-foreground uppercase tracking-widest">
-            {filtered.length} resultados
+        {/* Discovery Feed Sorting Info */}
+        <div className="flex items-center justify-between mt-8 mb-6">
+          <div>
+            <h2 className="text-xl font-black text-foreground tracking-tight flex items-center gap-2">
+               Melhores Lojas
+            </h2>
+            <p className="text-[10px] uppercase tracking-widest font-black text-muted-foreground/50 mt-1">Baseado em avaliações reais</p>
+          </div>
+          <div className="flex items-center gap-1 px-3 py-1.5 bg-success/10 rounded-xl text-[11px] font-black text-success uppercase tracking-widest">
+            {filtered.length} Resultados
           </div>
         </div>
 
