@@ -1,3 +1,4 @@
+import React from "react";
 import { ChevronLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import MarketplaceLayout from "@/components/marketplace/MarketplaceLayout";

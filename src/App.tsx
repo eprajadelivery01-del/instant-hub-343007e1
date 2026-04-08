@@ -1,3 +1,4 @@
+import React, { useMemo } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -23,41 +24,50 @@ import PrivacyPolicy from "./pages/marketplace/PrivacyPolicy";
 import TermsOfService from "./pages/marketplace/TermsOfService";
 import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient();
+const App = () => {
+  const queryClient = useMemo(() => new QueryClient({
+    defaultOptions: {
+      queries: {
+        staleTime: 60 * 1000,
+        retry: 1,
+      },
+    },
+  }), []);
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <CityProvider>
-        <CartProvider>
-          <AddressProvider>
-            <TooltipProvider>
-              <Toaster />
-              <Sonner />
-              <BrowserRouter>
-                <Routes>
-                  <Route path="/" element={<Navigate to="/marketplace" replace />} />
-                  <Route path="/marketplace/login" element={<Login />} />
-                  <Route path="/marketplace/signup" element={<Signup />} />
-                  <Route path="/marketplace" element={<Home />} />
-                  <Route path="/marketplace/store/:id" element={<StoreDetail />} />
-                  <Route path="/marketplace/cart" element={<Cart />} />
-                  <Route path="/marketplace/checkout" element={<RequireAuth><Checkout /></RequireAuth>} />
-                  <Route path="/marketplace/orders" element={<RequireAuth><Orders /></RequireAuth>} />
-                  <Route path="/marketplace/orders/:id" element={<RequireAuth><OrderDetail /></RequireAuth>} />
-                  <Route path="/marketplace/addresses" element={<RequireAuth><Addresses /></RequireAuth>} />
-                  <Route path="/marketplace/profile" element={<RequireAuth><Profile /></RequireAuth>} />
-                  <Route path="/marketplace/privacy" element={<PrivacyPolicy />} />
-                  <Route path="/marketplace/terms" element={<TermsOfService />} />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </BrowserRouter>
-            </TooltipProvider>
-          </AddressProvider>
-        </CartProvider>
-      </CityProvider>
-    </AuthProvider>
-  </QueryClientProvider>
-);
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <CityProvider>
+          <CartProvider>
+            <AddressProvider>
+              <TooltipProvider>
+                <Toaster />
+                <Sonner />
+                <BrowserRouter>
+                  <Routes>
+                    <Route path="/" element={<Navigate to="/marketplace" replace />} />
+                    <Route path="/marketplace/login" element={<Login />} />
+                    <Route path="/marketplace/signup" element={<Signup />} />
+                    <Route path="/marketplace" element={<Home />} />
+                    <Route path="/marketplace/store/:id" element={<StoreDetail />} />
+                    <Route path="/marketplace/cart" element={<Cart />} />
+                    <Route path="/marketplace/checkout" element={<RequireAuth><Checkout /></RequireAuth>} />
+                    <Route path="/marketplace/orders" element={<RequireAuth><Orders /></RequireAuth>} />
+                    <Route path="/marketplace/orders/:id" element={<RequireAuth><OrderDetail /></RequireAuth>} />
+                    <Route path="/marketplace/addresses" element={<RequireAuth><Addresses /></RequireAuth>} />
+                    <Route path="/marketplace/profile" element={<RequireAuth><Profile /></RequireAuth>} />
+                    <Route path="/marketplace/privacy" element={<PrivacyPolicy />} />
+                    <Route path="/marketplace/terms" element={<TermsOfService />} />
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </BrowserRouter>
+              </TooltipProvider>
+            </AddressProvider>
+          </CartProvider>
+        </CityProvider>
+      </AuthProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
