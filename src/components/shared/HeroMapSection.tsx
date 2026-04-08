@@ -6,12 +6,11 @@ import { Button } from "@/components/ui/button";
 
 export function HeroMapSection() {
   const [isOpen, setIsOpen] = useState(false);
-  const { data: regions } = useRegions();
 
   return (
     <div className="relative w-full h-[220px] rounded-[32px] overflow-hidden shadow-2xl border-4 border-white mb-6 group cursor-pointer" onClick={() => setIsOpen(true)}>
       <div className="absolute inset-0 pointer-events-none z-10">
-        <UnifiedMap regions={regions || []} />
+        <UnifiedMap />
       </div>
 
       {/* Overlay info */}
@@ -45,7 +44,7 @@ export function HeroMapSection() {
                  </div>
                  <div>
                     <h2 className="text-xl font-black tracking-tight">Mapa de Serviços</h2>
-                    <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest mt-0.5">Mapa Pró-Já e Marketplace</p>
+                    <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest mt-0.5">Mapa É Pra Já e Marketplace</p>
                  </div>
               </div>
               
@@ -58,27 +57,15 @@ export function HeroMapSection() {
             </div>
 
             <div className="flex-1 relative">
-              <UnifiedMap regions={regions || []} interactive />
+              <UnifiedMap interactive />
               
               {/* Floating Legend */}
               <div className="absolute bottom-6 left-6 right-6 md:right-auto md:w-80 bg-background/80 backdrop-blur-xl p-5 rounded-3xl shadow-2xl border border-white/20">
                 <h4 className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-4">Legenda do Mapa</h4>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4">
                    <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-lg bg-success/20 flex items-center justify-center text-success"><ShoppingBag className="h-4 w-4" /></div>
                       <span className="text-xs font-bold">Lojas Abertas</span>
-                   </div>
-                   <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center text-primary"><Navigation className="h-4 w-4" /></div>
-                      <span className="text-xs font-bold">Entregadores</span>
-                   </div>
-                   <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-[#F59E0B]/10 border border-[#F59E0B]/30 flex items-center justify-center"><div className="w-4 h-4 bg-[#F59E0B]/20 border border-[#F59E0B]" /></div>
-                      <span className="text-xs font-bold">Áreas de Entrega</span>
-                   </div>
-                   <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-info/20 flex items-center justify-center text-info"><Info className="h-4 w-4" /></div>
-                      <span className="text-xs font-bold">Sua Localidade</span>
                    </div>
                 </div>
               </div>
