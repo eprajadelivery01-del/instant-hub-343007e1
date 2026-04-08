@@ -10,6 +10,7 @@ import { HeroMapSection } from '@/components/shared/HeroMapSection';
 import { Input } from '@/components/ui/input';
 import { StoreTabCard } from '@/components/marketplace/StoreTabCard';
 import { MarketplaceMenu } from '@/components/marketplace/MarketplaceMenu';
+import { TopRatedCarousel } from '@/components/marketplace/TopRatedCarousel';
 import { Search, MapPin, Star, Clock, ChevronDown, Store, Utensils, Coffee, Pizza, Cake, Sandwich, User } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -137,7 +138,11 @@ export default function Home() {
               ))}
            </div>
         </div>
-o px-4">
+
+        {/* Top Rated Carousel - Queridinhos da Galera */}
+        <div className="mb-0">
+          <TopRatedCarousel companies={companies} />
+        </div>
 
         {/* Interactive Map Hero */}
         <HeroMapSection />
