@@ -42,7 +42,10 @@ export function ProductDetailDialog({ product, isOpen, onClose, onAddToCart, ini
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-xl p-0 overflow-y-auto max-h-[92vh] bg-white rounded-[32px] sm:rounded-[40px] border-none shadow-2xl scrollbar-hide">
+      <DialogContent 
+        onOpenAutoFocus={(e) => e.preventDefault()}
+        className="sm:max-w-xl p-0 overflow-y-auto max-h-[92vh] bg-white rounded-[32px] sm:rounded-[40px] border-none shadow-2xl scrollbar-hide"
+      >
         <div className="relative aspect-video sm:aspect-square sm:h-80 bg-slate-100 flex-shrink-0">
            {images.length > 0 ? (
              <>
