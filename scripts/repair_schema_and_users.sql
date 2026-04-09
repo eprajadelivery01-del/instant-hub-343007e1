@@ -232,11 +232,14 @@ BEGIN
     VALUES ('00000000-0000-0000-0000-000000000000', target_user_id, 'authenticated', 'authenticated', 'cliente@nexuspro.test', crypt('Password123!', gen_salt('bf')), NOW(), '{"provider":"email","providers":["email"]}'::jsonb, '{"full_name":"Cliente Teste", "role":"customer"}'::jsonb, NOW(), NOW())
     ON CONFLICT (id) DO NOTHING;
 
-    -- Se o trigger automático criou um perfil, limpamos para garantir o ID correto (ID = USER_ID)
-    DELETE FROM public.profiles WHERE user_id = target_user_id;
-
+    -- Usamos ON CONFLICT (id) porque é a Primary Key que está gerando o erro de duplicidade.
+    -- Se o trigger já criou o perfil com este ID, nós apenas atualizamos os campos.
     INSERT INTO public.profiles (id, user_id, full_name, role)
-    VALUES (target_user_id, target_user_id, 'Cliente Teste', 'customer');
+    VALUES (target_user_id, target_user_id, 'Cliente Teste', 'customer')
+    ON CONFLICT (id) DO UPDATE SET 
+        user_id = EXCLUDED.user_id,
+        full_name = EXCLUDED.full_name,
+        role = EXCLUDED.role;
 
     INSERT INTO public.customers (user_id, name) VALUES (target_user_id, 'Cliente Teste') ON CONFLICT (user_id) DO NOTHING;
 
@@ -248,10 +251,12 @@ BEGIN
     VALUES ('00000000-0000-0000-0000-000000000000', comp_user_id, 'authenticated', 'authenticated', 'loja_teste@nexuspro.test', crypt('Password123!', gen_salt('bf')), NOW(), '{"provider":"email","providers":["email"]}'::jsonb, '{"full_name":"Lanchonete Teste"}'::jsonb, NOW(), NOW())
     ON CONFLICT (id) DO NOTHING;
     
-    DELETE FROM public.profiles WHERE user_id = comp_user_id;
-    
     INSERT INTO public.profiles (id, user_id, full_name, role) 
-    VALUES (comp_user_id, comp_user_id, 'Lanchonete Teste', 'company');
+    VALUES (comp_user_id, comp_user_id, 'Lanchonete Teste', 'company')
+    ON CONFLICT (id) DO UPDATE SET 
+        user_id = EXCLUDED.user_id,
+        full_name = EXCLUDED.full_name,
+        role = EXCLUDED.role;
 
     INSERT INTO public.user_roles (user_id, role) VALUES (comp_user_id, 'company') ON CONFLICT DO NOTHING;
     
