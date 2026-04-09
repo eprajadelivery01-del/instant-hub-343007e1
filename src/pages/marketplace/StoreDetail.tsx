@@ -111,9 +111,9 @@ export default function StoreDetail() {
         </button>
         <div className="flex-1 min-w-0">
           <h2 className="font-black text-slate-900 truncate">{company.name}</h2>
-          <div className="flex items-center gap-2 text-[10px] font-bold text-success">
-            <div className="h-1.5 w-1.5 bg-success rounded-full animate-pulse" />
-            <span>ABERTO AGORA</span>
+          <div className="flex items-center gap-2 text-[10px] font-black text-success uppercase tracking-widest">
+            <div className="h-2 w-2 bg-success rounded-full animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.4)]" />
+            <span>Aberto</span>
           </div>
         </div>
         <button className="h-10 w-10 rounded-full flex items-center justify-center hover:bg-slate-50">
@@ -167,11 +167,11 @@ export default function StoreDetail() {
                   )}
                 </div>
                 <div className={cn(
-                  "absolute -bottom-1 -right-1 h-9 w-9 rounded-2xl border-4 border-white flex items-center justify-center shadow-xl transition-all duration-500",
-                  company.active ? "bg-success scale-100" : "bg-destructive scale-100 grayscale"
+                  "absolute -bottom-1 -right-1 h-8 w-8 rounded-full border-4 border-white flex items-center justify-center shadow-lg transition-all duration-500",
+                  company.active ? "bg-success" : "bg-destructive"
                 )}>
                    <div className={cn(
-                     "h-2.5 w-2.5 bg-white rounded-full",
+                     "h-2 w-2 bg-white rounded-full",
                      company.active && "animate-pulse"
                    )} />
                 </div>

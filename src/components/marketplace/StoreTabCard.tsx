@@ -14,17 +14,17 @@ export function StoreTabCard({ company }: StoreTabCardProps) {
     <div 
       onClick={() => navigate(`/marketplace/store/${company.id}`)}
       className={cn(
-        "group relative h-[320px] w-full bg-[#1c1c1e] rounded-[40px] overflow-hidden transition-all duration-500 hover:scale-[1.02] hover:-translate-y-2 cursor-pointer border-2 active:scale-[0.98]",
+        "group relative h-[320px] w-full bg-[#1c1c1e] rounded-[48px] overflow-hidden transition-all duration-500 hover:scale-[1.02] hover:-translate-y-2 cursor-pointer border-2 active:scale-[0.98]",
         company.active 
-          ? "border-success/40 shadow-[0_0_50px_-10px_rgba(34,197,94,0.6)]" 
-          : "border-destructive/40 shadow-[0_0_50px_-10px_rgba(239,68,68,0.6)] grayscale-[0.6] opacity-70"
+          ? "border-success/30 shadow-cloud-green hover:shadow-success/20" 
+          : "border-destructive/30 shadow-cloud-red grayscale-[0.6] opacity-70"
       )}
     >
 
-      {/* Status Bolinha - Apenas a bolinha, sem ícone atrás */}
-      <div className="absolute top-6 left-6 z-30 flex items-center gap-3">
+      {/* Status Bolinha - Ultra Clean (Garantido sem ícone) */}
+      <div className="absolute top-6 left-6 z-30">
         <div className={cn(
-          "h-3 w-3 rounded-full",
+          "h-3 w-3 rounded-full shadow-[0_0_10px_rgba(0,0,0,0.5)]",
           company.active ? "bg-success animate-pulse" : "bg-destructive"
         )} />
       </div>
