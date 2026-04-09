@@ -149,157 +149,185 @@ export default function Profile() {
       <div className="bg-white min-h-screen pb-24">
         {/* Header - Large Avatar & Name */}
         <div className="px-6 pt-12 pb-8 flex items-center gap-6">
-          <div className="relative group">
-            <input 
-              type="file" 
-              ref={fileInputRef} 
-              onChange={handlePhotoUpload} 
-              accept="image/*" 
-              className="hidden" 
-            />
-            <button 
-              disabled={uploading}
-              onClick={() => fileInputRef.current?.click()}
-              className={cn(
-                "h-24 w-24 rounded-full bg-slate-100 border-4 border-white shadow-xl flex items-center justify-center overflow-hidden shrink-0 relative",
-                "hover:brightness-90 transition-all",
-                uploading && "opacity-50"
-              )}
-            >
-              {profile?.avatar_url ? (
-                <img src={profile.avatar_url} alt="" className="h-full w-full object-cover" />
-              ) : (
-                <div className="text-4xl font-black text-slate-300">
-                  {profile?.full_name?.charAt(0) || user.email?.charAt(0).toUpperCase()}
+      <div className="max-w-7xl mx-auto bg-dashboard min-h-screen">
+        <div className="px-6 pt-12 pb-8">
+          <div className="flex items-center gap-6 mb-8 group">
+            <div className="relative">
+              <input 
+                type="file" 
+                ref={fileInputRef} 
+                onChange={handlePhotoUpload} 
+                accept="image/*" 
+                className="hidden" 
+              />
+              <button
+                disabled={uploading}
+                onClick={() => fileInputRef.current?.click()}
+                className={cn(
+                  "h-28 w-28 rounded-[38px] bg-white shadow-2xl flex items-center justify-center overflow-hidden shrink-0 relative border-4 border-white ring-1 ring-slate-100",
+                  "hover:scale-105 active:scale-95 transition-all duration-500",
+                  uploading && "opacity-50"
+                )}
+              >
+                {profile?.avatar_url ? (
+                  <img src={profile.avatar_url} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  <div className="text-4xl font-black text-primary/30">
+                    {profile?.full_name?.charAt(0) || user.email?.charAt(0).toUpperCase()}
+                  </div>
+                )}
+                
+                <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                   {uploading ? <Loader2 className="h-8 w-8 text-white animate-spin" /> : <Camera className="h-8 w-8 text-white" />}
                 </div>
-              )}
-              
-              <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                 {uploading ? <Loader2 className="h-8 w-10 text-white animate-spin" /> : <Camera className="h-8 w-8 text-white" />}
-              </div>
-            </button>
+              </button>
+            </div>
             
-            {uploading && (
-               <div className="absolute inset-0 flex items-center justify-center">
-                  <Loader2 className="h-8 w-8 text-primary animate-spin" />
-               </div>
-            )}
+            <div className="flex-1">
+              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary mb-1 block">Membro Premium</span>
+              <h2 className="text-3xl font-black text-slate-900 tracking-tight leading-none mb-2">
+                {profile?.full_name || 'Usuário'}
+              </h2>
+              <button className="px-3 py-1 rounded-full bg-white border border-slate-100 shadow-sm flex items-center gap-1 text-[10px] font-black uppercase text-slate-400">
+                Ver perfil público
+              </button>
+            </div>
           </div>
           
-          <div className="flex-1">
-            <h2 className="text-2xl font-black text-slate-900 tracking-tight">{profile?.full_name || 'Usuário'}</h2>
-            <button className="flex items-center gap-1 text-primary text-sm font-bold mt-1 group">
-               Vem economizar com o Clube
-               <ChevronRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
-            </button>
+          <div className="grid grid-cols-4 grid-rows-6 gap-3 h-[700px]">
+            <div className="col-span-4 row-span-2 bg-white rounded-[32px] p-6 flex flex-col justify-between relative overflow-hidden group cursor-pointer active:scale-[0.98] transition-all border border-orange-100 shadow-sm">
+               <div className="relative z-10">
+                  <div className="flex items-center gap-2 mb-2">
+                     <span className="text-primary font-black italic text-xl">é pra já</span>
+                     <span className="px-3 py-1 rounded-full bg-primary text-white text-[10px] font-black uppercase tracking-widest">CLUBE</span>
+                  </div>
+                  <h3 className="text-2xl font-black text-slate-900 w-[60%] leading-tight">Economia real em cada pedido.</h3>
+               </div>
+               <button className="w-fit px-6 h-10 rounded-2xl bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest relative z-10 shadow-lg shadow-black/10">
+                  Assinar agora
+               </button>
+               <Gem className="absolute -right-4 -bottom-4 h-40 w-40 text-primary/5 -rotate-12 group-hover:rotate-0 transition-transform duration-700" />
+            </div>
+
+            <div className="col-span-2 row-span-2 bg-white rounded-[32px] p-6 shadow-sm border border-slate-100 flex flex-col justify-between group cursor-pointer active:scale-[0.98] transition-all">
+                <div className="h-12 w-12 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-500 mb-4 group-hover:scale-110 transition-transform">
+                   <Wallet className="h-6 w-6" />
+                </div>
+                <div>
+                   <h4 className="font-black text-slate-900 mb-1">Pagamentos</h4>
+                   <p className="text-[10px] font-bold text-slate-400">Gerencie cartões e créditos</p>
+                </div>
+            </div>
+
+            <div className="col-span-2 row-span-1 bg-white rounded-[32px] px-6 py-4 shadow-sm border border-slate-100 flex items-center justify-between group cursor-pointer active:scale-[0.98] transition-all">
+                <div className="flex items-center gap-3">
+                   <div className="h-10 w-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400">
+                      <Bell className="h-5 w-5" />
+                   </div>
+                   <span className="font-bold text-slate-700">Avisos</span>
+                </div>
+                <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+            </div>
+
+            <div className="col-span-2 row-span-1 bg-white rounded-[32px] px-6 py-4 shadow-sm border border-slate-100 flex items-center gap-3 group cursor-pointer active:scale-[0.98] transition-all">
+                <div className="h-10 w-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400">
+                   <HelpCircle className="h-5 w-5" />
+                </div>
+                <span className="font-bold text-slate-700">Suporte</span>
+            </div>
+
+            <div className="col-span-4 row-span-1 bg-gradient-to-r from-indigo-600 to-purple-700 rounded-[32px] p-1 flex items-stretch shadow-lg shadow-indigo-500/20 active:scale-[0.98] transition-all cursor-pointer">
+               <div className="bg-white/10 w-full rounded-[28px] p-5 flex items-center justify-between backdrop-blur-md">
+                   <div className="flex items-center gap-4">
+                      <div className="h-10 w-10 rounded-full bg-white/20 flex items-center justify-center text-white">
+                         <Gem className="h-5 w-5" />
+                      </div>
+                      <div className="text-white">
+                         <p className="text-[10px] font-black uppercase tracking-widest opacity-60 leading-none mb-1">Seus Pontos</p>
+                         <h5 className="text-xl font-black">2.450 Pontos</h5>
+                      </div>
+                   </div>
+                   <ChevronRight className="h-5 w-5 text-white/40" />
+               </div>
+            </div>
+
+            <div className="col-span-2 row-span-1 bg-slate-50 border border-border/50 rounded-[32px] p-5 flex items-center gap-3 group cursor-pointer active:scale-[0.98] transition-all">
+                <Settings className="h-4 w-4 text-slate-400 group-hover:rotate-90 transition-transform duration-500" />
+                <span className="text-sm font-black text-slate-700">Ajustes</span>
+            </div>
+
+            <div className="col-span-2 row-span-1 bg-slate-50 border border-border/50 rounded-[32px] p-5 flex items-center gap-3 group cursor-pointer active:scale-[0.98] transition-all" onClick={() => setEditing(true)}>
+                <User className="h-4 w-4 text-slate-400" />
+                <span className="text-sm font-black text-slate-700">Minha Conta</span>
+            </div>
+          </div>
+          
+          <div className="mt-8 space-y-4">
+             <Button 
+                onClick={() => signOut()} 
+                variant="ghost" 
+                className="w-full h-16 rounded-[24px] bg-red-50/50 hover:bg-red-50 text-red-500 font-bold border border-red-100 flex items-center justify-center gap-2 group"
+             >
+                <LogOut className="h-5 w-5 group-hover:-translate-x-1 transition-transform" />
+                SAIR DA CONTA
+             </Button>
+
+             <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="ghost" className="w-full text-[10px] font-black uppercase tracking-widest text-slate-300 hover:text-red-400">
+                    Encerrar cadastro permanentemente
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent className="rounded-[40px] border-none shadow-2xl">
+                  <AlertDialogHeader>
+                    <div className="mx-auto h-20 w-20 bg-red-50 rounded-[32px] flex items-center justify-center mb-4">
+                       <Trash2 className="h-10 w-10 text-red-400" />
+                    </div>
+                    <AlertDialogTitle className="text-2xl font-black text-center text-slate-900">Tem certeza?</AlertDialogTitle>
+                    <AlertDialogDescription className="text-center text-sm font-medium text-slate-500 px-4">
+                      A exclusão da conta é permanente e removerá todos os seus dados, pedidos e preferências. Esta ação não pode ser desfeita.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter className="flex-col sm:flex-col gap-3">
+                    <AlertDialogAction 
+                      onClick={async () => {
+                        await supabase.from('profiles').delete().eq('id', user.id);
+                        await signOut();
+                        navigate('/marketplace/login');
+                      }}
+                      className="bg-red-500 hover:bg-red-600 h-14 rounded-2xl font-black uppercase tracking-widest text-xs"
+                    >
+                      Excluir Tudo
+                    </AlertDialogAction>
+                    <AlertDialogCancel className="h-14 rounded-2xl border-slate-100 font-black uppercase tracking-widest text-xs">Ainda não</AlertDialogCancel>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
           </div>
         </div>
 
-        <div className="px-4 space-y-6">
-          {/* É Pra Já Pago Card */}
-          <div className="bg-slate-50 rounded-[32px] p-1 border border-slate-100 shadow-sm">
-             <div className="bg-white rounded-[28px] p-6 shadow-sm border border-slate-100">
-                <div className="flex items-center gap-2 mb-4">
-                   <span className="text-primary font-black italic">é pra já</span>
-                   <span className="text-slate-900 font-black">Pago</span>
-                </div>
-                <button className="w-full flex items-center justify-between group">
-                   <div className="flex items-center gap-4">
-                      <div className="h-10 w-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400">
-                         <Wallet className="h-5 w-5" />
-                      </div>
-                      <span className="text-sm font-bold text-slate-700">Pagamentos</span>
-                   </div>
-                   <ChevronRight className="h-4 w-4 text-slate-300 group-hover:translate-x-1 transition-transform" />
-                </button>
-             </div>
-             <div className="px-6 py-3">
-                <p className="text-[11px] font-bold text-slate-400">Gerencie suas formas de pagamento</p>
-             </div>
-          </div>
-
-          {/* Points Banner */}
-          <div className="bg-gradient-to-r from-purple-600 to-indigo-700 rounded-[32px] p-6 flex items-center justify-between text-white relative overflow-hidden group cursor-pointer shadow-lg shadow-indigo-500/20 active:scale-[0.98] transition-all">
-             <div className="relative z-10 w-[70%]">
-                <h4 className="text-sm font-black mb-1">R$1 = 1 ponto Decolar</h4>
-                <p className="text-[11px] font-medium opacity-80 leading-relaxed">Acumule pontos em cada real gasto no É Pra Já!</p>
-             </div>
-             <div className="h-10 w-10 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-md relative z-10">
-                <ChevronRight className="h-5 w-5" />
-             </div>
-             <Gem className="absolute -right-4 -bottom-4 h-24 w-24 opacity-10 rotate-12" />
-          </div>
-
-          {/* Edit form */}
-          {editing && (
-            <div className="bg-slate-50 rounded-[32px] p-6 space-y-4 animate-in slide-in-from-top duration-500">
-              <div className="flex items-center justify-between mb-2">
-                 <h3 className="font-black text-slate-900">Dados da conta</h3>
-                 <button onClick={() => setEditing(false)} className="text-slate-400"><X className="h-5 w-5" /></button>
+        <Sheet open={editing} onOpenChange={setEditing}>
+          <SheetContent side="bottom" className="h-[80vh] rounded-t-[40px] border-none shadow-2xl p-0 overflow-hidden">
+            <div className="p-8 space-y-8 h-full bg-white">
+              <div className="flex items-center justify-between">
+                 <h3 className="text-2xl font-black text-slate-900 tracking-tight">Dados da conta</h3>
+                 <button onClick={() => setEditing(false)} className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center"><X className="h-5 w-5" /></button>
               </div>
-              <div className="space-y-4">
+              
+              <div className="space-y-6">
                 <div className="space-y-2">
                   <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Nome Completo</Label>
-                  <Input value={fullName} onChange={e => setFullName(e.target.value)} className="h-14 rounded-2xl bg-white border border-slate-100 shadow-sm" />
+                  <Input value={fullName} onChange={e => setFullName(e.target.value)} className="h-16 rounded-[24px] bg-slate-50 border-none px-6 text-lg font-bold focus:bg-white focus:ring-2 focus:ring-primary/20 transition-all" />
                 </div>
                 <div className="space-y-2">
                   <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Telefone</Label>
-                  <Input value={phone} onChange={e => setPhone(e.target.value)} className="h-14 rounded-2xl bg-white border border-slate-100 shadow-sm" />
+                  <Input value={phone} onChange={e => setPhone(e.target.value)} className="h-16 rounded-[24px] bg-slate-50 border-none px-6 text-lg font-bold focus:bg-white focus:ring-2 focus:ring-primary/20 transition-all" />
                 </div>
-                <Button onClick={handleSave} disabled={saving} className="w-full h-14 rounded-2xl font-black bg-primary">
+                <Button onClick={handleSave} disabled={saving} className="w-full h-16 rounded-[24px] font-black text-sm uppercase tracking-widest bg-primary shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all">
                   {saving ? 'SALVANDO...' : 'SALVAR ALTERAÇÕES'}
                 </Button>
               </div>
             </div>
-          )}
-
-          {/* Menu Sections */}
-          <div className="space-y-8 pb-10">
-            {menuSections.map((section, sidx) => (
-              <div key={sidx} className="space-y-1">
-                {section.items.map((item, iidx) => (
-                  <button
-                    key={iidx}
-                    onClick={item.onClick}
-                    className={cn(
-                      "w-full py-4 flex items-center justify-between group active:scale-[0.98] transition-all",
-                      iidx !== section.items.length - 1 && "border-b border-slate-50"
-                    )}
-                  >
-                    <div className="flex items-center gap-4">
-                      <item.icon className="h-5 w-5 text-slate-400 group-hover:text-primary transition-colors" />
-                      <span className="text-sm font-bold text-slate-700">{item.label}</span>
-                    </div>
-                    <ChevronRight className="h-4 w-4 text-slate-300 group-hover:translate-x-1 transition-transform" />
-                  </button>
-                ))}
-              </div>
-            ))}
-
-            {/* Logout */}
-            <button
-              onClick={handleLogout}
-              className="w-full py-6 flex items-center justify-center gap-2 text-slate-400 font-bold uppercase text-[10px] tracking-[0.2em] border-t border-slate-50 hover:bg-slate-50 transition-colors rounded-2xl"
-            >
-              <LogOut className="h-4 w-4" />
-              Sair da conta
-            </button>
-
-            {/* Account Deletion - Apple Compliance */}
-            <div className="pt-8 space-y-4">
-              <div className="p-6 bg-red-50 rounded-[32px] border border-red-100 flex flex-col gap-4">
-                 <div className="flex items-center gap-3 text-red-600">
-                    <AlertTriangle className="h-5 w-5" />
-                    <h4 className="text-sm font-black uppercase tracking-widest">Zona de Perigo</h4>
-                 </div>
-                 <p className="text-[11px] font-medium text-red-500 leading-relaxed">
-                    A exclusão da conta é permanente e removerá todos os seus dados, pedidos e preferências de nossos servidores. Esta ação não pode ser desfeita.
-                 </p>
-                 
-                 <AlertDialog>
-                   <AlertDialogTrigger asChild>
-                      <button className="w-full h-12 rounded-2xl bg-white border border-red-200 text-red-600 text-xs font-black uppercase tracking-widest hover:bg-red-600 hover:text-white transition-all shadow-sm">
-                        Excluir Minha Conta
                       </button>
                    </AlertDialogTrigger>
                    <AlertDialogContent className="rounded-[32px] p-8 border-0 shadow-2xl">

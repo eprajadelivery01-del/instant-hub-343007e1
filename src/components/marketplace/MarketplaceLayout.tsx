@@ -36,10 +36,10 @@ export default function MarketplaceLayout({ children, hideNav, hideHeader }: { c
         </div>
       </main>
 
-      {/* Bottom nav - Premium iFood style */}
+      {/* Floating Glass Nav - Premium Original style */}
       {!hideNav && (
-        <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-border/50 safe-area-bottom shadow-[0_-4px_20px_rgba(0,0,0,0.03)] h-16">
-          <div className="max-w-7xl mx-auto flex items-stretch justify-around h-full">
+        <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-md z-50 glass-nav rounded-[28px] h-18 overflow-hidden px-2">
+          <div className="flex items-center justify-around h-full py-2">
             {navItems.map(item => {
               const isHome = item.path === '/marketplace';
               const active = isHome
@@ -59,22 +59,26 @@ export default function MarketplaceLayout({ children, hideNav, hideHeader }: { c
                   to={item.path}
                   onClick={handleClick}
                   className={cn(
-                    'flex flex-col items-center justify-center gap-1.5 py-1 px-6 relative transition-all duration-300 group',
-                    active ? 'text-primary' : 'text-muted-foreground/60 hover:text-foreground'
+                    'flex flex-col items-center justify-center gap-1 min-w-[64px] relative transition-all duration-300 group',
+                    active ? 'text-primary' : 'text-slate-400 hover:text-slate-600'
                   )}
                 >
                   <div className={cn(
-                    "p-1 rounded-xl transition-all duration-300",
-                    active ? "bg-orange-50 text-primary" : "group-hover:bg-muted"
+                    "p-1.5 rounded-2xl transition-all duration-500",
+                    active ? "bg-primary/10 text-primary shadow-sm" : "group-hover:bg-slate-50"
                   )}>
-                    <item.icon className={cn("h-5 w-5 transition-transform", active ? "scale-110" : "group-hover:scale-105")} />
+                    <item.icon className={cn("h-5 w-5 transition-all duration-500", active ? "scale-110 rotate-0" : "scale-100 group-hover:scale-110")} />
                   </div>
                   <span className={cn(
-                    "text-[10px] font-black uppercase tracking-widest leading-none",
-                    active ? "opacity-100" : "opacity-60"
+                    "text-[9px] font-black uppercase tracking-[0.15em] leading-none transition-all duration-300",
+                    active ? "opacity-100 translate-y-0" : "opacity-0 translate-y-1 group-hover:opacity-40"
                   )}>
                     {item.label}
                   </span>
+                  
+                  {active && (
+                    <div className="absolute -bottom-1 h-1 w-1 rounded-full bg-primary animate-pulse" />
+                  )}
                 </Link>
               );
             })}
