@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { Company, Product } from "@/types/database";
-import { Star, Clock, X, ShoppingBag } from "lucide-react";
+import { Star, Clock, ShoppingBag } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface StoreTabCardProps {
@@ -27,12 +27,7 @@ export function StoreTabCard({ company }: StoreTabCardProps) {
            )}
            <h3 className="text-white text-sm font-black truncate max-w-[140px] tracking-tight">{company.name}</h3>
         </div>
-        <button 
-          onClick={(e) => { e.stopPropagation(); /* Logic to hide could go here */ }}
-          className="h-7 w-7 rounded-full bg-white/10 flex items-center justify-center text-white/40 hover:text-white hover:bg-white/20 transition-all"
-        >
-          <X className="h-4 w-4" />
-        </button>
+
       </div>
 
       {/* Main Content (Miniature Store Preview) */}
