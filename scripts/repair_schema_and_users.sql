@@ -207,18 +207,22 @@ BEGIN
 END $$;
 
 -- 9. RESET E SEEDING (HARMONIZADO)
-DELETE FROM public.products WHERE company_id IN (SELECT id FROM public.companies WHERE email LIKE '%@nexuspro.test');
-DELETE FROM public.companies WHERE email LIKE '%@nexuspro.test';
-DELETE FROM public.profiles WHERE user_id IN (SELECT id FROM auth.users WHERE email LIKE '%@nexuspro.test');
-DELETE FROM public.customers WHERE user_id IN (SELECT id FROM auth.users WHERE email LIKE '%@nexuspro.test');
-DELETE FROM auth.users WHERE email LIKE '%@nexuspro.test';
-
 DO $$ 
 DECLARE 
     target_user_id UUID := gen_random_uuid();
     comp_user_id UUID;
     city_id UUID;
 BEGIN
+    -- Limpeza mais agressiva para evitar órfãos
+    DELETE FROM public.order_items WHERE order_id IN (SELECT id FROM public.orders WHERE customer_id IN (SELECT id FROM public.customers WHERE user_id IN (SELECT id FROM auth.users WHERE email LIKE '%@nexuspro.test')));
+    DELETE FROM public.orders WHERE customer_id IN (SELECT id FROM public.customers WHERE user_id IN (SELECT id FROM auth.users WHERE email LIKE '%@nexuspro.test'));
+    DELETE FROM public.products WHERE company_id IN (SELECT id FROM public.companies WHERE email LIKE '%@nexuspro.test');
+    DELETE FROM public.companies WHERE email LIKE '%@nexuspro.test';
+    DELETE FROM public.profiles WHERE user_id IN (SELECT id FROM auth.users WHERE email LIKE '%@nexuspro.test');
+    DELETE FROM public.customers WHERE user_id IN (SELECT id FROM auth.users WHERE email LIKE '%@nexuspro.test');
+    DELETE FROM public.user_roles WHERE user_id IN (SELECT id FROM auth.users WHERE email LIKE '%@nexuspro.test');
+    DELETE FROM auth.users WHERE email LIKE '%@nexuspro.test';
+
     -- Cidade
     INSERT INTO public.cities (name, latitude, longitude) VALUES ('Diamantino', -14.4087, -56.4462)
     ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name RETURNING id INTO city_id;
@@ -228,9 +232,13 @@ BEGIN
     VALUES ('00000000-0000-0000-0000-000000000000', target_user_id, 'authenticated', 'authenticated', 'cliente@nexuspro.test', crypt('Password123!', gen_salt('bf')), NOW(), '{"provider":"email","providers":["email"]}'::jsonb, '{"full_name":"Cliente Teste", "role":"customer"}'::jsonb, NOW(), NOW())
     ON CONFLICT (id) DO NOTHING;
 
+    -- O Perfil pode ter sido criado via trigger automática. Fazemos o UPSERT.
     INSERT INTO public.profiles (id, user_id, full_name, role)
-    VALUES (target_user_id, target_user_id, 'Cliente Teste', 'customer') -- Aqui ID = USER_ID para satisfazer o Cliente App
-    ON CONFLICT (user_id) DO UPDATE SET full_name = EXCLUDED.full_name;
+    VALUES (target_user_id, target_user_id, 'Cliente Teste', 'customer')
+    ON CONFLICT (user_id) DO UPDATE SET 
+        id = EXCLUDED.id,
+        full_name = EXCLUDED.full_name,
+        role = EXCLUDED.role;
 
     INSERT INTO public.customers (user_id, name) VALUES (target_user_id, 'Cliente Teste') ON CONFLICT (user_id) DO NOTHING;
 
@@ -239,13 +247,18 @@ BEGIN
     -- UMA LOJA PARA TESTE IMEDIATO
     comp_user_id := gen_random_uuid();
     INSERT INTO auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
-    VALUES ('00000000-0000-0000-0000-000000000000', comp_user_id, 'authenticated', 'authenticated', 'loja_teste@nexuspro.test', crypt('Password123!', gen_salt('bf')), NOW(), '{"provider":"email","providers":["email"]}'::jsonb, '{"full_name":"Lanchonete Teste"}'::jsonb, NOW(), NOW());
+    VALUES ('00000000-0000-0000-0000-000000000000', comp_user_id, 'authenticated', 'authenticated', 'loja_teste@nexuspro.test', crypt('Password123!', gen_salt('bf')), NOW(), '{"provider":"email","providers":["email"]}'::jsonb, '{"full_name":"Lanchonete Teste"}'::jsonb, NOW(), NOW())
+    ON CONFLICT (id) DO NOTHING;
     
-    INSERT INTO public.profiles (id, user_id, full_name, role) VALUES (comp_user_id, comp_user_id, 'Lanchonete Teste', 'company');
-    INSERT INTO public.user_roles (user_id, role) VALUES (comp_user_id, 'company');
+    INSERT INTO public.profiles (id, user_id, full_name, role) 
+    VALUES (comp_user_id, comp_user_id, 'Lanchonete Teste', 'company')
+    ON CONFLICT (user_id) DO UPDATE SET id = EXCLUDED.id, full_name = EXCLUDED.full_name;
+
+    INSERT INTO public.user_roles (user_id, role) VALUES (comp_user_id, 'company') ON CONFLICT DO NOTHING;
     
-    INSERT INTO public.companies (name, email, user_id, description, category, city, city_id, active, is_active)
-    VALUES ('Lanchonete Teste', 'loja_teste@nexuspro.test', comp_user_id, 'A melhor loja de teste.', 'Lanches', 'Diamantino', city_id, true, true);
+    INSERT INTO public.companies (id, name, email, user_id, description, category, city, city_id, active, is_active)
+    VALUES (gen_random_uuid(), 'Lanchonete Teste', 'loja_teste@nexuspro.test', comp_user_id, 'A melhor loja de teste.', 'Lanches', 'Diamantino', city_id, true, true)
+    ON CONFLICT (user_id) DO UPDATE SET name = EXCLUDED.name;
 END $$;
 
 -- 10. RELOAD SCHEMA (IMPORTANTE PARA O LOVABLE RECONHECER AS MUDANÇAS)
