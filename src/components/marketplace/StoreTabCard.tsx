@@ -14,19 +14,20 @@ export function StoreTabCard({ company }: StoreTabCardProps) {
     <div 
       onClick={() => navigate(`/marketplace/store/${company.id}`)}
       className={cn(
-        "group relative h-[320px] w-full bg-[#1c1c1e] rounded-[40px] overflow-hidden transition-all duration-500 hover:scale-[1.02] hover:-translate-y-2 cursor-pointer border-4 active:scale-[0.98]",
+        "group relative h-[320px] w-full bg-[#1c1c1e] rounded-[40px] overflow-hidden transition-all duration-500 hover:scale-[1.02] hover:-translate-y-2 cursor-pointer border-2 active:scale-[0.98]",
         company.active 
-          ? "border-success/20 shadow-[0_0_30px_-5px_rgba(34,197,94,0.4)]" 
-          : "border-destructive/20 shadow-[0_0_30px_-5px_rgba(239,68,68,0.4)] grayscale-[0.6] opacity-70"
+          ? "border-success/30 shadow-[0_0_15px_rgba(34,197,94,0.4)]" 
+          : "border-destructive/30 shadow-[0_0_15px_rgba(239,68,68,0.4)] grayscale-[0.6] opacity-70"
       )}
     >
-      {/* Status Bolinha */}
-      <div className="absolute top-5 right-6 z-30">
+      {/* Status Bolinha - Agora no canto esquerdo */}
+      <div className="absolute top-5 left-6 z-30">
         <div className={cn(
-          "h-3 w-3 rounded-full shadow-[0_0_10px_rgba(0,0,0,0.5)] border-2 border-white/20",
-          company.active ? "bg-success animate-pulse" : "bg-destructive"
+          "h-2.5 w-2.5 rounded-full shadow-lg border border-white/10",
+          company.active ? "bg-success shadow-success/50 animate-pulse" : "bg-destructive shadow-destructive/50"
         )} />
       </div>
+
 
 
       {/* Browser-style Tab Header */}
