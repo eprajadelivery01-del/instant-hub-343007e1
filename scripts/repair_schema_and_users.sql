@@ -38,6 +38,7 @@ BEGIN
             active BOOLEAN DEFAULT true,
             user_id UUID REFERENCES auth.users(id),
             description TEXT,
+            category TEXT,
             phone TEXT,
             address TEXT,
             city TEXT,
@@ -49,6 +50,7 @@ BEGIN
     ELSE
         IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'companies' AND COLUMN_NAME = 'banner_url') THEN ALTER TABLE public.companies ADD COLUMN banner_url TEXT; END IF;
         IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'companies' AND COLUMN_NAME = 'description') THEN ALTER TABLE public.companies ADD COLUMN description TEXT; END IF;
+        IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'companies' AND COLUMN_NAME = 'category') THEN ALTER TABLE public.companies ADD COLUMN category TEXT; END IF;
     END IF;
 
     -- PRODUCTS
