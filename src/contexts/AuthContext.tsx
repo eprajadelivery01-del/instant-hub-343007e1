@@ -37,11 +37,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(session);
         setUser(session?.user ?? null);
         if (session?.user) {
-          await fetchProfile(session.user.id);
+          // Pequeno delay para garantir que o PostgREST resolveu o schema atualizado 
+          // caso o usuário tenha sido criado via SQL manual recentemente.
+          setTimeout(async () => {
+            await fetchProfile(session.user.id);
+            setLoading(false);
+          }, 500);
         } else {
           setProfile(null);
+          setLoading(false);
         }
-        setLoading(false);
       }
     );
 
