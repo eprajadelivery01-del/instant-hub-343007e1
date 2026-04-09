@@ -14,6 +14,8 @@ import { toast } from 'sonner';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter
 } from '@/components/ui/dialog';
+import { LocationPicker } from '@/components/marketplace/LocationPicker';
+import { Map as MapIcon } from 'lucide-react';
 
 export default function Addresses() {
   const { user } = useAuth();
@@ -26,6 +28,7 @@ export default function Addresses() {
     street: '', number: '', neighborhood: '', city: '',
     complement: '', reference: '', latitude: '', longitude: '', label: '',
   });
+  const [showMap, setShowMap] = useState(false);
 
   const fetchAddresses = async () => {
     if (!user) return;
@@ -100,6 +103,7 @@ export default function Addresses() {
   };
 
   return (
+    <>
     <MarketplaceLayout>
       <div className="space-y-6">
         <div className="flex items-center gap-3">
@@ -157,6 +161,16 @@ export default function Addresses() {
                 <Label>Apelido (opcional)</Label>
                 <Input placeholder="Ex: Casa, Trabalho" value={form.label} onChange={e => setForm(f => ({ ...f, label: e.target.value }))} />
               </div>
+
+              <Button 
+                type="button" 
+                variant="outline" 
+                className="w-full border-primary/20 bg-primary/5 text-primary hover:bg-primary/10 rounded-2xl h-11 transition-all"
+                onClick={() => setShowMap(true)}
+              >
+                <MapIcon className="h-4 w-4 mr-2" />
+                Selecionar no Mapa
+              </Button>
               <div className="grid grid-cols-3 gap-2">
                 <div className="col-span-2 space-y-1">
                   <Label>Rua *</Label>
@@ -204,5 +218,26 @@ export default function Addresses() {
         </Dialog>
       </div>
     </MarketplaceLayout>
+    <Dialog open={showMap} onOpenChange={setShowMap}>
+      <DialogContent className="max-w-2xl p-0 overflow-hidden rounded-[32px] border-none shadow-2xl">
+        <LocationPicker 
+          initialCoords={form.latitude && form.longitude ? { lat: parseFloat(form.latitude), lng: parseFloat(form.longitude) } : undefined}
+          onConfirm={(data) => {
+            setForm(f => ({
+              ...f,
+              street: data.address.street || f.street,
+              neighborhood: data.address.neighborhood || f.neighborhood,
+              city: data.address.city || f.city,
+              latitude: data.lat.toString(),
+              longitude: data.lng.toString(),
+            }));
+            setShowMap(false);
+            toast.success('Localização atualizada via mapa');
+          }}
+          onCancel={() => setShowMap(false)}
+        />
+      </DialogContent>
+    </Dialog>
+  </>
   );
 }
