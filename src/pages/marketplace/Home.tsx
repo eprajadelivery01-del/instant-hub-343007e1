@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 import MarketplaceLayout from '@/components/marketplace/MarketplaceLayout';
 import { HeroMapSection } from '@/components/shared/HeroMapSection';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { StoreTabCard } from '@/components/marketplace/StoreTabCard';
 import { MarketplaceMenu } from '@/components/marketplace/MarketplaceMenu';
 import { Search, MapPin, Star, Clock, ChevronDown, Store, Utensils, Coffee, Pizza, Cake, Sandwich, User, PanelLeft, X, Sparkles } from 'lucide-react';
