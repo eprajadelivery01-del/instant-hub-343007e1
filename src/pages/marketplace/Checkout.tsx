@@ -84,8 +84,10 @@ export default function Checkout() {
       }
 
       if (!found) {
-        // Fallback: Endereço fora das regiões mapeadas - aplica taxa padrão de contingência
-        setDeliveryFee(7.5);
+        // Fallback: Endereço fora das regiões mapeadas - taxa padrão de contingência
+        // Cache-bust update: 7.51
+        console.log('No region found. Applying fallback fee: 7.51');
+        setDeliveryFee(7.51);
         setRegionId(null);
         setUnavailable(false);
       }
