@@ -78,9 +78,6 @@ export default function MarketplaceLayout({ children, hideNav, hideHeader }: { c
                     {item.label}
                   </span>
                   
-                  {active && (
-                    <div className="absolute -bottom-1 h-1 w-1 rounded-full bg-primary animate-pulse" />
-                  )}
                 </Link>
               );
             })}
