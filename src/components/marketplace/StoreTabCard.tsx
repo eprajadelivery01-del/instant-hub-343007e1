@@ -16,17 +16,18 @@ export function StoreTabCard({ company }: StoreTabCardProps) {
       className={cn(
         "group relative h-[320px] w-full bg-[#1c1c1e] rounded-[40px] overflow-hidden transition-all duration-500 hover:scale-[1.02] hover:-translate-y-2 cursor-pointer border-2 active:scale-[0.98]",
         company.active 
-          ? "border-success/30 shadow-[0_0_15px_rgba(34,197,94,0.4)]" 
-          : "border-destructive/30 shadow-[0_0_15px_rgba(239,68,68,0.4)] grayscale-[0.6] opacity-70"
+          ? "border-success/40 shadow-[0_0_20px_rgba(34,197,94,0.4)]" 
+          : "border-destructive/40 shadow-[0_0_20px_rgba(239,68,68,0.4)] grayscale-[0.6] opacity-70"
       )}
     >
-      {/* Status Bolinha - Agora no canto esquerdo */}
-      <div className="absolute top-5 left-6 z-30">
+      {/* Status Bolinha - Limpa e sem desenho atrás */}
+      <div className="absolute top-6 left-6 z-30">
         <div className={cn(
-          "h-2.5 w-2.5 rounded-full shadow-lg border border-white/10",
-          company.active ? "bg-success shadow-success/50 animate-pulse" : "bg-destructive shadow-destructive/50"
+          "h-2.5 w-2.5 rounded-full",
+          company.active ? "bg-success animate-pulse" : "bg-destructive"
         )} />
       </div>
+
 
 
 
@@ -34,12 +35,13 @@ export function StoreTabCard({ company }: StoreTabCardProps) {
       <div className="absolute top-0 left-0 right-0 h-14 bg-white/5 backdrop-blur-3xl border-b border-white/10 flex items-center justify-between px-5 z-20">
         <div className="flex items-center gap-3 overflow-hidden">
            {company.logo_url ? (
-             <img src={company.logo_url} alt="" className="h-7 w-7 rounded-lg object-cover shadow-lg border border-white/10" />
+             <img src={company.logo_url} alt="" className="h-7 w-7 rounded-lg object-cover border border-white/10" />
            ) : (
-             <div className="h-7 w-7 rounded-lg bg-primary/20 flex items-center justify-center text-primary">
+             <div className="h-7 w-7 flex items-center justify-center text-primary">
                 <ShoppingBag className="h-4 w-4" />
              </div>
            )}
+
            <h3 className="text-white text-sm font-black truncate max-w-[140px] tracking-tight">{company.name}</h3>
         </div>
 
@@ -95,8 +97,9 @@ export function StoreTabCard({ company }: StoreTabCardProps) {
          </div>
       </div>
 
-      {/* Bottom Glow Effect */}
-      <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-primary/10 to-transparent pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity" />
+      {/* Bottom Subtle Overlay */}
+      <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
     </div>
+
   );
 }
