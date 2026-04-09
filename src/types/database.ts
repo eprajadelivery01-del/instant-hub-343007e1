@@ -30,6 +30,7 @@ export interface Company {
   opening_hours: any | null;
   delivery_mode: string | null;
   city_id: string | null;
+  delivery_fee: number | null;
 }
 
 export interface Product {

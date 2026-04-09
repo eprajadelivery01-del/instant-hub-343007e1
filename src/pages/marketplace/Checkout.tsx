@@ -55,41 +55,51 @@ export default function Checkout() {
     const checkRegion = async () => {
       console.log('Checking region for:', addr.street, addr.latitude, addr.longitude);
       setUnavailable(false); // Reset immediately
-      setDeliveryFee(null);
+      
+      // Prioridade 1: Taxa definida pelo Lojista no perfil dele
+      if (company?.delivery_fee !== null && company?.delivery_fee !== undefined) {
+        console.log('Using store-defined delivery fee:', company.delivery_fee);
+        setDeliveryFee(company.delivery_fee);
+        
+        // Ainda buscamos a região apenas para setar o regionId (para fins de relatórios/admin)
+        const { data: regions } = await supabase
+          .from('regions')
+          .select('id, geometry')
+          .eq('active', true);
+        
+        if (regions) {
+          const foundRegion = regions.find(r => r.geometry && isPointInRegion(addr.latitude!, addr.longitude!, r.geometry));
+          if (foundRegion) setRegionId(foundRegion.id);
+        }
+        return;
+      }
 
-      // Get all regions and check if point is inside any
+      // Prioridade 2: Buscar nas regiões (Legado/Fallback)
       const { data: regions, error } = await supabase
         .from('regions')
         .select('*')
         .eq('active', true);
 
       if (!regions || regions.length === 0) {
-        // No regions configured - set default fee
         setDeliveryFee(5);
         setRegionId(null);
-        setUnavailable(false);
         return;
       }
 
-      // Try to find matching region using point-in-polygon
       let found = false;
       for (const region of regions) {
         if (region.geometry && isPointInRegion(addr.latitude!, addr.longitude!, region.geometry)) {
           setDeliveryFee(region.delivery_fee);
           setRegionId(region.id);
-          setUnavailable(false);
           found = true;
           break;
         }
       }
 
       if (!found) {
-        // Fallback: Endereço fora das regiões mapeadas - taxa padrão de contingência
-        // Cache-bust update: 7.51
         console.log('No region found. Applying fallback fee: 7.51');
         setDeliveryFee(7.51);
         setRegionId(null);
-        setUnavailable(false);
       }
     };
     checkRegion();
