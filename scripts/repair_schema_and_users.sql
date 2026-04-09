@@ -197,7 +197,7 @@ END $$;
 
 -- 9. RESET DE DADOS DE TESTE (NEXUSPRO.TEST)
 DELETE FROM public.products WHERE company_id IN (SELECT id FROM public.companies WHERE email LIKE '%@nexuspro.test');
-DELETE FROM public.companies WHERE email LIKE '%@nexuspro.test');
+DELETE FROM public.companies WHERE email LIKE '%@nexuspro.test';
 DELETE FROM public.profiles WHERE id IN (SELECT id FROM auth.users WHERE email LIKE '%@nexuspro.test');
 DELETE FROM auth.users WHERE email LIKE '%@nexuspro.test';
 
