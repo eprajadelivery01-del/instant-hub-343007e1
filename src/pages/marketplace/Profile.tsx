@@ -225,10 +225,49 @@ export default function Profile() {
               <ChevronRight className="h-5 w-5 text-slate-200 group-hover:text-primary transition-all group-hover:translate-x-1" />
           </div>
 
-          {/* Support / Help (2x1) */}
-          <div className="col-span-2 row-span-1 bg-slate-50 border border-slate-100/50 rounded-[40px] px-8 flex items-center gap-4 group cursor-pointer active:scale-95 transition-all">
-              <div className="h-10 w-10 flex items-center justify-center text-slate-400"><HelpCircle className="h-5 w-5" /></div>
-              <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest">Central de Ajuda</span>
+          {/* Support / Help (1x1) */}
+          <div className="col-span-1 row-span-1 bg-white rounded-[40px] shadow-sm border border-slate-100 flex flex-col items-center justify-center gap-2 group cursor-pointer active:scale-95 transition-all p-4">
+              <div className="h-10 w-10 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:text-amber-500 transition-colors">
+                 <HelpCircle className="h-5 w-5" />
+              </div>
+              <span className="text-[10px] font-black text-slate-900 uppercase tracking-widest">Ajuda</span>
+          </div>
+
+          {/* Favorites (1x1) */}
+          <div className="col-span-1 row-span-1 bg-white rounded-[40px] shadow-sm border border-slate-100 flex flex-col items-center justify-center gap-2 group cursor-pointer active:scale-95 transition-all p-4">
+              <div className="h-10 w-10 rounded-2xl bg-rose-50 flex items-center justify-center text-rose-500 transition-transform group-hover:scale-110">
+                 <Heart className="h-5 w-5 fill-current" />
+              </div>
+              <span className="text-[10px] font-black text-slate-900 uppercase tracking-widest">Favoritos</span>
+          </div>
+
+          {/* Coupons / Tickets (2x1) */}
+          <div className="col-span-2 row-span-1 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 border border-indigo-100 rounded-[40px] px-8 flex items-center justify-between group cursor-pointer active:scale-95 transition-all">
+              <div className="flex items-center gap-4">
+                 <div className="h-12 w-12 rounded-[20px] bg-indigo-500 flex items-center justify-center text-white shadow-lg shadow-indigo-500/20">
+                    <Ticket className="h-6 w-6" />
+                 </div>
+                 <div className="flex flex-col">
+                    <span className="font-black text-sm text-indigo-900">Meus Cupons</span>
+                    <span className="text-[10px] font-bold text-indigo-400">12 disponíveis</span>
+                 </div>
+              </div>
+              <ChevronRight className="h-5 w-5 text-indigo-200" />
+          </div>
+
+          {/* Partnership CTA (4x1) */}
+          <div className="col-span-4 row-span-1 bg-white border border-slate-100 rounded-[40px] px-8 flex items-center justify-between group cursor-pointer active:scale-95 transition-all relative overflow-hidden">
+             <div className="flex items-center gap-6 relative z-10">
+                <div className="h-12 w-12 rounded-2xl bg-slate-900 flex items-center justify-center text-white">
+                   <Bike className="h-6 w-6" />
+                </div>
+                <div>
+                  <h4 className="font-black text-slate-900">Seja um Entregador</h4>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Aumente sua renda com o É Pra Já</p>
+                </div>
+             </div>
+             <div className="h-10 px-6 rounded-full bg-slate-50 border border-slate-100 text-[10px] font-black uppercase tracking-widest group-hover:bg-primary group-hover:text-white group-hover:border-primary transition-all relative z-10">Saiba Mais</div>
+             <Bike className="absolute -right-4 -top-2 h-24 w-24 text-slate-50 -rotate-12" />
           </div>
 
         </div>
