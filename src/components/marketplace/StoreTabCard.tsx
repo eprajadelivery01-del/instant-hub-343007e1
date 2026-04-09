@@ -16,10 +16,11 @@ export function StoreTabCard({ company }: StoreTabCardProps) {
       className={cn(
         "group relative h-[320px] w-full bg-[#1c1c1e] rounded-[40px] overflow-hidden transition-all duration-500 hover:scale-[1.02] hover:-translate-y-2 cursor-pointer border-2 active:scale-[0.98]",
         company.active 
-          ? "border-success/50 shadow-[0_0_12px_rgba(34,197,94,0.5)]" 
-          : "border-destructive/50 shadow-[0_0_12px_rgba(239,68,68,0.5)] grayscale-[0.6] opacity-70"
+          ? "border-success/40 shadow-[0_0_50px_-10px_rgba(34,197,94,0.6)]" 
+          : "border-destructive/40 shadow-[0_0_50px_-10px_rgba(239,68,68,0.6)] grayscale-[0.6] opacity-70"
       )}
     >
+
       {/* Status Bolinha - Apenas a bolinha, sem ícone atrás */}
       <div className="absolute top-6 left-6 z-30 flex items-center gap-3">
         <div className={cn(
