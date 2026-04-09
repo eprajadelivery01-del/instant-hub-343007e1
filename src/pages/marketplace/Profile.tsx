@@ -146,9 +146,6 @@ export default function Profile() {
 
   return (
     <MarketplaceLayout>
-      <div className="bg-white min-h-screen pb-24">
-        {/* Header - Large Avatar & Name */}
-        <div className="px-6 pt-12 pb-8 flex items-center gap-6">
       <div className="max-w-7xl mx-auto bg-dashboard min-h-screen">
         <div className="px-6 pt-12 pb-8">
           <div className="flex items-center gap-6 mb-8 group">
@@ -326,40 +323,9 @@ export default function Profile() {
                 <Button onClick={handleSave} disabled={saving} className="w-full h-16 rounded-[24px] font-black text-sm uppercase tracking-widest bg-primary shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all">
                   {saving ? 'SALVANDO...' : 'SALVAR ALTERAÇÕES'}
                 </Button>
-              </div>
             </div>
-                      </button>
-                   </AlertDialogTrigger>
-                   <AlertDialogContent className="rounded-[32px] p-8 border-0 shadow-2xl">
-                     <AlertDialogHeader>
-                       <AlertDialogTitle className="text-xl font-black text-slate-900">Tem certeza absoluta?</AlertDialogTitle>
-                       <AlertDialogDescription className="text-slate-500 font-medium">
-                         Esta ação é definitiva. Ao confirmar, sua conta será encerrada e você perderá acesso ao É Pra Já imediatamente.
-                       </AlertDialogDescription>
-                     </AlertDialogHeader>
-                     <AlertDialogFooter className="gap-3 mt-6">
-                       <AlertDialogCancel className="h-14 rounded-2xl border-slate-100 font-bold text-slate-500">Cancelar</AlertDialogCancel>
-                       <AlertDialogAction 
-                         onClick={async () => {
-                           toast.loading("Excluindo conta...");
-                           // In a real scenario, this would call a Supabase Edge Function to delete auth.user
-                           const { error } = await supabase.from('profiles').delete().eq('id', user.id);
-                           await signOut();
-                           toast.dismiss();
-                           toast.success("Conta excluída com sucesso");
-                           navigate('/marketplace/login');
-                         }}
-                         className="h-14 rounded-2xl bg-red-600 hover:bg-red-700 font-black text-xs tracking-widest"
-                       >
-                         CONFIRMAR EXCLUSÃO
-                       </AlertDialogAction>
-                     </AlertDialogFooter>
-                   </AlertDialogContent>
-                 </AlertDialog>
-              </div>
-            </div>
-          </div>
-        </div>
+          </SheetContent>
+        </Sheet>
       </div>
 
       {/* Partnership Sheets - Same as Home for consistency */}

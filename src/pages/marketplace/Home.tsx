@@ -107,7 +107,9 @@ export default function Home() {
              <ChevronDown className="h-3 w-3 text-muted-foreground" />
           </button>
         </div>
-      </div      {/* Dynamic Immersive Header */}
+      </div>
+      
+      {/* Dynamic Immersive Header */}
       <div className="bg-dashboard pb-6 pt-4 px-6 sticky top-0 z-50 backdrop-blur-md bg-white/50 border-b border-slate-100">
         <div className="max-w-7xl mx-auto flex flex-col gap-4">
           <div className="flex items-center justify-between">
