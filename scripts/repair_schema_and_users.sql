@@ -168,6 +168,23 @@ BEGIN
     END IF;
 END $$;
 
+-- 7. SINCRONIA DE CAMPOS
+DO $$ 
+BEGIN
+    -- Regions
+    ALTER TABLE public.regions ADD COLUMN IF NOT EXISTS active BOOLEAN DEFAULT true;
+    ALTER TABLE public.regions ADD COLUMN IF NOT EXISTS delivery_fee NUMERIC(10,2) DEFAULT 0;
+    
+    -- Companies
+    ALTER TABLE public.companies ADD COLUMN IF NOT EXISTS active BOOLEAN DEFAULT true;
+    ALTER TABLE public.companies ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT true;
+    ALTER TABLE public.companies ADD COLUMN IF NOT EXISTS rating NUMERIC(3,2) DEFAULT 5.0;
+    
+    -- Products
+    ALTER TABLE public.products ADD COLUMN IF NOT EXISTS active BOOLEAN DEFAULT true;
+    ALTER TABLE public.products ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT true;
+END $$;
+
 -- 8. RLS GERAL (Marketplace Público)
 DO $$ 
 DECLARE
