@@ -53,8 +53,12 @@ export default function Checkout() {
     }
 
     const checkRegion = async () => {
+      console.log('Checking region for:', addr.street, addr.latitude, addr.longitude);
+      setUnavailable(false); // Reset immediately
+      setDeliveryFee(null);
+
       // Get all regions and check if point is inside any
-      const { data: regions } = await supabase
+      const { data: regions, error } = await supabase
         .from('regions')
         .select('*')
         .eq('active', true);
