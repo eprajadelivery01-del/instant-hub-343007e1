@@ -167,6 +167,7 @@ export default function Checkout() {
         product_id: item.product.id,
         quantity: item.quantity,
         price: item.product.price,
+        unit_price: item.product.price,
         product_name: item.product.name,
       }));
 
