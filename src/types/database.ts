@@ -40,7 +40,9 @@ export interface Product {
   description: string | null;
   category: string;
   image_url: string | null;
+  image_urls?: string[] | null;
   active: boolean;
+
   created_at: string;
   updated_at: string;
 }

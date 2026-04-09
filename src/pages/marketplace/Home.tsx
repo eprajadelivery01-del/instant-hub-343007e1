@@ -41,8 +41,8 @@ export default function Home() {
     const fetchCompanies = async () => {
       const { data } = await supabase
         .from('companies')
-        .select('*, products(*)')
-        .eq('active', true);
+        .select('*, products(*)');
+
       
       // Process data: add mock ratings and premium status
       const processed = (data || []).map((c, index) => ({

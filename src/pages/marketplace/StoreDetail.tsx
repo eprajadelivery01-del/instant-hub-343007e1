@@ -11,6 +11,8 @@ import { ArrowLeft, Minus, Plus, Star, Clock, Store as StoreIcon, Share2, Utensi
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { ProductDetailDialog } from '@/components/marketplace/ProductDetailDialog';
+
 
 export default function StoreDetail() {
   const { id } = useParams<{ id: string }>();
@@ -21,6 +23,8 @@ export default function StoreDetail() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+
 
   useEffect(() => {
     if (!id) return;
@@ -129,9 +133,16 @@ export default function StoreDetail() {
                     <StoreIcon className="h-10 w-10 text-muted-foreground" />
                   </div>
                 )}
-                <div className="absolute -bottom-1 -right-1 h-8 w-8 bg-success rounded-full border-4 border-white flex items-center justify-center shadow-lg">
-                   <div className="h-2 w-2 bg-white rounded-full animate-pulse" />
+                <div className={cn(
+                  "absolute -bottom-1 -right-1 h-8 w-8 rounded-full border-4 border-white flex items-center justify-center shadow-lg transition-colors",
+                  company.active ? "bg-success" : "bg-destructive"
+                )}>
+                   <div className={cn(
+                     "h-2 w-2 bg-white rounded-full",
+                     company.active && "animate-pulse"
+                   )} />
                 </div>
+
              </div>
              
              <div className="mt-4 space-y-1">
@@ -206,8 +217,9 @@ export default function StoreDetail() {
                     <div
                       key={product.id}
                       className="group bg-white rounded-[28px] border border-border/50 p-4 flex gap-4 shadow-sm hover:shadow-xl hover:border-primary/20 transition-all cursor-pointer active:scale-[0.98]"
-                      onClick={() => handleAdd(product)}
+                      onClick={() => setSelectedProduct(product)}
                     >
+
                       <div className="flex-1 min-w-0 flex flex-col justify-between py-1">
                         <div>
                           <h4 className="font-black text-foreground text-[15px] leading-tight group-hover:text-primary transition-colors">{product.name}</h4>
@@ -251,7 +263,15 @@ export default function StoreDetail() {
                         </div>
                       </div>
                       
-                      {product.image_url && (
+                      {(product.image_urls && product.image_urls.length > 0) ? (
+                        <div className="h-28 w-28 rounded-2xl overflow-hidden shrink-0 shadow-lg group-hover:rotate-1 transition-transform">
+                          <img
+                            src={product.image_urls[0]}
+                            alt={product.name || ''}
+                            className="h-full w-full object-cover"
+                          />
+                        </div>
+                      ) : product.image_url && (
                         <div className="h-28 w-28 rounded-2xl overflow-hidden shrink-0 shadow-lg group-hover:rotate-1 transition-transform">
                           <img
                             src={product.image_url}
@@ -260,6 +280,7 @@ export default function StoreDetail() {
                           />
                         </div>
                       )}
+
                     </div>
                   );
                 })}
@@ -292,6 +313,20 @@ export default function StoreDetail() {
            </button>
         </div>
       )}
+      {/* Product Detail Modal */}
+      <ProductDetailDialog
+        product={selectedProduct}
+        isOpen={!!selectedProduct}
+        onClose={() => setSelectedProduct(null)}
+        onAddToCart={(product, qty) => {
+          for (let i = 0; i < qty; i++) {
+            handleAdd(product);
+          }
+        }}
+        initialQuantity={selectedProduct ? getItemQty(selectedProduct.id) : 1}
+      />
+
     </MarketplaceLayout>
+
   );
 }

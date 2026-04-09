@@ -13,8 +13,14 @@ export function StoreTabCard({ company }: StoreTabCardProps) {
   return (
     <div 
       onClick={() => navigate(`/marketplace/store/${company.id}`)}
-      className="group relative h-[320px] w-full bg-[#1c1c1e] rounded-[40px] overflow-hidden shadow-2xl transition-all duration-500 hover:scale-[1.02] hover:-translate-y-2 cursor-pointer border border-white/5 active:scale-[0.98]"
+      className={cn(
+        "group relative h-[320px] w-full bg-[#1c1c1e] rounded-[40px] overflow-hidden transition-all duration-500 hover:scale-[1.02] hover:-translate-y-2 cursor-pointer border border-white/5 active:scale-[0.98]",
+        company.active 
+          ? "shadow-[0_0_25px_-5px_rgba(34,197,94,0.3)] shadow-success/10" 
+          : "shadow-[0_0_25px_-5px_rgba(239,68,68,0.3)] shadow-destructive/10 grayscale-[0.5] opacity-80"
+      )}
     >
+
       {/* Browser-style Tab Header */}
       <div className="absolute top-0 left-0 right-0 h-14 bg-white/5 backdrop-blur-3xl border-b border-white/10 flex items-center justify-between px-5 z-20">
         <div className="flex items-center gap-3 overflow-hidden">
@@ -41,7 +47,6 @@ export function StoreTabCard({ company }: StoreTabCardProps) {
                </div>
                <span className="text-[10px] font-bold text-white/40">30-45 min</span>
             </div>
-            <span className="text-[10px] font-black text-primary uppercase tracking-widest">Aberto</span>
          </div>
 
          {/* Products Mini Grid (The "Browser Preview" part) */}
@@ -50,7 +55,9 @@ export function StoreTabCard({ company }: StoreTabCardProps) {
               company.products.map((product) => (
                 <div key={product.id} className="bg-white/5 rounded-[24px] overflow-hidden p-2 flex flex-col gap-2 group-hover:bg-white/10 transition-colors animate-in fade-in zoom-in duration-500">
                   <div className="aspect-square w-full rounded-[18px] overflow-hidden bg-black/20">
-                    {product.image_url ? (
+                    {product.image_urls && product.image_urls.length > 0 ? (
+                      <img src={product.image_urls[0]} alt="" className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                    ) : product.image_url ? (
                       <img src={product.image_url} alt="" className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-700" />
                     ) : (
                       <div className="h-full w-full flex items-center justify-center opacity-10">
@@ -58,6 +65,7 @@ export function StoreTabCard({ company }: StoreTabCardProps) {
                       </div>
                     )}
                   </div>
+
                   <div className="px-1 overflow-hidden">
                     <p className="text-[9px] text-white/90 font-black truncate leading-none">{product.name}</p>
                     <p className="text-[8px] text-primary font-bold mt-1">R$ {product.price?.toFixed(2)}</p>
