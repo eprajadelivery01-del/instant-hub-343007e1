@@ -261,8 +261,7 @@ BEGIN
     INSERT INTO public.user_roles (user_id, role) VALUES (comp_user_id, 'company') ON CONFLICT DO NOTHING;
     
     INSERT INTO public.companies (id, name, email, user_id, description, category, city, city_id, active, is_active)
-    VALUES (gen_random_uuid(), 'Lanchonete Teste', 'loja_teste@nexuspro.test', comp_user_id, 'A melhor loja de teste.', 'Lanches', 'Diamantino', city_id, true, true)
-    ON CONFLICT (user_id) DO UPDATE SET name = EXCLUDED.name;
+    VALUES (gen_random_uuid(), 'Lanchonete Teste', 'loja_teste@nexuspro.test', comp_user_id, 'A melhor loja de teste.', 'Lanches', 'Diamantino', city_id, true, true);
 END $$;
 
 -- 10. RELOAD SCHEMA (IMPORTANTE PARA O LOVABLE RECONHECER AS MUDANÇAS)
