@@ -210,8 +210,10 @@ BEGIN
     VALUES ('00000000-0000-0000-0000-000000000000', target_user_id, 'authenticated', 'authenticated', 'cliente@nexuspro.test', crypt('Password123!', gen_salt('bf')), NOW(), '{"provider":"email","providers":["email"]}'::jsonb, '{"full_name":"Cliente Teste", "role":"customer"}'::jsonb, NOW(), NOW())
     ON CONFLICT (id) DO NOTHING;
 
-    DELETE FROM public.profiles WHERE user_id = target_user_id;
-    INSERT INTO public.profiles (id, user_id, full_name, role) VALUES (target_user_id, target_user_id, 'Cliente Teste', 'customer');
+    INSERT INTO public.profiles (id, user_id, full_name, role)
+    VALUES (target_user_id, target_user_id, 'Cliente Teste', 'customer')
+    ON CONFLICT (id) DO UPDATE SET user_id = EXCLUDED.user_id, full_name = EXCLUDED.full_name, role = EXCLUDED.role;
+    
     INSERT INTO public.customers (user_id, name) VALUES (target_user_id, 'Cliente Teste') ON CONFLICT (user_id) DO NOTHING;
     INSERT INTO public.user_roles (user_id, role) VALUES (target_user_id, 'customer') ON CONFLICT DO NOTHING;
 
@@ -222,11 +224,14 @@ BEGIN
         
         -- Usuário e Perfil
         INSERT INTO auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
-        VALUES ('00000000-0000-0000-0000-000000000000', comp_user_id, 'authenticated', 'authenticated', 'loja' || i || '@nexuspro.test', crypt('Password123!', gen_salt('bf')), NOW(), '{"provider":"email","providers":["email"]}'::jsonb, jsonb_build_object('full_name', store_names[i]), NOW(), NOW());
+        VALUES ('00000000-0000-0000-0000-000000000000', comp_user_id, 'authenticated', 'authenticated', 'loja' || i || '@nexuspro.test', crypt('Password123!', gen_salt('bf')), NOW(), '{"provider":"email","providers":["email"]}'::jsonb, jsonb_build_object('full_name', store_names[i]), NOW(), NOW())
+        ON CONFLICT (id) DO NOTHING;
         
-        DELETE FROM public.profiles WHERE user_id = comp_user_id;
-        INSERT INTO public.profiles (id, user_id, full_name, role) VALUES (comp_user_id, comp_user_id, store_names[i], 'company');
-        INSERT INTO public.user_roles (user_id, role) VALUES (comp_user_id, 'company');
+        INSERT INTO public.profiles (id, user_id, full_name, role) 
+        VALUES (comp_user_id, comp_user_id, store_names[i], 'company')
+        ON CONFLICT (id) DO UPDATE SET user_id = EXCLUDED.user_id, full_name = EXCLUDED.full_name, role = EXCLUDED.role;
+        
+        INSERT INTO public.user_roles (user_id, role) VALUES (comp_user_id, 'company') ON CONFLICT DO NOTHING;
         
         -- Empresa
         INSERT INTO public.companies (id, name, email, user_id, description, category, city, city_id, active, is_active, rating)
