@@ -184,7 +184,14 @@ export default function Checkout() {
       toast.success('Pedido realizado com sucesso!');
       navigate(`/marketplace/orders/${order.id}`);
     } catch (err: any) {
-      toast.error(err.message || 'Erro ao criar pedido');
+      console.error('Checkout error:', err);
+      if (err.message?.includes('column') && err.message?.includes('schema cache')) {
+        toast.error('Erro de Banco de Dados: Colunas faltando na tabela "orders". Por favor, execute o SQL fornecido no painel do Supabase.', {
+          duration: 6000
+        });
+      } else {
+        toast.error(err.message || 'Erro ao criar pedido');
+      }
     } finally {
       setLoading(false);
     }
