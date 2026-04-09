@@ -25,11 +25,13 @@ export default function MarketplaceLayout({ children, hideNav, hideHeader }: { c
   return (
     <div className="min-h-screen bg-[#f7f7f7] flex flex-col font-sans">
       {/* Content */}
-      <main className={cn("flex-1", !hideNav && "pb-20")}>
-        {children}
+      <main className={cn("flex-1 flex flex-col", !hideNav && "pb-20")}>
+        <div className="flex-1">
+          {children}
+        </div>
         
         {/* Global Branding Footer */}
-        <div className="w-full py-8 flex justify-center opacity-20 pointer-events-none select-none">
+        <div className="w-full py-8 flex justify-center opacity-20 pointer-events-none select-none mt-auto">
           <p className="text-[10px] font-black tracking-[0.3em] text-muted-foreground uppercase">
             BONASOFT
           </p>
