@@ -12,11 +12,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { toast } from 'sonner';
 import { MapPin, CreditCard, Banknote, QrCode, Plus, AlertCircle } from 'lucide-react';
+import { useOrderLock } from '@/hooks/useOrderLock';
 
 export default function Checkout() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { items, company, subtotal, clearCart } = useCart();
+  const { isLocked, acquireLock, releaseLock, generateIdempotencyKey } = useOrderLock();
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [selectedAddress, setSelectedAddress] = useState<string>('');
   const [paymentMethod, setPaymentMethod] = useState('pix');
@@ -137,10 +139,14 @@ export default function Checkout() {
       return;
     }
 
+    if (loading || isLocked) return;
+    if (!acquireLock()) return;
+    
     setLoading(true);
     try {
       const addr = addresses.find(a => a.id === selectedAddress);
       const deliveryAddress = addr ? `${addr.street}, ${addr.number} - ${addr.neighborhood}, ${addr.city}` : '';
+      const ik = generateIdempotencyKey(user.id, items, total);
 
       // Create order
       const { data: order, error: orderError } = await supabase
@@ -155,11 +161,21 @@ export default function Checkout() {
           payment_method: paymentMethod,
           notes,
           region_id: regionId,
+          idempotency_key: ik // Anti-duplication column
         })
         .select()
         .single();
 
-      if (orderError) throw orderError;
+      if (orderError) {
+        // Handle unique constraint error specifically if needed
+        if (orderError.code === '23505') {
+          toast.info('Este pedido já foi processado');
+          // Navigate to orders instead of showing error
+          navigate('/marketplace/orders');
+          return;
+        }
+        throw orderError;
+      }
 
       // Create order items
       const orderItems = items.map(item => ({
@@ -205,6 +221,7 @@ export default function Checkout() {
       }
     } finally {
       setLoading(false);
+      releaseLock();
     }
   };
 
