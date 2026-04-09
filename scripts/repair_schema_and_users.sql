@@ -165,9 +165,13 @@ BEGIN
         '{"provider":"email","providers":["email"]}'::jsonb, '{"full_name":"Cliente Teste", "role":"customer"}'::jsonb, NOW(), NOW(), '', '', false, '11999999999'
     );
 
-    -- 5.2 INSERIR PERFIL PÚBLICO
+    -- 5.2 INSERIR PERFIL PÚBLICO (UPSERT)
     INSERT INTO public.profiles (id, full_name, role, phone)
-    VALUES (target_user_id, 'Cliente Teste', 'customer', '11999999999');
+    VALUES (target_user_id, 'Cliente Teste', 'customer', '11999999999')
+    ON CONFLICT (id) DO UPDATE SET 
+        full_name = EXCLUDED.full_name,
+        role = EXCLUDED.role,
+        phone = EXCLUDED.phone;
 
     -- 5.3 10 LOJISTAS E PRODUTOS
     FOR i IN 1..10 LOOP
@@ -177,14 +181,28 @@ BEGIN
         INSERT INTO auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
         VALUES ('00000000-0000-0000-0000-000000000000', comp_user_id, 'authenticated', 'authenticated', 'loja' || i || '@nexuspro.test', crypt('Password123!', gen_salt('bf')), NOW(), '{"provider":"email","providers":["email"]}'::jsonb, ('{"full_name":"' || store_names[i] || '"}')::jsonb, NOW(), NOW());
 
-        -- Perfil Loja
+        -- Perfil Loja (UPSERT)
         INSERT INTO public.profiles (id, full_name, role, phone)
-        VALUES (comp_user_id, store_names[i], 'company', '118888888' || i);
+        VALUES (comp_user_id, store_names[i], 'company', '118888888' || i)
+        ON CONFLICT (id) DO UPDATE SET 
+            full_name = EXCLUDED.full_name,
+            role = EXCLUDED.role,
+            phone = EXCLUDED.phone;
 
-        -- Tabela Companies
+        -- Tabela Companies (UPSERT)
         comp_id := gen_random_uuid();
         INSERT INTO public.companies (id, name, email, active, user_id, description, phone, address, city, category)
-        VALUES (comp_id, store_names[i], 'loja' || i || '@nexuspro.test', true, comp_user_id, 'Melhor loja de ' || store_categories[i] || ' da região.', '11888888' || i, 'Endereço #' || i, 'Diamantino', store_categories[i]);
+        VALUES (comp_id, store_names[i], 'loja' || i || '@nexuspro.test', true, comp_user_id, 'Melhor loja de ' || store_categories[i] || ' da região.', '11888888' || i, 'Endereço #' || i, 'Diamantino', store_categories[i])
+        ON CONFLICT (id) DO UPDATE SET
+            name = EXCLUDED.name,
+            email = EXCLUDED.email,
+            active = EXCLUDED.active,
+            user_id = EXCLUDED.user_id,
+            description = EXCLUDED.description,
+            phone = EXCLUDED.phone,
+            address = EXCLUDED.address,
+            city = EXCLUDED.city,
+            category = EXCLUDED.category;
 
         -- 10 Produtos por Loja
         FOR j IN 1..10 LOOP
