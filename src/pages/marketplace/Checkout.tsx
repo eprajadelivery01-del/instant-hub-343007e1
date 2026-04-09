@@ -197,6 +197,7 @@ export default function Checkout() {
       if (addr) {
         await supabase.from('deliveries').insert({
           order_id: order.id,
+          company_id: company.id, // CRITICAL: Link delivery to the store
           pickup_address: company.address || company.name,
           delivery_address: deliveryAddress,
           pickup_latitude: company.latitude,
