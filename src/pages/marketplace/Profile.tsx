@@ -13,7 +13,7 @@ import {
   LogOut, MapPin, User, ChevronRight, Gem, 
   Bell, HelpCircle, Wallet, Trash2, X, Camera, Loader2,
   Sparkles, Star, Gift, Shield, Ticket, Share2, 
-  MessageCircle, Settings, Phone, Mail, Award
+  MessageCircle, Settings, Phone, Mail, Award, Heart, Bike
 } from 'lucide-react';
 import { 
   AlertDialog, 
