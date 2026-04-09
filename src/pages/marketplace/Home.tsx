@@ -210,7 +210,7 @@ export default function Home() {
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-5 gap-y-10">
+          <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-5 gap-y-10">
             {filtered.map(company => (
               <StoreTabCard key={company.id} company={company} />
             ))}

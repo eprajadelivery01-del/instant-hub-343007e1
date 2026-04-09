@@ -14,7 +14,7 @@ export function StoreTabCard({ company }: StoreTabCardProps) {
     <div 
       onClick={() => navigate(`/marketplace/store/${company.id}`)}
       className={cn(
-        "group relative h-[320px] w-full bg-[#1c1c1e] rounded-[48px] overflow-hidden transition-all duration-500 hover:scale-[1.02] hover:-translate-y-2 cursor-pointer border-2 active:scale-[0.98]",
+        "group relative h-auto min-h-[260px] sm:min-h-[320px] w-full bg-[#1c1c1e] rounded-[32px] sm:rounded-[48px] overflow-hidden transition-all duration-500 hover:scale-[1.02] hover:-translate-y-2 cursor-pointer border-2 active:scale-[0.98]",
         company.active 
           ? "border-success/30 shadow-cloud-green hover:shadow-success/20" 
           : "border-destructive/30 shadow-cloud-red grayscale-[0.6] opacity-70"
