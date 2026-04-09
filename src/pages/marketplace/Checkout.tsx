@@ -80,9 +80,10 @@ export default function Checkout() {
       }
 
       if (!found) {
-        setDeliveryFee(null);
+        // Fallback: Endereço fora das regiões mapeadas - aplica taxa padrão de contingência
+        setDeliveryFee(7.5);
         setRegionId(null);
-        setUnavailable(true);
+        setUnavailable(false);
       }
     };
     checkRegion();
