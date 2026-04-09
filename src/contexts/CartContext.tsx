@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { CartItem, Product, Company } from '@/types/database';
 
 interface CartContextType {
@@ -15,8 +15,23 @@ interface CartContextType {
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export function CartProvider({ children }: { children: ReactNode }) {
-  const [items, setItems] = useState<CartItem[]>([]);
-  const [company, setCompany] = useState<Company | null>(null);
+  const [items, setItems] = useState<CartItem[]>(() => {
+    const saved = localStorage.getItem('cart_items');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [company, setCompany] = useState<Company | null>(() => {
+    const saved = localStorage.getItem('cart_company');
+    return saved ? JSON.parse(saved) : null;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('cart_items', JSON.stringify(items));
+    if (company) {
+      localStorage.setItem('cart_company', JSON.stringify(company));
+    } else {
+      localStorage.removeItem('cart_company');
+    }
+  }, [items, company]);
 
   const addItem = (product: Product, comp: Company) => {
     if (company && company.id !== comp.id) {
