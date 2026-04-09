@@ -14,12 +14,20 @@ export function StoreTabCard({ company }: StoreTabCardProps) {
     <div 
       onClick={() => navigate(`/marketplace/store/${company.id}`)}
       className={cn(
-        "group relative h-[320px] w-full bg-[#1c1c1e] rounded-[40px] overflow-hidden transition-all duration-500 hover:scale-[1.02] hover:-translate-y-2 cursor-pointer border border-white/5 active:scale-[0.98]",
+        "group relative h-[320px] w-full bg-[#1c1c1e] rounded-[40px] overflow-hidden transition-all duration-500 hover:scale-[1.02] hover:-translate-y-2 cursor-pointer border-4 active:scale-[0.98]",
         company.active 
-          ? "shadow-[0_0_25px_-5px_rgba(34,197,94,0.3)] shadow-success/10" 
-          : "shadow-[0_0_25px_-5px_rgba(239,68,68,0.3)] shadow-destructive/10 grayscale-[0.5] opacity-80"
+          ? "border-success/20 shadow-[0_0_30px_-5px_rgba(34,197,94,0.4)]" 
+          : "border-destructive/20 shadow-[0_0_30px_-5px_rgba(239,68,68,0.4)] grayscale-[0.6] opacity-70"
       )}
     >
+      {/* Status Bolinha */}
+      <div className="absolute top-5 right-6 z-30">
+        <div className={cn(
+          "h-3 w-3 rounded-full shadow-[0_0_10px_rgba(0,0,0,0.5)] border-2 border-white/20",
+          company.active ? "bg-success animate-pulse" : "bg-destructive"
+        )} />
+      </div>
+
 
       {/* Browser-style Tab Header */}
       <div className="absolute top-0 left-0 right-0 h-14 bg-white/5 backdrop-blur-3xl border-b border-white/10 flex items-center justify-between px-5 z-20">
