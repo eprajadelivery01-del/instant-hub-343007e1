@@ -196,8 +196,8 @@ export default function Checkout() {
     } catch (err: any) {
       console.error('Checkout error:', err);
       if (err.message?.includes('column') && err.message?.includes('schema cache')) {
-        toast.error('Erro de Banco de Dados: Colunas faltando na tabela "orders". Por favor, execute o SQL fornecido no painel do Supabase.', {
-          duration: 6000
+        toast.error(`Erro de Banco de Dados: ${err.message}. Por favor, verifique o SQL no Supabase.`, {
+          duration: 8000
         });
       } else {
         toast.error(err.message || 'Erro ao criar pedido');
