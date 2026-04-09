@@ -97,7 +97,7 @@ export function MarketplaceMenu({ children, onSelectCategory, onOpenPartnership 
            <div className="px-8 pt-10 pb-6 flex items-center justify-between">
               <SheetHeader>
                 <SheetTitle className="text-left flex flex-col items-start gap-1">
-                  <span className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/50">Discovery Hub</span>
+
                   <span className="text-2xl font-black text-slate-900 tracking-tight">
                     Aproveite o <span className="text-primary">É Pra Já!</span>
                   </span>
