@@ -9,6 +9,7 @@ import { CartProvider } from "@/contexts/CartContext";
 import { AddressProvider } from "@/contexts/AddressContext";
 import { CityProvider } from "@/contexts/CityContext";
 import RequireAuth from "@/components/marketplace/RequireAuth";
+import ScrollToTop from "@/components/shared/ScrollToTop";
 
 import Login from "./pages/marketplace/Login";
 import Signup from "./pages/marketplace/Signup";
@@ -45,6 +46,7 @@ const App = () => {
                 <Toaster />
                 <Sonner />
                 <BrowserRouter>
+                  <ScrollToTop />
                   <Routes>
                     <Route path="/" element={<Navigate to="/marketplace" replace />} />
                     <Route path="/marketplace/login" element={<Login />} />
