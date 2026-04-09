@@ -1,3 +1,4 @@
+// v3.0.1 - Premium Aesthetics Uplift Forced Sync
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
@@ -58,7 +59,6 @@ export default function Home() {
 
   return (
     <MarketplaceLayout>
-      {/* Premium V3 Immersive Header */}
       <div className="bg-white/80 border-b border-slate-100 sticky top-0 z-50 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-6 pt-6 pb-4 flex flex-col gap-6">
           <div className="flex items-center justify-between">
@@ -81,11 +81,7 @@ export default function Home() {
                  </button>
               </div>
             </div>
-
-            <div 
-              onClick={() => navigate('/marketplace/profile')}
-              className="h-14 w-14 rounded-2xl bg-white border border-slate-100 shadow-premium flex items-center justify-center overflow-hidden cursor-pointer active:scale-95 transition-all p-1"
-            >
+            <div onClick={() => navigate('/marketplace/profile')} className="h-14 w-14 rounded-2xl bg-white border border-slate-100 shadow-premium flex items-center justify-center overflow-hidden cursor-pointer active:scale-95 transition-all p-1">
               {user?.avatar_url ? (
                 <img src={user.avatar_url} alt="" className="h-full w-full object-cover rounded-xl" />
               ) : (
@@ -95,7 +91,6 @@ export default function Home() {
               )}
             </div>
           </div>
-
           <div className="relative group">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-slate-400 group-focus-within:text-primary transition-colors" />
             <Input
@@ -109,7 +104,6 @@ export default function Home() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 mt-8 pb-32">
-        {/* Premium Merchants Slider */}
         <div className="mb-12">
            <div className="flex items-center justify-between mb-5 px-2">
               <div className="flex flex-col">
@@ -146,7 +140,6 @@ export default function Home() {
            </div>
         </div>
 
-        {/* Categories Bento Slider */}
         <div className="mb-12">
            <div className="flex gap-4 overflow-x-auto scrollbar-hide py-2 px-1">
              {categories.map(cat => (
@@ -167,13 +160,10 @@ export default function Home() {
            </div>
         </div>
 
-        {/* Immersive Map Hero */}
         <div className="mb-14 rounded-[48px] overflow-hidden shadow-2xl shadow-black/5 border border-slate-100 h-64 relative group">
            <HeroMapSection />
-           <div className="absolute inset-0 pointer-events-none ring-1 ring-inset ring-black/5 rounded-[48px]" />
         </div>
 
-        {/* Global Discovery Feed */}
         <div className="flex items-center justify-between mb-10 px-2">
           <div>
             <h2 className="text-3xl font-black text-slate-900 tracking-tighter">O Melhor da Região</h2>
@@ -203,20 +193,19 @@ export default function Home() {
         )}
       </div>
 
-      {/* Sheets & Dialogs */}
       <Sheet open={!!partnershipType} onOpenChange={(open) => !open && setPartnershipType(null)}>
         <SheetContent side="bottom" className="h-[90vh] rounded-t-[48px] border-t-0 p-0 overflow-hidden">
           <div className="h-full flex flex-col bg-[#fdfdfd]">
              <div className="p-8 pb-4 flex items-center justify-between">
                 <SheetHeader>
                   <SheetTitle className="text-left flex flex-col items-start gap-1">
-                    <span className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground/40">Expansão de Ecossistema</span>
+                    <span className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground/40">Expansão É Pra Já</span>
                     <span className="text-3xl font-black text-slate-900 tracking-tighter">
                       Seja um {partnershipType === 'merchant' ? 'Parceiro' : 'Entregador'}
                     </span>
                   </SheetTitle>
                 </SheetHeader>
-                <button onClick={() => setPartnershipType(null)} className="h-12 w-12 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors"><X className="h-6 w-6"/></button>
+                <button onClick={() => setPartnershipType(null)} className="h-12 w-12 rounded-full bg-slate-100 flex items-center justify-center text-slate-400"><X className="h-6 w-6"/></button>
              </div>
              <div className="flex-1 overflow-y-auto px-8 pb-10 space-y-10 scrollbar-hide">
                 <div className="space-y-8">
@@ -224,23 +213,21 @@ export default function Home() {
                      "p-10 rounded-[40px] relative overflow-hidden shadow-xl",
                      partnershipType === 'merchant' ? "bg-slate-900 text-white" : "bg-sunset text-white"
                    )}>
-                      <h4 className="text-2xl font-black mb-3 relative z-10 leading-tight">
-                        {partnershipType === 'merchant' ? 'Venda mais em Diamantino' : 'Trabalhe com autonomia'}
-                      </h4>
-                      <p className="text-sm opacity-80 leading-relaxed relative z-10 max-w-sm">
-                        {partnershipType === 'merchant' 
-                          ? 'Acesse milhares de novos clientes na sua região com as ferramentas de venda e entrega mais modernas do Mato Grosso.' 
-                          : 'Seja seu próprio chefe. Ganhe por entrega feita e trabalhe nos horários que você escolher.'}
-                      </p>
-                      <X className="absolute -bottom-10 -right-10 h-48 w-48 text-white/5 -rotate-12" />
+                      <h4 className="text-2xl font-black mb-3 relative z-10 leading-tight">Venda mais em Diamantino</h4>
+                      <p className="text-sm opacity-80 leading-relaxed relative z-10 max-w-sm">Acesse milhares de novos clientes na sua região.</p>
                    </div>
                    <div className="bg-white p-10 rounded-[40px] border border-slate-100 space-y-5 shadow-sm">
-                      <div className="space-y-2">
-                        <Label className="text-[10px] font-black uppercase text-slate-400 ml-2">Dados de Contato</Label>
-                        <Input placeholder="Seu Nome Completo" className="h-16 rounded-2xl bg-slate-50 border-none px-6 font-bold" />
-                        <Input placeholder={partnershipType === 'merchant' ? "Nome Fantasia da Loja" : "Seu WhatsApp (00) 00000-0000"} className="h-16 rounded-2xl bg-slate-50 border-none px-6 font-bold" />
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                           <Label className="text-[10px] font-black uppercase text-slate-400 ml-2">Identificação</Label>
+                           <Input placeholder="Seu Nome Completo" className="h-16 rounded-2xl bg-slate-50 border-none px-6 font-bold" />
+                        </div>
+                        <div className="space-y-2">
+                           <Label className="text-[10px] font-black uppercase text-slate-400 ml-2">Contato</Label>
+                           <Input placeholder="Seu WhatsApp" className="h-16 rounded-2xl bg-slate-50 border-none px-6 font-bold" />
+                        </div>
                       </div>
-                      <Button onClick={() => { toast.success('Interesse registrado com sucesso!'); setPartnershipType(null); }} className="w-full h-16 rounded-[24px] bg-primary text-white font-black uppercase tracking-widest text-sm shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all mt-4">
+                      <Button onClick={() => { toast.success('Interesse registrado!'); setPartnershipType(null); }} className="w-full h-16 rounded-[24px] bg-primary text-white font-black uppercase tracking-widest mt-4">
                          Enviar Interesse
                       </Button>
                    </div>
