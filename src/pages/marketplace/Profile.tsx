@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { 
   LogOut, MapPin, User, ChevronRight, CreditCard, 
   HelpCircle, Bell, MessageCircle, FileText, Gem, 
