@@ -1,7 +1,6 @@
 -- ==========================================================
--- SCRIPT DE HARMONIZAÇÃO UNIFICADA: NEXUSPRO (V7)
--- Resolve o conflito entre Admin e App Cliente.
--- Suporta ambos: is_active/active, price/delivery_fee, id/user_id.
+-- SCRIPT DE HARMONIZAÇÃO UNIFICADA: NEXUSPRO (V7.5)
+-- Expansão: Semeia 10 lojas com produtos reais.
 -- ==========================================================
 
 -- 1. EXTENSÕES E SCHEMAS
@@ -169,31 +168,6 @@ BEGIN
     END IF;
 END $$;
 
--- 7. SINCRONIA DE CAMPOS (Caso as tabelas já existam)
--- Garante que o App Cliente sempre encontre as colunas que espera
-DO $$ 
-BEGIN
-    -- Regions
-    IF EXISTS (SELECT FROM information_schema.columns WHERE table_name = 'regions' AND column_name = 'price') THEN
-        ALTER TABLE public.regions ADD COLUMN IF NOT EXISTS delivery_fee NUMERIC(10,2) DEFAULT 0;
-        UPDATE public.regions SET delivery_fee = price WHERE delivery_fee = 0;
-    END IF;
-    IF EXISTS (SELECT FROM information_schema.columns WHERE table_name = 'regions' AND column_name = 'is_active') THEN
-        ALTER TABLE public.regions ADD COLUMN IF NOT EXISTS active BOOLEAN DEFAULT true;
-        UPDATE public.regions SET active = is_active;
-    END IF;
-
-    -- Companies
-    IF EXISTS (SELECT FROM information_schema.columns WHERE table_name = 'companies' AND column_name = 'is_active') THEN
-        ALTER TABLE public.companies ADD COLUMN IF NOT EXISTS active BOOLEAN DEFAULT true;
-        UPDATE public.companies SET active = is_active;
-    END IF;
-
-    -- Profiles (Garantir ID = USER_ID para o Cliente App se possível, ou compatibilidade)
-    -- O Cliente App usa .from('profiles').select('*').eq('id', userId)
-    -- Vamos garantir que se 'user_id' for o link, 'id' também seja o mesmo ou exista um fallback.
-END $$;
-
 -- 8. RLS GERAL (Marketplace Público)
 DO $$ 
 DECLARE
@@ -206,14 +180,18 @@ BEGIN
     END LOOP;
 END $$;
 
--- 9. RESET E SEEDING (HARMONIZADO)
+-- 9. RESET E SEEDING EXPANSÃO (V7.5)
 DO $$ 
 DECLARE 
     target_user_id UUID := gen_random_uuid();
     comp_user_id UUID;
+    comp_id UUID;
     city_id UUID;
+    store_names TEXT[] := ARRAY['Burger King Fake', 'Pizza Hut Fake', 'Sushi Master', 'Taco Bell Fake', 'Veggie Delight', 'Sweet Dreams', 'Pasta Palace', 'Fruit Fresh', 'Steak House', 'Ice Cream Heaven'];
+    store_categories TEXT[] := ARRAY['Lanches', 'Pizza', 'Sushi', 'Mexicana', 'Saudável', 'Doces', 'Massas', 'Frutas', 'Carnes', 'Sobremesas'];
+    i INTEGER;
 BEGIN
-    -- Limpeza mais agressiva para evitar órfãos
+    -- Limpeza total de dados de teste
     DELETE FROM public.order_items WHERE order_id IN (SELECT id FROM public.orders WHERE customer_id IN (SELECT id FROM public.customers WHERE user_id IN (SELECT id FROM auth.users WHERE email LIKE '%@nexuspro.test')));
     DELETE FROM public.orders WHERE customer_id IN (SELECT id FROM public.customers WHERE user_id IN (SELECT id FROM auth.users WHERE email LIKE '%@nexuspro.test'));
     DELETE FROM public.products WHERE company_id IN (SELECT id FROM public.companies WHERE email LIKE '%@nexuspro.test');
@@ -232,37 +210,36 @@ BEGIN
     VALUES ('00000000-0000-0000-0000-000000000000', target_user_id, 'authenticated', 'authenticated', 'cliente@nexuspro.test', crypt('Password123!', gen_salt('bf')), NOW(), '{"provider":"email","providers":["email"]}'::jsonb, '{"full_name":"Cliente Teste", "role":"customer"}'::jsonb, NOW(), NOW())
     ON CONFLICT (id) DO NOTHING;
 
-    -- Usamos ON CONFLICT (id) porque é a Primary Key que está gerando o erro de duplicidade.
-    -- Se o trigger já criou o perfil com este ID, nós apenas atualizamos os campos.
-    INSERT INTO public.profiles (id, user_id, full_name, role)
-    VALUES (target_user_id, target_user_id, 'Cliente Teste', 'customer')
-    ON CONFLICT (id) DO UPDATE SET 
-        user_id = EXCLUDED.user_id,
-        full_name = EXCLUDED.full_name,
-        role = EXCLUDED.role;
-
+    DELETE FROM public.profiles WHERE user_id = target_user_id;
+    INSERT INTO public.profiles (id, user_id, full_name, role) VALUES (target_user_id, target_user_id, 'Cliente Teste', 'customer');
     INSERT INTO public.customers (user_id, name) VALUES (target_user_id, 'Cliente Teste') ON CONFLICT (user_id) DO NOTHING;
-
     INSERT INTO public.user_roles (user_id, role) VALUES (target_user_id, 'customer') ON CONFLICT DO NOTHING;
 
-    -- UMA LOJA PARA TESTE IMEDIATO
-    comp_user_id := gen_random_uuid();
-    INSERT INTO auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
-    VALUES ('00000000-0000-0000-0000-000000000000', comp_user_id, 'authenticated', 'authenticated', 'loja_teste@nexuspro.test', crypt('Password123!', gen_salt('bf')), NOW(), '{"provider":"email","providers":["email"]}'::jsonb, '{"full_name":"Lanchonete Teste"}'::jsonb, NOW(), NOW())
-    ON CONFLICT (id) DO NOTHING;
-    
-    INSERT INTO public.profiles (id, user_id, full_name, role) 
-    VALUES (comp_user_id, comp_user_id, 'Lanchonete Teste', 'company')
-    ON CONFLICT (id) DO UPDATE SET 
-        user_id = EXCLUDED.user_id,
-        full_name = EXCLUDED.full_name,
-        role = EXCLUDED.role;
+    -- SEEDING DAS 10 LOJAS
+    FOR i IN 1..10 LOOP
+        comp_user_id := gen_random_uuid();
+        comp_id := gen_random_uuid();
+        
+        -- Usuário e Perfil
+        INSERT INTO auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
+        VALUES ('00000000-0000-0000-0000-000000000000', comp_user_id, 'authenticated', 'authenticated', 'loja' || i || '@nexuspro.test', crypt('Password123!', gen_salt('bf')), NOW(), '{"provider":"email","providers":["email"]}'::jsonb, jsonb_build_object('full_name', store_names[i]), NOW(), NOW());
+        
+        DELETE FROM public.profiles WHERE user_id = comp_user_id;
+        INSERT INTO public.profiles (id, user_id, full_name, role) VALUES (comp_user_id, comp_user_id, store_names[i], 'company');
+        INSERT INTO public.user_roles (user_id, role) VALUES (comp_user_id, 'company');
+        
+        -- Empresa
+        INSERT INTO public.companies (id, name, email, user_id, description, category, city, city_id, active, is_active, rating)
+        VALUES (comp_id, store_names[i], 'loja' || i || '@nexuspro.test', comp_user_id, 'Melhor loja de ' || store_categories[i] || ' da região.', store_categories[i], 'Diamantino', city_id, true, true, 4.0 + (random() * 1.0));
 
-    INSERT INTO public.user_roles (user_id, role) VALUES (comp_user_id, 'company') ON CONFLICT DO NOTHING;
-    
-    INSERT INTO public.companies (id, name, email, user_id, description, category, city, city_id, active, is_active)
-    VALUES (gen_random_uuid(), 'Lanchonete Teste', 'loja_teste@nexuspro.test', comp_user_id, 'A melhor loja de teste.', 'Lanches', 'Diamantino', city_id, true, true);
+        -- Produtos para esta empresa
+        INSERT INTO public.products (company_id, name, price, description, category, active, is_active)
+        VALUES 
+            (comp_id, 'Combo ' || store_categories[i] || ' Pro', 49.90, 'O produto mais vendido da casa.', 'Populares', true, true),
+            (comp_id, 'Especial ' || store_names[i], 35.00, 'Ingredientes selecionados e frescos.', 'Sugestão', true, true),
+            (comp_id, 'Bebida 600ml', 8.50, 'Gelada para acompanhar seu pedido.', 'Bebidas', true, true);
+    END LOOP;
 END $$;
 
--- 10. RELOAD SCHEMA (IMPORTANTE PARA O LOVABLE RECONHECER AS MUDANÇAS)
+-- 10. RELOAD SCHEMA
 NOTIFY pgrst, 'reload schema';
