@@ -235,10 +235,13 @@ BEGIN
         
         -- Auth Usuário Loja
         INSERT INTO auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
-        VALUES ('00000000-0000-0000-0000-000000000000', comp_user_id, 'authenticated', 'authenticated', 'loja' || i || '@nexuspro.test', crypt('Password123!', gen_salt('bf')), NOW(), '{"provider":"email","providers":["email"]}'::jsonb, ('{"full_name":"' || store_names[i] || '"}')::jsonb, NOW(), NOW());
+        VALUES ('00000000-0000-0000-0000-000000000000', comp_user_id, 'authenticated', 'authenticated', 'loja' || i || '@nexuspro.test', crypt('Password123!', gen_salt('bf')), NOW(), '{"provider":"email","providers":["email"]}'::jsonb, ('{"full_name":"' || store_names[i] || '"}')::jsonb, NOW(), NOW())
+        ON CONFLICT (id) DO NOTHING;
 
         -- Perfil e Empresa
-        INSERT INTO public.profiles (id, full_name, role) VALUES (comp_user_id, store_names[i], 'company');
+        INSERT INTO public.profiles (id, full_name, role) 
+        VALUES (comp_user_id, store_names[i], 'company')
+        ON CONFLICT (id) DO UPDATE SET full_name = EXCLUDED.full_name;
         
         INSERT INTO public.companies (id, name, email, user_id, description, category, city, city_id, latitude, longitude, active)
         VALUES (comp_id, store_names[i], 'loja' || i || '@nexuspro.test', comp_user_id, 'Loja oficial NexusPro.', store_categories[i], 'Diamantino', city_id, -14.4087 + (random() * 0.01), -56.4462 + (random() * 0.01), true)
@@ -247,7 +250,8 @@ BEGIN
         -- 10 Produtos
         FOR j IN 1..10 LOOP
             INSERT INTO public.products (company_id, name, price, description, category, active)
-            VALUES (comp_id, product_names[j] || ' - ' || store_names[i], (random() * 40 + 10)::numeric(10,2), 'Descrição do ' || product_names[j], lower(store_categories[i]), true);
+            VALUES (comp_id, product_names[j] || ' - ' || store_names[i], (random() * 40 + 10)::numeric(10,2), 'Descrição do ' || product_names[j], lower(store_categories[i]), true)
+            ON CONFLICT (id) DO NOTHING;
         END LOOP;
     END LOOP;
 
