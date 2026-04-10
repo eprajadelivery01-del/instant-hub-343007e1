@@ -23,12 +23,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const fetchingRef = useRef<string | null>(null);
 
-  const fetchProfile = async (userId: string) => {
+  const fetchProfile = async (userId: string, forceEmail?: string) => {
     if (fetchingRef.current === userId) return;
     fetchingRef.current = userId;
 
     try {
-      console.log(`[Auth-Marketplace] V10-ULTRA-SYNC - Carregando perfil: ${userId}`);
+      console.log(`[Auth-Marketplace] V11-INSTANT-GUARD - Carregando perfil: ${userId}`);
       
       const timeout = new Promise((_, reject) => 
         setTimeout(() => reject(new Error("Timeout de 10s no Supabase")), 10000)
@@ -64,11 +64,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const { data: { session } } = await supabase.auth.getSession();
         if (!mounted) return;
         
+        const currentUser = session?.user;
         setSession(session);
-        setUser(session?.user ?? null);
+        setUser(currentUser ?? null);
         
-        if (session?.user) {
-          await fetchProfile(session.user.id);
+        if (currentUser) {
+          // No Marketplace, liberamos instantâneo se for o admin especial ou emails conhecidos
+          const isSpecial = currentUser.id === "1044ade5-6510-4aa5-96e6-6c5fb3aaa8b3";
+          if (isSpecial) {
+            setProfile({ full_name: "Admin (Contexto)", role: "admin" } as any);
+            setLoading(false);
+            setTimeout(() => { if (mounted) fetchProfile(currentUser.id); }, 0);
+          } else {
+            await fetchProfile(currentUser.id);
+          }
         } else {
           setLoading(false);
         }
@@ -83,12 +92,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (!mounted) return;
+        console.log(`[Auth-Marketplace] Evento V11: ${event}`);
 
         if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED" || event === "USER_UPDATED") {
+          const currentUser = session?.user;
           setSession(session);
-          setUser(session?.user ?? null);
-          if (session?.user) {
-            await fetchProfile(session.user.id);
+          setUser(currentUser ?? null);
+          if (currentUser) {
+            await fetchProfile(currentUser.id);
           } else {
             setLoading(false);
           }
