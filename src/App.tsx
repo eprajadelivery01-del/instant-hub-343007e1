@@ -10,6 +10,7 @@ import { AddressProvider } from "@/contexts/AddressContext";
 import { CityProvider } from "@/contexts/CityContext";
 import RequireAuth from "@/components/marketplace/RequireAuth";
 import ScrollToTop from "@/components/shared/ScrollToTop";
+import { PageTransition } from "@/components/shared/PageTransition";
 
 import Login from "./pages/marketplace/Login";
 import Signup from "./pages/marketplace/Signup";
@@ -49,20 +50,20 @@ const App = () => {
                   <ScrollToTop />
                   <Routes>
                     <Route path="/" element={<Navigate to="/marketplace" replace />} />
-                    <Route path="/marketplace/login" element={<Login />} />
-                    <Route path="/marketplace/signup" element={<Signup />} />
-                    <Route path="/marketplace" element={<Home />} />
-                    <Route path="/marketplace/search" element={<Search />} />
-                    <Route path="/marketplace/store/:id" element={<StoreDetail />} />
-                    <Route path="/marketplace/cart" element={<Cart />} />
-                    <Route path="/marketplace/checkout" element={<RequireAuth><Checkout /></RequireAuth>} />
-                    <Route path="/marketplace/orders" element={<RequireAuth><Orders /></RequireAuth>} />
-                    <Route path="/marketplace/orders/:id" element={<RequireAuth><OrderDetail /></RequireAuth>} />
-                    <Route path="/marketplace/addresses" element={<RequireAuth><Addresses /></RequireAuth>} />
-                    <Route path="/marketplace/profile" element={<RequireAuth><Profile /></RequireAuth>} />
-                    <Route path="/marketplace/privacy" element={<PrivacyPolicy />} />
-                    <Route path="/marketplace/terms" element={<TermsOfService />} />
-                    <Route path="*" element={<NotFound />} />
+                    <Route path="/marketplace/login" element={<PageTransition><Login /></PageTransition>} />
+                    <Route path="/marketplace/signup" element={<PageTransition><Signup /></PageTransition>} />
+                    <Route path="/marketplace" element={<PageTransition><Home /></PageTransition>} />
+                    <Route path="/marketplace/search" element={<PageTransition><Search /></PageTransition>} />
+                    <Route path="/marketplace/store/:id" element={<PageTransition><StoreDetail /></PageTransition>} />
+                    <Route path="/marketplace/cart" element={<PageTransition><Cart /></PageTransition>} />
+                    <Route path="/marketplace/checkout" element={<PageTransition><RequireAuth><Checkout /></RequireAuth></PageTransition>} />
+                    <Route path="/marketplace/orders" element={<PageTransition><RequireAuth><Orders /></RequireAuth></PageTransition>} />
+                    <Route path="/marketplace/orders/:id" element={<PageTransition><RequireAuth><OrderDetail /></RequireAuth></PageTransition>} />
+                    <Route path="/marketplace/addresses" element={<PageTransition><RequireAuth><Addresses /></RequireAuth></PageTransition>} />
+                    <Route path="/marketplace/profile" element={<PageTransition><RequireAuth><Profile /></RequireAuth></PageTransition>} />
+                    <Route path="/marketplace/privacy" element={<PageTransition><PrivacyPolicy /></PageTransition>} />
+                    <Route path="/marketplace/terms" element={<PageTransition><TermsOfService /></PageTransition>} />
+                    <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
                   </Routes>
                 </BrowserRouter>
               </TooltipProvider>
