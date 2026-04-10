@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, ReactNode, useRef } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { Profile } from '@/types/database';
@@ -21,45 +21,89 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const fetchingRef = useRef<string | null>(null);
 
   const fetchProfile = async (userId: string) => {
-    const { data } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
-    setProfile(data);
+    if (fetchingRef.current === userId) return;
+    fetchingRef.current = userId;
+
+    try {
+      console.log(`[Auth-Marketplace] Carregando perfil: ${userId}`);
+      
+      const timeout = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error("Timeout de 10s no Supabase")), 10000)
+      );
+
+      const fetchPromise = supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      const { data, error } = await Promise.race([fetchPromise, timeout]) as any;
+      
+      if (error) {
+        console.error("[Auth-Marketplace] Erro ao buscar perfil:", error.message);
+      } else if (data) {
+        setProfile(data);
+      }
+    } catch (error: any) {
+      console.error("[Auth-Marketplace] Erro crítico:", error.message);
+    } finally {
+      fetchingRef.current = null;
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
+    let mounted = true;
+
+    const initializeAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!mounted) return;
+        
         setSession(session);
         setUser(session?.user ?? null);
+        
         if (session?.user) {
-          // Pequeno delay para garantir que o PostgREST resolveu o schema atualizado 
-          // caso o usuário tenha sido criado via SQL manual recentemente.
-          setTimeout(async () => {
-            await fetchProfile(session.user.id);
-            setLoading(false);
-          }, 500);
+          await fetchProfile(session.user.id);
         } else {
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error("Erro na inicialização:", error);
+        setLoading(false);
+      }
+    };
+
+    initializeAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (!mounted) return;
+
+        if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED" || event === "USER_UPDATED") {
+          setSession(session);
+          setUser(session?.user ?? null);
+          if (session?.user) {
+            await fetchProfile(session.user.id);
+          } else {
+            setLoading(false);
+          }
+        } else if (event === "SIGNED_OUT") {
+          setSession(null);
+          setUser(null);
           setProfile(null);
           setLoading(false);
         }
       }
     );
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchProfile(session.user.id);
-      }
-      setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signIn = async (email: string, password: string) => {
@@ -76,7 +120,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) throw error;
 
     if (data.user) {
-      // Create profile
+      // Create profile logic - Essential for marketplace
       await supabase.from('profiles').upsert({
         id: data.user.id,
         full_name: fullName,
@@ -92,10 +136,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
-    setSession(null);
-    setProfile(null);
+    try {
+      await supabase.auth.signOut();
+    } finally {
+      setUser(null);
+      setSession(null);
+      setProfile(null);
+      localStorage.clear();
+      sessionStorage.clear();
+      window.location.href = "/marketplace/login";
+    }
   };
 
   const refreshProfile = async () => {
