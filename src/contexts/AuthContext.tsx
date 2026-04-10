@@ -82,10 +82,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     initializeAuth();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+    const authListener = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (!mounted) return;
-        console.log(`[Auth-Marketplace] Evento V12 (TOTAL-RELEASE): ${event}`);
+        console.log(`[Auth-Marketplace] Evento V17 (TOTAL-RELEASE): ${event}`);
 
         if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED" || event === "USER_UPDATED") {
           const currentUser = session?.user;
@@ -106,7 +106,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return () => {
       mounted = false;
-      subscription.unsubscribe();
+      if (authListener && authListener.data && authListener.data.subscription) { authListener.data.subscription.unsubscribe(); }
     };
   }, []);
 
@@ -168,3 +168,5 @@ export const useAuth = () => {
   if (!ctx) throw new Error('useAuth must be used within AuthProvider');
   return ctx;
 };
+
+
