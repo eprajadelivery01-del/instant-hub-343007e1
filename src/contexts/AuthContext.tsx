@@ -28,17 +28,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     fetchingRef.current = userId;
 
     try {
-      console.log(`[Auth-Marketplace] Carregando perfil: ${userId}`);
+      console.log(`[Auth-Marketplace] V10-ULTRA-SYNC - Carregando perfil: ${userId}`);
       
       const timeout = new Promise((_, reject) => 
         setTimeout(() => reject(new Error("Timeout de 10s no Supabase")), 10000)
       );
 
+      // Usando seleção específica de colunas para contornar erro de Schema ('status', etc)
       const fetchPromise = supabase
         .from('profiles')
-        .select('*')
+        .select('id, full_name, role') 
         .eq('id', userId)
-        .single();
+        .maybeSingle();
 
       const { data, error } = await Promise.race([fetchPromise, timeout]) as any;
       
