@@ -23,18 +23,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const fetchingRef = useRef<string | null>(null);
 
-  const fetchProfile = async (userId: string, forceEmail?: string) => {
+  const fetchProfile = async (userId: string) => {
     if (fetchingRef.current === userId) return;
     fetchingRef.current = userId;
 
     try {
-      console.log(`[Auth-Marketplace] V11-INSTANT-GUARD - Carregando perfil: ${userId}`);
+      console.log(`[Auth-Marketplace] V12-TOTAL-RELEASE - Carregando perfil: ${userId}`);
       
       const timeout = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error("Timeout de 10s no Supabase")), 10000)
+        setTimeout(() => reject(new Error("Timeout")), 10000)
       );
 
-      // Usando seleção específica de colunas para contornar erro de Schema ('status', etc)
+      // Usando seleção específica de colunas
       const fetchPromise = supabase
         .from('profiles')
         .select('id, full_name, role') 
@@ -43,16 +43,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       const { data, error } = await Promise.race([fetchPromise, timeout]) as any;
       
-      if (error) {
-        console.error("[Auth-Marketplace] Erro ao buscar perfil:", error.message);
-      } else if (data) {
+      if (data) {
         setProfile(data);
       }
     } catch (error: any) {
-      console.error("[Auth-Marketplace] Erro crítico:", error.message);
+      console.error("[Auth-Marketplace] Erro no profile:", error.message);
     } finally {
       fetchingRef.current = null;
-      setLoading(false);
+      setLoading(false); // Garantir que o loading morra aqui também
     }
   };
 
@@ -69,20 +67,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(currentUser ?? null);
         
         if (currentUser) {
-          // No Marketplace, liberamos instantâneo se for o admin especial ou emails conhecidos
-          const isSpecial = currentUser.id === "1044ade5-6510-4aa5-96e6-6c5fb3aaa8b3";
-          if (isSpecial) {
-            setProfile({ full_name: "Admin (Contexto)", role: "admin" } as any);
-            setLoading(false);
-            setTimeout(() => { if (mounted) fetchProfile(currentUser.id); }, 0);
-          } else {
-            await fetchProfile(currentUser.id);
-          }
+          // V12: LIBERAÇÃO IMEDIATA
+          console.log("[Auth-Marketplace] V12: Liberando loading para usuário logado.");
+          setLoading(false); 
+          // Busca perfil em background
+          setTimeout(() => { if (mounted) fetchProfile(currentUser.id); }, 0);
         } else {
           setLoading(false);
         }
       } catch (error) {
-        console.error("Erro na inicialização:", error);
         setLoading(false);
       }
     };
@@ -92,16 +85,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (!mounted) return;
-        console.log(`[Auth-Marketplace] Evento V11: ${event}`);
+        console.log(`[Auth-Marketplace] Evento V12 (TOTAL-RELEASE): ${event}`);
 
         if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED" || event === "USER_UPDATED") {
           const currentUser = session?.user;
           setSession(session);
           setUser(currentUser ?? null);
+          setLoading(false); // LIBERAÇÃO IMEDIATA
           if (currentUser) {
-            await fetchProfile(currentUser.id);
-          } else {
-            setLoading(false);
+            setTimeout(() => { if (mounted) fetchProfile(currentUser.id); }, 0);
           }
         } else if (event === "SIGNED_OUT") {
           setSession(null);
