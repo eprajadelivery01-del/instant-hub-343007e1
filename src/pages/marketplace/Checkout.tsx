@@ -197,7 +197,7 @@ export default function Checkout() {
       if (addr) {
         await supabase.from('deliveries').insert({
           order_id: order.id,
-          company_id: company.id, // CRITICAL: Link delivery to the store
+          company_id: company.id,
           pickup_address: company.address || company.name,
           delivery_address: deliveryAddress,
           pickup_latitude: company.latitude,
@@ -205,6 +205,8 @@ export default function Checkout() {
           delivery_latitude: addr.latitude,
           delivery_longitude: addr.longitude,
           status: 'pending',
+          value: total,
+          price: deliveryFee || 0,
         });
       }
 
