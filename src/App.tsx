@@ -23,6 +23,7 @@ import Orders from "./pages/marketplace/Orders";
 import OrderDetail from "./pages/marketplace/OrderDetail";
 import Addresses from "./pages/marketplace/Addresses";
 import Profile from "./pages/marketplace/Profile";
+import Coupons from "./pages/marketplace/Coupons";
 import PrivacyPolicy from "./pages/marketplace/PrivacyPolicy";
 import TermsOfService from "./pages/marketplace/TermsOfService";
 import Search from "./pages/marketplace/Search";
@@ -63,6 +64,7 @@ const App = () => {
                     <Route path="/marketplace/orders/:id" element={<PageTransition><RequireAuth><OrderDetail /></RequireAuth></PageTransition>} />
                     <Route path="/marketplace/addresses" element={<PageTransition><RequireAuth><Addresses /></RequireAuth></PageTransition>} />
                     <Route path="/marketplace/profile" element={<PageTransition><RequireAuth><Profile /></RequireAuth></PageTransition>} />
+                    <Route path="/marketplace/coupons" element={<PageTransition><RequireAuth><Coupons /></RequireAuth></PageTransition>} />
                     <Route path="/marketplace/privacy" element={<PageTransition><PrivacyPolicy /></PageTransition>} />
                     <Route path="/marketplace/terms" element={<PageTransition><TermsOfService /></PageTransition>} />
                     <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />

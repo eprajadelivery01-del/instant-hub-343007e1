@@ -161,3 +161,29 @@ export interface Review {
   comment: string | null;
   created_at: string;
 }
+
+export interface Coupon {
+  id: string;
+  code: string;
+  description: string | null;
+  discount_type: 'percentage' | 'fixed';
+  discount_value: number;
+  min_order_value: number;
+  max_discount_value: number | null;
+  expires_at: string | null;
+  usage_limit: number | null;
+  used_count: number;
+  company_id: string | null;
+  active: boolean;
+  created_at: string;
+}
+
+export interface UserCoupon {
+  id: string;
+  user_id: string;
+  coupon_id: string;
+  used_at: string | null;
+  order_id: string | null;
+  created_at: string;
+  coupon?: Coupon;
+}

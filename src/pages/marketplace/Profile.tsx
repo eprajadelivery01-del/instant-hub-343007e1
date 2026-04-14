@@ -79,7 +79,7 @@ export default function Profile() {
     { icon: Settings, label: 'Meus Dados', subtitle: 'Informações pessoais', onClick: () => setEditing(true), chevron: true },
     { icon: HelpCircle, label: 'Ajuda', subtitle: 'Suporte e dúvidas', onClick: () => setSupportType('support') },
     { icon: Heart, label: 'Favoritos', subtitle: 'Suas lojas favoritas', onClick: () => toast.info('Suas lojas do coração ficarão guardadas aqui.') },
-    { icon: Ticket, label: 'Cupons', subtitle: '8 disponíveis', onClick: () => toast.success('Você ganhou 8 cupons! Fila de resgate em desenvolvimento.'), highlight: true },
+    { icon: Ticket, label: 'Cupons', subtitle: 'Meus cupons de desconto', onClick: () => navigate('/marketplace/coupons'), highlight: true },
   ];
 
   return (
