@@ -41,13 +41,13 @@ export function StoreTabCard({ company }: StoreTabCardProps) {
 
         <div className="absolute inset-x-0 top-0 z-20 flex items-start justify-between p-4">
           <span className={cn(
-            'rounded-full border border-primary-foreground/20 bg-background/15 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-primary-foreground backdrop-blur-md',
+            'rounded-full border border-primary-foreground/20 bg-background/15 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-primary-foreground backdrop-blur-md',
             !company.active && 'bg-card/80 text-foreground'
           )}>
             {company.active ? 'Aberta agora' : 'Fechada'}
           </span>
 
-          <div className="flex items-center gap-1 rounded-full bg-card px-3 py-1 text-[11px] font-black text-foreground shadow-sm">
+          <div className="flex items-center gap-1 rounded-full bg-card px-3 py-1 text-xs font-semibold text-foreground shadow-sm">
             <Star className="h-3.5 w-3.5 fill-current text-warning" />
             <span>{rating.toFixed(1)}</span>
           </div>
@@ -65,15 +65,15 @@ export function StoreTabCard({ company }: StoreTabCardProps) {
             </div>
 
             <div className="min-w-0 text-primary-foreground">
-              <h3 className="truncate text-2xl font-black tracking-tight">{company.name}</h3>
-              <p className="mt-1 line-clamp-2 text-sm font-medium text-primary-foreground/80">{subtitle}</p>
+              <h3 className="truncate text-xl font-bold">{company.name}</h3>
+              <p className="mt-0.5 line-clamp-1 text-sm text-primary-foreground/75">{subtitle}</p>
             </div>
           </div>
         </div>
       </div>
 
       <div className="space-y-5 p-5">
-        <div className="flex flex-wrap items-center gap-2 text-[11px] font-bold text-muted-foreground">
+        <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
           <div className="premium-chip flex items-center gap-2 rounded-full px-3 py-2">
             <Clock3 className="h-3.5 w-3.5 text-primary" />
             <span>25-40 min</span>
@@ -100,8 +100,8 @@ export function StoreTabCard({ company }: StoreTabCardProps) {
                     }
                   />
                 </div>
-                <p className="truncate text-[11px] font-black text-foreground">{product.name}</p>
-                <p className="mt-1 text-[11px] font-bold text-primary">
+                <p className="truncate text-xs font-medium text-foreground">{product.name}</p>
+                <p className="mt-0.5 text-xs font-semibold text-primary">
                   R$ {Number(product.price || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </p>
               </div>
@@ -109,15 +109,15 @@ export function StoreTabCard({ company }: StoreTabCardProps) {
           ) : (
             <div className="premium-chip col-span-3 flex min-h-[112px] flex-col items-center justify-center rounded-[24px] text-center text-muted-foreground">
               <ShoppingBag className="mb-2 h-8 w-8 opacity-50" />
-              <p className="text-xs font-bold">Cardápio em atualização</p>
+              <p className="text-xs text-muted-foreground">Cardápio em atualização</p>
             </div>
           )}
         </div>
 
         <div className="flex items-center justify-between border-t border-border/70 pt-1">
           <div>
-            <p className="text-[11px] font-black uppercase tracking-[0.22em] text-muted-foreground">Visitar loja</p>
-            <p className="mt-1 text-sm text-muted-foreground">Veja cardápio, combos e promoções</p>
+            <p className="text-xs font-medium text-muted-foreground">Visitar loja</p>
+            <p className="mt-0.5 text-xs text-muted-foreground/70">Cardápio, combos e promoções</p>
           </div>
 
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary transition-transform duration-300 group-hover:translate-x-1">
