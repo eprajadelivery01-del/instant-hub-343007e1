@@ -8,6 +8,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { CartProvider } from "@/contexts/CartContext";
 import { AddressProvider } from "@/contexts/AddressContext";
 import { CityProvider } from "@/contexts/CityContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 import RequireAuth from "@/components/marketplace/RequireAuth";
 import ScrollToTop from "@/components/shared/ScrollToTop";
 import { PageTransition } from "@/components/shared/PageTransition";
@@ -38,6 +39,7 @@ const App = () => {
   }), []);
 
   return (
+    <ThemeProvider>
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <CityProvider>
@@ -72,6 +74,7 @@ const App = () => {
         </CityProvider>
       </AuthProvider>
     </QueryClientProvider>
+    </ThemeProvider>
   );
 };
 

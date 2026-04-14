@@ -16,13 +16,13 @@ const statusLabels: Record<string, string> = {
   cancelled: 'Cancelado',
 };
 
-const statusDots: Record<string, string> = {
+const statusColors: Record<string, string> = {
   pending: 'bg-warning',
   confirmed: 'bg-primary',
   preparing: 'bg-primary',
-  ready: 'bg-success',
+  ready: 'bg-green-500',
   delivering: 'bg-primary animate-pulse',
-  delivered: 'bg-success',
+  delivered: 'bg-green-500',
   cancelled: 'bg-destructive',
 };
 
@@ -48,9 +48,7 @@ export default function Orders() {
     const channel = supabase
       .channel('customer-orders')
       .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'orders',
+        event: '*', schema: 'public', table: 'orders',
         filter: `customer_id=eq.${user.id}`,
       }, (payload) => {
         if (payload.eventType === 'UPDATE') {
@@ -64,59 +62,56 @@ export default function Orders() {
     return () => { supabase.removeChannel(channel); };
   }, [user]);
 
-  if (!user) {
-    navigate('/marketplace/login');
-    return null;
-  }
+  if (!user) { navigate('/marketplace/login'); return null; }
 
   return (
     <MarketplaceLayout>
-      <div className="max-w-lg mx-auto px-4 py-6 space-y-4">
+      <div className="max-w-lg mx-auto px-4 py-5 space-y-4">
         <h1 className="text-xl font-bold text-foreground">Meus pedidos</h1>
 
         {loading ? (
-          <div className="space-y-3">
+          <div className="space-y-2">
             {[1, 2, 3].map(i => (
-              <div key={i} className="bg-card rounded-2xl p-4 h-20 animate-pulse" />
+              <div key={i} className="bg-card border border-border rounded-2xl p-4 h-[72px] animate-pulse" />
             ))}
           </div>
         ) : orders.length === 0 ? (
-          <div className="flex flex-col items-center py-20 text-muted-foreground">
-            <div className="h-20 w-20 bg-muted rounded-full flex items-center justify-center mb-4">
-              <ClipboardList className="h-10 w-10" />
+          <div className="flex flex-col items-center py-16 text-center">
+            <div className="h-16 w-16 bg-secondary rounded-full flex items-center justify-center mb-4">
+              <ClipboardList className="h-8 w-8 text-muted-foreground/50" />
             </div>
-            <p className="text-base font-semibold text-foreground">Nenhum pedido ainda</p>
-            <p className="text-sm mt-1">Seus pedidos aparecerão aqui</p>
+            <p className="font-medium text-foreground">Nenhum pedido ainda</p>
+            <p className="text-sm text-muted-foreground mt-0.5">Seus pedidos aparecerão aqui</p>
           </div>
         ) : (
           <div className="space-y-2">
             {orders.map(order => (
               <Link key={order.id} to={`/marketplace/orders/${order.id}`}>
-                <div className="bg-card rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow active:scale-[0.99]">
+                <div className="bg-card border border-border rounded-2xl p-4 hover:border-primary/20 transition-colors active:scale-[0.99]">
                   <div className="flex items-center gap-3">
-                    <div className="h-11 w-11 rounded-xl bg-muted flex items-center justify-center flex-shrink-0">
-                      <Store className="h-5 w-5 text-muted-foreground" />
+                    <div className="h-10 w-10 rounded-xl bg-secondary flex items-center justify-center shrink-0">
+                      <Store className="h-4 w-4 text-muted-foreground" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h4 className="font-semibold text-foreground text-sm truncate">
+                      <h4 className="font-medium text-sm text-foreground truncate">
                         {order.company?.name || 'Pedido'}
                       </h4>
                       <div className="flex items-center gap-1.5 mt-0.5">
-                        <span className={`h-2 w-2 rounded-full ${statusDots[order.status] || 'bg-muted-foreground'}`} />
+                        <span className={`h-1.5 w-1.5 rounded-full ${statusColors[order.status] || 'bg-muted-foreground'}`} />
                         <span className="text-xs text-muted-foreground">
                           {statusLabels[order.status] || order.status}
                         </span>
                       </div>
                     </div>
-                    <div className="text-right flex-shrink-0">
-                      <p className="font-bold text-sm text-foreground">
+                    <div className="text-right shrink-0">
+                      <p className="font-semibold text-sm text-foreground">
                         R$ {(order.total || 0).toFixed(2).replace('.', ',')}
                       </p>
-                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                      <p className="text-xs text-muted-foreground mt-0.5">
                         {new Date(order.created_at).toLocaleDateString('pt-BR')}
                       </p>
                     </div>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                    <ChevronRight className="h-4 w-4 text-muted-foreground/40 shrink-0" />
                   </div>
                 </div>
               </Link>
