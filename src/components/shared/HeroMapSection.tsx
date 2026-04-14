@@ -33,46 +33,44 @@ export function HeroMapSection() {
 
       {/* Interactive Full-screen Modal */}
       {isOpen && (
-        <div className="fixed inset-0 z-[100] animate-in fade-in zoom-in duration-300" onClick={(e) => e.stopPropagation()}>
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
-          
-          <div className="absolute inset-4 md:inset-10 bg-background rounded-[40px] shadow-2xl overflow-hidden border border-border flex flex-col">
-            <div className="p-6 border-b border-border flex items-center justify-between bg-card text-card-foreground">
-              <div className="flex items-center gap-4">
-                 <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
-                    <MapIcon className="h-6 w-6" />
-                 </div>
-                 <div>
-                    <h2 className="text-xl font-black tracking-tight">Mapa de Serviços</h2>
-                    <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest mt-0.5">Mapa É Pra Já e Marketplace</p>
-                 </div>
-              </div>
-              
-              <button 
-                onClick={() => setIsOpen(false)}
-                className="h-10 w-10 rounded-full bg-muted hover:bg-muted/80 flex items-center justify-center transition-colors"
-              >
-                <X className="h-5 w-5" />
-              </button>
+        <div className="fixed inset-0 z-[9999] animate-in slide-in-from-bottom duration-300 bg-background" onClick={(e) => e.stopPropagation()}>
+            <div className="absolute inset-0">
+              <UnifiedMap interactive />
             </div>
 
-            <div className="flex-1 relative">
-              <UnifiedMap interactive />
-              
-              {/* Floating Legend */}
-              <div className="absolute bottom-6 left-6 right-6 md:right-auto md:w-80 bg-background/80 backdrop-blur-xl p-5 rounded-3xl shadow-2xl border border-white/20">
-                <div className="grid grid-cols-1 gap-4">
-                   <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-success/20 flex items-center justify-center text-success"><ShoppingBag className="h-4 w-4" /></div>
-                      <span className="text-xs font-bold">Lojas Abertas</span>
-                   </div>
+            {/* Floating Close Button */}
+            <button 
+              onClick={() => setIsOpen(false)}
+              className="absolute top-6 right-4 md:top-safe md:mt-4 h-12 w-12 rounded-full bg-background/95 backdrop-blur shadow-2xl border border-border/50 flex items-center justify-center text-foreground z-50 active:scale-90 transition-transform"
+            >
+              <X className="h-6 w-6 stroke-[3]" />
+            </button>
+            
+            {/* Floating Title (Top Left) */}
+            <div className="absolute top-6 left-4 md:top-safe md:mt-4 pointer-events-none z-50">
+              <div className="bg-background/95 backdrop-blur px-5 py-3 rounded-[20px] shadow-2xl border border-border/50">
+                <h2 className="text-sm font-black tracking-tight text-foreground">Mapa Interativo</h2>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <div className="h-1.5 w-1.5 rounded-full bg-success animate-pulse" />
+                  <span className="text-[10px] font-black uppercase tracking-widest text-success">Tempo Real</span>
                 </div>
               </div>
             </div>
 
-            <div className="p-4 bg-muted/30 border-t border-border flex justify-center">
+            {/* Floating Legend Bottom */}
+            <div className="absolute bottom-6 left-4 right-4 md:bottom-safe md:mb-6 z-50">
+              <div className="bg-background/95 backdrop-blur-xl p-5 rounded-[28px] shadow-[0_10px_40px_-10px_rgba(0,0,0,0.3)] border border-border/60 max-w-sm mx-auto">
+                <div className="flex items-center gap-4">
+                  <div className="h-14 w-14 rounded-2xl bg-success/15 flex items-center justify-center text-success shrink-0">
+                    <ShoppingBag className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-black text-foreground leading-tight">Lojas da Região</h3>
+                    <p className="text-xs font-semibold text-muted-foreground mt-1">Veja quais lojas estão aceitando pedidos agora</p>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
         </div>
       )}
     </div>
