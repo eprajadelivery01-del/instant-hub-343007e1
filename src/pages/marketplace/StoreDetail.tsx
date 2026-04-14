@@ -103,7 +103,7 @@ export default function StoreDetail() {
 
   const companyBanner = getCompanyBannerImage(company);
   const companyLogo = getCompanyLogoImage(company);
-  const storeCategory = company.category || categories[0] || 'Gastronomia';
+  const storeCategory = (company as any).category || categories[0] || 'Gastronomia';
 
   return (
     <MarketplaceLayout hideNav={false}>
