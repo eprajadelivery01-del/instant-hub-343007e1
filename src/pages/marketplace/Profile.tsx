@@ -116,22 +116,22 @@ export default function Profile() {
 
         {/* Clube card */}
         <div className="px-5 mb-6">
-          <div className="relative overflow-hidden rounded-2xl bg-foreground p-6">
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary to-orange-600 p-6 shadow-lg shadow-primary/30">
             <div className="relative z-10">
               <div className="flex items-center gap-2.5 mb-3">
-                <div className="h-9 w-9 rounded-xl bg-primary flex items-center justify-center">
-                  <Gem className="h-4 w-4 text-primary-foreground" />
+                <div className="h-9 w-9 rounded-xl bg-white/20 flex items-center justify-center backdrop-blur-sm">
+                  <span className="text-lg leading-none select-none">🍔</span>
                 </div>
-                <span className="text-xs font-medium text-background/50">Clube É Pra Já</span>
+                <span className="text-xs font-bold text-white/90">Clube É Pra Já</span>
               </div>
-              <p className="text-lg font-bold text-background leading-snug mb-4">
-                Economize com cupons exclusivos
+              <p className="text-lg font-bold text-white leading-snug mb-4">
+                Economize com cupons no seu lanche favorito
               </p>
-              <button className="h-10 px-5 rounded-xl bg-background text-foreground text-xs font-semibold hover:opacity-90 transition-opacity">
+              <button className="h-10 px-5 rounded-xl bg-white text-primary text-xs font-bold hover:opacity-90 shadow-sm transition-all active:scale-[0.98]">
                 Ver benefícios
               </button>
             </div>
-            <Gem className="absolute -right-4 -bottom-4 h-32 w-32 text-background/[0.04]" />
+            <span className="absolute -right-4 -bottom-4 text-[130px] opacity-10 select-none">🍔</span>
           </div>
         </div>
 
