@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils';
 import { ProductDetailDialog } from '@/components/marketplace/ProductDetailDialog';
 import { MediaImage } from '@/components/shared/MediaImage';
 import { getCompanyBannerImage, getCompanyLogoImage, getPrimaryProductImage } from '@/lib/media';
+import { toast } from 'sonner';
 
 export default function StoreDetail() {
   const { id } = useParams<{ id: string }>();

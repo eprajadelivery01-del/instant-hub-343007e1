@@ -16,7 +16,7 @@ interface ProductDetailDialogProps {
   isClosed?: boolean;
 }
 
-export function ProductDetailDialog({ product, isOpen, onClose, onAddToCart, initialQuantity = 0 }: ProductDetailDialogProps) {
+export function ProductDetailDialog({ product, isOpen, onClose, onAddToCart, initialQuantity = 0, isClosed }: ProductDetailDialogProps) {
   const [quantity, setQuantity] = useState(initialQuantity || 1);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 

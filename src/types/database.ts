@@ -35,6 +35,8 @@ export interface Company {
   delivery_mode: string | null;
   city_id: string | null;
   delivery_fee: number | null;
+  is_open?: boolean;
+  business_hours?: string | null;
 }
 
 export interface Product {
