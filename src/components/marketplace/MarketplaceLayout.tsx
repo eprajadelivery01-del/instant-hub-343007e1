@@ -32,8 +32,8 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
       </main>
 
       {!hideNav && (
-        <nav className="fixed bottom-6 left-1/2 z-50 h-[72px] w-[92%] max-w-md -translate-x-1/2 rounded-[28px] border border-border/30 bg-background/85 backdrop-blur-2xl shadow-[0_12px_40px_-10px_rgba(0,0,0,0.2)]">
-          <div className="flex h-full items-center justify-around px-2">
+        <nav className="fixed bottom-0 left-0 right-0 z-50 w-full border-t border-border bg-background pb-safe">
+          <div className="flex h-16 items-center justify-around px-2">
             {navItems.map((item) => {
               const isHome = item.path === '/marketplace';
               const active = isHome
@@ -52,21 +52,16 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
                   key={item.path}
                   to={item.path}
                   onClick={handleClick}
-                  className="group relative flex w-16 flex-col items-center justify-center gap-1.5 h-full transition-all"
+                  className="group flex flex-1 flex-col items-center justify-center gap-1 h-full"
                 >
-                  <div className={cn(
-                    'relative flex items-center justify-center transition-all duration-300',
-                    active ? 'text-primary' : 'text-muted-foreground'
-                  )}>
-                    <item.icon className={cn(
-                      'h-6 w-6 transition-all duration-300',
-                      active ? 'scale-110 stroke-[2.5px]' : 'scale-100 stroke-[1.5px] group-hover:scale-105 group-hover:text-foreground'
-                    )} />
-                  </div>
+                  <item.icon className={cn(
+                    'h-[22px] w-[22px] transition-all duration-200',
+                    active ? 'text-foreground stroke-[2.5px]' : 'text-muted-foreground stroke-[1.5px]'
+                  )} />
 
                   <span className={cn(
-                    'text-[10px] font-medium transition-all duration-300',
-                    active ? 'text-primary font-bold' : 'text-muted-foreground'
+                    'text-[10px] transition-all duration-200',
+                    active ? 'text-foreground font-bold' : 'text-muted-foreground font-medium'
                   )}>
                     {item.label}
                   </span>
