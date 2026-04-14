@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { toast } from 'sonner';
-import { MapPin, CreditCard, Banknote, QrCode, Plus, AlertCircle, ArrowLeft } from 'lucide-react';
+import { MapPin, CreditCard, Banknote, QrCode, Plus, AlertCircle, ArrowLeft, Ticket, CheckCircle2 } from 'lucide-react';
 import { useOrderLock } from '@/hooks/useOrderLock';
 
 export default function Checkout() {
@@ -27,6 +27,11 @@ export default function Checkout() {
   const [unavailable, setUnavailable] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loadingAddresses, setLoadingAddresses] = useState(true);
+
+  // Coupon States
+  const [couponCode, setCouponCode] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
+  const [validatingCoupon, setValidatingCoupon] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -83,7 +88,50 @@ export default function Checkout() {
     } catch { return false; }
   };
 
-  const total = subtotal + (deliveryFee || 0);
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) return;
+    setValidatingCoupon(true);
+    try {
+      const code = couponCode.trim().toUpperCase();
+      const { data, error } = await supabase.from('coupons').select('*').eq('code', code).eq('active', true).maybeSingle();
+      
+      if (error || !data) {
+        toast.error('Cupom inválido ou inativo.');
+        setAppliedCoupon(null);
+        return;
+      }
+      if (data.expires_at && new Date(data.expires_at) < new Date()) {
+        toast.error('Este cupom já expirou.');
+        setAppliedCoupon(null);
+        return;
+      }
+      if (data.min_order_value && subtotal < data.min_order_value) {
+        toast.error(`Valor mínimo para aplicar é de R$ ${data.min_order_value.toLocaleString('pt-BR')}`);
+        setAppliedCoupon(null);
+        return;
+      }
+      if (data.company_id && data.company_id !== company?.id) {
+        toast.error('Este cupom é exclusivo de outra loja.');
+        setAppliedCoupon(null);
+        return;
+      }
+      
+      setAppliedCoupon(data);
+      toast.success('🎉 Cupom aplicado com sucesso!');
+    } catch (err) {
+      toast.error('Falha ao checar o cupom.');
+    } finally {
+      setValidatingCoupon(false);
+    }
+  };
+
+  const discountAmount = appliedCoupon 
+    ? (appliedCoupon.discount_type === 'percentage' 
+       ? Math.min((subtotal * (appliedCoupon.discount_value / 100)), appliedCoupon.max_discount_value || Infinity)
+       : appliedCoupon.discount_value)
+    : 0;
+
+  const total = Math.max(0, subtotal - discountAmount) + (deliveryFee || 0);
 
   const handleSubmit = async () => {
     if (!user || !company || items.length === 0) return;
@@ -109,11 +157,21 @@ export default function Checkout() {
         order_id: order.id, product_id: item.product.id, quantity: item.quantity,
         price: item.product.price, unit_price: item.product.price, product_name: item.product.name,
       }));
-      const { error: itemsError } = await supabase.from('order_items').insert(orderItems);
-      if (itemsError) throw itemsError;
-      if (addr) {
-        await supabase.from('deliveries').insert({
-          order_id: order.id, company_id: company.id,
+        const { error: itemsError } = await supabase.from('order_items').insert(orderItems);
+        if (itemsError) throw itemsError;
+        
+        if (appliedCoupon) {
+          await supabase.from('user_coupons').insert({
+            user_id: user.id,
+            coupon_id: appliedCoupon.id,
+            order_id: order.id,
+            used_at: new Date().toISOString()
+          });
+        }
+        
+        if (addr) {
+          await supabase.from('deliveries').insert({
+            order_id: order.id, company_id: company.id,
           pickup_address: company.address || company.name, delivery_address: deliveryAddress,
           pickup_latitude: company.latitude, pickup_longitude: company.longitude,
           delivery_latitude: addr.latitude, delivery_longitude: addr.longitude,
@@ -202,6 +260,41 @@ export default function Checkout() {
           <Textarea placeholder="Ex: sem cebola, troco para R$50..." value={notes} onChange={e => setNotes(e.target.value)} className="rounded-xl min-h-[80px]" />
         </div>
 
+        {/* Cupom */}
+        <div className="bg-card border border-border rounded-2xl p-4 space-y-3">
+          <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+            <Ticket className="h-4 w-4 text-primary" /> Cupom de Desconto
+          </h3>
+          {appliedCoupon ? (
+            <div className="flex items-center justify-between bg-primary/10 border border-primary/20 rounded-xl p-3">
+              <div className="flex items-center gap-2 text-primary">
+                <CheckCircle2 className="h-5 w-5" />
+                <span className="font-bold text-sm uppercase">{appliedCoupon.code}</span>
+              </div>
+              <button onClick={() => setAppliedCoupon(null)} className="text-xs font-semibold text-muted-foreground underline">Remover</button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <input 
+                type="text" 
+                placeholder="Insira o código" 
+                value={couponCode}
+                onChange={e => setCouponCode(e.target.value)}
+                className="flex-1 h-11 bg-background border border-border rounded-xl px-4 text-sm font-bold uppercase placeholder:normal-case placeholder:font-normal focus:outline-none focus:border-primary transition-colors"
+                disabled={validatingCoupon}
+              />
+              <Button 
+                variant="secondary" 
+                className="h-11 rounded-xl text-primary font-bold" 
+                disabled={!couponCode.trim() || validatingCoupon}
+                onClick={handleApplyCoupon}
+              >
+                {validatingCoupon ? '...' : 'Aplicar'}
+              </Button>
+            </div>
+          )}
+        </div>
+
         {/* Resumo */}
         <div className="bg-card border border-border rounded-2xl p-4 space-y-2">
           <h3 className="text-sm font-semibold text-foreground mb-2">Resumo</h3>
@@ -220,6 +313,12 @@ export default function Checkout() {
               <span className="text-muted-foreground">Entrega</span>
               <span>{deliveryFee !== null ? `R$ ${deliveryFee.toFixed(2).replace('.', ',')}` : '—'}</span>
             </div>
+            {appliedCoupon && (
+              <div className="flex justify-between text-sm text-primary font-medium">
+                <span>Desconto ({appliedCoupon.code})</span>
+                <span>- R$ {discountAmount.toFixed(2).replace('.', ',')}</span>
+              </div>
+            )}
             <div className="border-t border-border pt-2 flex justify-between font-bold">
               <span>Total</span>
               <span className="text-primary">R$ {total.toFixed(2).replace('.', ',')}</span>
