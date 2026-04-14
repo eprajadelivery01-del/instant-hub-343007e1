@@ -29,28 +29,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     try {
       console.log(`[Auth-Marketplace] V12-TOTAL-RELEASE - Carregando perfil: ${userId}`);
-      
-      const timeout = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error("Timeout")), 10000)
+
+      const timeout = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Timeout')), 10000)
       );
 
-      // Usando seleção específica de colunas
       const fetchPromise = supabase
         .from('profiles')
-        .select('id, full_name, role') 
+        .select('id, full_name, avatar_url, phone, role, created_at, updated_at')
         .eq('id', userId)
         .maybeSingle();
 
-      const { data, error } = await Promise.race([fetchPromise, timeout]) as any;
-      
+      const { data } = await Promise.race([fetchPromise, timeout]) as any;
+
       if (data) {
         setProfile(data);
       }
     } catch (error: any) {
-      console.error("[Auth-Marketplace] Erro no profile:", error.message);
+      console.error('[Auth-Marketplace] Erro no profile:', error.message);
     } finally {
       fetchingRef.current = null;
-      setLoading(false); // Garantir que o loading morra aqui também
+      setLoading(false);
     }
   };
 
@@ -61,21 +60,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (!mounted) return;
-        
+
         const currentUser = session?.user;
         setSession(session);
         setUser(currentUser ?? null);
-        
+
         if (currentUser) {
-          // V12: LIBERAÇÃO IMEDIATA
-          console.log("[Auth-Marketplace] V12: Liberando loading para usuário logado.");
-          setLoading(false); 
-          // Busca perfil em background
-          setTimeout(() => { if (mounted) fetchProfile(currentUser.id); }, 0);
+          console.log('[Auth-Marketplace] V12: Liberando loading para usuário logado.');
+          setLoading(false);
+          setTimeout(() => {
+            if (mounted) fetchProfile(currentUser.id);
+          }, 0);
         } else {
           setLoading(false);
         }
-      } catch (error) {
+      } catch {
         setLoading(false);
       }
     };
@@ -87,15 +86,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!mounted) return;
         console.log(`[Auth-Marketplace] Evento V17 (TOTAL-RELEASE): ${event}`);
 
-        if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED" || event === "USER_UPDATED") {
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
           const currentUser = session?.user;
           setSession(session);
           setUser(currentUser ?? null);
-          setLoading(false); // LIBERAÇÃO IMEDIATA
+          setLoading(false);
           if (currentUser) {
-            setTimeout(() => { if (mounted) fetchProfile(currentUser.id); }, 0);
+            setTimeout(() => {
+              if (mounted) fetchProfile(currentUser.id);
+            }, 0);
           }
-        } else if (event === "SIGNED_OUT") {
+        } else if (event === 'SIGNED_OUT') {
           setSession(null);
           setUser(null);
           setProfile(null);
@@ -106,7 +107,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return () => {
       mounted = false;
-      if (authListener && authListener.data && authListener.data.subscription) { authListener.data.subscription.unsubscribe(); }
+      if (authListener?.data?.subscription) {
+        authListener.data.subscription.unsubscribe();
+      }
     };
   }, []);
 
@@ -124,14 +127,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) throw error;
 
     if (data.user) {
-      // Create profile logic - Essential for marketplace
       await supabase.from('profiles').upsert({
         id: data.user.id,
         full_name: fullName,
         phone,
         role: 'customer',
       });
-      // Create user role
+
       await supabase.from('user_roles').insert({
         user_id: data.user.id,
         role: 'customer',
@@ -148,7 +150,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setProfile(null);
       localStorage.clear();
       sessionStorage.clear();
-      window.location.href = "/marketplace/login";
+      window.location.href = '/marketplace/login';
     }
   };
 
@@ -168,5 +170,3 @@ export const useAuth = () => {
   if (!ctx) throw new Error('useAuth must be used within AuthProvider');
   return ctx;
 };
-
-
