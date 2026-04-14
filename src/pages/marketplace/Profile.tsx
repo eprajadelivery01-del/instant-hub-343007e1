@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
+import { SupportChat } from '@/components/chat/SupportChat';
 import {
   LogOut, MapPin, User, ChevronRight, Gem,
   Bell, HelpCircle, Wallet, Trash2, X, Camera, Loader2,
@@ -30,6 +31,7 @@ export default function Profile() {
   const [saving, setSaving] = useState(false);
   const [editing, setEditing] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [supportType, setSupportType] = useState<'support' | 'driver_application' | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -71,13 +73,13 @@ export default function Profile() {
   if (!user) { navigate('/marketplace/login'); return null; }
 
   const menuItems = [
-    { icon: Wallet, label: 'Saldo', subtitle: 'Carteira digital', onClick: () => {} },
+    { icon: Wallet, label: 'Saldo', subtitle: 'Carteira digital', onClick: () => toast('Sua carteira está vazia.', { description: 'Recargas estarão disponíveis em breve.' }) },
     { icon: MapPin, label: 'Endereços', subtitle: 'Gerenciar locais', onClick: () => navigate('/marketplace/addresses'), chevron: true },
-    { icon: Bell, label: 'Notificações', subtitle: 'Nenhuma novidade', onClick: () => {} },
+    { icon: Bell, label: 'Notificações', subtitle: 'Nenhuma novidade', onClick: () => toast.info('Todas as novidades do app aparecerão aqui.') },
     { icon: Settings, label: 'Meus Dados', subtitle: 'Informações pessoais', onClick: () => setEditing(true), chevron: true },
-    { icon: HelpCircle, label: 'Ajuda', subtitle: 'Suporte e dúvidas', onClick: () => {} },
-    { icon: Heart, label: 'Favoritos', subtitle: 'Suas lojas favoritas', onClick: () => {} },
-    { icon: Ticket, label: 'Cupons', subtitle: '8 disponíveis', onClick: () => {}, highlight: true },
+    { icon: HelpCircle, label: 'Ajuda', subtitle: 'Suporte e dúvidas', onClick: () => setSupportType('support') },
+    { icon: Heart, label: 'Favoritos', subtitle: 'Suas lojas favoritas', onClick: () => toast.info('Suas lojas do coração ficarão guardadas aqui.') },
+    { icon: Ticket, label: 'Cupons', subtitle: '8 disponíveis', onClick: () => toast.success('Você ganhou 8 cupons! Fila de resgate em desenvolvimento.'), highlight: true },
   ];
 
   return (
@@ -197,7 +199,7 @@ export default function Profile() {
 
         {/* Entregador banner */}
         <div className="px-5 mb-4">
-          <div className="flex items-center justify-between rounded-2xl bg-card border border-border p-4">
+          <button onClick={() => setSupportType('driver_application')} className="w-full flex items-center justify-between rounded-2xl bg-card border border-border p-4 text-left hover:bg-secondary/50 transition-colors">
             <div className="flex items-center gap-3">
               <div className="h-9 w-9 rounded-xl bg-foreground flex items-center justify-center">
                 <Bike className="h-4 w-4 text-background" />
@@ -208,7 +210,7 @@ export default function Profile() {
               </div>
             </div>
             <span className="text-xs font-medium text-primary">Saiba mais</span>
-          </div>
+          </button>
         </div>
 
         {/* Actions */}
@@ -279,6 +281,25 @@ export default function Profile() {
                 </Button>
               </div>
             </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Support Chat Sheet */}
+      <Sheet open={supportType !== null} onOpenChange={(open) => !open && setSupportType(null)}>
+        <SheetContent side="bottom" className="h-[80vh] rounded-t-3xl border-none p-0 overflow-hidden">
+          <div className="flex flex-col h-full bg-background relative">
+            <div className="absolute right-4 top-4 z-10 bg-background/80 rounded-full p-1 border">
+              <button onClick={() => setSupportType(null)}>
+                <X className="h-5 w-5 text-muted-foreground" />
+              </button>
+            </div>
+            {supportType && (
+              <SupportChat 
+                title={supportType === 'support' ? "Ajuda e Suporte" : "Seja um Entregador"} 
+                topic={supportType} 
+              />
+            )}
           </div>
         </SheetContent>
       </Sheet>
