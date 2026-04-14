@@ -197,7 +197,7 @@ export default function Home() {
                 className={cn(
                   'flex h-12 items-center gap-2 whitespace-nowrap rounded-xl border px-5 text-xs font-semibold transition-all',
                   activeCategory === category.value
-                    ? 'bg-foreground border-foreground text-background shadow-lg'
+                    ? 'bg-primary border-primary text-primary-foreground shadow-lg shadow-primary/20'
                     : 'premium-card text-muted-foreground hover:border-primary/20'
                 )}
               >
