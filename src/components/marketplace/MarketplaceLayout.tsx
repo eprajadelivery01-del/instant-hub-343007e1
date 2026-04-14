@@ -32,8 +32,8 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
       </main>
 
       {!hideNav && (
-        <nav className="premium-panel fixed bottom-5 left-1/2 z-50 h-[76px] w-[92%] max-w-md -translate-x-1/2 overflow-hidden rounded-[30px] px-2">
-          <div className="flex h-full items-center justify-around py-2">
+        <nav className="fixed bottom-6 left-1/2 z-50 h-[72px] w-[92%] max-w-md -translate-x-1/2 rounded-[28px] border border-border/30 bg-background/85 backdrop-blur-2xl shadow-[0_12px_40px_-10px_rgba(0,0,0,0.2)]">
+          <div className="flex h-full items-center justify-around px-2">
             {navItems.map((item) => {
               const isHome = item.path === '/marketplace';
               const active = isHome
@@ -52,29 +52,24 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
                   key={item.path}
                   to={item.path}
                   onClick={handleClick}
-                  className={cn(
-                    'group relative flex min-w-[64px] flex-col items-center justify-center gap-1 rounded-2xl px-3 py-2 transition-all duration-300',
-                    active ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
-                  )}
+                  className="group relative flex w-16 flex-col items-center justify-center gap-1.5 h-full transition-all"
                 >
                   <div className={cn(
-                    'rounded-2xl p-2 transition-all duration-500',
-                    active ? 'bg-primary/10 text-primary shadow-sm' : 'group-hover:bg-secondary'
+                    'relative flex items-center justify-center transition-all duration-300',
+                    active ? 'text-primary' : 'text-muted-foreground'
                   )}>
-                    <item.icon className={cn('h-5 w-5 transition-all duration-500', active ? 'scale-110' : 'group-hover:scale-110')} />
+                    <item.icon className={cn(
+                      'h-6 w-6 transition-all duration-300',
+                      active ? 'scale-110 stroke-[2.5px]' : 'scale-100 stroke-[1.5px] group-hover:scale-105 group-hover:text-foreground'
+                    )} />
                   </div>
 
                   <span className={cn(
-                    'text-[9px] font-black uppercase tracking-[0.15em] leading-none transition-all duration-300',
-                    active ? 'translate-y-0 opacity-100' : 'translate-y-1 opacity-0 group-hover:opacity-50'
+                    'text-[10px] font-medium transition-all duration-300',
+                    active ? 'text-primary font-bold' : 'text-muted-foreground'
                   )}>
                     {item.label}
                   </span>
-
-                  <span className={cn(
-                    'absolute bottom-1 h-1 rounded-full bg-primary transition-all duration-300',
-                    active ? 'w-8 opacity-100' : 'w-0 opacity-0'
-                  )} />
                 </Link>
               );
             })}
