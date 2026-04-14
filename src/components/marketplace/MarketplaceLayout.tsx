@@ -73,23 +73,22 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
       )}
 
       {itemCount > 0 && !location.pathname.includes('/cart') && !location.pathname.includes('/checkout') && (
-        <div className="fixed bottom-20 left-0 right-0 z-40 px-4 animate-in slide-in-from-bottom duration-500">
+        <div className="sticky bottom-[80px] z-[60] w-full px-4 border-none pointer-events-none mb-4 flex justify-center animate-in slide-in-from-bottom duration-500">
           <Link
             to="/marketplace/cart"
-            className="mx-auto flex h-14 w-full max-w-lg items-center justify-between rounded-[22px] bg-primary px-6 text-primary-foreground shadow-lg active:scale-[0.98] transition-transform"
+            className="pointer-events-auto flex h-16 w-full max-w-sm items-center justify-between rounded-full bg-primary pl-2 pr-6 text-primary-foreground shadow-[0_12px_30px_-5px_rgba(234,88,12,0.5)] active:scale-[0.97] transition-all hover:shadow-[0_15px_35px_-5px_rgba(234,88,12,0.6)]"
           >
-            <div className="flex items-center gap-4">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary-foreground/15 text-sm font-black">
+            <div className="flex items-center gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/20 backdrop-blur-md text-lg font-black shadow-inner">
                 {itemCount}
               </div>
-
-              <div className="text-left">
-                <p className="text-[9px] font-black uppercase tracking-widest opacity-80 leading-none">Ver sacola</p>
-                <p className="text-sm font-black">Finalizar pedido</p>
+              <div className="flex flex-col justify-center text-left">
+                <p className="text-[14px] font-black leading-tight tracking-tight">Ver Sacola</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest opacity-80 mt-0.5">Finalizar pedido</p>
               </div>
             </div>
 
-            <ShoppingBag className="h-5 w-5 opacity-70" />
+            <ShoppingBag className="h-6 w-6 opacity-90 stroke-[2.5]" />
           </Link>
         </div>
       )}
