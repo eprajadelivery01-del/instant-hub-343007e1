@@ -1,99 +1,130 @@
-import { useNavigate } from "react-router-dom";
-import { Company, Product } from "@/types/database";
-import { Star, Clock, ShoppingBag } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { useNavigate } from 'react-router-dom';
+import { Company, Product } from '@/types/database';
+import { ArrowRight, Clock3, ShoppingBag, Star, Store as StoreIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { MediaImage } from '@/components/shared/MediaImage';
+import { getCompanyBannerImage, getCompanyLogoImage, getPrimaryProductImage } from '@/lib/media';
 
 interface StoreTabCardProps {
-  company: Company & { products: Product[] };
+  company: Company & { products: Product[]; rating?: number | null; cover_url?: string | null; category?: string | null };
 }
 
 export function StoreTabCard({ company }: StoreTabCardProps) {
   const navigate = useNavigate();
+  const bannerImage = getCompanyBannerImage(company);
+  const logoImage = getCompanyLogoImage(company);
+  const featuredProducts = (company.products || []).slice(0, 3);
+  const rating = Number(company.rating || 4.8);
+  const subtitle = company.category || company.description || 'Gastronomia de alto nível';
 
   return (
-    <div 
+    <button
+      type="button"
       onClick={() => navigate(`/marketplace/store/${company.id}`)}
       className={cn(
-        "group relative h-auto min-h-[260px] sm:min-h-[320px] w-full bg-[#1c1c1e] rounded-[32px] sm:rounded-[48px] overflow-hidden transition-all duration-500 hover:scale-[1.02] hover:-translate-y-2 cursor-pointer border-2 active:scale-[0.98]",
-        company.active 
-          ? "border-success/30 shadow-cloud-green hover:shadow-success/20" 
-          : "border-destructive/30 shadow-cloud-red grayscale-[0.6] opacity-70"
+        'premium-card premium-card-interactive group relative w-full overflow-hidden rounded-[32px] text-left active:scale-[0.99]',
+        !company.active && 'opacity-80 grayscale-[0.16]'
       )}
     >
+      <div className="relative h-52 overflow-hidden">
+        <MediaImage
+          src={bannerImage}
+          alt={`Capa da loja ${company.name}`}
+          className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+          fallback={
+            <div className="flex h-full w-full items-center justify-center bg-secondary text-muted-foreground">
+              <StoreIcon className="h-16 w-16 opacity-40" />
+            </div>
+          }
+        />
+        <div className="hero-image-overlay absolute inset-0" />
 
-      {/* Status Bolinha - Ultra Clean (Garantido sem ícone) */}
-      <div className="absolute top-6 left-6 z-30">
-        <div className={cn(
-          "h-3 w-3 rounded-full shadow-[0_0_10px_rgba(0,0,0,0.5)]",
-          company.active ? "bg-success animate-pulse" : "bg-destructive"
-        )} />
-      </div>
+        <div className="absolute inset-x-0 top-0 z-20 flex items-start justify-between p-4">
+          <span className={cn(
+            'rounded-full border border-primary-foreground/20 bg-background/15 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-primary-foreground backdrop-blur-md',
+            !company.active && 'bg-card/80 text-foreground'
+          )}>
+            {company.active ? 'Aberta agora' : 'Fechada'}
+          </span>
 
+          <div className="flex items-center gap-1 rounded-full bg-card px-3 py-1 text-[11px] font-black text-foreground shadow-sm">
+            <Star className="h-3.5 w-3.5 fill-current text-warning" />
+            <span>{rating.toFixed(1)}</span>
+          </div>
+        </div>
 
+        <div className="absolute inset-x-0 bottom-0 z-20 p-5">
+          <div className="flex items-end gap-4">
+            <div className="premium-panel flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-[24px] bg-card/90">
+              <MediaImage
+                src={logoImage}
+                alt={`Logo da loja ${company.name}`}
+                className="h-full w-full object-cover"
+                fallback={<StoreIcon className="h-7 w-7 text-muted-foreground" />}
+              />
+            </div>
 
-
-
-      {/* Minimal Header (Sem ícone, apenas nome e status lateral) */}
-      <div className="absolute top-0 left-0 right-0 h-14 flex items-center justify-between px-6 z-20">
-        <div className="flex items-center gap-3 overflow-hidden ml-6">
-           <h3 className="text-white text-sm font-black truncate max-w-[140px] tracking-tight">{company.name}</h3>
+            <div className="min-w-0 text-primary-foreground">
+              <h3 className="truncate text-2xl font-black tracking-tight">{company.name}</h3>
+              <p className="mt-1 line-clamp-2 text-sm font-medium text-primary-foreground/80">{subtitle}</p>
+            </div>
+          </div>
         </div>
       </div>
 
+      <div className="space-y-5 p-5">
+        <div className="flex flex-wrap items-center gap-2 text-[11px] font-bold text-muted-foreground">
+          <div className="premium-chip flex items-center gap-2 rounded-full px-3 py-2">
+            <Clock3 className="h-3.5 w-3.5 text-primary" />
+            <span>25-40 min</span>
+          </div>
+          <div className="premium-chip rounded-full px-3 py-2">
+            {company.delivery_fee ? `Entrega R$ ${company.delivery_fee.toFixed(2).replace('.', ',')}` : 'Entrega grátis'}
+          </div>
+          {company.city && <div className="premium-chip rounded-full px-3 py-2">{company.city}</div>}
+        </div>
 
-      {/* Main Content (Miniature Store Preview) */}
-      <div className="pt-14 p-4 h-full flex flex-col gap-3">
-         {/* Store Brief Info */}
-         <div className="flex items-center justify-between px-1">
-            <div className="flex items-center gap-2">
-               <div className="flex items-center gap-1 bg-yellow-400 text-black px-2 py-0.5 rounded-full text-[10px] font-black">
-                  <Star className="h-3 w-3 fill-current" />
-                  <span>4.8</span>
-               </div>
-               <span className="text-[10px] font-bold text-white/40">30-45 min</span>
-            </div>
-         </div>
-
-         {/* Products Mini Grid (The "Browser Preview" part) */}
-         <div className="flex-1 grid grid-cols-2 gap-2 p-1 overflow-hidden">
-            {(company.products || []).length > 0 ? (
-              company.products.map((product) => (
-                <div key={product.id} className="bg-white/5 rounded-[24px] overflow-hidden p-2 flex flex-col gap-2 group-hover:bg-white/10 transition-colors animate-in fade-in zoom-in duration-500">
-                  <div className="aspect-square w-full rounded-[18px] overflow-hidden bg-black/20">
-                    {product.image_urls && product.image_urls.length > 0 ? (
-                      <img src={product.image_urls[0]} alt="" className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-700" />
-                    ) : product.image_url ? (
-                      <img src={product.image_url} alt="" className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-700" />
-                    ) : (
-                      <div className="h-full w-full flex items-center justify-center opacity-10">
-                        <ShoppingBag className="h-6 w-6 text-white" />
+        <div className="grid grid-cols-3 gap-3">
+          {featuredProducts.length > 0 ? (
+            featuredProducts.map((product) => (
+              <div key={product.id} className="premium-chip overflow-hidden rounded-[22px] p-2">
+                <div className="mb-2 aspect-square overflow-hidden rounded-[16px] bg-secondary">
+                  <MediaImage
+                    src={getPrimaryProductImage(product)}
+                    alt={product.name || 'Produto da loja'}
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    fallback={
+                      <div className="flex h-full w-full items-center justify-center text-muted-foreground">
+                        <ShoppingBag className="h-5 w-5 opacity-50" />
                       </div>
-                    )}
-                  </div>
-
-                  <div className="px-1 overflow-hidden">
-                    <p className="text-[9px] text-white/90 font-black truncate leading-none">{product.name}</p>
-                    <p className="text-[8px] text-primary font-bold mt-1">R$ {product.price?.toFixed(2)}</p>
-                  </div>
+                    }
+                  />
                 </div>
-              ))
-            ) : (
-              <div className="col-span-2 flex flex-col items-center justify-center opacity-20 py-10">
-                 <ShoppingBag className="h-12 w-12 text-white mb-2" />
-                 <p className="text-[10px] font-bold text-white">Sem produtos cadastrados</p>
+                <p className="truncate text-[11px] font-black text-foreground">{product.name}</p>
+                <p className="mt-1 text-[11px] font-bold text-primary">
+                  R$ {Number(product.price || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </p>
               </div>
-            )}
-         </div>
+            ))
+          ) : (
+            <div className="premium-chip col-span-3 flex min-h-[112px] flex-col items-center justify-center rounded-[24px] text-center text-muted-foreground">
+              <ShoppingBag className="mb-2 h-8 w-8 opacity-50" />
+              <p className="text-xs font-bold">Cardápio em atualização</p>
+            </div>
+          )}
+        </div>
 
-         {/* Call to action text (Subtle) */}
-         <div className="text-center pb-2">
-            <p className="text-[10px] text-white/30 font-bold uppercase tracking-[0.2em] group-hover:text-primary transition-colors">Visitar Loja</p>
-         </div>
+        <div className="flex items-center justify-between border-t border-border/70 pt-1">
+          <div>
+            <p className="text-[11px] font-black uppercase tracking-[0.22em] text-muted-foreground">Visitar loja</p>
+            <p className="mt-1 text-sm text-muted-foreground">Veja cardápio, combos e promoções</p>
+          </div>
+
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary transition-transform duration-300 group-hover:translate-x-1">
+            <ArrowRight className="h-5 w-5" />
+          </div>
+        </div>
       </div>
-
-      {/* Bottom Subtle Overlay */}
-      <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
-    </div>
-
+    </button>
   );
 }

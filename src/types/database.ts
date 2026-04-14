@@ -24,7 +24,11 @@ export interface Company {
   updated_at: string;
   user_id: string;
   banner_url: string | null;
+  cover_url?: string | null;
   description: string | null;
+  category?: string | null;
+  rating?: number | null;
+  is_active?: boolean;
   latitude: number | null;
   longitude: number | null;
   opening_hours: any | null;
@@ -43,7 +47,6 @@ export interface Product {
   image_url: string | null;
   image_urls?: string[] | null;
   active: boolean;
-
   created_at: string;
   updated_at: string;
 }

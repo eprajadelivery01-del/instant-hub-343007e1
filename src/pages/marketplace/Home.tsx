@@ -1,5 +1,4 @@
-// v3.0.2 - Restauracao de Marca e Localizacao Profissional
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
@@ -13,11 +12,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { StoreTabCard } from '@/components/marketplace/StoreTabCard';
 import { MarketplaceMenu } from '@/components/marketplace/MarketplaceMenu';
-import { Search, MapPin, Star, Clock, ChevronDown, Store, Utensils, Coffee, Pizza, Cake, Sandwich, User, PanelLeft, X } from 'lucide-react';
-import {
-  Sheet, SheetContent, SheetHeader, SheetTitle
-} from '@/components/ui/sheet';
+import { Skeleton } from '@/components/ui/skeleton';
+import { MediaImage } from '@/components/shared/MediaImage';
+import { Search, Star, ChevronDown, Store, Utensils, Coffee, Pizza, Cake, Sandwich, User, PanelLeft, X } from 'lucide-react';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
+import { getAvatarImage, getCompanyBannerImage, getCompanyLogoImage } from '@/lib/media';
 
 const categories = [
   { icon: Utensils, label: 'Todos', value: '' },
@@ -27,7 +27,6 @@ const categories = [
   { icon: Cake, label: 'Doces', value: 'doces' },
 ];
 
-// Mapeamento profissional para substituir nomes genericos/ingleses/fake
 const PROFESSIONAL_NAMES: Record<string, string> = {
   'Sushi Master': 'Harumi Sushi',
   'Ice Cream Heaven': 'Gelateria Central',
@@ -39,25 +38,26 @@ const PROFESSIONAL_NAMES: Record<string, string> = {
   'Veggie Delight': 'Horta & Sabor',
   'Fruit Fresh': 'Frutaria Tropical',
   'Pasta Palace': 'Cantina Di Roma',
-  'Lanchonete Teste': 'Lanchonete da Praça'
+  'Lanchonete Teste': 'Lanchonete da Praça',
 };
 
+type MarketplaceCompany = Company & { products: Product[]; rating: number; isPremium?: boolean };
+
 export default function Home() {
-  const [companies, setCompanies] = useState<(Company & { products: Product[], rating: number, isPremium?: boolean })[]>([]);
+  const [companies, setCompanies] = useState<MarketplaceCompany[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('');
   const [partnershipType, setPartnershipType] = useState<'merchant' | 'driver' | null>(null);
   const { selectedAddress } = useAddress();
-  const { user } = useAuth();
+  const { profile } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchCompanies = async () => {
       const { data } = await supabase.from('companies').select('*, products(*)');
-      const processed = (data || []).map((c, index) => {
-        // Restaurar nomes profissionais
-        let name = c.name;
+      const processed = (data || []).map((company, index) => {
+        let name = company.name;
         if (PROFESSIONAL_NAMES[name]) {
           name = PROFESSIONAL_NAMES[name];
         } else if (name.includes('Fake')) {
@@ -65,208 +65,253 @@ export default function Home() {
         }
 
         return {
-          ...c,
+          ...company,
           name,
-          products: (c.products || []).slice(0, 4),
-          rating: (c.rating && c.rating > 0) ? c.rating : (4.5 + (Math.random() * 0.5)),
-          isPremium: index < 5
+          active: company.active ?? company.is_active ?? false,
+          products: (company.products || []).slice(0, 4),
+          rating: company.rating && company.rating > 0 ? company.rating : 4.5 + Math.random() * 0.5,
+          isPremium: index < 5,
         };
       }).sort((a, b) => b.rating - a.rating);
-      
-      setCompanies(processed as any);
+
+      setCompanies(processed as MarketplaceCompany[]);
       setLoading(false);
     };
+
     fetchCompanies();
   }, []);
 
-  const filtered = companies.filter(c =>
-    c.name.toLowerCase().includes(search.toLowerCase()) &&
-    (activeCategory === '' || (c.description?.toLowerCase().includes(activeCategory.toLowerCase())))
-  );
+  const filtered = useMemo(() => {
+    return companies.filter((company) =>
+      company.name.toLowerCase().includes(search.toLowerCase()) &&
+      (activeCategory === '' || (company.description?.toLowerCase().includes(activeCategory.toLowerCase())) || (company.category?.toLowerCase().includes(activeCategory.toLowerCase())))
+    );
+  }, [companies, search, activeCategory]);
+
+  const featuredCompanies = useMemo(() => companies.filter((company) => company.isPremium).slice(0, 5), [companies]);
 
   return (
     <MarketplaceLayout>
-      {/* Header Original e Profissional */}
-      <div className="bg-white/80 border-b border-slate-100 sticky top-0 z-50 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-6 pt-6 pb-4 flex flex-col gap-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-5">
+      <div className="sticky top-0 z-50 border-b border-border/60 bg-background/90 backdrop-blur-2xl">
+        <div className="mx-auto flex max-w-7xl flex-col gap-5 px-4 pb-4 pt-5 sm:px-6">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex min-w-0 items-center gap-4">
               <MarketplaceMenu onSelectCategory={setActiveCategory} onOpenPartnership={setPartnershipType}>
-                <button className="h-12 w-12 flex items-center justify-center text-slate-500 rounded-2xl border border-slate-100 bg-white shadow-sm hover:shadow-md transition-all">
-                   <PanelLeft className="h-5 w-5" />
+                <button className="premium-card flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-muted-foreground transition-all hover:text-foreground">
+                  <PanelLeft className="h-5 w-5" />
                 </button>
               </MarketplaceMenu>
-              <div className="flex flex-col">
-                 <span className="text-[10px] font-black uppercase tracking-[0.25em] text-primary leading-none mb-1">É Pra Já</span>
-                 <button onClick={() => navigate('/marketplace/addresses')} className="flex items-center gap-1 group outline-none">
-                    <span className="text-sm font-black text-slate-900 truncate max-w-[180px]">
-                       {selectedAddress ? `${selectedAddress.street}, ${selectedAddress.number}` : 'Definir endereço'}
-                    </span>
-                    <ChevronDown className="h-3.5 w-3.5 text-primary transition-transform group-hover:translate-y-0.5" />
-                 </button>
+
+              <div className="min-w-0">
+                <span className="mb-1 block text-[10px] font-black uppercase tracking-[0.25em] text-primary">É Pra Já</span>
+                <button onClick={() => navigate('/marketplace/addresses')} className="group flex items-center gap-1 outline-none">
+                  <span className="max-w-[180px] truncate text-sm font-black text-foreground">
+                    {selectedAddress ? `${selectedAddress.street}, ${selectedAddress.number}` : 'Definir endereço'}
+                  </span>
+                  <ChevronDown className="h-3.5 w-3.5 text-primary transition-transform group-hover:translate-y-0.5" />
+                </button>
               </div>
             </div>
 
-            <div 
+            <button
               onClick={() => navigate('/marketplace/profile')}
-              className="h-12 w-12 rounded-2xl bg-white border border-slate-100 shadow-sm flex items-center justify-center overflow-hidden cursor-pointer hover:shadow-md transition-all"
+              className="premium-card flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl"
             >
-              {user?.avatar_url ? (
-                <img src={user.avatar_url} alt="" className="h-full w-full object-cover" />
-              ) : (
-                <User className="h-6 w-6 text-slate-300" />
-              )}
-            </div>
+              <MediaImage
+                src={getAvatarImage(profile)}
+                alt="Foto do perfil"
+                className="h-full w-full object-cover"
+                fallback={<User className="h-6 w-6 text-muted-foreground/50" />}
+              />
+            </button>
           </div>
 
-          <div className="relative group">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-slate-400" />
+          <div className="premium-card relative rounded-[26px] p-1">
+            <Search className="absolute left-5 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="O que você deseja pedir hoje?"
               value={search}
-              onChange={e => setSearch(e.target.value)}
-              className="pl-12 bg-slate-50 border-none h-14 rounded-2xl text-sm font-bold placeholder:text-slate-400 focus-visible:bg-white focus-visible:ring-1 focus-visible:ring-primary/20 transition-all"
+              onChange={(e) => setSearch(e.target.value)}
+              className="h-14 rounded-[22px] border-0 bg-transparent pl-12 text-sm font-bold placeholder:text-muted-foreground focus-visible:ring-0"
             />
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 mt-8 pb-32">
-        {/* Lojas em Destaque */}
-        <div className="mb-10">
-           <div className="flex items-center justify-between mb-5 px-2">
-              <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-400">Destaques da Região</h4>
-           </div>
-           <div className="flex gap-4 overflow-x-auto scrollbar-hide -mx-4 px-4 pb-2">
-              {companies.filter(c => c.isPremium).map(c => (
-                <button key={c.id} onClick={() => navigate(`/marketplace/store/${c.id}`)} className="flex flex-col gap-3 min-w-[200px] bg-white border border-slate-100 p-4 rounded-[32px] hover:shadow-md transition-all group overflow-hidden">
-                   <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-xl bg-slate-50 flex items-center justify-center p-2 overflow-hidden shrink-0">
-                         {c.logo_url ? <img src={c.logo_url} className="w-full h-full object-contain" /> : <Store className="h-5 w-5 text-slate-400" />}
-                      </div>
-                      <span className="text-sm font-black truncate text-slate-800 tracking-tight">{c.name}</span>
-                   </div>
-                   <div className="h-24 w-full rounded-[24px] overflow-hidden bg-slate-50 relative">
-                      {c.banner_url ? (
-                        <img src={c.banner_url} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center opacity-10"><Store className="h-8 w-8" /></div>
-                      )}
-                   </div>
-                   <div className="flex items-center justify-between px-1">
-                      <div className="flex items-center gap-1 text-warning font-black text-[10px]">
-                         <Star className="h-3 w-3 fill-current" />
-                         <span>{c.rating.toFixed(1)}</span>
-                      </div>
-                      <span className="text-[10px] font-bold text-slate-400">30-45 min</span>
-                   </div>
-                </button>
+      <div className="mx-auto max-w-7xl space-y-10 px-4 pb-32 pt-6 sm:px-6">
+        <section className="space-y-4">
+          <div className="flex items-end justify-between gap-4 px-1">
+            <div>
+              <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-muted-foreground">Destaques da Região</h4>
+              <p className="mt-2 text-2xl font-black tracking-tight text-foreground">As lojas mais fortes perto de você</p>
+            </div>
+          </div>
+
+          <div className="-mx-4 flex gap-4 overflow-x-auto px-4 pb-2 scrollbar-hide">
+            {featuredCompanies.map((company) => (
+              <button
+                key={company.id}
+                onClick={() => navigate(`/marketplace/store/${company.id}`)}
+                className="premium-card premium-card-interactive group flex min-w-[252px] flex-col gap-3 overflow-hidden rounded-[30px] p-4 text-left"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="premium-chip flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-2xl p-2">
+                    <MediaImage
+                      src={getCompanyLogoImage(company)}
+                      alt={`Logo da loja ${company.name}`}
+                      className="h-full w-full object-cover"
+                      fallback={<Store className="h-5 w-5 text-muted-foreground" />}
+                    />
+                  </div>
+                  <span className="truncate text-sm font-black tracking-tight text-foreground">{company.name}</span>
+                </div>
+
+                <div className="relative h-28 w-full overflow-hidden rounded-[24px] bg-secondary">
+                  <MediaImage
+                    src={getCompanyBannerImage(company)}
+                    alt={`Capa da loja ${company.name}`}
+                    className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    fallback={<div className="flex h-full w-full items-center justify-center text-muted-foreground/40"><Store className="h-8 w-8" /></div>}
+                  />
+                  <div className="hero-image-overlay absolute inset-0" />
+                </div>
+
+                <div className="flex items-center justify-between px-1">
+                  <div className="flex items-center gap-1 text-[10px] font-black text-warning">
+                    <Star className="h-3 w-3 fill-current" />
+                    <span>{company.rating.toFixed(1)}</span>
+                  </div>
+                  <span className="text-[10px] font-bold text-muted-foreground">30-45 min</span>
+                </div>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <section className="space-y-3">
+          <div className="flex gap-3 overflow-x-auto py-2 scrollbar-hide">
+            {categories.map((category) => (
+              <button
+                key={category.value}
+                onClick={() => setActiveCategory(category.value)}
+                className={cn(
+                  'flex h-14 items-center gap-2 whitespace-nowrap rounded-2xl border px-6 text-xs font-black transition-all',
+                  activeCategory === category.value
+                    ? 'bg-foreground border-foreground text-background shadow-lg'
+                    : 'premium-card text-muted-foreground hover:border-primary/20'
+                )}
+              >
+                <category.icon className="h-4 w-4 shrink-0" />
+                {category.label}
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <section className="premium-card overflow-hidden rounded-[34px] p-2">
+          <div className="relative h-60 overflow-hidden rounded-[28px]">
+            <HeroMapSection />
+            <div className="premium-panel absolute right-4 top-4 rounded-full px-3 py-1.5 text-[9px] font-black uppercase tracking-widest text-muted-foreground">
+              Diamantino - MT
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <div className="mb-6 flex items-center justify-between gap-4 px-1">
+            <div>
+              <h2 className="text-3xl font-black tracking-tighter text-foreground">O Melhor da Cidade</h2>
+              <p className="mt-1 text-[10px] font-bold uppercase text-muted-foreground">Lojas grandes, premium e bem organizadas</p>
+            </div>
+            <div className="premium-chip rounded-2xl px-4 py-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+              {filtered.length} sugestões
+            </div>
+          </div>
+
+          {loading ? (
+            <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
+              {[1, 2, 3, 4].map((item) => (
+                <div key={item} className="premium-card rounded-[32px] p-4">
+                  <Skeleton className="h-52 rounded-[28px]" />
+                  <div className="mt-4 grid grid-cols-3 gap-3">
+                    <Skeleton className="h-24 rounded-[22px]" />
+                    <Skeleton className="h-24 rounded-[22px]" />
+                    <Skeleton className="h-24 rounded-[22px]" />
+                  </div>
+                </div>
               ))}
-           </div>
-        </div>
-
-        {/* Categorias Profissionais */}
-        <div className="mb-10">
-           <div className="flex gap-3 overflow-x-auto scrollbar-hide py-2">
-             {categories.map(cat => (
-               <button
-                 key={cat.value}
-                 onClick={() => setActiveCategory(cat.value)}
-                 className={cn(
-                   "flex items-center gap-2 px-6 h-14 rounded-2xl transition-all border font-black text-xs whitespace-nowrap",
-                   activeCategory === cat.value
-                     ? "bg-slate-900 border-slate-900 text-white shadow-lg shadow-slate-900/10"
-                     : "bg-white border-slate-100 text-slate-400 hover:border-slate-200"
-                 )}
-               >
-                 <cat.icon className="h-4 w-4 shrink-0" />
-                 {cat.label}
-               </button>
-             ))}
-           </div>
-        </div>
-
-        {/* Mapa do App */}
-        <div className="mb-12 rounded-[40px] overflow-hidden border border-slate-100 h-60 relative group shadow-sm">
-           <HeroMapSection />
-           <div className="absolute top-4 right-4 bg-white/90 backdrop-blur px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest text-slate-500 shadow-sm">Diamantino - MT</div>
-        </div>
-
-        {/* Lista Principal de Lojas */}
-        <div className="flex items-center justify-between mb-8 px-2">
-          <div>
-            <h2 className="text-2xl font-black text-slate-900 tracking-tighter">O Melhor da Cidade</h2>
-            <p className="text-[10px] uppercase font-bold text-slate-400 mt-1">Lojas próximas a você</p>
-          </div>
-          <div className="px-4 py-2 bg-slate-50 rounded-2xl text-[10px] font-black text-slate-500 uppercase tracking-widest">
-            {filtered.length} Sugestões
-          </div>
-        </div>
-
-        {loading ? (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-            {[1, 2, 3, 4].map(i => (
-              <div key={i} className="bg-white rounded-[40px] border border-slate-50 p-6 aspect-[1/1.2] animate-pulse" />
-            ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-5 gap-y-10">
-            {filtered.map(company => (
-              <StoreTabCard key={company.id} company={company} />
-            ))}
-          </div>
-        )}
+            </div>
+          ) : filtered.length > 0 ? (
+            <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
+              {filtered.map((company) => (
+                <StoreTabCard key={company.id} company={company} />
+              ))}
+            </div>
+          ) : (
+            <div className="premium-card flex flex-col items-center rounded-[32px] px-6 py-14 text-center">
+              <Store className="h-12 w-12 text-muted-foreground/50" />
+              <h3 className="mt-4 text-xl font-black text-foreground">Nenhuma loja encontrada</h3>
+              <p className="mt-2 max-w-sm text-sm text-muted-foreground">Ajuste a busca ou troque a categoria para ver mais opções perto de você.</p>
+            </div>
+          )}
+        </section>
       </div>
 
-      {/* Sheets de Parceria Revistos */}
       <Sheet open={!!partnershipType} onOpenChange={(open) => !open && setPartnershipType(null)}>
-        <SheetContent side="bottom" className="h-[85vh] rounded-t-[40px] border-none p-0 overflow-hidden">
-          <div className="h-full flex flex-col bg-white">
-             <div className="p-8 pb-4 flex items-center justify-between border-b border-slate-50">
-                <SheetHeader>
-                  <SheetTitle className="text-left flex flex-col items-start gap-1">
-                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">Parceria É Pra Já</span>
-                    <span className="text-2xl font-black text-slate-900 tracking-tighter">
-                      Seja um {partnershipType === 'merchant' ? 'Parceiro' : 'Entregador'}
-                    </span>
-                  </SheetTitle>
-                </SheetHeader>
-                <button onClick={() => setPartnershipType(null)} className="h-12 w-12 rounded-full bg-slate-50 flex items-center justify-center text-slate-400"><X className="h-6 w-6"/></button>
-             </div>
-             
-             <div className="flex-1 overflow-y-auto px-8 py-8 space-y-8 scrollbar-hide">
-                <div className="space-y-6">
-                   <div className={cn(
-                     "p-8 rounded-[32px] relative overflow-hidden shadow-sm",
-                     partnershipType === 'merchant' ? "bg-slate-900 text-white" : "bg-orange-500 text-white"
-                   )}>
-                      <h4 className="text-xl font-black mb-2 relative z-10 leading-tight">
-                        {partnershipType === 'merchant' ? 'Cresça o seu negócio' : 'Trabalhe com autonomia'}
-                      </h4>
-                      <p className="text-xs opacity-80 leading-relaxed relative z-10 max-w-xs">
-                        {partnershipType === 'merchant' 
-                          ? 'Venda mais em Diamantino com as ferramentas mais modernas do mercado.' 
-                          : 'Seja seu próprio chefe e ganhe por cada entrega realizada.'}
-                      </p>
-                   </div>
-                   
-                   <div className="bg-slate-50 p-8 rounded-[32px] space-y-5">
-                      <div className="space-y-4">
-                        <div className="space-y-2">
-                           <Label className="text-[10px] font-black uppercase text-slate-400 ml-2">Nome Completo</Label>
-                           <Input placeholder="Seu nome" className="h-14 rounded-2xl bg-white border-transparent px-6 font-bold" />
-                        </div>
-                        <div className="space-y-2">
-                           <Label className="text-[10px] font-black uppercase text-slate-400 ml-2">Seu WhatsApp</Label>
-                           <Input placeholder="(00) 00000-0000" className="h-14 rounded-2xl bg-white border-transparent px-6 font-bold" />
-                        </div>
-                      </div>
-                      <Button onClick={() => { toast.success('Interesse registrado com sucesso!'); setPartnershipType(null); }} className="w-full h-14 rounded-2xl bg-slate-900 text-white font-black uppercase tracking-widest text-xs mt-4">
-                         Enviar Interesse
-                      </Button>
-                   </div>
+        <SheetContent side="bottom" className="h-[85vh] overflow-hidden rounded-t-[40px] border-none p-0">
+          <div className="flex h-full flex-col bg-card">
+            <div className="flex items-center justify-between border-b border-border px-8 pb-4 pt-8">
+              <SheetHeader>
+                <SheetTitle className="text-left flex flex-col items-start gap-1">
+                  <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">Parceria É Pra Já</span>
+                  <span className="text-2xl font-black tracking-tighter text-foreground">
+                    Seja um {partnershipType === 'merchant' ? 'Parceiro' : 'Entregador'}
+                  </span>
+                </SheetTitle>
+              </SheetHeader>
+              <button onClick={() => setPartnershipType(null)} className="flex h-12 w-12 items-center justify-center rounded-full bg-secondary text-muted-foreground">
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+
+            <div className="flex-1 space-y-8 overflow-y-auto px-8 py-8 scrollbar-hide">
+              <div className={cn(
+                'rounded-[32px] p-8 text-primary-foreground',
+                partnershipType === 'merchant' ? 'bg-foreground' : 'bg-primary'
+              )}>
+                <h4 className="text-xl font-black leading-tight">
+                  {partnershipType === 'merchant' ? 'Cresça o seu negócio' : 'Trabalhe com autonomia'}
+                </h4>
+                <p className="mt-2 max-w-xs text-xs leading-relaxed opacity-80">
+                  {partnershipType === 'merchant'
+                    ? 'Venda mais em Diamantino com uma vitrine premium e experiência superior.'
+                    : 'Tenha liberdade para rodar quando quiser e ganhar por entrega realizada.'}
+                </p>
+              </div>
+
+              <div className="premium-card space-y-5 rounded-[32px] p-8">
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label className="ml-2 text-[10px] font-black uppercase text-muted-foreground">Nome Completo</Label>
+                    <Input placeholder="Seu nome" className="h-14 rounded-2xl border-border/70 bg-background px-6 font-bold" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="ml-2 text-[10px] font-black uppercase text-muted-foreground">Seu WhatsApp</Label>
+                    <Input placeholder="(00) 00000-0000" className="h-14 rounded-2xl border-border/70 bg-background px-6 font-bold" />
+                  </div>
                 </div>
-             </div>
+
+                <Button
+                  onClick={() => {
+                    toast.success('Interesse registrado com sucesso!');
+                    setPartnershipType(null);
+                  }}
+                  className="h-14 w-full rounded-2xl text-xs font-black uppercase tracking-widest"
+                >
+                  Enviar interesse
+                </Button>
+              </div>
+            </div>
           </div>
         </SheetContent>
       </Sheet>
