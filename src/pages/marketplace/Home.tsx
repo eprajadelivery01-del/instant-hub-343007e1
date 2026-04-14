@@ -103,9 +103,9 @@ export default function Home() {
               </MarketplaceMenu>
 
               <div className="min-w-0">
-                <span className="mb-1 block text-[10px] font-black uppercase tracking-[0.25em] text-primary">É Pra Já</span>
+                <span className="mb-0.5 block text-xs font-bold text-primary">É Pra Já</span>
                 <button onClick={() => navigate('/marketplace/addresses')} className="group flex items-center gap-1 outline-none">
-                  <span className="max-w-[180px] truncate text-sm font-black text-foreground">
+                  <span className="max-w-[200px] truncate text-sm font-semibold text-foreground">
                     {selectedAddress ? `${selectedAddress.street}, ${selectedAddress.number}` : 'Definir endereço'}
                   </span>
                   <ChevronDown className="h-3.5 w-3.5 text-primary transition-transform group-hover:translate-y-0.5" />
@@ -142,8 +142,8 @@ export default function Home() {
         <section className="space-y-4">
           <div className="flex items-end justify-between gap-4 px-1">
             <div>
-              <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-muted-foreground">Destaques da Região</h4>
-              <p className="mt-2 text-2xl font-black tracking-tight text-foreground">As lojas mais fortes perto de você</p>
+              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Destaques</p>
+              <h2 className="mt-1 text-xl font-bold text-foreground">Perto de você</h2>
             </div>
           </div>
 
@@ -163,7 +163,7 @@ export default function Home() {
                       fallback={<Store className="h-5 w-5 text-muted-foreground" />}
                     />
                   </div>
-                  <span className="truncate text-sm font-black tracking-tight text-foreground">{company.name}</span>
+                  <span className="truncate text-sm font-semibold text-foreground">{company.name}</span>
                 </div>
 
                 <div className="relative h-28 w-full overflow-hidden rounded-[24px] bg-secondary">
@@ -177,11 +177,11 @@ export default function Home() {
                 </div>
 
                 <div className="flex items-center justify-between px-1">
-                  <div className="flex items-center gap-1 text-[10px] font-black text-warning">
+                  <div className="flex items-center gap-1 text-xs font-semibold text-warning">
                     <Star className="h-3 w-3 fill-current" />
                     <span>{company.rating.toFixed(1)}</span>
                   </div>
-                  <span className="text-[10px] font-bold text-muted-foreground">30-45 min</span>
+                  <span className="text-xs text-muted-foreground">30-45 min</span>
                 </div>
               </button>
             ))}
@@ -195,7 +195,7 @@ export default function Home() {
                 key={category.value}
                 onClick={() => setActiveCategory(category.value)}
                 className={cn(
-                  'flex h-14 items-center gap-2 whitespace-nowrap rounded-2xl border px-6 text-xs font-black transition-all',
+                  'flex h-12 items-center gap-2 whitespace-nowrap rounded-xl border px-5 text-xs font-semibold transition-all',
                   activeCategory === category.value
                     ? 'bg-foreground border-foreground text-background shadow-lg'
                     : 'premium-card text-muted-foreground hover:border-primary/20'
@@ -208,24 +208,24 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="premium-card overflow-hidden rounded-[34px] p-2">
-          <div className="relative h-60 overflow-hidden rounded-[28px]">
+        <section className="premium-card overflow-hidden rounded-2xl p-1.5">
+          <div className="relative h-48 overflow-hidden rounded-xl">
             <HeroMapSection />
-            <div className="premium-panel absolute right-4 top-4 rounded-full px-3 py-1.5 text-[9px] font-black uppercase tracking-widest text-muted-foreground">
+            <div className="premium-panel absolute right-3 top-3 rounded-full px-3 py-1 text-[10px] font-medium text-muted-foreground">
               Diamantino - MT
             </div>
           </div>
         </section>
 
         <section>
-          <div className="mb-6 flex items-center justify-between gap-4 px-1">
+          <div className="mb-5 flex items-center justify-between gap-4 px-1">
             <div>
-              <h2 className="text-3xl font-black tracking-tighter text-foreground">O Melhor da Cidade</h2>
-              <p className="mt-1 text-[10px] font-bold uppercase text-muted-foreground">Lojas grandes, premium e bem organizadas</p>
+              <h2 className="text-2xl font-bold text-foreground">Lojas</h2>
+              <p className="mt-0.5 text-sm text-muted-foreground">As melhores da cidade</p>
             </div>
-            <div className="premium-chip rounded-2xl px-4 py-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-              {filtered.length} sugestões
-            </div>
+            <span className="rounded-full bg-secondary px-3 py-1 text-xs font-medium text-muted-foreground">
+              {filtered.length}
+            </span>
           </div>
 
           {loading ? (
@@ -250,8 +250,8 @@ export default function Home() {
           ) : (
             <div className="premium-card flex flex-col items-center rounded-[32px] px-6 py-14 text-center">
               <Store className="h-12 w-12 text-muted-foreground/50" />
-              <h3 className="mt-4 text-xl font-black text-foreground">Nenhuma loja encontrada</h3>
-              <p className="mt-2 max-w-sm text-sm text-muted-foreground">Ajuste a busca ou troque a categoria para ver mais opções perto de você.</p>
+              <h3 className="mt-4 text-lg font-semibold text-foreground">Nenhuma loja encontrada</h3>
+              <p className="mt-1.5 max-w-sm text-sm text-muted-foreground">Ajuste a busca ou troque a categoria para ver mais opções.</p>
             </div>
           )}
         </section>
