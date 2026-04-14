@@ -92,7 +92,7 @@ export default function Home() {
 
   return (
     <MarketplaceLayout>
-      <div className="sticky top-0 z-50 border-b border-border/60 bg-background/90 backdrop-blur-2xl">
+      <div className="border-b border-border bg-background">
         <div className="mx-auto flex max-w-7xl flex-col gap-5 px-4 pb-4 pt-5 sm:px-6">
           <div className="flex items-center justify-between gap-4">
             <div className="flex min-w-0 items-center gap-4">
