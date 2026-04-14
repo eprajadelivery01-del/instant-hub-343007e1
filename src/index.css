@@ -157,8 +157,14 @@
 
   .premium-card {
     background: linear-gradient(180deg, hsl(var(--surface-elevated)), hsl(var(--card)));
-    border: 1px solid hsl(var(--border) / 0.82);
-    box-shadow: 0 16px 44px -22px hsl(var(--foreground) / 0.16);
+    border: 1px solid hsl(var(--border) / 0.95);
+    box-shadow: 0 16px 44px -22px hsl(var(--foreground) / 0.2);
+  }
+
+  /* Enhancing for dark mode specifically */
+  .dark .premium-card {
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 20px 50px -20px rgba(0, 0, 0, 0.5);
   }
 
   .premium-card-interactive {

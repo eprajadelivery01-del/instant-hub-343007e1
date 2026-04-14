@@ -75,10 +75,13 @@ export function MarketplaceMenu({ children, onSelectCategory, onOpenPartnership 
   };
 
   const categories = [
-    { icon: Utensils, label: "Restaurantes", color: "bg-sunset", value: "restaurante" },
+    { icon: Utensils, label: "Todos", color: "bg-sunset", value: "" },
+    { icon: Pizza, label: "Pizza", color: "bg-sunset", value: "pizza" },
+    { icon: Sandwich, label: "Lanches", color: "bg-sunset", value: "lanches" },
     { icon: ShoppingBag, label: "Mercados", color: "bg-sunset", value: "mercado" },
     { icon: Pill, label: "Farmácias", color: "bg-sunset", value: "farmacia" },
     { icon: Beer, label: "Bebidas", color: "bg-sunset", value: "bebidas" },
+    { icon: Cake, label: "Doces", color: "bg-sunset", value: "doces" },
     { icon: Dog, label: "Pet Shops", color: "bg-sunset", value: "pet" },
     { icon: Store, label: "Shopping", color: "bg-sunset", value: "shopping" },
   ];
@@ -95,16 +98,21 @@ export function MarketplaceMenu({ children, onSelectCategory, onOpenPartnership 
       </SheetTrigger>
       <SheetContent side="left" className="w-full sm:w-[400px] p-0 border-r-0 rounded-r-[40px] overflow-hidden">
         <div className="h-full flex flex-col bg-[#fdfdfd]">
-           <div className="px-8 pt-10 pb-6 flex items-center justify-between">
+            <div className="px-8 pt-10 pb-6 flex items-center justify-between">
               <SheetHeader>
                 <SheetTitle className="text-left flex flex-col items-start gap-1">
-
                   <span className="text-2xl font-black text-slate-900 tracking-tight">
                     Aproveite o <span className="text-primary">É Pra Já!</span>
                   </span>
                 </SheetTitle>
               </SheetHeader>
-           </div>
+              <button 
+                onClick={() => setIsOpen(false)}
+                className="h-12 w-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200 hover:text-slate-900 transition-all active:scale-95"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
 
            <div className="flex-1 overflow-y-auto px-8 pb-32 space-y-10 scrollbar-hide">
               {/* Category Grid */}

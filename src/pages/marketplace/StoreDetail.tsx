@@ -116,9 +116,11 @@ export default function StoreDetail() {
         </button>
         <div className="min-w-0 flex-1">
           <h2 className="truncate font-black text-foreground">{company.name}</h2>
-          <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-success">
-            <div className="h-2 w-2 rounded-full bg-success animate-pulse" />
-            <span>{company.active ? 'Aberto' : 'Fechado'}</span>
+          <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
+            <div className={cn("h-2 w-2 rounded-full shadow-sm", company.is_open ? "bg-success animate-pulse" : "bg-destructive")} />
+            <span className={company.is_open ? "text-success" : "text-destructive"}>
+              {company.is_open ? 'Aberto' : 'Fechado no momento'}
+            </span>
           </div>
         </div>
         <button className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-secondary">
@@ -167,6 +169,15 @@ export default function StoreDetail() {
                 <span className="text-primary">{company.city || 'Diamantino'}</span>
                 <span className="h-1 w-1 rounded-full bg-border" />
                 <span>{storeCategory}</span>
+                {company.business_hours && (
+                  <>
+                    <span className="h-1 w-1 rounded-full bg-border" />
+                    <span className="flex items-center gap-1">
+                      <Clock className="h-3 w-3" />
+                      {company.business_hours}
+                    </span>
+                  </>
+                )}
               </div>
             </div>
             
@@ -284,7 +295,21 @@ export default function StoreDetail() {
             <p className="text-base font-bold tracking-tight">Nenhum prato por enquanto</p>
           </div>
         ) : (
-          categories.map((category) => {
+          <>
+            {!company.is_open && (
+              <div className="mt-8 mb-2 animate-in fade-in slide-in-from-top-4 duration-700">
+                <div className="bg-destructive/10 border border-destructive/20 rounded-[2rem] p-6 flex flex-col items-center text-center gap-2">
+                  <div className="w-12 h-12 rounded-2xl bg-destructive/20 flex items-center justify-center mb-1">
+                    <Clock className="h-6 w-6 text-destructive" />
+                  </div>
+                  <h3 className="text-lg font-black text-destructive uppercase tracking-tight">Loja Fechada no Momento</h3>
+                  <p className="max-w-xs text-sm text-destructive/70 font-medium">
+                    {company.business_hours ? `Esta loja atende das: ${company.business_hours}` : 'Esta loja não está aceitando pedidos agora. Você pode navegar pelo cardápio, mas não poderá fazer pedidos.'}
+                  </p>
+                </div>
+              </div>
+            )}
+            {categories.map((category) => {
             const categoryProducts = filteredProducts.filter((product) => product.category === category);
             if (categoryProducts.length === 0 && searchQuery) return null;
 
@@ -298,9 +323,9 @@ export default function StoreDetail() {
                   {categoryProducts.map((product) => {
                     const qty = getItemQty(product.id);
                     return (
-                      <div
+                        <div
                         key={product.id}
-                        className="group flex cursor-pointer gap-4 rounded-3xl bg-card border border-border/40 p-4 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_20px_-8px_rgba(0,0,0,0.1)] transition-all active:scale-[0.98]"
+                        className="group flex cursor-pointer gap-4 rounded-[32px] bg-card border border-white/10 p-5 shadow-2xl hover:border-primary/30 hover:shadow-primary/5 transition-all active:scale-[0.98]"
                         onClick={() => setSelectedProduct(product)}
                       >
                         <div className="flex min-w-0 flex-1 flex-col justify-between py-0.5">
@@ -338,9 +363,18 @@ export default function StoreDetail() {
                                   </button>
                                 </div>
                               ) : (
-                                <button
-                                  onClick={(e) => { e.stopPropagation(); handleAdd(product); }}
-                                  className="flex h-8 w-8 items-center justify-center rounded-full bg-secondary/80 text-foreground transition-all hover:bg-primary hover:text-primary-foreground"
+                                 <button
+                                  onClick={(e) => { 
+                                    e.stopPropagation(); 
+                                    if (company.is_open) handleAdd(product);
+                                    else toast.error("Esta loja está fechada no momento.");
+                                  }}
+                                  className={cn(
+                                    "flex h-8 w-8 items-center justify-center rounded-full transition-all shadow-md",
+                                    company.is_open 
+                                      ? "bg-secondary/80 text-foreground hover:bg-primary hover:text-primary-foreground" 
+                                      : "bg-muted text-muted-foreground/40 cursor-not-allowed"
+                                  )}
                                 >
                                   <Plus className="h-4 w-4" />
                                 </button>
@@ -377,6 +411,7 @@ export default function StoreDetail() {
         product={selectedProduct}
         isOpen={!!selectedProduct}
         onClose={() => setSelectedProduct(null)}
+        isClosed={!company.is_open}
         onAddToCart={(product, quantity) => {
           for (let index = 0; index < quantity; index += 1) {
             handleAdd(product);

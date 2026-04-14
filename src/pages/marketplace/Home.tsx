@@ -14,7 +14,7 @@ import { StoreTabCard } from '@/components/marketplace/StoreTabCard';
 import { MarketplaceMenu } from '@/components/marketplace/MarketplaceMenu';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MediaImage } from '@/components/shared/MediaImage';
-import { Search, Star, ChevronDown, Store, Utensils, Coffee, Pizza, Cake, Sandwich, User, PanelLeft, X } from 'lucide-react';
+import { Search, Star, ChevronDown, Store, Utensils, Coffee, Pizza, Cake, Sandwich, Pill, ShoppingCart, User, PanelLeft, X, Dog, Beer } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { getAvatarImage, getCompanyBannerImage, getCompanyLogoImage } from '@/lib/media';
@@ -23,8 +23,12 @@ const categories = [
   { icon: Utensils, label: 'Todos', value: '' },
   { icon: Pizza, label: 'Pizza', value: 'pizza' },
   { icon: Sandwich, label: 'Lanches', value: 'lanches' },
-  { icon: Coffee, label: 'Bebidas', value: 'bebidas' },
+  { icon: ShoppingCart, label: 'Mercado', value: 'mercado' },
+  { icon: Pill, label: 'Farmácia', value: 'farmacia' },
+  { icon: Beer, label: 'Bebidas', value: 'bebidas' },
   { icon: Cake, label: 'Doces', value: 'doces' },
+  { icon: Dog, label: 'Pet Shop', value: 'pet' },
+  { icon: Store, label: 'Shopping', value: 'shopping' },
 ];
 
 const PROFESSIONAL_NAMES: Record<string, string> = {
@@ -88,7 +92,12 @@ export default function Home() {
     );
   }, [companies, search, activeCategory]);
 
-  const featuredCompanies = useMemo(() => companies.filter((company) => company.isPremium).slice(0, 5), [companies]);
+  const featuredCompanies = useMemo(() => 
+    companies.filter((company) => 
+      company.isPremium && 
+      (activeCategory === '' || (company.description?.toLowerCase().includes(activeCategory.toLowerCase())) || (company.category?.toLowerCase().includes(activeCategory.toLowerCase())))
+    ).slice(0, 5), 
+  [companies, activeCategory]);
 
   return (
     <MarketplaceLayout>

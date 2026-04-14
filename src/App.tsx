@@ -1,4 +1,5 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useEffect } from "react";
+import { SplashScreen } from "@capacitor/splash-screen";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -30,6 +31,13 @@ import Search from "./pages/marketplace/Search";
 import NotFound from "./pages/NotFound";
 
 const App = () => {
+  useEffect(() => {
+    // Hide splash screen after React mounts
+    setTimeout(() => {
+       SplashScreen.hide().catch(() => {});
+    }, 500);
+  }, []);
+
   const queryClient = useMemo(() => new QueryClient({
     defaultOptions: {
       queries: {

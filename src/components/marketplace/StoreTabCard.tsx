@@ -42,9 +42,9 @@ export function StoreTabCard({ company }: StoreTabCardProps) {
         <div className="absolute inset-x-0 top-0 z-20 flex items-start justify-between p-4">
           <span className={cn(
             'rounded-full border border-primary-foreground/20 bg-background/15 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-primary-foreground backdrop-blur-md',
-            !company.active && 'bg-card/80 text-foreground'
+            !company.is_open && 'bg-card/80 text-foreground border-border'
           )}>
-            {company.active ? 'Aberta agora' : 'Fechada'}
+            {company.is_open ? 'Aberta agora' : 'Fechada'}
           </span>
 
           <div className="flex items-center gap-1 rounded-full bg-card px-3 py-1 text-xs font-semibold text-foreground shadow-sm">

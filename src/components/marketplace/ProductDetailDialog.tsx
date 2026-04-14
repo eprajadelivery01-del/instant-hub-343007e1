@@ -13,6 +13,7 @@ interface ProductDetailDialogProps {
   onClose: () => void;
   onAddToCart: (product: Product, quantity: number) => void;
   initialQuantity?: number;
+  isClosed?: boolean;
 }
 
 export function ProductDetailDialog({ product, isOpen, onClose, onAddToCart, initialQuantity = 0 }: ProductDetailDialogProps) {
@@ -153,9 +154,15 @@ export function ProductDetailDialog({ product, isOpen, onClose, onAddToCart, ini
 
             <Button 
               onClick={handleAdd} 
-              className="h-[56px] flex-1 rounded-2xl text-[13px] font-black uppercase tracking-widest shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all active:scale-[0.98]"
+              disabled={isClosed}
+              className={cn(
+                "h-[56px] flex-1 rounded-2xl text-[13px] font-black uppercase tracking-widest shadow-lg transition-all active:scale-[0.98]",
+                isClosed 
+                  ? "bg-muted text-muted-foreground cursor-not-allowed shadow-none" 
+                  : "shadow-primary/25 hover:shadow-primary/40"
+              )}
             >
-              Adicionar • {(Number(product.price || 0) * quantity).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+              {isClosed ? "Loja Fechada" : `Adicionar • ${(Number(product.price || 0) * quantity).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`}
             </Button>
           </div>
         </div>
