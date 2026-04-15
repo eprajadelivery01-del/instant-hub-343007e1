@@ -17,7 +17,7 @@ export default function Checkout() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { items, company, subtotal, clearCart } = useCart();
-  const { isLocked, acquireLock, releaseLock, generateIdempotencyKey } = useOrderLock();
+  const { isLocked, acquireLock, releaseLock, generateIdempotencyKey, resetIdempotencyKey } = useOrderLock();
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [selectedAddress, setSelectedAddress] = useState<string>('');
   const [paymentMethod, setPaymentMethod] = useState('pix');
@@ -150,7 +150,26 @@ export default function Checkout() {
         payment_method: paymentMethod, notes, region_id: regionId, idempotency_key: ik
       }).select().single();
       if (orderError) {
-        if (orderError.code === '23505') { toast.info('Pedido já processado'); navigate('/marketplace/orders'); return; }
+        if (orderError.code === '23505') {
+          const { data: existingOrder } = await supabase
+            .from('orders')
+            .select('id')
+            .eq('customer_id', user.id)
+            .eq('idempotency_key', ik)
+            .maybeSingle();
+
+          if (existingOrder?.id) {
+            clearCart();
+            resetIdempotencyKey();
+            toast.info('Esse pedido já foi criado. Abrimos os detalhes para você.');
+            navigate(`/marketplace/orders/${existingOrder.id}`);
+            return;
+          }
+
+          toast.info('Pedido já processado');
+          navigate('/marketplace/orders');
+          return;
+        }
         throw orderError;
       }
       const orderItems = items.map(item => ({
@@ -178,7 +197,10 @@ export default function Checkout() {
           status: 'pending', value: total, price: deliveryFee || 0,
         });
       }
-      clearCart(); toast.success('Pedido realizado!'); navigate(`/marketplace/orders/${order.id}`);
+      clearCart();
+      resetIdempotencyKey();
+      toast.success('Pedido realizado!');
+      navigate(`/marketplace/orders/${order.id}`);
     } catch (err: any) {
       toast.error(err.message || 'Erro ao criar pedido');
     } finally { setLoading(false); releaseLock(); }
