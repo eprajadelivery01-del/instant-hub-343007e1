@@ -147,7 +147,7 @@ export default function Checkout() {
       const { data: order, error: orderError } = await supabase.from('orders').insert({
         customer_id: user.id, company_id: company.id, status: 'pending', total,
         delivery_fee: deliveryFee || 0, delivery_address: deliveryAddress,
-        payment_method: paymentMethod, notes, region_id: regionId, idempotency_key: ik
+        payment_method: paymentMethod, notes, idempotency_key: ik
       }).select().single();
       if (orderError) {
         if (orderError.code === '23505') { toast.info('Pedido já processado'); navigate('/marketplace/orders'); return; }
