@@ -4,15 +4,25 @@ import { CartItem } from '@/types/database';
 export function useOrderLock() {
   const [isLocked, setIsLocked] = useState(false);
   const lockRef = useRef(false);
+  const idempotencyKeyRef = useRef<string | null>(null);
+  const cartFingerprintRef = useRef('');
 
   const generateIdempotencyKey = useCallback((userId: string, items: CartItem[], total: number) => {
-    // Basic hash based on User, Item IDs, Quantities and Total
-    const baseStr = `${userId}-${total}-${items.map(i => `${i.product.id}:${i.quantity}`).sort().join('|')}`;
-    
-    // We can also add a timestamp floored to the minute if we want to allow the same order 
-    // to be placed again after some time, but for now, let's keep it very strict for the session.
-    // Let's use a random suffix that persists until clear to allow retries on same state
-    return btoa(baseStr).slice(0, 50);
+    const cartFingerprint = `${userId}-${total}-${items.map(i => `${i.product.id}:${i.quantity}`).sort().join('|')}`;
+
+    if (!idempotencyKeyRef.current || cartFingerprintRef.current !== cartFingerprint) {
+      cartFingerprintRef.current = cartFingerprint;
+      idempotencyKeyRef.current = typeof crypto !== 'undefined' && crypto.randomUUID
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    }
+
+    return idempotencyKeyRef.current;
+  }, []);
+
+  const resetIdempotencyKey = useCallback(() => {
+    idempotencyKeyRef.current = null;
+    cartFingerprintRef.current = '';
   }, []);
 
   const acquireLock = useCallback(() => {
@@ -31,6 +41,7 @@ export function useOrderLock() {
     isLocked,
     acquireLock,
     releaseLock,
-    generateIdempotencyKey
+    generateIdempotencyKey,
+    resetIdempotencyKey
   };
 }
