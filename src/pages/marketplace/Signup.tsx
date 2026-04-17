@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ArrowLeft, ShoppingBag } from 'lucide-react';
 import { toast } from 'sonner';
+import { ThemeToggle } from '@/components/shared/ThemeToggle';
 
 export default function Signup() {
   const [fullName, setFullName] = useState('');
@@ -34,10 +35,11 @@ export default function Signup() {
 
   return (
     <div className="app-shell min-h-screen flex flex-col">
-      <div className="px-4 py-3">
+      <div className="px-4 py-3 flex items-center justify-between">
         <button onClick={() => navigate('/marketplace/login')} className="h-10 w-10 rounded-full bg-card border border-border flex items-center justify-center text-muted-foreground">
           <ArrowLeft className="h-5 w-5" />
         </button>
+        <ThemeToggle />
       </div>
 
       <div className="flex-1 flex flex-col px-6 max-w-md mx-auto w-full">

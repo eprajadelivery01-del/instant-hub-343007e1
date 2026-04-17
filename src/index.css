@@ -7,37 +7,29 @@
 
 @layer base {
   :root {
-    /* Sunset Tech 2070 — Dark by default */
-    --background: 0 0% 5%;
-    --foreground: 0 0% 96%;
-    --surface-elevated: 0 0% 8%;
-    --surface-glass: 0 0% 100%;
-    --overlay: 0 0% 0%;
-
-    --card: 0 0% 10%;
-    --card-foreground: 0 0% 96%;
-
-    --popover: 0 0% 8%;
-    --popover-foreground: 0 0% 96%;
-
-    --primary: 17 100% 56%;
+    /* Light defaults — overridden by .dark class */
+    --background: 30 50% 98%;
+    --foreground: 20 25% 12%;
+    --surface-elevated: 0 0% 100%;
+    --surface-glass: 30 60% 100%;
+    --overlay: 20 30% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 20 25% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 20 25% 12%;
+    --primary: 17 100% 52%;
     --primary-foreground: 0 0% 100%;
-
-    --secondary: 0 0% 12%;
-    --secondary-foreground: 0 0% 96%;
-
-    --muted: 0 0% 12%;
-    --muted-foreground: 0 0% 65%;
-
-    --accent: 22 100% 62%;
-    --accent-foreground: 0 0% 10%;
-
-    --destructive: 0 75% 55%;
+    --secondary: 28 60% 95%;
+    --secondary-foreground: 20 25% 15%;
+    --muted: 28 40% 94%;
+    --muted-foreground: 20 12% 42%;
+    --accent: 22 100% 92%;
+    --accent-foreground: 17 90% 38%;
+    --destructive: 0 84% 55%;
     --destructive-foreground: 0 0% 100%;
-
-    --border: 0 0% 100%;
-    --input: 0 0% 14%;
-    --ring: 17 100% 56%;
+    --border: 28 45% 88%;
+    --input: 28 45% 90%;
+    --ring: 17 100% 52%;
 
     --radius: 0.75rem;
 
@@ -46,14 +38,14 @@
     --warning: 38 92% 55%;
     --warning-foreground: 0 0% 10%;
 
-    --sidebar-background: 0 0% 7%;
-    --sidebar-foreground: 0 0% 90%;
-    --sidebar-primary: 17 100% 56%;
+    --sidebar-background: 30 50% 97%;
+    --sidebar-foreground: 20 20% 22%;
+    --sidebar-primary: 17 100% 52%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 12%;
-    --sidebar-accent-foreground: 22 100% 62%;
-    --sidebar-border: 0 0% 14%;
-    --sidebar-ring: 17 100% 56%;
+    --sidebar-accent: 22 100% 92%;
+    --sidebar-accent-foreground: 17 90% 38%;
+    --sidebar-border: 28 45% 88%;
+    --sidebar-ring: 17 100% 52%;
   }
 
   .light {
