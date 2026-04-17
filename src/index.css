@@ -194,6 +194,13 @@
     isolation: isolate;
   }
 
+  .light .app-shell {
+    background:
+      radial-gradient(ellipse at top, rgba(255, 122, 61, 0.18), transparent 55%),
+      radial-gradient(circle at bottom right, rgba(255, 177, 153, 0.22), transparent 50%),
+      linear-gradient(180deg, hsl(30 60% 99%) 0%, hsl(28 50% 96%) 100%);
+  }
+
   /* Subtle grain + particle overlay (dark theme only) */
   .dark .app-shell::before,
   .app-shell::before {
