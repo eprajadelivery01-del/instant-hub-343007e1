@@ -224,9 +224,20 @@
     animation: particle-drift 60s linear infinite;
   }
 
-  .light .app-shell::before,
-  .light .app-shell::after {
+  .light .app-shell::before {
     opacity: 0;
+  }
+
+  .light .app-shell::after {
+    opacity: 0.55;
+    background-image:
+      radial-gradient(circle at 12% 18%, rgba(80, 80, 80, 0.55) 0%, transparent 1.6px),
+      radial-gradient(circle at 78% 32%, rgba(160, 160, 170, 0.5) 0%, transparent 1.8px),
+      radial-gradient(circle at 35% 65%, rgba(40, 40, 40, 0.6) 0%, transparent 1.6px),
+      radial-gradient(circle at 88% 78%, rgba(190, 190, 200, 0.45) 0%, transparent 2px),
+      radial-gradient(circle at 22% 88%, rgba(60, 60, 60, 0.55) 0%, transparent 1.7px),
+      radial-gradient(circle at 60% 12%, rgba(180, 180, 190, 0.5) 0%, transparent 1.6px),
+      radial-gradient(circle at 50% 45%, rgba(100, 100, 110, 0.5) 0%, transparent 1.8px);
   }
 
   .app-shell > * {
