@@ -94,7 +94,10 @@ export default {
         "accordion-up": "accordion-up 0.2s ease-out",
       },
       backgroundImage: {
-        "sunset": "linear-gradient(to right, #ea580c, #facc15)",
+        "sunset": "linear-gradient(135deg, #FF5A1F, #FF7A3D, #FFB199)",
+      },
+      boxShadow: {
+        glow: "0 0 20px rgba(255, 90, 31, 0.5), 0 0 40px rgba(255, 90, 31, 0.2)",
       },
     },
   },
