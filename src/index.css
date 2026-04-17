@@ -56,36 +56,37 @@
   }
 
   .light {
-    --background: 0 0% 96%;
-    --foreground: 220 20% 10%;
+    /* Sunset on warm white — vibrant orange over cream background */
+    --background: 30 50% 98%;
+    --foreground: 20 25% 12%;
     --surface-elevated: 0 0% 100%;
-    --surface-glass: 0 0% 100%;
-    --overlay: 220 30% 8%;
+    --surface-glass: 30 60% 100%;
+    --overlay: 20 30% 10%;
     --card: 0 0% 100%;
-    --card-foreground: 220 20% 10%;
+    --card-foreground: 20 25% 12%;
     --popover: 0 0% 100%;
-    --popover-foreground: 220 20% 10%;
-    --primary: 18 100% 47%;
+    --popover-foreground: 20 25% 12%;
+    --primary: 17 100% 52%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 220 14% 96%;
-    --secondary-foreground: 220 20% 10%;
-    --muted: 220 14% 96%;
-    --muted-foreground: 220 8% 46%;
-    --accent: 30 95% 95%;
-    --accent-foreground: 30 95% 35%;
-    --destructive: 0 84% 60%;
+    --secondary: 28 60% 95%;
+    --secondary-foreground: 20 25% 15%;
+    --muted: 28 40% 94%;
+    --muted-foreground: 20 12% 42%;
+    --accent: 22 100% 92%;
+    --accent-foreground: 17 90% 38%;
+    --destructive: 0 84% 55%;
     --destructive-foreground: 0 0% 100%;
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 30 95% 52%;
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 30 95% 52%;
+    --border: 28 45% 88%;
+    --input: 28 45% 90%;
+    --ring: 17 100% 52%;
+    --sidebar-background: 30 50% 97%;
+    --sidebar-foreground: 20 20% 22%;
+    --sidebar-primary: 17 100% 52%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 30 95% 95%;
-    --sidebar-accent-foreground: 30 95% 35%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 30 95% 52%;
+    --sidebar-accent: 22 100% 92%;
+    --sidebar-accent-foreground: 17 90% 38%;
+    --sidebar-border: 28 45% 88%;
+    --sidebar-ring: 17 100% 52%;
   }
 
   .dark {
@@ -193,6 +194,13 @@
     isolation: isolate;
   }
 
+  .light .app-shell {
+    background:
+      radial-gradient(ellipse at top, rgba(255, 122, 61, 0.18), transparent 55%),
+      radial-gradient(circle at bottom right, rgba(255, 177, 153, 0.22), transparent 50%),
+      linear-gradient(180deg, hsl(30 60% 99%) 0%, hsl(28 50% 96%) 100%);
+  }
+
   /* Subtle grain + particle overlay (dark theme only) */
   .dark .app-shell::before,
   .app-shell::before {
@@ -295,6 +303,70 @@
     box-shadow:
       0 10px 30px rgba(0, 0, 0, 0.6),
       0 4px 6px rgba(0, 0, 0, 0.35);
+  }
+
+  /* ============ LIGHT THEME refinements (sunset on warm white) ============ */
+  .light .glass-nav {
+    background: rgba(255, 250, 245, 0.78);
+    backdrop-filter: blur(24px) saturate(160%);
+    -webkit-backdrop-filter: blur(24px) saturate(160%);
+    border-top: 1px solid rgba(255, 90, 31, 0.18);
+    box-shadow: 0 -8px 28px rgba(255, 122, 61, 0.08);
+  }
+
+  .light .glass-card {
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(255, 122, 61, 0.15);
+    box-shadow: 0 10px 30px rgba(255, 90, 31, 0.08);
+  }
+
+  .light .premium-panel {
+    background: rgba(255, 255, 255, 0.85);
+    border: 1px solid rgba(255, 122, 61, 0.18);
+    box-shadow: 0 12px 36px rgba(255, 90, 31, 0.1);
+  }
+
+  .light .premium-card {
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid rgba(255, 122, 61, 0.16);
+    box-shadow: 0 10px 28px rgba(255, 90, 31, 0.08);
+  }
+
+  .light .premium-card-interactive:hover {
+    box-shadow: 0 0 30px rgba(255, 90, 31, 0.18), 0 20px 50px rgba(255, 90, 31, 0.12);
+    border-color: rgba(255, 90, 31, 0.4);
+  }
+
+  .light .premium-card img {
+    filter: contrast(1.05) saturate(1.1);
+  }
+
+  .light .premium-chip {
+    background: rgba(255, 245, 235, 0.85);
+    border: 1px solid rgba(255, 122, 61, 0.22);
+    color: hsl(20 25% 18%);
+  }
+
+  .light .hero-image-overlay {
+    background: linear-gradient(
+      180deg,
+      transparent 0%,
+      rgba(255, 245, 235, 0.35) 40%,
+      rgba(20, 14, 10, 0.78) 100%
+    );
+  }
+
+  .light .shadow-premium {
+    box-shadow:
+      0 10px 30px rgba(255, 90, 31, 0.12),
+      0 4px 6px rgba(255, 90, 31, 0.06);
+  }
+
+  .light .bg-dashboard {
+    background:
+      radial-gradient(circle at top right, rgba(255, 90, 31, 0.08), transparent 400px),
+      radial-gradient(circle at bottom left, rgba(255, 177, 153, 0.12), transparent 300px),
+      hsl(30 50% 98%);
   }
 
   .btn-glow {

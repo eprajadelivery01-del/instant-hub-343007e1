@@ -5,7 +5,6 @@ import { useCart } from '@/contexts/CartContext';
 import { useOrderNotifications } from '@/hooks/useOrderNotifications';
 import { Home, Search, ShoppingBag, ClipboardList, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { ThemeToggle } from '@/components/shared/ThemeToggle';
 
 const navItems = [
   { path: '/marketplace', icon: Home, label: 'Início' },
@@ -24,7 +23,6 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
 
   return (
     <div className="app-shell min-h-screen flex flex-col font-sans text-foreground">
-      <ThemeToggle className="fixed top-3 right-3 z-[70]" />
       <main className={cn('flex flex-1 flex-col', !hideNav && 'pb-24')}>
         <div className="flex-1">{children}</div>
 
