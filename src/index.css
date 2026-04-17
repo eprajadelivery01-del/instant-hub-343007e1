@@ -169,72 +169,117 @@
   }
 
   .glass-card {
-    @apply bg-card/70 backdrop-blur-xl border border-border/60 shadow-xl;
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
   }
 
   .glass-nav {
-    @apply bg-card/70 backdrop-blur-2xl border border-border/60 shadow-xl;
+    background: rgba(13, 13, 13, 0.7);
+    backdrop-filter: blur(24px) saturate(140%);
+    -webkit-backdrop-filter: blur(24px) saturate(140%);
+    border-top: 1px solid rgba(255, 90, 31, 0.18);
+    box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.6);
   }
 
   .app-shell {
     background:
-      radial-gradient(circle at top center, hsl(var(--primary) / 0.14), transparent 34%),
-      linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--secondary) / 0.45) 100%);
+      radial-gradient(ellipse at top, rgba(255, 90, 31, 0.08), transparent 55%),
+      radial-gradient(circle at top, #1A1A1A 0%, #0D0D0D 70%);
+    min-height: 100%;
   }
 
   .premium-panel {
-    background: linear-gradient(180deg, hsl(var(--surface-glass) / 0.94), hsl(var(--card) / 0.88));
-    border: 1px solid hsl(var(--border) / 0.72);
-    box-shadow: 0 18px 48px -20px hsl(var(--foreground) / 0.18);
-    backdrop-filter: blur(18px);
+    background: rgba(255, 255, 255, 0.045);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
   }
 
   .premium-card {
-    background: linear-gradient(180deg, hsl(var(--surface-elevated)), hsl(var(--card)));
-    border: 1px solid hsl(var(--border) / 0.95);
-    box-shadow: 0 16px 44px -22px hsl(var(--foreground) / 0.2);
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
   }
 
-  /* Enhancing for dark mode specifically */
   .dark .premium-card {
-    border-color: rgba(255, 255, 255, 0.1);
-    box-shadow: 0 20px 50px -20px rgba(0, 0, 0, 0.5);
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
   }
 
   .premium-card-interactive {
-    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease, filter 0.3s ease;
   }
 
   .premium-card-interactive:hover {
     transform: translateY(-4px);
-    box-shadow: 0 24px 64px -24px hsl(var(--foreground) / 0.22);
-    border-color: hsl(var(--primary) / 0.28);
+    box-shadow: 0 0 30px rgba(255, 90, 31, 0.25), 0 20px 50px rgba(0, 0, 0, 0.7);
+    border-color: rgba(255, 122, 61, 0.4);
+  }
+
+  .premium-card img {
+    filter: contrast(1.08) saturate(1.12);
+    transition: filter 0.3s ease, transform 0.3s ease;
   }
 
   .premium-chip {
-    background: hsl(var(--secondary));
-    border: 1px solid hsl(var(--border) / 0.8);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: hsl(var(--foreground));
+    backdrop-filter: blur(8px);
+    transition: all 0.25s ease;
   }
 
   .hero-image-overlay {
-    background: linear-gradient(180deg, hsl(var(--overlay) / 0.04) 0%, hsl(var(--overlay) / 0.18) 35%, hsl(var(--overlay) / 0.82) 100%);
+    background: linear-gradient(
+      180deg,
+      transparent 0%,
+      rgba(13, 13, 13, 0.4) 40%,
+      rgba(13, 13, 13, 0.95) 100%
+    );
   }
 
   .shadow-premium {
     box-shadow:
-      0 10px 30px -10px rgba(0, 0, 0, 0.1),
-      0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      0 10px 30px rgba(0, 0, 0, 0.6),
+      0 4px 6px rgba(0, 0, 0, 0.35);
+  }
+
+  .btn-glow {
+    box-shadow: 0 0 20px rgba(255, 90, 31, 0.5), 0 0 40px rgba(255, 90, 31, 0.2);
   }
 
   .bg-dashboard {
-    background: radial-gradient(circle at top right, rgba(249, 115, 22, 0.05), transparent 400px),
-                radial-gradient(circle at bottom left, rgba(249, 115, 22, 0.02), transparent 300px),
-                #fafafb;
+    background:
+      radial-gradient(circle at top right, rgba(255, 90, 31, 0.08), transparent 400px),
+      radial-gradient(circle at bottom left, rgba(255, 122, 61, 0.05), transparent 300px),
+      #0D0D0D;
   }
 
   .page-transition-wrapper {
     animation: page-enter 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
     will-change: opacity, transform;
+  }
+}
+
+@layer base {
+  button, a, .premium-chip {
+    transition: all 0.25s ease;
+  }
+}
+
+@keyframes neon-pulse {
+  0%, 100% {
+    box-shadow: 0 0 12px rgba(255, 90, 31, 0.5), 0 0 24px rgba(255, 90, 31, 0.25);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(255, 90, 31, 0.7), 0 0 40px rgba(255, 90, 31, 0.35);
   }
 }
 
