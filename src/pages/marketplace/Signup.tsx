@@ -33,7 +33,7 @@ export default function Signup() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="app-shell min-h-screen flex flex-col">
       <div className="px-4 py-3">
         <button onClick={() => navigate('/marketplace/login')} className="h-10 w-10 rounded-full bg-card border border-border flex items-center justify-center text-muted-foreground">
           <ArrowLeft className="h-5 w-5" />
