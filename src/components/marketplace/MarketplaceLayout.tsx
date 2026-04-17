@@ -5,7 +5,6 @@ import { useCart } from '@/contexts/CartContext';
 import { useOrderNotifications } from '@/hooks/useOrderNotifications';
 import { Home, Search, ShoppingBag, ClipboardList, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { ThemeToggle } from '@/components/shared/ThemeToggle';
 
 const navItems = [
   { path: '/marketplace', icon: Home, label: 'Início' },
