@@ -413,9 +413,23 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .app-shell::after {
-    animation: none;
+@keyframes badge-pulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 4px 12px rgba(255, 90, 31, 0.6), 0 0 0 0 rgba(255, 90, 31, 0);
+  }
+  50% {
+    transform: scale(1.08);
+    box-shadow: 0 4px 14px rgba(255, 90, 31, 0.8), 0 0 0 6px rgba(255, 90, 31, 0.18);
+  }
+}
+
+@keyframes badge-glow {
+  0%, 100% {
+    box-shadow: 0 0 16px rgba(255, 90, 31, 0.16), inset 0 0 0 1px rgba(255, 90, 31, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 28px rgba(255, 90, 31, 0.32), inset 0 0 0 1px rgba(255, 122, 61, 0.4);
   }
 }
 
