@@ -6,16 +6,26 @@
             <solid android:color="#0D0D0D" />
         </shape>
     </item>
+    <!-- Sunset radial glow -->
     <item>
         <shape android:shape="rectangle">
             <gradient
                 android:type="radial"
-                android:gradientRadius="600"
+                android:gradientRadius="700"
                 android:centerX="0.5"
-                android:centerY="0.35"
-                android:startColor="#33FF5A1F"
-                android:centerColor="#1AFF5A1F"
+                android:centerY="0.5"
+                android:startColor="#66FF5A1F"
+                android:centerColor="#33FF7A3D"
                 android:endColor="#000D0D0D" />
         </shape>
+    </item>
+    <!-- Centered logo -->
+    <item
+        android:gravity="center"
+        android:width="200dp"
+        android:height="200dp">
+        <bitmap
+            android:src="@drawable/logo_eprajat"
+            android:gravity="center" />
     </item>
 </layer-list>
