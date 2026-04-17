@@ -28,7 +28,7 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="app-shell min-h-screen flex flex-col">
       <div className="px-4 py-3 flex items-center">
         <button onClick={() => navigate('/marketplace')} className="h-10 w-10 rounded-full bg-card border border-border flex items-center justify-center text-muted-foreground">
           <ArrowLeft className="h-5 w-5" />
