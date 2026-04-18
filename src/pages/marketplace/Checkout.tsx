@@ -6,8 +6,6 @@ import { useCart } from '@/contexts/CartContext';
 import { Address } from '@/types/database';
 import MarketplaceLayout from '@/components/marketplace/MarketplaceLayout';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { toast } from 'sonner';
 import { MapPin, CreditCard, Banknote, QrCode, Plus, AlertCircle, ArrowLeft, Ticket, CheckCircle2, Loader2 } from 'lucide-react';
@@ -17,12 +15,12 @@ import { calculateDeliveryFee } from '@/utils/freight';
 export default function Checkout() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { items, company, subtotal, clearCart } = useCart();
+  const { items, company, notes: itemNotes, subtotal, clearCart } = useCart();
   const { isLocked, acquireLock, releaseLock, generateIdempotencyKey, resetIdempotencyKey } = useOrderLock();
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [selectedAddress, setSelectedAddress] = useState<string>('');
   const [paymentMethod, setPaymentMethod] = useState('pix');
-  const [notes, setNotes] = useState('');
+
   const [deliveryFee, setDeliveryFee] = useState<number | null>(null);
   const [regionId, setRegionId] = useState<string | null>(null);
   const [regionName, setRegionName] = useState<string | null>(null);
@@ -31,7 +29,6 @@ export default function Checkout() {
   const [loading, setLoading] = useState(false);
   const [loadingAddresses, setLoadingAddresses] = useState(true);
 
-  // Coupon States
   const [couponCode, setCouponCode] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
   const [validatingCoupon, setValidatingCoupon] = useState(false);
@@ -187,6 +184,7 @@ export default function Checkout() {
       const orderItems = items.map(item => ({
         order_id: order.id, product_id: item.product.id, quantity: item.quantity,
         price: item.product.price, unit_price: item.product.price, product_name: item.product.name,
+        notes: itemNotes[item.product.id] || null,
       }));
         const { error: itemsError } = await supabase.from('order_items').insert(orderItems);
         if (itemsError) throw itemsError;
@@ -304,11 +302,6 @@ export default function Checkout() {
           </RadioGroup>
         </div>
 
-        {/* Observações */}
-        <div className="bg-card border border-border rounded-2xl p-4 space-y-2">
-          <Label className="text-sm font-medium">Observações</Label>
-          <Textarea placeholder="Ex: sem cebola, troco para R$50..." value={notes} onChange={e => setNotes(e.target.value)} className="rounded-xl min-h-[80px]" />
-        </div>
 
         {/* Cupom */}
         <div className="bg-card border border-border rounded-2xl p-4 space-y-3">

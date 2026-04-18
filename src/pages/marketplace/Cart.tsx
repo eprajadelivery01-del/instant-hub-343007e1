@@ -3,12 +3,12 @@ import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import MarketplaceLayout from '@/components/marketplace/MarketplaceLayout';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Minus, Plus, Trash2, ShoppingBag } from 'lucide-react';
+import { ArrowLeft, Minus, Plus, Trash2, ShoppingBag, MessageSquare } from 'lucide-react';
 import { MediaImage } from '@/components/shared/MediaImage';
 import { getPrimaryProductImage } from '@/lib/media';
 
 export default function Cart() {
-  const { items, company, updateQuantity, clearCart, subtotal } = useCart();
+  const { items, company, notes, updateQuantity, updateNote, clearCart, subtotal } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -42,45 +42,65 @@ export default function Cart() {
         <button onClick={clearCart} className="text-xs font-semibold text-primary">Limpar</button>
       </div>
 
-      <div className="mx-auto max-w-lg space-y-4 px-4 py-4">
+      <div className="mx-auto max-w-lg space-y-3 px-4 py-4 pb-32">
+        {/* Itens com observação por item */}
         <div className="premium-card overflow-hidden rounded-[28px] divide-y divide-border">
           {items.map((item) => (
-            <div key={item.product.id} className="flex items-center gap-3 p-4">
-              <div className="h-16 w-16 shrink-0 overflow-hidden rounded-2xl bg-secondary">
-                <MediaImage
-                  src={getPrimaryProductImage(item.product)}
-                  alt={item.product.name || 'Produto no carrinho'}
-                  className="h-full w-full object-cover"
-                  fallback={<div className="flex h-full w-full items-center justify-center text-muted-foreground"><ShoppingBag className="h-5 w-5" /></div>}
+            <div key={item.product.id} className="flex flex-col">
+              {/* Linha principal do item */}
+              <div className="flex items-center gap-3 p-4">
+                <div className="h-16 w-16 shrink-0 overflow-hidden rounded-2xl bg-secondary">
+                  <MediaImage
+                    src={getPrimaryProductImage(item.product)}
+                    alt={item.product.name || 'Produto no carrinho'}
+                    className="h-full w-full object-cover"
+                    fallback={<div className="flex h-full w-full items-center justify-center text-muted-foreground"><ShoppingBag className="h-5 w-5" /></div>}
+                  />
+                </div>
+
+                <div className="min-w-0 flex-1">
+                  <h4 className="truncate text-sm font-medium text-foreground">{item.product.name}</h4>
+                  <p className="mt-0.5 text-sm font-bold text-foreground">
+                    R$ {((item.product.price || 0) * item.quantity).toFixed(2).replace('.', ',')}
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-1">
+                  <button
+                    className="flex h-8 w-8 items-center justify-center rounded-full border border-border transition-transform active:scale-90"
+                    onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
+                  >
+                    {item.quantity === 1 ? <Trash2 className="h-3 w-3 text-destructive" /> : <Minus className="h-3 w-3" />}
+                  </button>
+                  <span className="w-6 text-center text-sm font-bold">{item.quantity}</span>
+                  <button
+                    className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground transition-transform active:scale-90"
+                    onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
+                  >
+                    <Plus className="h-3 w-3" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Campo de observação por item */}
+              <div className="px-4 pb-4 -mt-1">
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  <MessageSquare className="h-3 w-3 text-muted-foreground" />
+                  <span className="text-[11px] text-muted-foreground font-medium">Observação</span>
+                </div>
+                <textarea
+                  value={notes[item.product.id] || ''}
+                  onChange={(e) => updateNote(item.product.id, e.target.value)}
+                  placeholder={`Ex: sem cebola, sem sal, ponto bem passado...`}
+                  rows={2}
+                  className="w-full resize-none rounded-xl border border-border bg-muted/40 px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:bg-background transition-colors"
                 />
-              </div>
-
-              <div className="min-w-0 flex-1">
-                <h4 className="truncate text-sm font-medium text-foreground">{item.product.name}</h4>
-                <p className="mt-0.5 text-sm font-bold text-foreground">
-                  R$ {((item.product.price || 0) * item.quantity).toFixed(2).replace('.', ',')}
-                </p>
-              </div>
-
-              <div className="flex items-center gap-1">
-                <button
-                  className="flex h-8 w-8 items-center justify-center rounded-full border border-border transition-transform active:scale-90"
-                  onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
-                >
-                  {item.quantity === 1 ? <Trash2 className="h-3 w-3 text-destructive" /> : <Minus className="h-3 w-3" />}
-                </button>
-                <span className="w-6 text-center text-sm font-bold">{item.quantity}</span>
-                <button
-                  className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground transition-transform active:scale-90"
-                  onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
-                >
-                  <Plus className="h-3 w-3" />
-                </button>
               </div>
             </div>
           ))}
         </div>
 
+        {/* Resumo de valores */}
         <div className="premium-card space-y-2 rounded-[28px] p-4">
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">Subtotal</span>

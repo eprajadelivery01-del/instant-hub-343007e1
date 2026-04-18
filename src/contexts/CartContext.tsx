@@ -4,9 +4,11 @@ import { CartItem, Product, Company } from '@/types/database';
 interface CartContextType {
   items: CartItem[];
   company: Company | null;
+  notes: Record<string, string>;
   addItem: (product: Product, company: Company) => void;
   removeItem: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
+  updateNote: (productId: string, note: string) => void;
   clearCart: () => void;
   subtotal: number;
   itemCount: number;
@@ -23,21 +25,26 @@ export function CartProvider({ children }: { children: ReactNode }) {
     const saved = localStorage.getItem('cart_company');
     return saved ? JSON.parse(saved) : null;
   });
+  const [notes, setNotes] = useState<Record<string, string>>(() => {
+    const saved = localStorage.getItem('cart_notes');
+    return saved ? JSON.parse(saved) : {};
+  });
 
   useEffect(() => {
     localStorage.setItem('cart_items', JSON.stringify(items));
+    localStorage.setItem('cart_notes', JSON.stringify(notes));
     if (company) {
       localStorage.setItem('cart_company', JSON.stringify(company));
     } else {
       localStorage.removeItem('cart_company');
     }
-  }, [items, company]);
+  }, [items, company, notes]);
 
   const addItem = (product: Product, comp: Company) => {
     if (company && company.id !== comp.id) {
-      // Different store - clear cart
       setItems([{ product, quantity: 1 }]);
       setCompany(comp);
+      setNotes({});
       return;
     }
     setCompany(comp);
@@ -58,6 +65,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
       if (filtered.length === 0) setCompany(null);
       return filtered;
     });
+    setNotes(prev => {
+      const next = { ...prev };
+      delete next[productId];
+      return next;
+    });
   };
 
   const updateQuantity = (productId: string, quantity: number) => {
@@ -67,9 +79,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
     );
   };
 
+  const updateNote = (productId: string, note: string) => {
+    setNotes(prev => ({ ...prev, [productId]: note }));
+  };
+
   const clearCart = () => {
     setItems([]);
     setCompany(null);
+    setNotes({});
+    localStorage.removeItem('cart_notes');
   };
 
   const subtotal = items.reduce(
@@ -80,7 +98,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const itemCount = items.reduce((sum, i) => sum + i.quantity, 0);
 
   return (
-    <CartContext.Provider value={{ items, company, addItem, removeItem, updateQuantity, clearCart, subtotal, itemCount }}>
+    <CartContext.Provider value={{ items, company, notes, addItem, removeItem, updateQuantity, updateNote, clearCart, subtotal, itemCount }}>
       {children}
     </CartContext.Provider>
   );
