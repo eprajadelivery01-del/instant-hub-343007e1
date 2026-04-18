@@ -10,8 +10,9 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { toast } from 'sonner';
-import { MapPin, CreditCard, Banknote, QrCode, Plus, AlertCircle, ArrowLeft, Ticket, CheckCircle2 } from 'lucide-react';
+import { MapPin, CreditCard, Banknote, QrCode, Plus, AlertCircle, ArrowLeft, Ticket, CheckCircle2, Loader2 } from 'lucide-react';
 import { useOrderLock } from '@/hooks/useOrderLock';
+import { calculateDeliveryFee } from '@/utils/freight';
 
 export default function Checkout() {
   const navigate = useNavigate();
@@ -24,7 +25,9 @@ export default function Checkout() {
   const [notes, setNotes] = useState('');
   const [deliveryFee, setDeliveryFee] = useState<number | null>(null);
   const [regionId, setRegionId] = useState<string | null>(null);
+  const [regionName, setRegionName] = useState<string | null>(null);
   const [unavailable, setUnavailable] = useState(false);
+  const [loadingFee, setLoadingFee] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loadingAddresses, setLoadingAddresses] = useState(true);
 
@@ -47,46 +50,55 @@ export default function Checkout() {
   useEffect(() => {
     if (!selectedAddress) return;
     const addr = addresses.find(a => a.id === selectedAddress);
-    if (!addr || !addr.latitude || !addr.longitude) { setDeliveryFee(null); setUnavailable(false); return; }
+    if (!addr || !addr.latitude || !addr.longitude) {
+      setDeliveryFee(null);
+      setRegionId(null);
+      setRegionName(null);
+      setUnavailable(false);
+      return;
+    }
 
     const checkRegion = async () => {
+      setLoadingFee(true);
       setUnavailable(false);
-      if (company?.delivery_fee !== null && company?.delivery_fee !== undefined) {
-        setDeliveryFee(company.delivery_fee);
-        const { data: regions } = await supabase.from('regions').select('id, geometry').eq('active', true);
-        if (regions) {
-          const found = regions.find(r => r.geometry && isPointInRegion(addr.latitude!, addr.longitude!, r.geometry));
-          if (found) setRegionId(found.id);
+      try {
+        // Se a loja tem taxa fixa configurada, usa ela mas ainda tenta identificar a região
+        if (company?.delivery_fee !== null && company?.delivery_fee !== undefined) {
+          setDeliveryFee(company.delivery_fee);
+          const result = await calculateDeliveryFee(addr.latitude!, addr.longitude!, supabase);
+          if (result.regionId) {
+            setRegionId(result.regionId);
+            setRegionName(result.regionName);
+          }
+          return;
         }
-        return;
-      }
-      const { data: regions } = await supabase.from('regions').select('*').eq('active', true);
-      if (!regions || regions.length === 0) { setDeliveryFee(5); setRegionId(null); return; }
-      let found = false;
-      for (const region of regions) {
-        if (region.geometry && isPointInRegion(addr.latitude!, addr.longitude!, region.geometry)) {
-          setDeliveryFee(region.delivery_fee); setRegionId(region.id); found = true; break;
+
+        // Cálculo automático baseado nas regiões do mapa
+        const result = await calculateDeliveryFee(addr.latitude!, addr.longitude!, supabase);
+
+        if (result.isOutOfRange) {
+          setDeliveryFee(null);
+          setRegionId(null);
+          setRegionName(null);
+          setUnavailable(true);
+          toast.warning('Este endereço está fora da área de entrega.');
+        } else if (result.fee !== null) {
+          setDeliveryFee(result.fee);
+          setRegionId(result.regionId);
+          setRegionName(result.regionName);
+        } else {
+          // Nenhuma região cadastrada ainda — sem bloqueio
+          setDeliveryFee(0);
+          setRegionId(null);
+          setRegionName(null);
         }
+      } finally {
+        setLoadingFee(false);
       }
-      if (!found) { setDeliveryFee(7.51); setRegionId(null); }
     };
+
     checkRegion();
   }, [selectedAddress, addresses]);
-
-  const isPointInRegion = (lat: number, lng: number, geometry: any): boolean => {
-    try {
-      const coords = geometry?.coordinates?.[0] || geometry?.geometry?.coordinates?.[0];
-      if (!coords) return false;
-      let inside = false;
-      for (let i = 0, j = coords.length - 1; i < coords.length; j = i++) {
-        const xi = coords[i][1], yi = coords[i][0];
-        const xj = coords[j][1], yj = coords[j][0];
-        const intersect = ((yi > lng) !== (yj > lng)) && (lat < (xj - xi) * (lng - yi) / (yj - yi) + xi);
-        if (intersect) inside = !inside;
-      }
-      return inside;
-    } catch { return false; }
-  };
 
   const handleApplyCoupon = async () => {
     if (!couponCode.trim()) return;
@@ -251,7 +263,23 @@ export default function Checkout() {
           )}
           {unavailable && (
             <div className="flex items-center gap-2 p-3 rounded-xl bg-destructive/10 text-destructive text-sm">
-              <AlertCircle className="h-4 w-4 shrink-0" /> Entrega não disponível
+              <AlertCircle className="h-4 w-4 shrink-0" />
+              <div>
+                <p className="font-semibold">Entrega não disponível</p>
+                <p className="text-xs opacity-80">Este endereço está fora da área de atendimento.</p>
+              </div>
+            </div>
+          )}
+          {loadingFee && (
+            <div className="flex items-center gap-2 p-3 rounded-xl bg-primary/5 text-primary text-sm">
+              <Loader2 className="h-4 w-4 animate-spin shrink-0" />
+              <span>Calculando frete da região...</span>
+            </div>
+          )}
+          {regionName && !loadingFee && (
+            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-primary/5 text-primary text-xs font-semibold">
+              <MapPin className="h-3.5 w-3.5" />
+              {regionName}
             </div>
           )}
         </div>
@@ -333,7 +361,15 @@ export default function Checkout() {
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Entrega</span>
-              <span>{deliveryFee !== null ? `R$ ${deliveryFee.toFixed(2).replace('.', ',')}` : '—'}</span>
+              <span>
+                {loadingFee ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin inline" />
+                ) : deliveryFee !== null ? (
+                  `R$ ${deliveryFee.toFixed(2).replace('.', ',')}`
+                ) : unavailable ? (
+                  <span className="text-destructive text-xs font-semibold">Fora da área</span>
+                ) : '—'}
+              </span>
             </div>
             {appliedCoupon && (
               <div className="flex justify-between text-sm text-primary font-medium">

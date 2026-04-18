@@ -8,10 +8,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, MapPin, Plus, Pencil, Trash2, Map as MapIcon } from 'lucide-react';
+import { ArrowLeft, MapPin, Plus, Pencil, Trash2, Map as MapIcon, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { LocationPicker } from '@/components/marketplace/LocationPicker';
+import { geocodeAddress } from '@/utils/freight';
 
 export default function Addresses() {
   const { user } = useAuth();
@@ -20,6 +21,7 @@ export default function Addresses() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Address | null>(null);
+  const [geocoding, setGeocoding] = useState(false);
   const [form, setForm] = useState({
     street: '', number: '', neighborhood: '', city: '',
     complement: '', reference: '', latitude: '', longitude: '', label: '',
@@ -56,12 +58,31 @@ export default function Addresses() {
     if (!user || !form.street || !form.number || !form.neighborhood || !form.city) {
       toast.error('Preencha os campos obrigatórios'); return;
     }
+
+    let lat = form.latitude ? parseFloat(form.latitude) : null;
+    let lng = form.longitude ? parseFloat(form.longitude) : null;
+
+    // Geocoding automático se coordenadas não foram informadas
+    if (!lat || !lng) {
+      setGeocoding(true);
+      const fullAddress = `${form.street}, ${form.number}, ${form.neighborhood}, ${form.city}`;
+      const coords = await geocodeAddress(fullAddress);
+      if (coords) {
+        lat = coords.lat;
+        lng = coords.lng;
+        toast.success('Localização detectada automaticamente 📍');
+      } else {
+        toast.warning('Não foi possível detectar a localização. Frete será calculado ao selecionar o endereço.');
+      }
+      setGeocoding(false);
+    }
+
     const payload = {
       user_id: user.id, street: form.street, number: form.number,
       neighborhood: form.neighborhood, city: form.city,
       complement: form.complement || null, reference: form.reference || null,
-      latitude: form.latitude ? parseFloat(form.latitude) : null,
-      longitude: form.longitude ? parseFloat(form.longitude) : null,
+      latitude: lat,
+      longitude: lng,
       label: form.label || null,
     };
     if (editing) {
@@ -186,7 +207,13 @@ export default function Addresses() {
               </div>
               <DialogFooter className="gap-2">
                 <Button variant="outline" onClick={() => setShowForm(false)} className="rounded-lg">Cancelar</Button>
-                <Button onClick={handleSave} className="rounded-lg">{editing ? 'Salvar' : 'Adicionar'}</Button>
+                <Button onClick={handleSave} disabled={geocoding} className="rounded-lg">
+                  {geocoding ? (
+                    <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Localizando...</>
+                  ) : (
+                    editing ? 'Salvar' : 'Adicionar'
+                  )}
+                </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
