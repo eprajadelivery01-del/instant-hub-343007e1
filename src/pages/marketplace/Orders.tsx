@@ -56,9 +56,10 @@ export default function Orders() {
         const { data, error } = await query.or(filters.join(',')).order('created_at', { ascending: false });
         
         if (error) throw error;
+        console.log(`[Orders] Pedidos encontrados para ${user.id}:`, data?.length || 0);
         setOrders(data || []);
       } catch (error) {
-        console.error("Erro ao buscar pedidos:", error);
+        console.error("[Orders] Erro ao buscar pedidos:", error);
       } finally {
         setLoading(false);
       }
@@ -69,8 +70,10 @@ export default function Orders() {
       .channel('customer-orders')
       .on('postgres_changes', {
         event: '*', schema: 'public', table: 'orders',
-        filter: `customer_id=eq.${user.id}`,
       }, (payload) => {
+        const isMine = payload.new.customer_id === user.id || payload.new.user_id === user.id;
+        if (!isMine) return;
+
         if (payload.eventType === 'UPDATE') {
           setOrders(prev => prev.map(o => o.id === payload.new.id ? { ...o, ...payload.new } : o));
         } else if (payload.eventType === 'INSERT') {
