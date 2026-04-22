@@ -1,4 +1,5 @@
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
@@ -21,20 +22,29 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
 
   useOrderNotifications();
 
-  const showCartButton = itemCount > 0 && !location.pathname.includes('/cart') && !location.pathname.includes('/checkout');
+  // Portal target — renderizamos a barra fora do app-shell para
+  // que nenhum wrapper com transform/filter/animation a "prenda".
+  const [portalEl, setPortalEl] = useState<HTMLElement | null>(null);
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    let el = document.getElementById('marketplace-fixed-root');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'marketplace-fixed-root';
+      document.body.appendChild(el);
+    }
+    setPortalEl(el);
+  }, []);
 
-  return (
-    <div className="app-shell min-h-screen flex flex-col font-sans text-foreground">
-      <main className={cn('flex flex-1 flex-col transition-all duration-300', !hideNav && (showCartButton ? 'pb-48' : 'pb-24'))}>
-        <div className="flex-1">{children}</div>
+  const showCartFab =
+    itemCount > 0 &&
+    !location.pathname.includes('/cart') &&
+    !location.pathname.includes('/checkout');
 
-        <div className="mt-auto flex w-full justify-center py-8 opacity-20 pointer-events-none select-none">
-          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground">BONASOFT</p>
-        </div>
-      </main>
-
+  const fixedUi = (
+    <>
       {!hideNav && (
-        <nav className="sticky bottom-0 z-50 w-full border-t border-border bg-background pb-safe mt-auto">
+        <nav className="fixed inset-x-0 bottom-0 z-[80] w-full border-t border-border bg-background marketplace-bottom-nav">
           <div className="flex h-16 items-center justify-around px-2">
             {navItems.map((item) => {
               const isHome = item.path === '/marketplace';
@@ -60,7 +70,6 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
                     'h-[22px] w-[22px] transition-all duration-200',
                     active ? 'text-foreground stroke-[2.5px]' : 'text-muted-foreground stroke-[1.5px]'
                   )} />
-
                   <span className={cn(
                     'text-[10px] transition-all duration-200',
                     active ? 'text-foreground font-bold' : 'text-muted-foreground font-medium'
@@ -74,8 +83,8 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
         </nav>
       )}
 
-      {showCartButton && (
-        <div className="fixed bottom-[80px] z-[40] w-full px-4 border-none pointer-events-none mb-4 flex justify-center animate-in slide-in-from-bottom duration-500">
+      {showCartFab && (
+        <div className="fixed inset-x-0 z-[40] w-full px-4 pointer-events-none flex justify-center marketplace-cart-fab">
           <Link
             to="/marketplace/cart"
             className="pointer-events-auto flex h-16 w-full max-w-sm items-center justify-between rounded-full bg-primary pl-2 pr-6 text-primary-foreground shadow-[0_12px_30px_-5px_rgba(234,88,12,0.5)] active:scale-[0.97] transition-all hover:shadow-[0_15px_35px_-5px_rgba(234,88,12,0.6)]"
@@ -89,11 +98,27 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
                 <p className="text-[10px] font-bold uppercase tracking-widest opacity-80 mt-0.5">Finalizar pedido</p>
               </div>
             </div>
-
             <ShoppingBag className="h-6 w-6 opacity-90 stroke-[2.5]" />
           </Link>
         </div>
       )}
+    </>
+  );
+
+  return (
+    <div className="app-shell min-h-screen flex flex-col font-sans text-foreground">
+      <main className={cn(
+        'flex flex-1 flex-col transition-all duration-300', 
+        !hideNav && (showCartFab ? 'pb-marketplace-nav-with-cart' : 'pb-marketplace-nav')
+      )}>
+        <div className="flex-1">{children}</div>
+
+        <div className="mt-auto flex w-full justify-center py-8 opacity-20 pointer-events-none select-none">
+          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground">BONASOFT</p>
+        </div>
+      </main>
+
+      {portalEl && createPortal(fixedUi, portalEl)}
     </div>
   );
 }

@@ -152,6 +152,10 @@ export default function Checkout() {
     try {
       const addr = addresses.find(a => a.id === selectedAddress);
       const deliveryAddress = addr ? `${addr.street}, ${addr.number} - ${addr.neighborhood}, ${addr.city}` : '';
+      const orderNotes = Object.values(itemNotes)
+        .map((note) => note.trim())
+        .filter(Boolean)
+        .join(' • ') || null;
       
       // 1. Busca perfil para dados redundantes (Garante visibilidade)
       const { data: profile } = await supabase.from('profiles').select('name, phone').eq('id', user.id).maybeSingle();
@@ -168,7 +172,7 @@ export default function Checkout() {
         customer_name: profile?.name || user.user_metadata?.full_name || 'Cliente Marketplace',
         customer_phone: profile?.phone || 'Não informado',
         payment_method: paymentMethod, 
-        notes, 
+        notes: orderNotes,
         idempotency_key: ik
       }).select().single();
       if (orderError) {

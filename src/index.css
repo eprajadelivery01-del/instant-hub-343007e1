@@ -182,8 +182,25 @@
     background:
       radial-gradient(ellipse at top, rgba(255, 90, 31, 0.08), transparent 55%),
       radial-gradient(circle at top, #1A1A1A 0%, #0D0D0D 70%);
-    min-height: 100%;
+    min-height: 100vh;
+    min-height: 100dvh;
     isolation: isolate;
+  }
+
+  .marketplace-bottom-nav {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .marketplace-cart-fab {
+    bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .pb-marketplace-nav {
+    padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .pb-marketplace-nav-with-cart {
+    padding-bottom: calc(180px + env(safe-area-inset-bottom, 0px));
   }
 
   .light .app-shell {
@@ -351,8 +368,8 @@
     background: linear-gradient(
       180deg,
       transparent 0%,
-      rgba(255, 255, 255, 0.4) 40%,
-      rgba(0, 0, 0, 0.6) 100%
+      transparent 55%,
+      rgba(0, 0, 0, 0.55) 100%
     );
   }
 
@@ -378,8 +395,8 @@
   }
 
   .page-transition-wrapper {
-    animation: page-enter 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
-    will-change: opacity, transform;
+    animation: page-enter 0.24s ease-out both;
+    will-change: opacity;
   }
 }
 
@@ -433,13 +450,9 @@
 @keyframes page-enter {
   from {
     opacity: 0;
-    transform: translateY(14px) scale(0.99);
-    filter: blur(3px);
   }
 
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
-    filter: blur(0px);
   }
 }

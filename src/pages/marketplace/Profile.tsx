@@ -157,10 +157,7 @@ export default function Profile() {
 
         {/* Dark mode toggle */}
         <div className="px-5 mb-2">
-          <div className="relative flex items-center justify-between rounded-2xl bg-card border border-primary/40 p-4 shadow-[0_0_24px_rgba(255,90,31,0.18)] animate-[badge-glow_2.5s_ease-in-out_infinite]">
-            <span className="absolute -top-2 left-4 px-2 py-0.5 rounded-full bg-gradient-to-r from-primary to-accent text-[9px] font-black uppercase tracking-wider text-primary-foreground shadow-[0_4px_12px_rgba(255,90,31,0.6)] animate-[badge-pulse_1.6s_ease-in-out_infinite]">
-              Novo
-            </span>
+          <div className="relative flex items-center justify-between rounded-2xl bg-card border border-border p-4">
             <div className="flex items-center gap-3">
               <div className="h-9 w-9 rounded-xl bg-primary/15 flex items-center justify-center ring-1 ring-primary/30">
                 {theme === 'dark' ? <Moon className="h-4 w-4 text-primary" /> : <Sun className="h-4 w-4 text-primary" />}
