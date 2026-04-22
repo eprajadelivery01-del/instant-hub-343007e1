@@ -5,12 +5,15 @@ import { Company, Product } from '@/types/database';
 import { useCart } from '@/contexts/CartContext';
 import MarketplaceLayout from '@/components/marketplace/MarketplaceLayout';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Minus, Plus, Star, Clock, Store as StoreIcon, Share2, Utensils, Search, Info, Ticket } from 'lucide-react';
+import { ArrowLeft, Minus, Plus, Star, Clock, Store as StoreIcon, Share2, Utensils, Search, Info, Ticket, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ProductDetailDialog } from '@/components/marketplace/ProductDetailDialog';
 import { MediaImage } from '@/components/shared/MediaImage';
 import { getCompanyBannerImage, getCompanyLogoImage, getPrimaryProductImage } from '@/lib/media';
 import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
+import { calculateDeliveryFee } from '@/utils/freight';
+import { Address } from '@/types/database';
 
 export default function StoreDetail() {
   const { id } = useParams<{ id: string }>();
@@ -21,8 +24,11 @@ export default function StoreDetail() {
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
   const [isScrolled, setIsScrolled] = useState(false);
+  const { user } = useAuth();
+  const [dynamicDeliveryFee, setDynamicDeliveryFee] = useState<number | null>(null);
+  const [isOutOfRange, setIsOutOfRange] = useState(false);
+  const [calculatingFee, setCalculatingFee] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 150);
@@ -46,6 +52,45 @@ export default function StoreDetail() {
 
     fetchStore();
   }, [id]);
+
+  useEffect(() => {
+    if (!user || !company) return;
+
+    const checkDeliveryFee = async () => {
+      setCalculatingFee(true);
+      try {
+        // 1. Busca endereços do usuário
+        const { data: addresses } = await supabase
+          .from('addresses')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
+
+        if (addresses && addresses.length > 0) {
+          const addr = addresses[0]; // Pega o mais recente
+          if (addr.latitude && addr.longitude) {
+            // Se a loja tem taxa fixa no cadastro, prioriza ela, mas verifica range
+            if (company.delivery_fee !== null && company.delivery_fee !== undefined && company.delivery_fee > 0) {
+              setDynamicDeliveryFee(company.delivery_fee);
+              const result = await calculateDeliveryFee(addr.latitude, addr.longitude, supabase);
+              setIsOutOfRange(result.isOutOfRange);
+            } else {
+              // Senão calcula pela região do mapa
+              const result = await calculateDeliveryFee(addr.latitude, addr.longitude, supabase);
+              setDynamicDeliveryFee(result.fee);
+              setIsOutOfRange(result.isOutOfRange);
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Erro ao calcular frete:', err);
+      } finally {
+        setCalculatingFee(false);
+      }
+    };
+
+    checkDeliveryFee();
+  }, [user, company]);
 
   const categories = useMemo(() => [...new Set(products.map((product) => product.category))], [products]);
   const filteredProducts = useMemo(
@@ -225,15 +270,22 @@ export default function StoreDetail() {
               <Ticket className="h-3.5 w-3.5" />
               Cupons disponíveis
             </div>
-            {company.delivery_fee === 0 ? (
-              <div className="flex items-center gap-1.5 rounded-lg bg-success/10 px-2.5 py-1.5 text-[10px] font-bold text-success border border-success/20">
-                <Clock className="h-3.5 w-3.5" />
-                Entrega Grátis
+            {isOutOfRange ? (
+              <div className="flex items-center gap-1.5 rounded-lg bg-destructive/10 px-2.5 py-1.5 text-[10px] font-bold text-destructive border border-destructive/20">
+                <AlertCircle className="h-3 w-3" />
+                Fora da área de entrega
+              </div>
+            ) : calculatingFee ? (
+              <div className="flex items-center gap-1.5 rounded-lg bg-secondary/60 px-2.5 py-1.5 text-[10px] font-bold text-muted-foreground animate-pulse">
+                <Clock className="h-3 w-3" />
+                Calculando entrega...
               </div>
             ) : (
               <div className="flex items-center gap-1.5 rounded-lg bg-secondary/60 px-2.5 py-1.5 text-[10px] font-bold text-muted-foreground">
                 <StoreIcon className="h-3 w-3" />
-                {company.delivery_fee ? `Entrega ${(company.delivery_fee).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}` : 'Calcular entrega'}
+                {dynamicDeliveryFee !== null 
+                  ? `Entrega ${dynamicDeliveryFee.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}` 
+                  : (company.delivery_fee ? `Entrega ${company.delivery_fee.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}` : 'Calcular entrega')}
               </div>
             )}
           </div>
