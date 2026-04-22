@@ -163,14 +163,11 @@ export default function Checkout() {
       const ik = generateIdempotencyKey(user.id, items, total);
       const { data: order, error: orderError } = await supabase.from('orders').insert({
         customer_id: user.id, 
-        user_id: user.id,
         company_id: company.id, 
         status: 'pending', 
         total,
         delivery_fee: deliveryFee || 0, 
         delivery_address: deliveryAddress,
-        customer_name: profile?.name || user.user_metadata?.full_name || 'Cliente Marketplace',
-        customer_phone: profile?.phone || 'Não informado',
         payment_method: paymentMethod, 
         notes: orderNotes,
         idempotency_key: ik
