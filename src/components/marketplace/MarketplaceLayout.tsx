@@ -21,9 +21,11 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
 
   useOrderNotifications();
 
+  const showCartButton = itemCount > 0 && !location.pathname.includes('/cart') && !location.pathname.includes('/checkout');
+
   return (
     <div className="app-shell min-h-screen flex flex-col font-sans text-foreground">
-      <main className={cn('flex flex-1 flex-col', !hideNav && 'pb-24')}>
+      <main className={cn('flex flex-1 flex-col transition-all duration-300', !hideNav && (showCartButton ? 'pb-48' : 'pb-24'))}>
         <div className="flex-1">{children}</div>
 
         <div className="mt-auto flex w-full justify-center py-8 opacity-20 pointer-events-none select-none">
@@ -72,8 +74,8 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
         </nav>
       )}
 
-      {itemCount > 0 && !location.pathname.includes('/cart') && !location.pathname.includes('/checkout') && (
-        <div className="sticky bottom-[80px] z-[60] w-full px-4 border-none pointer-events-none mb-4 flex justify-center animate-in slide-in-from-bottom duration-500">
+      {showCartButton && (
+        <div className="fixed bottom-[80px] z-[40] w-full px-4 border-none pointer-events-none mb-4 flex justify-center animate-in slide-in-from-bottom duration-500">
           <Link
             to="/marketplace/cart"
             className="pointer-events-auto flex h-16 w-full max-w-sm items-center justify-between rounded-full bg-primary pl-2 pr-6 text-primary-foreground shadow-[0_12px_30px_-5px_rgba(234,88,12,0.5)] active:scale-[0.97] transition-all hover:shadow-[0_15px_35px_-5px_rgba(234,88,12,0.6)]"

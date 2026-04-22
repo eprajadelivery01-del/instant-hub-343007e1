@@ -48,7 +48,7 @@ export function ProductDetailDialog({ product, isOpen, onClose, onAddToCart, ini
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent
         onOpenAutoFocus={(e) => e.preventDefault()}
-        className="max-h-[92vh] max-w-lg overflow-y-auto rounded-t-[32px] border-none bg-card p-0 shadow-2xl scrollbar-hide sm:rounded-[32px] sm:max-h-[85vh] [&>button]:hidden"
+        className="max-h-[92vh] max-w-lg overflow-y-auto rounded-t-[32px] border-none bg-card p-0 shadow-2xl scrollbar-hide sm:rounded-[32px] sm:max-h-[85vh] [&>button]:hidden z-[100]"
       >
         <div className="relative h-64 sm:h-72 w-full flex-shrink-0 bg-secondary/30">
           {images.length > 0 ? (
@@ -132,7 +132,7 @@ export function ProductDetailDialog({ product, isOpen, onClose, onAddToCart, ini
             )}
           </div>
 
-          <div className="flex items-center gap-3 sm:gap-4 mt-auto">
+          <div className="flex items-center gap-3 sm:gap-4 mt-auto pt-6 pb-8 sm:pb-4">
             <div className="flex h-[56px] items-center gap-3 rounded-2xl bg-secondary/80 px-2 border border-border/50">
               <button
                 type="button"
