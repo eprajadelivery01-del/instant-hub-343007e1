@@ -391,7 +391,7 @@
   }
 
   .page-transition-wrapper {
-    animation: page-enter 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation: page-enter 0.24s ease-out both;
     will-change: opacity;
   }
 }
@@ -446,11 +446,9 @@
 @keyframes page-enter {
   from {
     opacity: 0;
-    filter: blur(3px);
   }
 
   to {
     opacity: 1;
-    filter: blur(0px);
   }
 }
