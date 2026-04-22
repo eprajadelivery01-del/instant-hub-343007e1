@@ -95,8 +95,6 @@ export default function Orders() {
     };
   }, [user]);
 
-  if (!user) { navigate('/marketplace/login'); return null; }
-
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return orders;
@@ -114,6 +112,8 @@ export default function Orders() {
     (currentPage - 1) * PAGE_SIZE,
     currentPage * PAGE_SIZE,
   );
+
+  if (!user) { navigate('/marketplace/login'); return null; }
 
   return (
     <MarketplaceLayout>
