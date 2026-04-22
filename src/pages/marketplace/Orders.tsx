@@ -71,11 +71,12 @@ export default function Orders() {
       .on('postgres_changes', {
         event: '*', schema: 'public', table: 'orders',
       }, (payload) => {
-        const isMine = payload.new.customer_id === user.id || payload.new.user_id === user.id;
+        const nextOrder = payload.new as Partial<Order> & { id?: string; user_id?: string };
+        const isMine = nextOrder.customer_id === user.id || nextOrder.user_id === user.id;
         if (!isMine) return;
 
         if (payload.eventType === 'UPDATE') {
-          setOrders(prev => prev.map(o => o.id === payload.new.id ? { ...o, ...payload.new } : o));
+          setOrders(prev => prev.map(o => o.id === nextOrder.id ? { ...o, ...nextOrder } : o));
         } else if (payload.eventType === 'INSERT') {
           fetchOrders();
         }
