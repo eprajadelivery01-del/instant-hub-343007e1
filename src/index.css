@@ -364,8 +364,8 @@
     background: linear-gradient(
       180deg,
       transparent 0%,
-      rgba(255, 255, 255, 0.4) 40%,
-      rgba(0, 0, 0, 0.6) 100%
+      transparent 55%,
+      rgba(0, 0, 0, 0.55) 100%
     );
   }
 
