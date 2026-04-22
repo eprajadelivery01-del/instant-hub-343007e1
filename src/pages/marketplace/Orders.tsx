@@ -35,13 +35,33 @@ export default function Orders() {
   useEffect(() => {
     if (!user) return;
     const fetchOrders = async () => {
-      const { data } = await supabase
-        .from('orders')
-        .select('*, company:companies(*)')
-        .eq('customer_id', user.id)
-        .order('created_at', { ascending: false });
-      setOrders(data || []);
-      setLoading(false);
+      try {
+        // 1. Busca o telefone do perfil atual para usar como backup
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('phone')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        const phone = profile?.phone?.replace(/\D/g, "");
+
+        // 2. Busca pedidos por ID ou por Telefone (Recuperação resiliente)
+        let query = supabase
+          .from('orders')
+          .select('*, company:companies(*)');
+        
+        const filters = [`customer_id.eq.${user.id}`, `user_id.eq.${user.id}`];
+        if (phone) filters.push(`customer_phone.eq.${phone}`);
+
+        const { data, error } = await query.or(filters.join(',')).order('created_at', { ascending: false });
+        
+        if (error) throw error;
+        setOrders(data || []);
+      } catch (error) {
+        console.error("Erro ao buscar pedidos:", error);
+      } finally {
+        setLoading(false);
+      }
     };
     fetchOrders();
 
