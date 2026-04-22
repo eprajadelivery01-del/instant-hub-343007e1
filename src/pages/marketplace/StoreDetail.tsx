@@ -25,6 +25,7 @@ export default function StoreDetail() {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const { user } = useAuth();
   const [dynamicDeliveryFee, setDynamicDeliveryFee] = useState<number | null>(null);
   const [isOutOfRange, setIsOutOfRange] = useState(false);

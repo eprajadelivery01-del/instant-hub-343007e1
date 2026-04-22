@@ -170,7 +170,7 @@ export default function Profile() {
             >
               <div className={cn(
                 'h-9 w-9 rounded-xl flex items-center justify-center shrink-0',
-                item.highlight ? 'bg-primary/10 text-primary' : 'bg-secondary text-muted-foreground'
+                'bg-secondary text-muted-foreground'
               )}>
                 <item.icon className="h-4 w-4" />
               </div>
