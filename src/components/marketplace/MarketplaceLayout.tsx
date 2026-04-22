@@ -32,7 +32,7 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
       </main>
 
       {!hideNav && (
-        <nav className="sticky bottom-0 z-50 w-full border-t border-border bg-background pb-safe mt-auto">
+        <nav className="fixed bottom-0 left-0 right-0 z-50 w-full border-t border-border bg-background pb-safe">
           <div className="flex h-16 items-center justify-around px-2">
             {navItems.map((item) => {
               const isHome = item.path === '/marketplace';
@@ -73,7 +73,7 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
       )}
 
       {itemCount > 0 && !location.pathname.includes('/cart') && !location.pathname.includes('/checkout') && (
-        <div className="sticky bottom-[80px] z-[60] w-full px-4 border-none pointer-events-none mb-4 flex justify-center animate-in slide-in-from-bottom duration-500">
+        <div className="fixed bottom-[80px] left-0 right-0 z-[60] w-full px-4 border-none pointer-events-none flex justify-center animate-in slide-in-from-bottom duration-500">
           <Link
             to="/marketplace/cart"
             className="pointer-events-auto flex h-16 w-full max-w-sm items-center justify-between rounded-full bg-primary pl-2 pr-6 text-primary-foreground shadow-[0_12px_30px_-5px_rgba(234,88,12,0.5)] active:scale-[0.97] transition-all hover:shadow-[0_15px_35px_-5px_rgba(234,88,12,0.6)]"
