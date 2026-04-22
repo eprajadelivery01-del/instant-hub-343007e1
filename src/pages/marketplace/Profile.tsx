@@ -75,11 +75,11 @@ export default function Profile() {
   const menuItems = [
     { icon: Wallet, label: 'Saldo', subtitle: 'Carteira digital', onClick: () => toast('Sua carteira está vazia.', { description: 'Recargas estarão disponíveis em breve.' }) },
     { icon: MapPin, label: 'Endereços', subtitle: 'Gerenciar locais', onClick: () => navigate('/marketplace/addresses'), chevron: true },
-    { icon: Bell, label: 'Notificações', subtitle: 'Nenhuma novidade', onClick: () => toast.info('Todas as novidades do app aparecerão aqui.') },
+    { icon: theme === 'dark' ? Moon : Sun, label: 'Aparência do app', subtitle: theme === 'dark' ? 'Tema escuro ativo' : 'Tema claro ativo', onClick: () => toggleTheme() },
     { icon: Settings, label: 'Meus Dados', subtitle: 'Informações pessoais', onClick: () => setEditing(true), chevron: true },
     { icon: HelpCircle, label: 'Ajuda', subtitle: 'Suporte e dúvidas', onClick: () => setSupportType('support') },
     { icon: Heart, label: 'Favoritos', subtitle: 'Suas lojas favoritas', onClick: () => toast.info('Suas lojas do coração ficarão guardadas aqui.') },
-    { icon: Ticket, label: 'Cupons', subtitle: 'Meus cupons de desconto', onClick: () => navigate('/marketplace/coupons'), highlight: true },
+    { icon: Ticket, label: 'Cupons', subtitle: 'Meus cupons de desconto', onClick: () => navigate('/marketplace/coupons') },
   ];
 
   return (
@@ -155,21 +155,7 @@ export default function Profile() {
           </div>
         </div>
 
-        {/* Dark mode toggle */}
-        <div className="px-5 mb-2">
-          <div className="relative flex items-center justify-between rounded-2xl bg-card border border-border p-4">
-            <div className="flex items-center gap-3">
-              <div className="h-9 w-9 rounded-xl bg-primary/15 flex items-center justify-center ring-1 ring-primary/30">
-                {theme === 'dark' ? <Moon className="h-4 w-4 text-primary" /> : <Sun className="h-4 w-4 text-primary" />}
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-foreground">Aparência do app</p>
-                <p className="text-xs text-muted-foreground">{theme === 'dark' ? 'Tema escuro ativo' : 'Tema claro ativo'}</p>
-              </div>
-            </div>
-            <Switch checked={theme === 'dark'} onCheckedChange={toggleTheme} />
-          </div>
-        </div>
+
 
         {/* Menu list */}
         <div className="px-5 py-4 space-y-1">

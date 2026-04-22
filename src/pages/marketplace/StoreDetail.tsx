@@ -199,7 +199,7 @@ export default function StoreDetail() {
                 'absolute -bottom-1 -left-1 flex h-6 w-6 items-center justify-center rounded-full border-[3px] border-background shadow-sm',
                 company.active ? 'bg-success' : 'bg-destructive'
               )}>
-                <div className={cn('h-1.5 w-1.5 rounded-full bg-white', company.active && 'animate-pulse')} />
+                <div className={cn('h-1.5 w-1.5 rounded-full bg-white')} />
               </div>
             </div>
           </div>
