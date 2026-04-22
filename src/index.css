@@ -182,8 +182,21 @@
     background:
       radial-gradient(ellipse at top, rgba(255, 90, 31, 0.08), transparent 55%),
       radial-gradient(circle at top, #1A1A1A 0%, #0D0D0D 70%);
-    min-height: 100%;
+    min-height: 100vh;
+    min-height: 100dvh;
     isolation: isolate;
+  }
+
+  .marketplace-bottom-nav {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .marketplace-cart-fab {
+    bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .pb-marketplace-nav {
+    padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
   }
 
   .light .app-shell {
