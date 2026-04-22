@@ -152,11 +152,24 @@ export default function Checkout() {
     try {
       const addr = addresses.find(a => a.id === selectedAddress);
       const deliveryAddress = addr ? `${addr.street}, ${addr.number} - ${addr.neighborhood}, ${addr.city}` : '';
+      
+      // 1. Busca perfil para dados redundantes (Garante visibilidade)
+      const { data: profile } = await supabase.from('profiles').select('name, phone').eq('id', user.id).maybeSingle();
+      
       const ik = generateIdempotencyKey(user.id, items, total);
       const { data: order, error: orderError } = await supabase.from('orders').insert({
-        customer_id: user.id, company_id: company.id, status: 'pending', total,
-        delivery_fee: deliveryFee || 0, delivery_address: deliveryAddress,
-        payment_method: paymentMethod, notes, idempotency_key: ik
+        customer_id: user.id, 
+        user_id: user.id,
+        company_id: company.id, 
+        status: 'pending', 
+        total,
+        delivery_fee: deliveryFee || 0, 
+        delivery_address: deliveryAddress,
+        customer_name: profile?.name || user.user_metadata?.full_name || 'Cliente Marketplace',
+        customer_phone: profile?.phone || 'Não informado',
+        payment_method: paymentMethod, 
+        notes, 
+        idempotency_key: ik
       }).select().single();
       if (orderError) {
         if (orderError.code === '23505') {
