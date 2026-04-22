@@ -14,7 +14,7 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 const statusSteps = ['pending', 'confirmed', 'preparing', 'ready', 'delivering', 'delivered'];
 const statusLabels: Record<string, string> = {
   pending: 'Aguardando', confirmed: 'Confirmado', preparing: 'Preparando',
-  ready: 'Pronto', delivering: 'Em entrega', delivered: 'Entregue',
+  ready: 'Pronto', delivering: 'Em entrega', in_route: 'Em entrega', delivered: 'Entregue',
 };
 
 export default function OrderDetail() {
@@ -67,7 +67,7 @@ export default function OrderDetail() {
   }, [id]);
 
   useEffect(() => {
-    if (!delivery || order?.status !== 'delivering' || !mapContainerRef.current) return;
+    if (!delivery || !['delivering', 'in_route'].includes(order?.status || '') || !mapContainerRef.current) return;
     if (mapRef.current) return;
     const centerLat = delivery.current_latitude || delivery.delivery_latitude || -23.55;
     const centerLng = delivery.current_longitude || delivery.delivery_longitude || -46.63;
@@ -147,7 +147,7 @@ export default function OrderDetail() {
     );
   }
 
-  const currentStepIndex = statusSteps.indexOf(order.status);
+  const currentStepIndex = statusSteps.indexOf(order.status === 'in_route' ? 'delivering' : order.status);
 
   return (
     <MarketplaceLayout>
@@ -160,7 +160,7 @@ export default function OrderDetail() {
         </div>
 
         {/* Map */}
-        {delivery && order.status === 'delivering' && (
+        {delivery && ['delivering', 'in_route'].includes(order.status) && (
           <div className="bg-card border border-border rounded-2xl overflow-hidden">
             <div ref={mapContainerRef} className="h-48 w-full" />
             <div className="p-3 flex items-center gap-2">
@@ -198,7 +198,7 @@ export default function OrderDetail() {
           <div className="space-y-2">
             {orderItems.map(item => (
               <div key={item.id} className="flex justify-between text-sm">
-                <span className="text-muted-foreground">{item.quantity}x {item.product_name}</span>
+                <span className="text-muted-foreground">{item.quantity}x {item.product_name || (item as any).products?.name || 'Produto'}</span>
                 <span className="text-foreground">R$ {((item.price || 0) * item.quantity).toFixed(2).replace('.', ',')}</span>
               </div>
             ))}
