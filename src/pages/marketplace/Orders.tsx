@@ -36,25 +36,13 @@ export default function Orders() {
     if (!user) return;
     const fetchOrders = async () => {
       try {
-        // 1. Busca o telefone do perfil atual para usar como backup
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('phone')
-          .eq('id', user.id)
-          .maybeSingle();
-
-        const phone = profile?.phone?.replace(/\D/g, "");
-
-        // 2. Busca pedidos por ID ou por Telefone (Recuperação resiliente)
-        let query = supabase
+        // Busca pedidos pelos vínculos reais existentes na tabela
+        const { data, error } = await supabase
           .from('orders')
-          .select('*, company:companies(*)');
-        
-        const filters = [`customer_id.eq.${user.id}`, `user_id.eq.${user.id}`];
-        if (phone) filters.push(`customer_phone.eq.${phone}`);
+          .select('*, company:companies(*)')
+          .or(`customer_id.eq.${user.id},user_id.eq.${user.id}`)
+          .order('created_at', { ascending: false });
 
-        const { data, error } = await query.or(filters.join(',')).order('created_at', { ascending: false });
-        
         if (error) throw error;
         console.log(`[Orders] Pedidos encontrados para ${user.id}:`, data?.length || 0);
         setOrders(data || []);
