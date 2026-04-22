@@ -70,16 +70,21 @@ export default function StoreDetail() {
         if (addresses && addresses.length > 0) {
           const addr = addresses[0]; // Pega o mais recente
           if (addr.latitude && addr.longitude) {
-            // Se a loja tem taxa fixa no cadastro, prioriza ela, mas verifica range
-            if (company.delivery_fee !== null && company.delivery_fee !== undefined && company.delivery_fee > 0) {
-              setDynamicDeliveryFee(company.delivery_fee);
-              const result = await calculateDeliveryFee(addr.latitude, addr.longitude, supabase);
-              setIsOutOfRange(result.isOutOfRange);
-            } else {
-              // Senão calcula pela região do mapa
-              const result = await calculateDeliveryFee(addr.latitude, addr.longitude, supabase);
+            // CALCULO OBRIGATÓRIO PELA REGIÃO (ADMIN PANEL MAP)
+            const result = await calculateDeliveryFee(addr.latitude, addr.longitude, supabase);
+            
+            if (result.fee !== null) {
+              // Se achou uma região no mapa, ESSE VALOR É A LEI
               setDynamicDeliveryFee(result.fee);
-              setIsOutOfRange(result.isOutOfRange);
+              setIsOutOfRange(false);
+            } else if (result.isOutOfRange) {
+              // Se o mapa diz que tá fora, tá fora
+              setDynamicDeliveryFee(null);
+              setIsOutOfRange(true);
+            } else {
+              // Fallback apenas se não houver regiões cadastradas no mapa
+              setDynamicDeliveryFee(company.delivery_fee);
+              setIsOutOfRange(false);
             }
           }
         }
