@@ -287,7 +287,7 @@ export default function OrderDetail() {
           <div className="bg-card border border-border rounded-2xl p-4">
             <Button variant="outline" className="w-full rounded-xl h-10" size="sm" onClick={() => setShowChat(!showChat)}>
               <MessageCircle className="h-4 w-4 mr-2" />
-              {showChat ? 'Fechar chat' : 'Chat com entregador'}
+              {showChat ? 'Fechar chat com entregador' : 'Chat com entregador'}
             </Button>
             {showChat && (
               <div className="mt-3">
