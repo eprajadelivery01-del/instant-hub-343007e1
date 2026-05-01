@@ -6,16 +6,32 @@ import { Order, OrderItem, Delivery, ChatMessage } from '@/types/database';
 import MarketplaceLayout from '@/components/marketplace/MarketplaceLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, MapPin, MessageCircle, Send, Star, Check, Navigation } from 'lucide-react';
+import { ArrowLeft, MessageCircle, Send, Star, Check, Navigation, Store } from 'lucide-react';
 import { toast } from 'sonner';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
+import { OrderStoreChat } from '@/components/marketplace/OrderStoreChat';
 
 const statusSteps = ['pending', 'confirmed', 'preparing', 'ready', 'delivering', 'delivered'];
 const statusLabels: Record<string, string> = {
-  pending: 'Aguardando', confirmed: 'Confirmado', preparing: 'Preparando',
-  ready: 'Pronto', delivering: 'Em entrega', in_route: 'Em entrega', delivered: 'Entregue',
+  pending: 'Pedido solicitado',
+  confirmed: 'Aceito pelo lojista',
+  preparing: 'Em preparo',
+  ready: 'Pronto para retirada',
+  delivering: 'Saiu para entrega',
+  in_route: 'Saiu para entrega',
+  delivered: 'Entregue',
 };
+const statusDescriptions: Record<string, string> = {
+  pending: 'Aguardando confirmação do lojista.',
+  confirmed: 'O lojista aceitou seu pedido.',
+  preparing: 'Seu pedido está sendo preparado.',
+  ready: 'Pedido pronto, aguardando entregador.',
+  delivering: 'O entregador está a caminho.',
+  delivered: 'Pedido entregue. Bom apetite!',
+};
+
+const STORE_CHAT_STATUSES = ['confirmed', 'preparing', 'ready', 'delivering', 'in_route', 'delivered'];
 
 export default function OrderDetail() {
   const { id } = useParams<{ id: string }>();
@@ -27,6 +43,7 @@ export default function OrderDetail() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [showChat, setShowChat] = useState(false);
+  const [showStoreChat, setShowStoreChat] = useState(false);
   const [showReview, setShowReview] = useState(false);
   const [rating, setRating] = useState(5);
   const [reviewComment, setReviewComment] = useState('');
@@ -172,25 +189,75 @@ export default function OrderDetail() {
 
         {/* Status */}
         <div className="bg-card border border-border rounded-2xl p-4">
-          <h3 className="font-medium text-foreground mb-4 text-sm">Acompanhamento</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-medium text-foreground text-sm">Acompanhamento</h3>
+            <span className="text-[11px] uppercase tracking-wide text-primary font-semibold">
+              {statusLabels[order.status] || 'Em andamento'}
+            </span>
+          </div>
           <div className="relative">
-            {statusSteps.map((step, i) => (
-              <div key={step} className="flex items-center gap-3 relative">
-                {i < statusSteps.length - 1 && (
-                  <div className={`absolute left-[13px] top-7 w-0.5 h-5 ${i < currentStepIndex ? 'bg-primary' : 'bg-border'}`} />
-                )}
-                <div className={`h-7 w-7 rounded-full flex items-center justify-center text-xs font-medium shrink-0 z-10 ${
-                  i <= currentStepIndex ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'
-                }`}>
-                  {i <= currentStepIndex ? <Check className="h-3.5 w-3.5" /> : i + 1}
+            {statusSteps.map((step, i) => {
+              const done = i < currentStepIndex;
+              const current = i === currentStepIndex;
+              return (
+                <div key={step} className="flex items-start gap-3 relative pb-4 last:pb-0">
+                  {i < statusSteps.length - 1 && (
+                    <div
+                      className={`absolute left-[13px] top-7 w-0.5 h-[calc(100%-12px)] ${
+                        done ? 'bg-primary' : 'bg-border'
+                      }`}
+                    />
+                  )}
+                  <div
+                    className={`h-7 w-7 rounded-full flex items-center justify-center text-xs font-medium shrink-0 z-10 transition-all ${
+                      done
+                        ? 'bg-primary text-primary-foreground'
+                        : current
+                          ? 'bg-primary text-primary-foreground ring-4 ring-primary/20 animate-pulse'
+                          : 'bg-secondary text-muted-foreground'
+                    }`}
+                  >
+                    {done ? <Check className="h-3.5 w-3.5" /> : i + 1}
+                  </div>
+                  <div className="flex-1 pt-0.5">
+                    <p
+                      className={`text-sm leading-tight ${
+                        done || current ? 'text-foreground font-medium' : 'text-muted-foreground'
+                      }`}
+                    >
+                      {statusLabels[step]}
+                    </p>
+                    {current && statusDescriptions[step] && (
+                      <p className="text-xs text-muted-foreground mt-0.5">{statusDescriptions[step]}</p>
+                    )}
+                  </div>
                 </div>
-                <span className={`text-sm py-1.5 ${i <= currentStepIndex ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>
-                  {statusLabels[step]}
-                </span>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
+
+        {/* Chat com lojista — disponível assim que o pedido é aceito */}
+        {order.company_id && STORE_CHAT_STATUSES.includes(order.status) && (
+          <div className="bg-card border border-border rounded-2xl p-4">
+            <Button
+              variant="outline"
+              className="w-full rounded-xl h-10"
+              size="sm"
+              onClick={() => setShowStoreChat((v) => !v)}
+            >
+              <Store className="h-4 w-4 mr-2" />
+              {showStoreChat ? 'Fechar chat com lojista' : `Chat com ${order.company?.name || 'lojista'}`}
+            </Button>
+            {showStoreChat && (
+              <OrderStoreChat
+                orderId={order.id}
+                companyId={order.company_id}
+                companyName={order.company?.name}
+              />
+            )}
+          </div>
+        )}
 
         {/* Items */}
         <div className="bg-card border border-border rounded-2xl p-4">
@@ -220,7 +287,7 @@ export default function OrderDetail() {
           <div className="bg-card border border-border rounded-2xl p-4">
             <Button variant="outline" className="w-full rounded-xl h-10" size="sm" onClick={() => setShowChat(!showChat)}>
               <MessageCircle className="h-4 w-4 mr-2" />
-              {showChat ? 'Fechar chat' : 'Chat com entregador'}
+              {showChat ? 'Fechar chat com entregador' : 'Chat com entregador'}
             </Button>
             {showChat && (
               <div className="mt-3">
