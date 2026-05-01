@@ -6,16 +6,32 @@ import { Order, OrderItem, Delivery, ChatMessage } from '@/types/database';
 import MarketplaceLayout from '@/components/marketplace/MarketplaceLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, MapPin, MessageCircle, Send, Star, Check, Navigation } from 'lucide-react';
+import { ArrowLeft, MessageCircle, Send, Star, Check, Navigation, Store } from 'lucide-react';
 import { toast } from 'sonner';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
+import { OrderStoreChat } from '@/components/marketplace/OrderStoreChat';
 
 const statusSteps = ['pending', 'confirmed', 'preparing', 'ready', 'delivering', 'delivered'];
 const statusLabels: Record<string, string> = {
-  pending: 'Aguardando', confirmed: 'Confirmado', preparing: 'Preparando',
-  ready: 'Pronto', delivering: 'Em entrega', in_route: 'Em entrega', delivered: 'Entregue',
+  pending: 'Pedido solicitado',
+  confirmed: 'Aceito pelo lojista',
+  preparing: 'Em preparo',
+  ready: 'Pronto para retirada',
+  delivering: 'Saiu para entrega',
+  in_route: 'Saiu para entrega',
+  delivered: 'Entregue',
 };
+const statusDescriptions: Record<string, string> = {
+  pending: 'Aguardando confirmação do lojista.',
+  confirmed: 'O lojista aceitou seu pedido.',
+  preparing: 'Seu pedido está sendo preparado.',
+  ready: 'Pedido pronto, aguardando entregador.',
+  delivering: 'O entregador está a caminho.',
+  delivered: 'Pedido entregue. Bom apetite!',
+};
+
+const STORE_CHAT_STATUSES = ['confirmed', 'preparing', 'ready', 'delivering', 'in_route', 'delivered'];
 
 export default function OrderDetail() {
   const { id } = useParams<{ id: string }>();
@@ -27,6 +43,7 @@ export default function OrderDetail() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [showChat, setShowChat] = useState(false);
+  const [showStoreChat, setShowStoreChat] = useState(false);
   const [showReview, setShowReview] = useState(false);
   const [rating, setRating] = useState(5);
   const [reviewComment, setReviewComment] = useState('');
