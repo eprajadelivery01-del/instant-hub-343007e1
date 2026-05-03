@@ -7,7 +7,6 @@ import { useAddress } from '@/contexts/AddressContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import MarketplaceLayout from '@/components/marketplace/MarketplaceLayout';
-import { HeroMapSection } from '@/components/shared/HeroMapSection';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { StoreTabCard } from '@/components/marketplace/StoreTabCard';
@@ -214,15 +213,6 @@ export default function Home() {
                 {category.label}
               </button>
             ))}
-          </div>
-        </section>
-
-        <section className="premium-card overflow-hidden rounded-2xl p-1.5">
-          <div className="relative h-48 overflow-hidden rounded-xl">
-            <HeroMapSection />
-            <div className="premium-panel absolute right-3 top-3 rounded-full px-3 py-1 text-[10px] font-medium text-muted-foreground">
-              Diamantino - MT
-            </div>
           </div>
         </section>
 
