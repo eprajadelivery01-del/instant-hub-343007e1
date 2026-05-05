@@ -5,7 +5,9 @@ export type AuditEvent =
   | 'orders.insert.success'
   | 'orders.insert.403'
   | 'orders.insert.23505'
-  | 'orders.insert.error';
+  | 'orders.insert.error'
+  | 'customers.autocreate.success'
+  | 'customers.autocreate.failed';
 
 export interface AuditLogEntry {
   request_id: string;
