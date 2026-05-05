@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Order, OrderItem } from '@/types/database';
 import {
@@ -18,10 +18,11 @@ interface Props {
 const paymentLabels: Record<string, string> = {
   pix: 'PIX',
   cash: 'Dinheiro',
-  credit: 'Cartão de crédito',
-  debit: 'Cartão de débito',
-  card: 'Cartão',
-  card_machine: 'Cartão na entrega',
+  money: 'Dinheiro',
+  credit: 'CartÃ£o de crÃ©dito',
+  debit: 'CartÃ£o de dÃ©bito',
+  card: 'CartÃ£o',
+  card_machine: 'CartÃ£o na entrega',
   online: 'Pagamento online',
 };
 
@@ -59,7 +60,7 @@ export default function OrderSummaryDialog({ orderId, open, onOpenChange }: Prop
   const total = order?.total || subtotal + deliveryFee;
   const paymentLabel = order?.payment_method
     ? paymentLabels[order.payment_method] || order.payment_method
-    : 'Não informado';
+    : 'NÃ£o informado';
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -112,15 +113,15 @@ export default function OrderSummaryDialog({ orderId, open, onOpenChange }: Prop
               )}
             </div>
 
-            {/* Endereço */}
+            {/* EndereÃ§o */}
             <div className="flex items-start gap-2">
               <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
               <div>
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                  Endereço de entrega
+                  EndereÃ§o de entrega
                 </p>
                 <p className="text-foreground mt-0.5">
-                  {order.delivery_address || 'Endereço não informado'}
+                  {order.delivery_address || 'EndereÃ§o nÃ£o informado'}
                 </p>
               </div>
             </div>
@@ -136,13 +137,13 @@ export default function OrderSummaryDialog({ orderId, open, onOpenChange }: Prop
               </div>
             </div>
 
-            {/* Observações */}
+            {/* ObservaÃ§Ãµes */}
             {order.notes && (
               <div className="flex items-start gap-2">
                 <StickyNote className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
                 <div>
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                    Observações
+                    ObservaÃ§Ãµes
                   </p>
                   <p className="text-foreground mt-0.5 whitespace-pre-wrap">
                     {order.notes}
