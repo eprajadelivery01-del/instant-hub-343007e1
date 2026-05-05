@@ -28,7 +28,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     fetchingRef.current = userId;
 
     try {
-      console.log(`[Auth-Marketplace] V12-TOTAL-RELEASE - Carregando perfil: ${userId}`);
+      if (import.meta.env.DEV) {
+        console.log('[Auth-Marketplace] Loading profile');
+      }
 
       const timeout = new Promise((_, reject) =>
         setTimeout(() => reject(new Error('Timeout')), 10000)
@@ -46,7 +48,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setProfile(data);
       }
     } catch (error: any) {
-      console.error('[Auth-Marketplace] Erro no profile:', error.message);
+      if (import.meta.env.DEV) {
+        console.error('[Auth-Marketplace] Profile error');
+      }
     } finally {
       fetchingRef.current = null;
       setLoading(false);
@@ -66,7 +70,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(currentUser ?? null);
 
         if (currentUser) {
-          console.log('[Auth-Marketplace] V12: Liberando loading para usuário logado.');
           setLoading(false);
           setTimeout(() => {
             if (mounted) fetchProfile(currentUser.id);
@@ -84,7 +87,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const authListener = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (!mounted) return;
-        console.log(`[Auth-Marketplace] Evento V17 (TOTAL-RELEASE): ${event}`);
+        if (import.meta.env.DEV) {
+          console.log(`[Auth-Marketplace] Auth event: ${event}`);
+        }
 
         if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
           const currentUser = session?.user;
@@ -127,16 +132,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) throw error;
 
     if (data.user) {
+      // NOTE: role assignment is handled by a server-side trigger on auth.users
+      // (AFTER INSERT) to prevent privilege escalation. Client only writes
+      // non-privileged profile fields.
       await supabase.from('profiles').upsert({
         id: data.user.id,
         full_name: fullName,
         phone,
-        role: 'customer',
-      });
-
-      await supabase.from('user_roles').insert({
-        user_id: data.user.id,
-        role: 'customer',
       });
     }
   };
