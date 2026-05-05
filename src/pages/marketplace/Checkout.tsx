@@ -49,6 +49,25 @@ const logOrdersRlsFailure = (context: {
   console.groupEnd();
 };
 
+const explainCustomerProvisionError = (error: { code?: string; message?: string; details?: string } | null | undefined) => {
+  const message = error?.message?.toLowerCase() || '';
+  const details = error?.details?.toLowerCase() || '';
+
+  if (error?.code === '42501' || message.includes('row-level security') || details.includes('row-level security')) {
+    return 'Não foi possível vincular seu cadastro de cliente. Verifique a policy de INSERT em public.customers (auth.uid() = user_id).';
+  }
+
+  if (message.includes("column 'email'") || message.includes('column "email"')) {
+    return 'Não foi possível vincular seu cadastro de cliente porque a tabela public.customers não possui a coluna email esperada pelo app.';
+  }
+
+  if (message.includes("column 'phone'") || message.includes('column "phone"')) {
+    return 'Não foi possível vincular seu cadastro de cliente porque a tabela public.customers não possui a coluna phone esperada pelo app.';
+  }
+
+  return 'Não foi possível vincular seu cadastro de cliente neste momento.';
+};
+
 export default function Checkout() {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
@@ -219,12 +238,12 @@ export default function Checkout() {
             user_id: user.id,
             name: profile?.full_name || user.email || 'Cliente',
             phone: profile?.phone || null,
-            email: user.email || null,
           })
           .select('id')
           .single();
 
         if (createCustomerError || !createdCustomer?.id) {
+          const customerProvisionMessage = explainCustomerProvisionError(createCustomerError);
           console.error('[Checkout][customers] Falha ao auto-provisionar cliente', {
             authenticated_user_id: user.id,
             error: createCustomerError,
@@ -234,10 +253,21 @@ export default function Checkout() {
             event: 'customers.autocreate.failed',
             user_id: user.id,
             payload: { user_id: user.id },
-            context: { error: createCustomerError?.message },
+            context: {
+              error: createCustomerError?.message,
+              error_code: createCustomerError?.code ?? null,
+              error_details: createCustomerError?.details ?? null,
+            },
           });
-          throw new Error('Não foi possível vincular seu cadastro de cliente. Verifique a policy de INSERT em public.customers (auth.uid() = user_id).');
+          throw new Error(customerProvisionMessage);
         }
+
+        void recordAuditLog({
+          request_id: requestId,
+          event: 'customers.autocreate.success',
+          user_id: user.id,
+          context: { customer_record_id: createdCustomer.id },
+        });
         customerRecord = createdCustomer;
       }
 
