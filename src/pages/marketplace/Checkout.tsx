@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { MapPin, CreditCard, Banknote, QrCode, Plus, AlertCircle, ArrowLeft, Ticket, CheckCircle2, Loader2 } from 'lucide-react';
 import { useOrderLock } from '@/hooks/useOrderLock';
 import { calculateDeliveryFee } from '@/utils/freight';
+import { recordAuditLog, newRequestId } from '@/lib/auditLog';
 
 const ORDERS_POLICY_SQL = {
   insert: `CREATE POLICY "Customers_Insert_Orders" ON public.orders FOR INSERT TO authenticated WITH CHECK ( user_id = auth.uid() AND customer_id IN ( SELECT customer_profile.id FROM public.customers customer_profile WHERE customer_profile.user_id = auth.uid() ) );`,
@@ -187,6 +188,7 @@ export default function Checkout() {
     if (loading || isLocked) return;
     if (!acquireLock()) return;
     setLoading(true);
+    const requestId = newRequestId();
     try {
       const addr = addresses.find(a => a.id === selectedAddress);
       const deliveryAddress = addr ? `${addr.street}, ${addr.number} - ${addr.neighborhood}, ${addr.city}` : '';
@@ -232,9 +234,17 @@ export default function Checkout() {
       };
 
       console.info('[Checkout][orders] Tentando criar pedido', {
+        request_id: requestId,
         payload: orderPayload,
         authenticated_user_id: user.id,
         customer_record_id: customerRecord?.id ?? null,
+      });
+      void recordAuditLog({
+        request_id: requestId,
+        event: 'orders.insert.attempt',
+        user_id: user.id,
+        payload: orderPayload,
+        context: { customer_record_id: resolvedCustomerId },
       });
 
       const { data: order, error: orderError } = await supabase
@@ -245,12 +255,26 @@ export default function Checkout() {
 
       if (orderError) {
         if (orderError.code === '23505') {
-          const { data: existingOrder } = await supabase
-            .from('orders')
+          // Busca pedido já existente via view segura (respeita RLS).
+          const { data: existingOrder, error: lookupError } = await supabase
+            .from('customer_orders_view')
             .select('id')
-            .or(`customer_id.eq.${resolvedCustomerId},user_id.eq.${user.id}`)
             .eq('idempotency_key', ik)
             .maybeSingle();
+
+          void recordAuditLog({
+            request_id: requestId,
+            event: 'orders.insert.23505',
+            user_id: user.id,
+            error_code: orderError.code,
+            error_message: orderError.message,
+            payload: orderPayload,
+            context: {
+              idempotency_key: ik,
+              existing_order_id: existingOrder?.id ?? null,
+              lookup_error: lookupError?.message ?? null,
+            },
+          });
 
           if (existingOrder?.id) {
             clearCart();
@@ -272,10 +296,35 @@ export default function Checkout() {
             payload: orderPayload,
             error: orderError,
           });
+          void recordAuditLog({
+            request_id: requestId,
+            event: 'orders.insert.403',
+            user_id: user.id,
+            http_status: 403,
+            error_code: (orderError as any).code ?? null,
+            error_message: orderError.message,
+            payload: orderPayload,
+            context: { customer_record_id: resolvedCustomerId, policies: ORDERS_POLICY_SQL },
+          });
+        } else {
+          void recordAuditLog({
+            request_id: requestId,
+            event: 'orders.insert.error',
+            user_id: user.id,
+            error_code: (orderError as any).code ?? null,
+            error_message: orderError.message,
+            payload: orderPayload,
+          });
         }
 
         throw orderError;
       }
+      void recordAuditLog({
+        request_id: requestId,
+        event: 'orders.insert.success',
+        user_id: user.id,
+        context: { order_id: order.id },
+      });
       const orderItems = items.map(item => ({
         order_id: order.id, product_id: item.product.id, quantity: item.quantity,
         price: item.product.price, unit_price: item.product.price, product_name: item.product.name,
