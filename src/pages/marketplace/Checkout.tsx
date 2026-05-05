@@ -166,7 +166,7 @@ export default function Checkout() {
       }
       
       // 1. Busca perfil para dados redundantes (Garante visibilidade)
-      const { data: profile } = await supabase.from('profiles').select('name, phone').eq('id', user.id).maybeSingle();
+      const { data: profile } = await supabase.from('profiles').select('full_name, phone').eq('id', user.id).maybeSingle();
       
       const ik = generateIdempotencyKey(user.id, items, total);
       const { data: order, error: orderError } = await supabase.from('orders').insert({
