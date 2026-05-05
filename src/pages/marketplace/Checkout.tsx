@@ -203,18 +203,42 @@ export default function Checkout() {
         finalNotes = finalNotes ? `${finalNotes} • ${changeNote}` : changeNote;
       }
 
-      const { data: customerRecord } = await supabase
+      let { data: customerRecord } = await supabase
         .from('customers')
         .select('id')
         .eq('user_id', user.id)
         .maybeSingle();
 
       if (!customerRecord?.id) {
-        console.error('[Checkout][orders] Usuário autenticado sem registro em public.customers', {
+        console.warn('[Checkout][customers] Registro ausente — provisionando automaticamente', {
           authenticated_user_id: user.id,
-          customer_record: customerRecord ?? null,
         });
-        throw new Error('Seu cadastro de cliente ainda não foi vinculado. Faça login novamente ou contate o suporte.');
+        const { data: createdCustomer, error: createCustomerError } = await supabase
+          .from('customers')
+          .insert({
+            user_id: user.id,
+            name: profile?.full_name || user.email || 'Cliente',
+            phone: profile?.phone || null,
+            email: user.email || null,
+          })
+          .select('id')
+          .single();
+
+        if (createCustomerError || !createdCustomer?.id) {
+          console.error('[Checkout][customers] Falha ao auto-provisionar cliente', {
+            authenticated_user_id: user.id,
+            error: createCustomerError,
+          });
+          void recordAuditLog({
+            request_id: requestId,
+            event: 'customers.autocreate.failed',
+            user_id: user.id,
+            payload: { user_id: user.id },
+            context: { error: createCustomerError?.message },
+          });
+          throw new Error('Não foi possível vincular seu cadastro de cliente. Verifique a policy de INSERT em public.customers (auth.uid() = user_id).');
+        }
+        customerRecord = createdCustomer;
       }
 
       const resolvedCustomerId = customerRecord.id;
