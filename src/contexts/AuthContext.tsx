@@ -132,13 +132,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) throw error;
 
     if (data.user) {
-      // NOTE: role assignment is handled by a server-side trigger on auth.users
-      // (AFTER INSERT) to prevent privilege escalation. Client only writes
-      // non-privileged profile fields.
+      // Profile: only non-privileged fields. The `role` column must NOT be
+      // writable by clients (enforce via RLS UPDATE policy with column check).
       await supabase.from('profiles').upsert({
         id: data.user.id,
         full_name: fullName,
         phone,
+      });
+
+      // user_roles: client may only self-assign 'customer'. RLS must enforce
+      // WITH CHECK (user_id = auth.uid() AND role = 'customer') and forbid UPDATE.
+      await supabase.from('user_roles').insert({
+        user_id: data.user.id,
+        role: 'customer',
       });
     }
   };
