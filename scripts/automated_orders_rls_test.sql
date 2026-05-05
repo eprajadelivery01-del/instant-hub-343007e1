@@ -4,9 +4,10 @@
 -- já cadastrado em auth.users e public.customers.
 --
 -- Como usar:
---   1) defina o e-mail do cliente de teste em :test_email
---   2) rode o bloco inteiro
---   3) verifique a saída final (tabela results) — todos PASS
+--   1) aplique antes scripts/fix_customers_self_provision.sql
+--   2) defina o e-mail do cliente de teste em :test_email
+--   3) rode o bloco inteiro
+--   4) verifique a saída final (tabela results) — todos PASS
 -- =====================================================================
 
 \set test_email '\'cliente_teste@epraja.dev\''
