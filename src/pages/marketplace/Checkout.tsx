@@ -12,6 +12,42 @@ import { MapPin, CreditCard, Banknote, QrCode, Plus, AlertCircle, ArrowLeft, Tic
 import { useOrderLock } from '@/hooks/useOrderLock';
 import { calculateDeliveryFee } from '@/utils/freight';
 
+const ORDERS_POLICY_SQL = {
+  insert: `CREATE POLICY "Customers_Insert_Orders" ON public.orders FOR INSERT TO authenticated WITH CHECK ( user_id = auth.uid() AND customer_id IN ( SELECT customer_profile.id FROM public.customers customer_profile WHERE customer_profile.user_id = auth.uid() ) );`,
+  select: `CREATE POLICY "Customers_Select_Orders" ON public.orders FOR SELECT TO authenticated USING ( user_id = auth.uid() OR customer_id IN ( SELECT customer_profile.id FROM public.customers customer_profile WHERE customer_profile.user_id = auth.uid() ) );`,
+  lojistaGuard: `Policies do lojista devem existir apenas em SELECT/UPDATE/DELETE e nunca em FOR ALL/INSERT para não bloquear o cliente.`,
+};
+
+const isOrdersRlsError = (error: unknown) => {
+  if (!error || typeof error !== 'object') return false;
+  const candidate = error as { code?: string; message?: string; details?: string; status?: number };
+  return (
+    candidate.status === 403 ||
+    candidate.code === '42501' ||
+    candidate.message?.toLowerCase().includes('row-level security') ||
+    candidate.details?.toLowerCase().includes('row-level security')
+  );
+};
+
+const logOrdersRlsFailure = (context: {
+  userId: string;
+  customerRecordId: string | null;
+  payload: Record<string, unknown>;
+  error: unknown;
+}) => {
+  console.group('[Checkout][orders][403] Falha de RLS ao criar pedido');
+  console.error('Erro bruto:', context.error);
+  console.info('Payload enviado para orders:', context.payload);
+  console.info('Contexto autenticado:', {
+    user_id: context.userId,
+    customer_record_id: context.customerRecordId,
+    customer_id_sent: context.payload.customer_id,
+    company_id_sent: context.payload.company_id,
+  });
+  console.info('Policies SQL relevantes:', ORDERS_POLICY_SQL);
+  console.groupEnd();
+};
+
 export default function Checkout() {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -171,21 +207,42 @@ export default function Checkout() {
         .eq('user_id', user.id)
         .maybeSingle();
 
-      const resolvedCustomerId = customerRecord?.id || user.id;
-      
+      if (!customerRecord?.id) {
+        console.error('[Checkout][orders] Usuário autenticado sem registro em public.customers', {
+          authenticated_user_id: user.id,
+          customer_record: customerRecord ?? null,
+        });
+        throw new Error('Seu cadastro de cliente ainda não foi vinculado. Faça login novamente ou contate o suporte.');
+      }
+
+      const resolvedCustomerId = customerRecord.id;
+
       const ik = generateIdempotencyKey(user.id, items, total);
-      const { data: order, error: orderError } = await supabase.from('orders').insert({
+      const orderPayload = {
         customer_id: resolvedCustomerId,
         user_id: user.id,
-        company_id: company.id, 
-        status: 'pending', 
+        company_id: company.id,
+        status: 'pending',
         total,
-        delivery_fee: deliveryFee || 0, 
+        delivery_fee: deliveryFee || 0,
         delivery_address: deliveryAddress,
-        payment_method: paymentMethod, 
+        payment_method: paymentMethod,
         notes: finalNotes,
         idempotency_key: ik
-      }).select().single();
+      };
+
+      console.info('[Checkout][orders] Tentando criar pedido', {
+        payload: orderPayload,
+        authenticated_user_id: user.id,
+        customer_record_id: customerRecord?.id ?? null,
+      });
+
+      const { data: order, error: orderError } = await supabase
+        .from('orders')
+        .insert(orderPayload)
+        .select()
+        .single();
+
       if (orderError) {
         if (orderError.code === '23505') {
           const { data: existingOrder } = await supabase
@@ -207,6 +264,16 @@ export default function Checkout() {
           navigate('/marketplace/orders');
           return;
         }
+
+        if (isOrdersRlsError(orderError)) {
+          logOrdersRlsFailure({
+            userId: user.id,
+            customerRecordId: customerRecord?.id ?? null,
+            payload: orderPayload,
+            error: orderError,
+          });
+        }
+
         throw orderError;
       }
       const orderItems = items.map(item => ({
