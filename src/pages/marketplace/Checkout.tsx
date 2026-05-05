@@ -312,8 +312,8 @@ export default function Checkout() {
           </h3>
           <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="space-y-1">
             {[
-              { value: 'pix', icon: QrCode, label: 'PIX' },
               { value: 'money', icon: Banknote, label: 'Dinheiro' },
+              { value: 'pix', icon: QrCode, label: 'PIX' },
               { value: 'card', icon: CreditCard, label: 'Cartão (na entrega)' },
             ].map(m => (
               <div key={m.value} className="flex items-center gap-3 p-3 rounded-xl border border-border hover:border-primary/20 transition-colors">
@@ -323,6 +323,42 @@ export default function Checkout() {
               </div>
             ))}
           </RadioGroup>
+          {paymentMethod === 'money' && (
+            <div className="rounded-xl border border-border p-3 space-y-2">
+              <div className="flex items-center gap-2">
+                <input
+                  id="needs-change"
+                  type="checkbox"
+                  checked={needsChange}
+                  onChange={(e) => setNeedsChange(e.target.checked)}
+                  className="h-4 w-4 accent-primary"
+                />
+                <label htmlFor="needs-change" className="text-sm cursor-pointer">
+                  Preciso de troco
+                </label>
+              </div>
+              {needsChange && (
+                <div className="space-y-1">
+                  <label className="text-xs text-muted-foreground">Troco para quanto?</label>
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    min={total}
+                    step="0.01"
+                    placeholder={`Ex: ${(Math.ceil(total / 10) * 10).toFixed(2)}`}
+                    value={changeFor}
+                    onChange={(e) => setChangeFor(e.target.value)}
+                    className="w-full h-11 bg-background border border-border rounded-xl px-4 text-sm focus:outline-none focus:border-primary transition-colors"
+                  />
+                  {changeFor && Number(changeFor) > total && (
+                    <p className="text-xs text-muted-foreground">
+                      Troco de R$ {(Number(changeFor) - total).toFixed(2).replace('.', ',')}
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
 
