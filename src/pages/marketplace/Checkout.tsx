@@ -275,7 +275,7 @@ export default function Checkout() {
 
       const ik = generateIdempotencyKey(user.id, items, total);
       const orderPayload = {
-        customer_id: user.id, // Reverted to user.id to match the existing DB schema and other apps
+        customer_id: resolvedCustomerId,
         user_id: user.id,
         company_id: company.id,
         status: 'pending',
