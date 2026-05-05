@@ -185,16 +185,34 @@ BEGIN
     ALTER TABLE public.products ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT true;
 END $$;
 
--- 8. RLS GERAL (Marketplace Público)
-DO $$ 
+-- 8. RLS GERAL — habilita RLS em todas as tabelas, mas NÃO cria policies abertas.
+-- Apenas catálogo público (companies, products, cities, regions) tem SELECT público.
+-- Demais tabelas devem ter policies owner-scoped definidas explicitamente.
+DO $$
 DECLARE
     t text;
 BEGIN
     FOR t IN SELECT tablename FROM pg_tables WHERE schemaname = 'public' LOOP
         EXECUTE format('ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY', t);
         EXECUTE format('DROP POLICY IF EXISTS "Public select %I" ON public.%I', t, t);
-        EXECUTE format('CREATE POLICY "Public select %I" ON public.%I FOR SELECT USING (true)', t, t);
     END LOOP;
+
+    IF EXISTS (SELECT 1 FROM pg_tables WHERE schemaname='public' AND tablename='companies') THEN
+        EXECUTE 'DROP POLICY IF EXISTS "companies_public_read" ON public.companies';
+        EXECUTE 'CREATE POLICY "companies_public_read" ON public.companies FOR SELECT USING (true)';
+    END IF;
+    IF EXISTS (SELECT 1 FROM pg_tables WHERE schemaname='public' AND tablename='products') THEN
+        EXECUTE 'DROP POLICY IF EXISTS "products_public_read" ON public.products';
+        EXECUTE 'CREATE POLICY "products_public_read" ON public.products FOR SELECT USING (true)';
+    END IF;
+    IF EXISTS (SELECT 1 FROM pg_tables WHERE schemaname='public' AND tablename='cities') THEN
+        EXECUTE 'DROP POLICY IF EXISTS "cities_public_read" ON public.cities';
+        EXECUTE 'CREATE POLICY "cities_public_read" ON public.cities FOR SELECT USING (true)';
+    END IF;
+    IF EXISTS (SELECT 1 FROM pg_tables WHERE schemaname='public' AND tablename='regions') THEN
+        EXECUTE 'DROP POLICY IF EXISTS "regions_public_read" ON public.regions';
+        EXECUTE 'CREATE POLICY "regions_public_read" ON public.regions FOR SELECT USING (true)';
+    END IF;
 END $$;
 
 -- 9. RESET E SEEDING EXPANSÃO (V7.5)
