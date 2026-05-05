@@ -164,10 +164,18 @@ export default function Checkout() {
         const changeNote = `Troco para R$ ${changeFor}`;
         finalNotes = finalNotes ? `${finalNotes} • ${changeNote}` : changeNote;
       }
+
+      const { data: customerRecord } = await supabase
+        .from('customers')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      const resolvedCustomerId = customerRecord?.id || user.id;
       
       const ik = generateIdempotencyKey(user.id, items, total);
       const { data: order, error: orderError } = await supabase.from('orders').insert({
-        customer_id: user.id,
+        customer_id: resolvedCustomerId,
         user_id: user.id,
         company_id: company.id, 
         status: 'pending', 
@@ -183,7 +191,7 @@ export default function Checkout() {
           const { data: existingOrder } = await supabase
             .from('orders')
             .select('id')
-            .eq('customer_id', user.id)
+            .or(`customer_id.eq.${resolvedCustomerId},user_id.eq.${user.id}`)
             .eq('idempotency_key', ik)
             .maybeSingle();
 
