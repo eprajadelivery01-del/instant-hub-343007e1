@@ -19,7 +19,9 @@ export default function Checkout() {
   const { isLocked, acquireLock, releaseLock, generateIdempotencyKey, resetIdempotencyKey } = useOrderLock();
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [selectedAddress, setSelectedAddress] = useState<string>('');
-  const [paymentMethod, setPaymentMethod] = useState('pix');
+  const [paymentMethod, setPaymentMethod] = useState('money');
+  const [needsChange, setNeedsChange] = useState(false);
+  const [changeFor, setChangeFor] = useState('');
 
   const [deliveryFee, setDeliveryFee] = useState<number | null>(null);
   const [regionId, setRegionId] = useState<string | null>(null);
@@ -156,20 +158,27 @@ export default function Checkout() {
         .map((note) => note.trim())
         .filter(Boolean)
         .join(' • ') || null;
+
+      let finalNotes = orderNotes;
+      if (paymentMethod === 'money' && needsChange && changeFor) {
+        const changeNote = `Troco para R$ ${changeFor}`;
+        finalNotes = finalNotes ? `${finalNotes} • ${changeNote}` : changeNote;
+      }
       
       // 1. Busca perfil para dados redundantes (Garante visibilidade)
       const { data: profile } = await supabase.from('profiles').select('name, phone').eq('id', user.id).maybeSingle();
       
       const ik = generateIdempotencyKey(user.id, items, total);
       const { data: order, error: orderError } = await supabase.from('orders').insert({
-        customer_id: user.id, 
+        customer_id: user.id,
+        user_id: user.id,
         company_id: company.id, 
         status: 'pending', 
         total,
         delivery_fee: deliveryFee || 0, 
         delivery_address: deliveryAddress,
         payment_method: paymentMethod, 
-        notes: orderNotes,
+        notes: finalNotes,
         idempotency_key: ik
       }).select().single();
       if (orderError) {
