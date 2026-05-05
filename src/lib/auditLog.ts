@@ -40,6 +40,16 @@ export async function recordAuditLog(entry: AuditLogEntry) {
       source: entry.source ?? 'marketplace',
     });
     if (error) {
+      const message = error.message || '';
+      if (
+        error.code === 'PGRST205' ||
+        message.includes("Could not find the table 'public.audit_logs'") ||
+        message.includes('schema cache')
+      ) {
+        console.info('[audit_logs] tabela não encontrada; seguindo sem persistir auditoria');
+        return;
+      }
+
       console.warn('[audit_logs] falha ao gravar', error.message);
     }
   } catch (e) {
