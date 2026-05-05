@@ -3,6 +3,8 @@
 -- Permite INSERT do próprio usuário autenticado, SELECT só para admin.
 -- =====================================================================
 
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
 CREATE TABLE IF NOT EXISTS public.audit_logs (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   request_id text NOT NULL,
