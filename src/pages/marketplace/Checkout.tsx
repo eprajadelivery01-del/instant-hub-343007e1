@@ -207,7 +207,15 @@ export default function Checkout() {
         .eq('user_id', user.id)
         .maybeSingle();
 
-      const resolvedCustomerId = customerRecord?.id || user.id;
+      if (!customerRecord?.id) {
+        console.error('[Checkout][orders] Usuário autenticado sem registro em public.customers', {
+          authenticated_user_id: user.id,
+          customer_record: customerRecord ?? null,
+        });
+        throw new Error('Seu cadastro de cliente ainda não foi vinculado. Faça login novamente ou contate o suporte.');
+      }
+
+      const resolvedCustomerId = customerRecord.id;
 
       const ik = generateIdempotencyKey(user.id, items, total);
       const orderPayload = {
