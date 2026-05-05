@@ -6,7 +6,6 @@ FOR INSERT
 TO authenticated
 WITH CHECK (
   auth.uid() = user_id
-  OR auth.uid() = client_id
   OR customer_id IN (
     SELECT c.id
     FROM public.customers c
