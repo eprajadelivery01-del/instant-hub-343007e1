@@ -123,10 +123,12 @@ export default function OrderDetail() {
     );
   }
 
+  const currentOrderStatus = (delivery?.status === 'completed' || delivery?.status === 'delivered') ? 'delivered' : order.status;
+  
   const currentStepIndex = statusSteps.indexOf(
-    order.status === 'in_route' || order.status === 'in_transit' ? 'delivering' : 
-    order.status === 'completed' ? 'delivered' : 
-    order.status
+    currentOrderStatus === 'in_route' || currentOrderStatus === 'in_transit' ? 'delivering' : 
+    currentOrderStatus === 'completed' ? 'delivered' : 
+    currentOrderStatus
   );
 
   return (
@@ -140,7 +142,7 @@ export default function OrderDetail() {
         </div>
 
         {/* Status Delivery */}
-        {delivery && ['delivering', 'in_route', 'in_transit'].includes(order.status) && (
+        {delivery && ['delivering', 'in_route', 'in_transit'].includes(currentOrderStatus) && (
           <div className="bg-primary/5 border border-primary/20 rounded-2xl p-4 flex items-center gap-3">
             <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
               <Navigation className="h-5 w-5 text-primary animate-pulse" />
