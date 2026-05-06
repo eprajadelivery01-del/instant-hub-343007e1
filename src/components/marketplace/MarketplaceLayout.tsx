@@ -32,12 +32,19 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
       try {
         const { data, error } = await supabase
           .from('orders')
-          .select('id')
-          .or(`customer_id.eq.${user.id},user_id.eq.${user.id}`)
-          .not('status', 'in', '("delivered","completed","cancelled")');
+          .select('status, deliveries(status)')
+          .or(`customer_id.eq.${user.id},user_id.eq.${user.id}`);
 
         if (error) throw error;
-        setOrderCount(data?.length || 0);
+        
+        const activeCount = (data as any[])?.filter(o => {
+          const deliveryStatus = o.deliveries?.[0]?.status;
+          const isFinished = ['delivered', 'completed', 'cancelled'].includes(o.status) || 
+                             ['delivered', 'completed'].includes(deliveryStatus);
+          return !isFinished;
+        }).length || 0;
+        
+        setOrderCount(activeCount);
       } catch (error) {
         console.error('[MarketplaceLayout] Erro ao buscar contagem de pedidos:', error);
       }
