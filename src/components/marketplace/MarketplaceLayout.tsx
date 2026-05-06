@@ -30,18 +30,12 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
 
     const fetchOrderCount = async () => {
       try {
-        let { data, error } = await supabase
-          .from('customer_orders_view')
-          .select('id');
+        const { data, error } = await supabase
+          .from('orders')
+          .select('id')
+          .or(`customer_id.eq.${user.id},user_id.eq.${user.id}`);
 
-        if (error && /relation .* does not exist|customer_orders_view/i.test(error.message)) {
-          const fb = await supabase
-            .from('orders')
-            .select('id')
-            .or(`customer_id.eq.${user.id},user_id.eq.${user.id}`);
-          data = fb.data;
-        }
-
+        if (error) throw error;
         setOrderCount(data?.length || 0);
       } catch (error) {
         console.error('[MarketplaceLayout] Erro ao buscar contagem de pedidos:', error);

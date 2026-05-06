@@ -51,7 +51,7 @@ export default function Orders() {
       try {
         const { data, error } = await supabase
           .from('orders')
-          .select('*, company:companies(*)')
+          .select('*, company:companies(*), deliveries(status)')
           .or(`customer_id.eq.${user.id},user_id.eq.${user.id}`)
           .order('created_at', { ascending: false });
 
@@ -177,14 +177,22 @@ export default function Orders() {
                         {order.company?.name || 'Pedido'}
                       </h4>
                       <div className="flex items-center gap-1.5 mt-0.5">
-                        <span
-                          className={`h-1.5 w-1.5 rounded-full ${
-                            statusColors[order.status] || 'bg-muted-foreground'
-                          }`}
-                        />
-                        <span className="text-xs text-muted-foreground">
-                          {statusLabels[order.status] || order.status}
-                        </span>
+                        {(() => {
+                          const deliveryStatus = (order as any).deliveries?.[0]?.status;
+                          const currentStatus = (deliveryStatus === 'completed' || deliveryStatus === 'delivered') ? 'delivered' : order.status;
+                          return (
+                            <>
+                              <span
+                                className={`h-1.5 w-1.5 rounded-full ${
+                                  statusColors[currentStatus] || 'bg-muted-foreground'
+                                }`}
+                              />
+                              <span className="text-xs text-muted-foreground">
+                                {statusLabels[currentStatus] || currentStatus}
+                              </span>
+                            </>
+                          );
+                        })()}
                       </div>
                     </Link>
                     <div className="text-right shrink-0">

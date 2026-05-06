@@ -311,7 +311,7 @@ export default function Checkout() {
         if (orderError.code === '23505') {
           // Busca pedido já existente via view segura (respeita RLS).
           const { data: existingOrder, error: lookupError } = await supabase
-            .from('customer_orders_view')
+            .from('orders')
             .select('id')
             .eq('idempotency_key', ik)
             .maybeSingle();
