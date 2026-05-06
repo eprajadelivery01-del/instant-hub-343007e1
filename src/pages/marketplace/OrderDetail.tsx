@@ -8,8 +8,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ArrowLeft, MessageCircle, Send, Star, Check, Navigation, Store } from 'lucide-react';
 import { toast } from 'sonner';
-import maplibregl from 'maplibre-gl';
-import 'maplibre-gl/dist/maplibre-gl.css';
 import { OrderStoreChat } from '@/components/marketplace/OrderStoreChat';
 
 const statusSteps = ['pending', 'confirmed', 'preparing', 'ready', 'delivering', 'delivered'];
@@ -48,9 +46,6 @@ export default function OrderDetail() {
   const [rating, setRating] = useState(5);
   const [reviewComment, setReviewComment] = useState('');
   const chatEndRef = useRef<HTMLDivElement>(null);
-  const mapContainerRef = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<maplibregl.Map | null>(null);
-  const driverMarkerRef = useRef<maplibregl.Marker | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -83,47 +78,7 @@ export default function OrderDetail() {
     return () => { supabase.removeChannel(orderChannel); supabase.removeChannel(deliveryChannel); };
   }, [id]);
 
-  useEffect(() => {
-    if (!delivery || !['delivering', 'in_route'].includes(order?.status || '') || !mapContainerRef.current) return;
-    if (mapRef.current) return;
-    const centerLat = delivery.current_latitude || delivery.delivery_latitude || -23.55;
-    const centerLng = delivery.current_longitude || delivery.delivery_longitude || -46.63;
-    const map = new maplibregl.Map({
-      container: mapContainerRef.current,
-      style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
-      center: [centerLng, centerLat], zoom: 14,
-    });
-    map.addControl(new maplibregl.NavigationControl(), 'top-right');
-    if (delivery.delivery_latitude && delivery.delivery_longitude) {
-      const el = document.createElement('div');
-      el.innerHTML = `<div style="width:34px;height:34px;border-radius:50%;background:hsl(var(--primary));border:3px solid white;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(0,0,0,0.2);font-size:16px;">🏠</div>`;
-      new maplibregl.Marker({ element: el }).setLngLat([delivery.delivery_longitude, delivery.delivery_latitude]).addTo(map);
-    }
-    if (delivery.pickup_latitude && delivery.pickup_longitude) {
-      const el = document.createElement('div');
-      el.innerHTML = `<div style="width:30px;height:30px;border-radius:8px;background:#22c55e;border:2px solid white;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 10px rgba(0,0,0,0.15);font-size:14px;">🏪</div>`;
-      new maplibregl.Marker({ element: el }).setLngLat([delivery.pickup_longitude, delivery.pickup_latitude]).addTo(map);
-    }
-    if (delivery.current_latitude && delivery.current_longitude) {
-      const el = document.createElement('div');
-      el.innerHTML = `<div style="width:38px;height:38px;border-radius:50%;background:hsl(var(--primary));border:3px solid white;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 16px rgba(0,0,0,0.25);font-size:18px;">🛵</div>`;
-      driverMarkerRef.current = new maplibregl.Marker({ element: el }).setLngLat([delivery.current_longitude, delivery.current_latitude]).addTo(map);
-    }
-    mapRef.current = map;
-    return () => { map.remove(); mapRef.current = null; driverMarkerRef.current = null; };
-  }, [delivery, order?.status]);
 
-  useEffect(() => {
-    if (!delivery?.current_latitude || !delivery?.current_longitude || !mapRef.current) return;
-    if (driverMarkerRef.current) {
-      driverMarkerRef.current.setLngLat([delivery.current_longitude, delivery.current_latitude]);
-    } else {
-      const el = document.createElement('div');
-      el.innerHTML = '🛵'; el.style.fontSize = '24px';
-      driverMarkerRef.current = new maplibregl.Marker({ element: el }).setLngLat([delivery.current_longitude, delivery.current_latitude]).addTo(mapRef.current);
-    }
-    mapRef.current.flyTo({ center: [delivery.current_longitude, delivery.current_latitude], speed: 0.5 });
-  }, [delivery?.current_latitude, delivery?.current_longitude]);
 
   useEffect(() => {
     if (!delivery) return;
@@ -176,13 +131,15 @@ export default function OrderDetail() {
           <h1 className="text-lg font-semibold text-foreground">Acompanhar pedido</h1>
         </div>
 
-        {/* Map */}
+        {/* Status Delivery */}
         {delivery && ['delivering', 'in_route'].includes(order.status) && (
-          <div className="bg-card border border-border rounded-2xl overflow-hidden">
-            <div ref={mapContainerRef} className="h-48 w-full" />
-            <div className="p-3 flex items-center gap-2">
-              <Navigation className="h-4 w-4 text-primary animate-pulse" />
-              <span className="text-sm font-medium text-foreground">Entregador a caminho</span>
+          <div className="bg-primary/5 border border-primary/20 rounded-2xl p-4 flex items-center gap-3">
+            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+              <Navigation className="h-5 w-5 text-primary animate-pulse" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-foreground">Entregador a caminho</p>
+              <p className="text-xs text-muted-foreground">O entregador já coletou seu pedido e está se deslocando.</p>
             </div>
           </div>
         )}
