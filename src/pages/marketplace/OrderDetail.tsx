@@ -193,7 +193,7 @@ export default function OrderDetail() {
                       done
                         ? 'bg-primary text-primary-foreground'
                         : current
-                          ? 'bg-primary text-primary-foreground ring-4 ring-primary/20 animate-pulse'
+                          ? `bg-primary text-primary-foreground ${['delivered', 'completed'].includes(currentOrderStatus) ? '' : 'ring-4 ring-primary/20 animate-pulse'}`
                           : 'bg-secondary text-muted-foreground'
                     }`}
                   >
