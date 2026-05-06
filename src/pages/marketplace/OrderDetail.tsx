@@ -17,8 +17,10 @@ const statusLabels: Record<string, string> = {
   preparing: 'Em preparo',
   ready: 'Pronto para retirada',
   delivering: 'Saiu para entrega',
+  in_transit: 'Saiu para entrega',
   in_route: 'Saiu para entrega',
   delivered: 'Entregue',
+  completed: 'Entregue',
 };
 const statusDescriptions: Record<string, string> = {
   pending: 'Aguardando confirmação do lojista.',
@@ -26,7 +28,9 @@ const statusDescriptions: Record<string, string> = {
   preparing: 'Seu pedido está sendo preparado.',
   ready: 'Pedido pronto, aguardando entregador.',
   delivering: 'O entregador está a caminho.',
+  in_transit: 'O entregador está a caminho.',
   delivered: 'Pedido entregue. Bom apetite!',
+  completed: 'Pedido entregue. Bom apetite!',
 };
 
 const STORE_CHAT_STATUSES = ['confirmed', 'preparing', 'ready', 'delivering', 'in_route', 'delivered'];
@@ -119,7 +123,11 @@ export default function OrderDetail() {
     );
   }
 
-  const currentStepIndex = statusSteps.indexOf(order.status === 'in_route' ? 'delivering' : order.status);
+  const currentStepIndex = statusSteps.indexOf(
+    order.status === 'in_route' || order.status === 'in_transit' ? 'delivering' : 
+    order.status === 'completed' ? 'delivered' : 
+    order.status
+  );
 
   return (
     <MarketplaceLayout>
@@ -132,7 +140,7 @@ export default function OrderDetail() {
         </div>
 
         {/* Status Delivery */}
-        {delivery && ['delivering', 'in_route'].includes(order.status) && (
+        {delivery && ['delivering', 'in_route', 'in_transit'].includes(order.status) && (
           <div className="bg-primary/5 border border-primary/20 rounded-2xl p-4 flex items-center gap-3">
             <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
               <Navigation className="h-5 w-5 text-primary animate-pulse" />
