@@ -106,7 +106,9 @@ export default function Orders() {
     
     // First filter by tab
     const tabFiltered = orders.filter(o => {
-      const isFinished = ['delivered', 'completed', 'cancelled'].includes(o.status);
+      const deliveryStatus = (o as any).deliveries?.[0]?.status;
+      const isFinished = ['delivered', 'completed', 'cancelled'].includes(o.status) || 
+                         ['delivered', 'completed'].includes(deliveryStatus);
       return activeTab === 'active' ? !isFinished : isFinished;
     });
 

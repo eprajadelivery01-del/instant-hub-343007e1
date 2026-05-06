@@ -85,13 +85,16 @@ export default function OrderDetail() {
   }, [id]);
   
   useEffect(() => {
-    if (order && (order.status === 'delivered' || order.status === 'completed')) {
+    const isFinished = (order?.status === 'delivered' || order?.status === 'completed') || 
+                       (delivery?.status === 'delivered' || delivery?.status === 'completed');
+                       
+    if (order && isFinished) {
       // Check if already reviewed
       supabase.from('reviews').select('id').eq('order_id', order.id).maybeSingle().then(({ data }) => {
         if (!data) setShowReview(true);
       });
     }
-  }, [order?.status]);
+  }, [order?.status, delivery?.status]);
 
 
 
