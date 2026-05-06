@@ -43,6 +43,7 @@ export default function Orders() {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [summaryOrderId, setSummaryOrderId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'active' | 'history'>('active');
   const PAGE_SIZE = 8;
 
   useEffect(() => {
@@ -102,14 +103,21 @@ export default function Orders() {
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return orders;
-    return orders.filter((o) => {
+    
+    // First filter by tab
+    const tabFiltered = orders.filter(o => {
+      const isFinished = ['delivered', 'completed', 'cancelled'].includes(o.status);
+      return activeTab === 'active' ? !isFinished : isFinished;
+    });
+
+    if (!q) return tabFiltered;
+    return tabFiltered.filter((o) => {
       const name = o.company?.name?.toLowerCase() || '';
       const status = (statusLabels[o.status] || o.status || '').toLowerCase();
       const idShort = o.id.slice(0, 8).toLowerCase();
       return name.includes(q) || status.includes(q) || idShort.includes(q);
     });
-  }, [orders, search]);
+  }, [orders, search, activeTab]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
@@ -123,7 +131,23 @@ export default function Orders() {
   return (
     <MarketplaceLayout>
       <div className="max-w-lg mx-auto px-4 py-5 space-y-4">
-        <h1 className="text-xl font-bold text-foreground">Meus pedidos</h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-xl font-bold text-foreground">Meus pedidos</h1>
+          <div className="flex bg-secondary rounded-xl p-1">
+            <button
+              onClick={() => { setActiveTab('active'); setPage(1); }}
+              className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-all ${activeTab === 'active' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground'}`}
+            >
+              Ativos
+            </button>
+            <button
+              onClick={() => { setActiveTab('history'); setPage(1); }}
+              className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-all ${activeTab === 'history' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground'}`}
+            >
+              Histórico
+            </button>
+          </div>
+        </div>
 
         {/* Busca */}
         <div className="relative">

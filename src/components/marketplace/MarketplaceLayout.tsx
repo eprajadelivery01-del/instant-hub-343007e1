@@ -33,7 +33,8 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
         const { data, error } = await supabase
           .from('orders')
           .select('id')
-          .or(`customer_id.eq.${user.id},user_id.eq.${user.id}`);
+          .or(`customer_id.eq.${user.id},user_id.eq.${user.id}`)
+          .not('status', 'in', '("delivered","completed","cancelled")');
 
         if (error) throw error;
         setOrderCount(data?.length || 0);
