@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { ArrowLeft, MessageCircle, Send, Star, Check, Navigation, Store } from 'lucide-react';
 import { toast } from 'sonner';
 import { OrderStoreChat } from '@/components/marketplace/OrderStoreChat';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 const statusSteps = ['pending', 'confirmed', 'preparing', 'ready', 'delivering', 'delivered'];
 const statusLabels: Record<string, string> = {
@@ -47,7 +48,8 @@ export default function OrderDetail() {
   const [showChat, setShowChat] = useState(false);
   const [showStoreChat, setShowStoreChat] = useState(false);
   const [showReview, setShowReview] = useState(false);
-  const [rating, setRating] = useState(5);
+  const [orderRating, setOrderRating] = useState(5);
+  const [driverRating, setDriverRating] = useState(5);
   const [reviewComment, setReviewComment] = useState('');
   const chatEndRef = useRef<HTMLDivElement>(null);
 
@@ -81,6 +83,15 @@ export default function OrderDetail() {
 
     return () => { supabase.removeChannel(orderChannel); supabase.removeChannel(deliveryChannel); };
   }, [id]);
+  
+  useEffect(() => {
+    if (order && (order.status === 'delivered' || order.status === 'completed')) {
+      // Check if already reviewed
+      supabase.from('reviews').select('id').eq('order_id', order.id).maybeSingle().then(({ data }) => {
+        if (!data) setShowReview(true);
+      });
+    }
+  }, [order?.status]);
 
 
 
@@ -106,7 +117,9 @@ export default function OrderDetail() {
     try {
       await supabase.from('reviews').insert({
         order_id: order.id, user_id: user.id, company_id: order.company_id,
-        driver_id: delivery?.driver_id, rating, comment: reviewComment || null,
+        driver_id: delivery?.driver_id, 
+        rating: Math.round((orderRating + driverRating) / 2), 
+        comment: `[Pedido: ${orderRating} Estrelas | Entregador: ${driverRating} Estrelas] ${reviewComment || ''}`.trim(),
       });
       toast.success('Avaliação enviada!');
       setShowReview(false);
@@ -284,29 +297,50 @@ export default function OrderDetail() {
           </div>
         )}
 
-        {/* Review */}
-        {order.status === 'delivered' && (
-          <div className="bg-card border border-border rounded-2xl p-4">
-            {!showReview ? (
-              <Button variant="outline" className="w-full rounded-xl h-10" onClick={() => setShowReview(true)}>
-                <Star className="h-4 w-4 mr-2" /> Avaliar pedido
-              </Button>
-            ) : (
-              <div className="space-y-4">
-                <h3 className="font-medium text-foreground text-sm">Como foi seu pedido?</h3>
+        {/* Review Modal */}
+        <Dialog open={showReview} onOpenChange={setShowReview}>
+          <DialogContent className="sm:max-w-md rounded-3xl mx-4">
+            <DialogHeader>
+              <DialogTitle className="text-center text-lg">Avalie sua experiência</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-6 pt-4 pb-2">
+              <div className="space-y-3">
+                <p className="text-sm font-medium text-center text-muted-foreground">Como estava o pedido?</p>
                 <div className="flex gap-2 justify-center">
                   {[1, 2, 3, 4, 5].map(s => (
-                    <button key={s} onClick={() => setRating(s)}>
-                      <Star className={`h-7 w-7 transition-colors ${s <= rating ? 'text-warning fill-warning' : 'text-muted-foreground/30'}`} />
+                    <button key={s} onClick={() => setOrderRating(s)} className="transition-transform active:scale-90">
+                      <Star className={`h-8 w-8 transition-colors ${s <= orderRating ? 'text-warning fill-warning' : 'text-muted-foreground/30'}`} />
                     </button>
                   ))}
                 </div>
-                <Input placeholder="Comentário (opcional)" value={reviewComment} onChange={e => setReviewComment(e.target.value)} className="rounded-xl h-10" />
-                <Button className="w-full rounded-xl h-10" onClick={submitReview}>Enviar avaliação</Button>
               </div>
-            )}
-          </div>
-        )}
+
+              <div className="space-y-3 border-t border-border pt-4">
+                <p className="text-sm font-medium text-center text-muted-foreground">Como foi a entrega?</p>
+                <div className="flex gap-2 justify-center">
+                  {[1, 2, 3, 4, 5].map(s => (
+                    <button key={s} onClick={() => setDriverRating(s)} className="transition-transform active:scale-90">
+                      <Star className={`h-8 w-8 transition-colors ${s <= driverRating ? 'text-warning fill-warning' : 'text-muted-foreground/30'}`} />
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Input 
+                  placeholder="Conte-nos mais sobre sua experiência..." 
+                  value={reviewComment} 
+                  onChange={e => setReviewComment(e.target.value)} 
+                  className="rounded-xl h-12 bg-secondary/50 border-none outline-none focus:ring-2 focus:ring-primary/20" 
+                />
+              </div>
+
+              <Button className="w-full rounded-2xl h-12 text-base font-bold shadow-lg shadow-primary/20 transition-all active:scale-[0.98]" onClick={submitReview}>
+                Enviar Avaliação
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </MarketplaceLayout>
   );

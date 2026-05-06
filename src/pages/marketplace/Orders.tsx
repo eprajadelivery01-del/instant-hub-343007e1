@@ -15,7 +15,10 @@ const statusLabels: Record<string, string> = {
   preparing: 'Preparando',
   ready: 'Pronto para retirada',
   delivering: 'Saiu para entrega',
+  in_route: 'Saiu para entrega',
+  in_transit: 'Saiu para entrega',
   delivered: 'Entregue',
+  completed: 'Entregue',
   cancelled: 'Cancelado',
 };
 
@@ -25,7 +28,10 @@ const statusColors: Record<string, string> = {
   preparing: 'bg-primary',
   ready: 'bg-green-500',
   delivering: 'bg-primary animate-pulse',
+  in_route: 'bg-primary animate-pulse',
+  in_transit: 'bg-primary animate-pulse',
   delivered: 'bg-green-500',
+  completed: 'bg-green-500',
   cancelled: 'bg-destructive',
 };
 
