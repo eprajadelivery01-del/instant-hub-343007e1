@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import { useOrderNotifications } from '@/hooks/useOrderNotifications';
 import { Home, Search, ShoppingBag, ClipboardList, User } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
 
 const navItems = [
@@ -21,6 +22,49 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
   const { itemCount } = useCart();
 
   useOrderNotifications();
+
+  const [orderCount, setOrderCount] = useState(0);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchOrderCount = async () => {
+      try {
+        let { count, error } = await supabase
+          .from('customer_orders_view')
+          .select('*', { count: 'exact', head: true });
+
+        if (error && /relation .* does not exist|customer_orders_view/i.test(error.message)) {
+          const fb = await supabase
+            .from('orders')
+            .select('*', { count: 'exact', head: true })
+            .or(`customer_id.eq.${user.id},user_id.eq.${user.id}`);
+          count = fb.count;
+        }
+
+        setOrderCount(count || 0);
+      } catch (error) {
+        console.error('[MarketplaceLayout] Erro ao buscar contagem de pedidos:', error);
+      }
+    };
+
+    fetchOrderCount();
+
+    const channel = supabase
+      .channel(`layout-orders-${user.id}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'orders' },
+        () => {
+          fetchOrderCount();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
 
   // Portal target — renderizamos a barra fora do app-shell para
   // que nenhum wrapper com transform/filter/animation a "prenda".
@@ -64,12 +108,19 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
                   key={item.path}
                   to={item.path}
                   onClick={handleClick}
-                  className="group flex flex-1 flex-col items-center justify-center gap-1 h-full"
+                  className="group flex flex-1 flex-col items-center justify-center gap-1 h-full relative"
                 >
-                  <item.icon className={cn(
-                    'h-[22px] w-[22px] transition-all duration-200',
-                    active ? 'text-foreground stroke-[2.5px]' : 'text-muted-foreground stroke-[1.5px]'
-                  )} />
+                  <div className="relative">
+                    <item.icon className={cn(
+                      'h-[22px] w-[22px] transition-all duration-200',
+                      active ? 'text-foreground stroke-[2.5px]' : 'text-muted-foreground stroke-[1.5px]'
+                    )} />
+                    {item.path === '/marketplace/orders' && orderCount > 0 && (
+                      <span className="absolute -top-1.5 -right-2.5 flex h-[14px] min-w-[14px] px-1 items-center justify-center rounded-full bg-primary text-[9px] font-black text-primary-foreground shadow-sm">
+                        {orderCount > 99 ? '99+' : orderCount}
+                      </span>
+                    )}
+                  </div>
                   <span className={cn(
                     'text-[10px] transition-all duration-200',
                     active ? 'text-foreground font-bold' : 'text-muted-foreground font-medium'

@@ -245,18 +245,6 @@ export default function Orders() {
                 </Button>
               </div>
             )}
-            
-            {/* Contador de Pedidos */}
-            <div className="pt-6 pb-2 text-center">
-              <div className="inline-flex flex-col items-center justify-center p-4 bg-secondary/30 rounded-2xl border border-border/50 min-w-[160px]">
-                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
-                  Total de pedidos
-                </p>
-                <p className="text-3xl font-black text-foreground mt-1">
-                  {orders.length}
-                </p>
-              </div>
-            </div>
           </>
         )}
       </div>
