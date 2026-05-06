@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { ArrowLeft, MessageCircle, Send, Star, Check, Navigation, Store } from 'lucide-react';
 import { toast } from 'sonner';
 import { OrderStoreChat } from '@/components/marketplace/OrderStoreChat';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 const statusSteps = ['pending', 'confirmed', 'preparing', 'ready', 'delivering', 'delivered'];
 const statusLabels: Record<string, string> = {
@@ -305,6 +305,9 @@ export default function OrderDetail() {
           <DialogContent className="sm:max-w-md rounded-3xl mx-4">
             <DialogHeader>
               <DialogTitle className="text-center text-lg">Avalie sua experiência</DialogTitle>
+              <DialogDescription className="text-center text-xs text-muted-foreground sr-only">
+                Sua avaliação nos ajuda a melhorar o serviço da loja e do entregador.
+              </DialogDescription>
             </DialogHeader>
             <div className="space-y-6 pt-4 pb-2">
               <div className="space-y-3">
