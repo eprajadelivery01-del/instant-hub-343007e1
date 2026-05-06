@@ -14,7 +14,7 @@ interface SupportChatProps {
 interface Message {
   id: string;
   sender_id: string;
-  message: string;
+  content: string;
   created_at: string;
 }
 
@@ -23,60 +23,76 @@ export function SupportChat({ topic, title, companyId = null }: SupportChatProps
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
   const [newMessage, setNewMessage] = useState('');
-  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [conversationId, setConversationId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!user) return;
 
     const initializeChat = async () => {
-      // Find existing session or create a new one
-      let { data: session } = await supabase
-        .from('chat_sessions')
-        .select('*')
-        .eq('customer_id', user.id)
-        .eq('topic', topic)
-        .eq('status', 'open')
-        .maybeSingle();
-
-      if (!session) {
-        // Create new session via RPC or direct insert (assuming permissions allow)
-        const { data: newSession } = await supabase
-          .from('chat_sessions')
-          .insert({ customer_id: user.id, topic, company_id: companyId })
-          .select()
-          .single();
-        session = newSession;
-      }
-
-      if (session) {
-        setSessionId(session.id);
-        const { data: history } = await supabase
-          .from('chat_message_logs')
+      try {
+        // Tenta encontrar uma conversa existente para este tópico e usuário
+        let { data: conversation } = await supabase
+          .from('conversations')
           .select('*')
-          .eq('session_id', session.id)
-          .order('created_at', { ascending: true });
+          .eq('user_id', user.id)
+          .eq('topic', topic)
+          .maybeSingle();
 
-        if (history) setMessages(history);
+        if (!conversation) {
+          // Cria uma nova conversa
+          const { data: newConv, error: createError } = await supabase
+            .from('conversations')
+            .insert({ 
+              user_id: user.id, 
+              topic, 
+              title,
+              updated_at: new Date().toISOString()
+            })
+            .select()
+            .single();
+          
+          if (createError) throw createError;
+          conversation = newConv;
+        }
 
-        // Subscription
-        const channel = supabase.channel(`support_chat_${session.id}`)
-          .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_message_logs', filter: `session_id=eq.${session.id}` }, payload => {
-            const newMsg = payload.new as Message;
-            setMessages(prev => {
-              if (prev.find(m => m.id === newMsg.id)) return prev;
-              return [...prev, newMsg];
-            });
-          })
-          .subscribe();
+        if (conversation) {
+          setConversationId(conversation.id);
+          const { data: history } = await supabase
+            .from('messages')
+            .select('*')
+            .eq('conversation_id', conversation.id)
+            .order('created_at', { ascending: true });
 
+          if (history) setMessages(history);
+
+          // Subscription Realtime
+          const channel = supabase.channel(`conversation_${conversation.id}`)
+            .on('postgres_changes', { 
+              event: 'INSERT', 
+              schema: 'public', 
+              table: 'messages', 
+              filter: `conversation_id=eq.${conversation.id}` 
+            }, payload => {
+              const newMsg = payload.new as Message;
+              setMessages(prev => {
+                if (prev.find(m => m.id === newMsg.id)) return prev;
+                return [...prev, newMsg];
+              });
+            })
+            .subscribe();
+
+          setLoading(false);
+          return () => { supabase.removeChannel(channel); };
+        }
+      } catch (err) {
+        console.error("[SupportChat] Erro ao inicializar:", err);
         setLoading(false);
-        return () => { supabase.removeChannel(channel); };
       }
     };
 
     initializeChat();
-  }, [user, topic, companyId]);
+  }, [user, topic]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -86,17 +102,28 @@ export function SupportChat({ topic, title, companyId = null }: SupportChatProps
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim() || !user || !sessionId) return;
+    if (!newMessage.trim() || !user || !conversationId) return;
 
     const msgText = newMessage.trim();
     setNewMessage('');
 
-    // Optimistic UI could go here, but let's rely on DB realtime
-    await supabase.from('chat_message_logs').insert({
-      session_id: sessionId,
-      sender_id: user.id,
-      message: msgText
-    });
+    try {
+      const { error } = await supabase.from('messages').insert({
+        conversation_id: conversationId,
+        sender_id: user.id,
+        content: msgText
+      });
+
+      if (error) throw error;
+
+      // Atualiza o timestamp da conversa para ela subir na lista do admin
+      await supabase.from('conversations').update({ 
+        updated_at: new Date().toISOString() 
+      }).eq('id', conversationId);
+
+    } catch (err) {
+      console.error("[SupportChat] Erro ao enviar:", err);
+    }
   };
 
   return (
@@ -117,18 +144,19 @@ export function SupportChat({ topic, title, companyId = null }: SupportChatProps
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
           </div>
         ) : messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center opacity-50">
-            <p className="text-sm">Envie a primeira mensagem para iniciar o atendimento.</p>
+          <div className="flex flex-col items-center justify-center h-full text-center opacity-50 px-8">
+            <UserIcon className="h-12 w-12 mb-4 text-muted-foreground/30" />
+            <p className="text-sm font-medium">Olá! Envie uma mensagem para iniciar seu atendimento ou inscrição.</p>
           </div>
         ) : (
           messages.map(msg => {
             const isMe = msg.sender_id === user?.id;
             return (
               <div key={msg.id} className={`flex flex-col max-w-[80%] ${isMe ? 'ml-auto items-end' : 'mr-auto items-start'}`}>
-                <div className={`p-3 rounded-2xl ${isMe ? 'bg-primary text-primary-foreground rounded-br-sm' : 'bg-secondary text-foreground rounded-bl-sm'}`}>
-                  <p className="text-sm">{msg.message}</p>
+                <div className={`p-3 rounded-2xl ${isMe ? 'bg-primary text-primary-foreground rounded-br-sm' : 'bg-secondary text-foreground rounded-bl-sm shadow-sm'}`}>
+                  <p className="text-sm leading-relaxed">{msg.content}</p>
                 </div>
-                <span className="text-[10px] text-muted-foreground mt-1 px-1">
+                <span className="text-[10px] text-muted-foreground mt-1 px-1 opacity-60">
                   {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </span>
               </div>
@@ -142,10 +170,10 @@ export function SupportChat({ topic, title, companyId = null }: SupportChatProps
           value={newMessage}
           onChange={e => setNewMessage(e.target.value)}
           placeholder="Escreva sua mensagem..."
-          className="flex-1 rounded-full bg-background"
+          className="flex-1 rounded-full bg-background border-border/40 h-12 px-5"
         />
-        <Button disabled={!newMessage.trim() || !sessionId} type="submit" size="icon" className="rounded-full shrink-0">
-          <Send className="h-4 w-4" />
+        <Button disabled={!newMessage.trim() || !conversationId} type="submit" size="icon" className="rounded-full h-12 w-12 shrink-0 shadow-lg active:scale-95 transition-all">
+          <Send className="h-5 w-5" />
         </Button>
       </form>
     </div>
