@@ -241,7 +241,7 @@ export default function Profile() {
 
       {/* Edit sheet */}
       <Sheet open={editing} onOpenChange={setEditing}>
-        <SheetContent side="bottom" className="h-[70vh] rounded-t-3xl border-none p-0">
+        <SheetContent side="bottom" hideClose className="h-[70vh] rounded-t-3xl border-none p-0">
           <div className="h-full flex flex-col bg-background">
             <div className="p-6 pb-4 flex items-center justify-between border-b border-border">
               <div>
@@ -273,7 +273,7 @@ export default function Profile() {
 
       {/* Support Chat Sheet */}
       <Sheet open={supportType !== null} onOpenChange={(open) => !open && setSupportType(null)}>
-        <SheetContent side="bottom" className="h-[80vh] rounded-t-3xl border-none p-0 overflow-hidden">
+        <SheetContent side="bottom" hideClose className="h-[80vh] rounded-t-3xl border-none p-0 overflow-hidden">
           <div className="flex flex-col h-full bg-background relative">
             <div className="absolute right-4 top-4 z-10 bg-background/80 rounded-full p-1 border">
               <button onClick={() => setSupportType(null)}>
