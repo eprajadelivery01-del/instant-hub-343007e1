@@ -159,12 +159,12 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
   );
 
   return (
-    <div className="app-shell min-h-screen flex flex-col font-sans text-foreground">
+    <div className="app-shell h-full flex flex-col font-sans text-foreground overflow-hidden">
       <main className={cn(
-        'flex flex-1 flex-col transition-all duration-300', 
+        'flex flex-1 flex-col transition-all duration-300 overflow-y-auto custom-scrollbar', 
         !hideNav && (showCartFab ? 'pb-marketplace-nav-with-cart' : 'pb-marketplace-nav')
       )}>
-        <div className="flex-1">{children}</div>
+        <div className="flex-1 w-full max-w-lg mx-auto">{children}</div>
 
         <div className="mt-auto flex w-full justify-center py-8 opacity-20 pointer-events-none select-none">
           <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground">BONASOFT</p>
