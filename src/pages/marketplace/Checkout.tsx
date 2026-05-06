@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
@@ -89,6 +89,7 @@ export default function Checkout() {
 
   const [couponCode, setCouponCode] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
+  const [applicableProductIds, setApplicableProductIds] = useState<string[]>([]);
   const [validatingCoupon, setValidatingCoupon] = useState(false);
 
   useEffect(() => {
@@ -183,6 +184,11 @@ export default function Checkout() {
         return;
       }
       
+      // Fetch linked products
+      const { data: links } = await supabase.from('coupon_products').select('product_id').eq('coupon_id', data.id);
+      const pids = (links || []).map((l: any) => l.product_id);
+      
+      setApplicableProductIds(pids);
       setAppliedCoupon(data);
       toast.success('🎉 Cupom aplicado com sucesso!');
     } catch (err) {
@@ -192,11 +198,25 @@ export default function Checkout() {
     }
   };
 
-  const discountAmount = appliedCoupon 
-    ? (appliedCoupon.discount_type === 'percentage' 
-       ? Math.min((subtotal * (appliedCoupon.discount_value / 100)), appliedCoupon.max_discount_value || Infinity)
-       : appliedCoupon.discount_value)
-    : 0;
+  const discountAmount = useMemo(() => {
+    if (!appliedCoupon) return 0;
+    
+    const isSpecific = applicableProductIds.length > 0;
+    const eligibleItems = isSpecific 
+      ? items.filter(item => applicableProductIds.includes(item.id))
+      : items;
+    
+    const eligibleSubtotal = eligibleItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+    
+    if (eligibleSubtotal === 0) return 0;
+
+    if (appliedCoupon.discount_type === 'percentage') {
+      const discount = (eligibleSubtotal * (appliedCoupon.discount_value / 100));
+      return Math.min(discount, appliedCoupon.max_discount_value || Infinity);
+    }
+    
+    return Math.min(eligibleSubtotal, appliedCoupon.discount_value);
+  }, [appliedCoupon, applicableProductIds, items]);
 
   const total = Math.max(0, subtotal - discountAmount) + (deliveryFee || 0);
 
