@@ -49,23 +49,12 @@ export default function Orders() {
     if (!user) return;
     const fetchOrders = async () => {
       try {
-        // Usa a view segura customer_orders_view (filtra por auth.uid()).
-        // Fallback para a tabela direta caso a view ainda não exista no banco.
-        let { data, error } = await supabase
-          .from('customer_orders_view')
-          .select('*')
+        const { data, error } = await supabase
+          .from('orders')
+          .select('*, company:companies(*)')
+          .or(`customer_id.eq.${user.id},user_id.eq.${user.id}`)
           .order('created_at', { ascending: false });
 
-        if (error && /relation .* does not exist|customer_orders_view/i.test(error.message)) {
-          console.warn('[Orders] view customer_orders_view ausente, usando fallback');
-          const fb = await supabase
-            .from('orders')
-            .select('*, company:companies(*)')
-            .or(`customer_id.eq.${user.id},user_id.eq.${user.id}`)
-            .order('created_at', { ascending: false });
-          data = fb.data as any;
-          error = fb.error;
-        }
         if (error) throw error;
         console.log(`[Orders] Pedidos encontrados para ${user.id}:`, data?.length || 0);
         setOrders(data || []);
