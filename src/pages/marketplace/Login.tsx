@@ -68,10 +68,20 @@ export default function Login() {
           </Button>
         </form>
 
-        <p className="py-8 text-center text-sm text-muted-foreground">
-          Não tem conta?{' '}
-          <Link to="/marketplace/signup" className="text-primary font-semibold">Cadastrar</Link>
-        </p>
+        <div className="py-8 space-y-4">
+          <p className="text-center text-sm text-muted-foreground">
+            Não tem conta?{' '}
+            <Link to="/marketplace/signup" className="text-primary font-semibold">Cadastrar</Link>
+          </p>
+          <div className="flex justify-center gap-6">
+            <Link to="/marketplace/privacy" className="text-xs text-muted-foreground/60 hover:text-primary transition-colors">
+              Privacidade
+            </Link>
+            <Link to="/marketplace/terms" className="text-xs text-muted-foreground/60 hover:text-primary transition-colors">
+              Termos de Uso
+            </Link>
+          </div>
+        </div>
       </div>
     </div>
   );

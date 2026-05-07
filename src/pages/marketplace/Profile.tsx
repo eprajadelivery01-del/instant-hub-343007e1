@@ -15,7 +15,7 @@ import { SupportChat } from '@/components/chat/SupportChat';
 import {
   LogOut, MapPin, User, ChevronRight, Gem,
   Bell, HelpCircle, Wallet, Trash2, X, Camera, Loader2,
-  Star, Heart, Bike, Ticket, Settings, Moon, Sun
+  Star, Heart, Bike, Ticket, Settings, Moon, Sun, FileText, ShieldCheck
 } from 'lucide-react';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -78,6 +78,8 @@ export default function Profile() {
     { icon: theme === 'dark' ? Moon : Sun, label: 'Aparência do app', subtitle: theme === 'dark' ? 'Tema escuro ativo' : 'Tema claro ativo', onClick: () => toggleTheme() },
     { icon: Settings, label: 'Meus Dados', subtitle: 'Informações pessoais', onClick: () => setEditing(true), chevron: true },
     { icon: HelpCircle, label: 'Ajuda', subtitle: 'Suporte e dúvidas', onClick: () => setSupportType('support') },
+    { icon: FileText, label: 'Termos de Uso', subtitle: 'Regras da plataforma', onClick: () => navigate('/marketplace/terms'), chevron: true },
+    { icon: ShieldCheck, label: 'Privacidade', subtitle: 'Seus dados protegidos', onClick: () => navigate('/marketplace/privacy'), chevron: true },
     { icon: Heart, label: 'Favoritos', subtitle: 'Suas lojas favoritas', onClick: () => toast.info('Suas lojas do coração ficarão guardadas aqui.') },
     { icon: Ticket, label: 'Cupons', subtitle: 'Meus cupons de desconto', onClick: () => navigate('/marketplace/coupons') },
   ];
