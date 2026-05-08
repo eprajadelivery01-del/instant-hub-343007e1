@@ -203,10 +203,13 @@ export default function Checkout() {
     
     const isSpecific = applicableProductIds.length > 0;
     const eligibleItems = isSpecific 
-      ? items.filter(item => applicableProductIds.includes(item.id))
+      ? items.filter(item => applicableProductIds.includes(item.product.id))
       : items;
     
-    const eligibleSubtotal = eligibleItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+    const eligibleSubtotal = eligibleItems.reduce(
+      (acc, item) => acc + ((item.product.price || 0) * item.quantity),
+      0,
+    );
     
     if (eligibleSubtotal === 0) return 0;
 
@@ -229,206 +232,70 @@ export default function Checkout() {
     setLoading(true);
     const requestId = newRequestId();
     try {
-      const addr = addresses.find(a => a.id === selectedAddress);
-      const deliveryAddress = addr ? `${addr.street}, ${addr.number} - ${addr.neighborhood}, ${addr.city}` : '';
       const orderNotes = Object.values(itemNotes)
         .map((note) => note.trim())
         .filter(Boolean)
         .join(' • ') || null;
 
-      let finalNotes = orderNotes;
-      if (paymentMethod === 'money' && needsChange && changeFor) {
-        const changeNote = `Troco para R$ ${changeFor}`;
-        finalNotes = finalNotes ? `${finalNotes} • ${changeNote}` : changeNote;
-      }
-
-      let { data: customerRecord } = await supabase
-        .from('customers')
-        .select('id')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (!customerRecord?.id) {
-        console.warn('[Checkout][customers] Registro ausente — provisionando automaticamente', {
-          authenticated_user_id: user.id,
-        });
-        const { data: createdCustomer, error: createCustomerError } = await supabase
-          .from('customers')
-          .insert({
-            user_id: user.id,
-            name: profile?.full_name || user.email || 'Cliente',
-            phone: profile?.phone || null,
-          })
-          .select('id')
-          .single();
-
-        if (createCustomerError || !createdCustomer?.id) {
-          const customerProvisionMessage = explainCustomerProvisionError(createCustomerError);
-          console.error('[Checkout][customers] Falha ao auto-provisionar cliente', {
-            authenticated_user_id: user.id,
-            error: createCustomerError,
-          });
-          void recordAuditLog({
-            request_id: requestId,
-            event: 'customers.autocreate.failed',
-            user_id: user.id,
-            payload: { user_id: user.id },
-            context: {
-              error: createCustomerError?.message,
-              error_code: createCustomerError?.code ?? null,
-              error_details: createCustomerError?.details ?? null,
-            },
-          });
-          throw new Error(customerProvisionMessage);
-        }
-
-        void recordAuditLog({
-          request_id: requestId,
-          event: 'customers.autocreate.success',
-          user_id: user.id,
-          context: { customer_record_id: createdCustomer.id },
-        });
-        customerRecord = createdCustomer;
-      }
-
-      const resolvedCustomerId = customerRecord.id;
-
       const ik = generateIdempotencyKey(user.id, items, total);
-      const orderPayload = {
-        customer_id: resolvedCustomerId,
-        user_id: user.id,
+
+      // Cálculo de total agora é autoridade do servidor (edge function).
+      // Cliente envia apenas refs (items, address, coupon code) — total é apenas
+      // dica de UX e jamais é gravado direto em orders.
+      const requestBody = {
+        items: items.map((it) => ({
+          product_id: it.product.id,
+          quantity: it.quantity,
+          notes: itemNotes[it.product.id] || null,
+        })),
         company_id: company.id,
-        status: 'pending',
-        total,
-        delivery_fee: deliveryFee || 0,
-        delivery_address: deliveryAddress,
+        address_id: selectedAddress,
         payment_method: paymentMethod,
-        notes: finalNotes,
-        idempotency_key: ik
+        coupon_code: appliedCoupon?.code ?? null,
+        notes: orderNotes,
+        needs_change: paymentMethod === 'money' && needsChange,
+        change_for: changeFor ? Number(changeFor) : null,
+        idempotency_key: ik,
       };
 
-      console.info('[Checkout][orders] Tentando criar pedido', {
-        request_id: requestId,
-        payload: orderPayload,
-        authenticated_user_id: user.id,
-        customer_record_id: customerRecord?.id ?? null,
-      });
       void recordAuditLog({
         request_id: requestId,
         event: 'orders.insert.attempt',
         user_id: user.id,
-        payload: orderPayload,
-        context: { customer_record_id: resolvedCustomerId },
+        payload: requestBody,
       });
 
-      const { data: order, error: orderError } = await supabase
-        .from('orders')
-        .insert(orderPayload)
-        .select()
-        .single();
+      const { data, error: fnError } = await supabase.functions.invoke('create-order', {
+        body: requestBody,
+      });
 
-      if (orderError) {
-        if (orderError.code === '23505') {
-          // Busca pedido já existente via view segura (respeita RLS).
-          const { data: existingOrder, error: lookupError } = await supabase
-            .from('orders')
-            .select('id')
-            .eq('idempotency_key', ik)
-            .maybeSingle();
-
-          void recordAuditLog({
-            request_id: requestId,
-            event: 'orders.insert.23505',
-            user_id: user.id,
-            error_code: orderError.code,
-            error_message: orderError.message,
-            payload: orderPayload,
-            context: {
-              idempotency_key: ik,
-              existing_order_id: existingOrder?.id ?? null,
-              lookup_error: lookupError?.message ?? null,
-            },
-          });
-
-          if (existingOrder?.id) {
-            clearCart();
-            resetIdempotencyKey();
-            toast.info('Esse pedido já foi criado. Abrimos os detalhes para você.');
-            navigate(`/marketplace/orders/${existingOrder.id}`);
-            return;
-          }
-
-          toast.info('Pedido já processado');
-          navigate('/marketplace/orders');
-          return;
-        }
-
-        if (isOrdersRlsError(orderError)) {
-          logOrdersRlsFailure({
-            userId: user.id,
-            customerRecordId: customerRecord?.id ?? null,
-            payload: orderPayload,
-            error: orderError,
-          });
-          void recordAuditLog({
-            request_id: requestId,
-            event: 'orders.insert.403',
-            user_id: user.id,
-            http_status: 403,
-            error_code: (orderError as any).code ?? null,
-            error_message: orderError.message,
-            payload: orderPayload,
-            context: { customer_record_id: resolvedCustomerId, policies: ORDERS_POLICY_SQL },
-          });
-        } else {
-          void recordAuditLog({
-            request_id: requestId,
-            event: 'orders.insert.error',
-            user_id: user.id,
-            error_code: (orderError as any).code ?? null,
-            error_message: orderError.message,
-            payload: orderPayload,
-          });
-        }
-
-        throw orderError;
+      if (fnError || !data?.order_id) {
+        const message = (data as any)?.error || fnError?.message || 'Erro ao criar pedido';
+        void recordAuditLog({
+          request_id: requestId,
+          event: 'orders.insert.error',
+          user_id: user.id,
+          error_message: message,
+          payload: requestBody,
+        });
+        throw new Error(message);
       }
+
       void recordAuditLog({
         request_id: requestId,
         event: 'orders.insert.success',
         user_id: user.id,
-        context: { order_id: order.id },
+        context: { order_id: data.order_id, idempotent: !!data.idempotent },
       });
-      const orderItems = items.map(item => ({
-        order_id: order.id, product_id: item.product.id, quantity: item.quantity,
-        price: item.product.price, unit_price: item.product.price, product_name: item.product.name,
-        notes: itemNotes[item.product.id] || null,
-      }));
-        const { error: itemsError } = await supabase.from('order_items').insert(orderItems);
-        if (itemsError) throw itemsError;
-        
-        if (appliedCoupon) {
-          await supabase.from('user_coupons').insert({
-            user_id: user.id,
-            coupon_id: appliedCoupon.id,
-            order_id: order.id,
-            used_at: new Date().toISOString()
-          });
-        }
-        
-        if (addr) {
-          await supabase.from('deliveries').insert({
-            order_id: order.id, company_id: company.id,
-          pickup_address: company.address || company.name, delivery_address: deliveryAddress,
-          pickup_latitude: company.latitude, pickup_longitude: company.longitude,
-          delivery_latitude: addr.latitude, delivery_longitude: addr.longitude,
-          status: 'pending', value: total, price: deliveryFee || 0,
-        });
-      }
+
       clearCart();
       resetIdempotencyKey();
-      toast.success('Pedido realizado!');
-      navigate(`/marketplace/orders/${order.id}`);
+      if (data.idempotent) {
+        toast.info('Esse pedido já foi criado. Abrimos os detalhes para você.');
+      } else {
+        toast.success('Pedido realizado!');
+      }
+      navigate(`/marketplace/orders/${data.order_id}`);
     } catch (err: any) {
       toast.error(err.message || 'Erro ao criar pedido');
     } finally { setLoading(false); releaseLock(); }
