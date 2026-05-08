@@ -1,0 +1,4 @@
+project_id = "nptkxlrhrlssdsevpgqe"
+
+[functions.create-order]
+verify_jwt = true
