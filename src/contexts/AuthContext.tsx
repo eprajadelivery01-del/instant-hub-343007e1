@@ -131,21 +131,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     if (error) throw error;
 
+    // IMPORTANTE: profile + user_roles são criados automaticamente pelo trigger
+    // public.handle_new_user() (SECURITY DEFINER) em auth.users — ver
+    // scripts/handle_new_user_trigger.sql.
+    // Nunca escrever `role` a partir do client (risco de role escalation).
+    // Atualizamos apenas campos não privilegiados após o signup.
     if (data.user) {
-      // Profile: only non-privileged fields. The `role` column must NOT be
-      // writable by clients (enforce via RLS UPDATE policy with column check).
-      await supabase.from('profiles').upsert({
-        id: data.user.id,
+      await supabase.from('profiles').update({
         full_name: fullName,
         phone,
-      });
-
-      // user_roles: client may only self-assign 'customer'. RLS must enforce
-      // WITH CHECK (user_id = auth.uid() AND role = 'customer') and forbid UPDATE.
-      await supabase.from('user_roles').insert({
-        user_id: data.user.id,
-        role: 'customer',
-      });
+      }).eq('id', data.user.id);
     }
   };
 
