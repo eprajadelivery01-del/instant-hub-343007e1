@@ -13,61 +13,6 @@ import { useOrderLock } from '@/hooks/useOrderLock';
 import { calculateDeliveryFee } from '@/utils/freight';
 import { recordAuditLog, newRequestId } from '@/lib/auditLog';
 
-const ORDERS_POLICY_SQL = {
-  insert: `CREATE POLICY "Customers_Insert_Orders" ON public.orders FOR INSERT TO authenticated WITH CHECK ( user_id = auth.uid() AND customer_id IN ( SELECT customer_profile.id FROM public.customers customer_profile WHERE customer_profile.user_id = auth.uid() ) );`,
-  select: `CREATE POLICY "Customers_Select_Orders" ON public.orders FOR SELECT TO authenticated USING ( user_id = auth.uid() OR customer_id IN ( SELECT customer_profile.id FROM public.customers customer_profile WHERE customer_profile.user_id = auth.uid() ) );`,
-  lojistaGuard: `Policies do lojista devem existir apenas em SELECT/UPDATE/DELETE e nunca em FOR ALL/INSERT para não bloquear o cliente.`,
-};
-
-const isOrdersRlsError = (error: unknown) => {
-  if (!error || typeof error !== 'object') return false;
-  const candidate = error as { code?: string; message?: string; details?: string; status?: number };
-  return (
-    candidate.status === 403 ||
-    candidate.code === '42501' ||
-    candidate.message?.toLowerCase().includes('row-level security') ||
-    candidate.details?.toLowerCase().includes('row-level security')
-  );
-};
-
-const logOrdersRlsFailure = (context: {
-  userId: string;
-  customerRecordId: string | null;
-  payload: Record<string, unknown>;
-  error: unknown;
-}) => {
-  console.group('[Checkout][orders][403] Falha de RLS ao criar pedido');
-  console.error('Erro bruto:', context.error);
-  console.info('Payload enviado para orders:', context.payload);
-  console.info('Contexto autenticado:', {
-    user_id: context.userId,
-    customer_record_id: context.customerRecordId,
-    customer_id_sent: context.payload.customer_id,
-    company_id_sent: context.payload.company_id,
-  });
-  console.info('Policies SQL relevantes:', ORDERS_POLICY_SQL);
-  console.groupEnd();
-};
-
-const explainCustomerProvisionError = (error: { code?: string; message?: string; details?: string } | null | undefined) => {
-  const message = error?.message?.toLowerCase() || '';
-  const details = error?.details?.toLowerCase() || '';
-
-  if (error?.code === '42501' || message.includes('row-level security') || details.includes('row-level security')) {
-    return 'Não foi possível vincular seu cadastro de cliente. Verifique a policy de INSERT em public.customers (auth.uid() = user_id).';
-  }
-
-  if (message.includes("column 'email'") || message.includes('column "email"')) {
-    return 'Não foi possível vincular seu cadastro de cliente porque a tabela public.customers não possui a coluna email esperada pelo app.';
-  }
-
-  if (message.includes("column 'phone'") || message.includes('column "phone"')) {
-    return 'Não foi possível vincular seu cadastro de cliente porque a tabela public.customers não possui a coluna phone esperada pelo app.';
-  }
-
-  return 'Não foi possível vincular seu cadastro de cliente neste momento.';
-};
-
 export default function Checkout() {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
