@@ -159,7 +159,7 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
   );
 
   return (
-    <div className="app-shell h-full flex flex-col font-sans text-foreground overflow-hidden">
+    <div className="app-shell h-full flex flex-col font-sans text-foreground">
       <main className={cn(
         'flex flex-1 flex-col transition-all duration-300 overflow-y-auto custom-scrollbar', 
         !hideNav && (showCartFab ? 'pb-marketplace-nav-with-cart' : 'pb-marketplace-nav')
