@@ -13,6 +13,24 @@ import { useOrderLock } from '@/hooks/useOrderLock';
 import { calculateDeliveryFee } from '@/utils/freight';
 import { recordAuditLog, newRequestId } from '@/lib/auditLog';
 
+function mapServerError(msg: string): string {
+  const m = msg.toLowerCase();
+  if (m.includes('invalid or inactive coupon')) return 'Cupom inválido ou inativo.';
+  if (m.includes('coupon expired')) return 'Este cupom já expirou.';
+  if (m.includes('coupon minimum') || m.includes('below coupon')) return 'Pedido abaixo do mínimo do cupom.';
+  if (m.includes('coupon belongs to another')) return 'Este cupom é exclusivo de outra loja.';
+  if (m.includes('address not found')) return 'Endereço inválido para este usuário.';
+  if (m.includes('out of range') || m.includes('out of region') || m.includes('delivery unavailable'))
+    return 'Entrega indisponível para este endereço.';
+  if (m.includes('product') && m.includes('unavailable')) return 'Um dos itens não está mais disponível.';
+  if (m.includes('product') && m.includes('not found')) return 'Um produto do carrinho não existe mais.';
+  if (m.includes('does not belong to the company')) return 'Há itens de outra loja no carrinho.';
+  if (m.includes('company not found')) return 'Loja indisponível no momento.';
+  if (m.includes('failed to provision customer')) return 'Não foi possível vincular seu cadastro. Tente novamente.';
+  if (m.includes('invalid session') || m.includes('missing authorization')) return 'Sessão expirada. Faça login novamente.';
+  return msg || 'Erro ao criar pedido.';
+}
+
 export default function Checkout() {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
@@ -182,7 +200,13 @@ export default function Checkout() {
         .filter(Boolean)
         .join(' • ') || null;
 
-      const ik = generateIdempotencyKey(user.id, items, total);
+      // Idempotency key baseado em (user, loja, endereço, cupom, itens).
+      // Não inclui total — o servidor é a autoridade de preço.
+      const ik = generateIdempotencyKey(
+        user.id,
+        items,
+        `${company.id}|${selectedAddress}|${appliedCoupon?.code ?? ''}|${paymentMethod}`,
+      );
 
       // Cálculo de total agora é autoridade do servidor (edge function).
       // Cliente envia apenas refs (items, address, coupon code) — total é apenas
@@ -215,15 +239,18 @@ export default function Checkout() {
       });
 
       if (fnError || !data?.order_id) {
-        const message = (data as any)?.error || fnError?.message || 'Erro ao criar pedido';
+        const rawMsg =
+          (data as any)?.error || (fnError as any)?.context?.error || fnError?.message || 'Erro ao criar pedido';
+        const friendly = mapServerError(String(rawMsg));
         void recordAuditLog({
           request_id: requestId,
           event: 'orders.insert.error',
           user_id: user.id,
-          error_message: message,
+          error_message: rawMsg,
           payload: requestBody,
+          context: { friendly },
         });
-        throw new Error(message);
+        throw new Error(friendly);
       }
 
       void recordAuditLog({

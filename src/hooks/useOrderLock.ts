@@ -7,8 +7,11 @@ export function useOrderLock() {
   const idempotencyKeyRef = useRef<string | null>(null);
   const cartFingerprintRef = useRef('');
 
-  const generateIdempotencyKey = useCallback((userId: string, items: CartItem[], total: number) => {
-    const cartFingerprint = `${userId}-${total}-${items.map(i => `${i.product.id}:${i.quantity}`).sort().join('|')}`;
+  const generateIdempotencyKey = useCallback((userId: string, items: CartItem[], extra?: string) => {
+    const cartFingerprint = `${userId}|${extra ?? ''}|${items
+      .map(i => `${i.product.id}:${i.quantity}`)
+      .sort()
+      .join('|')}`;
 
     if (!idempotencyKeyRef.current || cartFingerprintRef.current !== cartFingerprint) {
       cartFingerprintRef.current = cartFingerprint;

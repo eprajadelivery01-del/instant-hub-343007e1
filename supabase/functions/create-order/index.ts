@@ -40,6 +40,14 @@ function badRequest(message: string, extra?: Record<string, unknown>) {
   return json({ error: message, ...extra }, 400);
 }
 
+function newRequestId() {
+  try {
+    return (crypto as any).randomUUID?.() ?? `req_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+  } catch {
+    return `req_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
@@ -70,29 +78,61 @@ Deno.serve(async (req) => {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 
-  let body: CreateOrderBody;
+  const requestId = newRequestId();
+  const t0 = Date.now();
+  let body: CreateOrderBody | undefined;
+  const audit = async (
+    event: string,
+    extra: Record<string, unknown> = {},
+    httpStatus: number | null = null,
+  ) => {
+    try {
+      await adminClient.from('audit_logs').insert({
+        request_id: requestId,
+        user_id: user?.id ?? null,
+        event,
+        source: 'edge.create-order',
+        http_status: httpStatus,
+        error_code: (extra as any).error_code ?? null,
+        error_message: (extra as any).error_message ?? null,
+        payload: (extra as any).payload ?? null,
+        context: { idempotency_key: body?.idempotency_key ?? null, ...((extra as any).context ?? {}) },
+      });
+    } catch (e) {
+      console.warn('[create-order][audit] failed', (e as Error).message);
+    }
+  };
+  const fail = async (status: number, event: string, message: string, extra: Record<string, unknown> = {}) => {
+    await audit(event, { error_message: message, ...extra }, status);
+    return json({ error: message, request_id: requestId, ...((extra as any).public ?? {}) }, status);
+  };
+
   try {
     body = (await req.json()) as CreateOrderBody;
   } catch {
-    return badRequest('Invalid JSON body.');
+    return fail(400, 'create_order.bad_json', 'Invalid JSON body.');
   }
 
   if (!body || !Array.isArray(body.items) || body.items.length === 0) {
-    return badRequest('items is required and must be non-empty.');
+    return fail(400, 'create_order.validation', 'items is required and must be non-empty.');
   }
-  if (!body.company_id) return badRequest('company_id is required.');
-  if (!body.address_id) return badRequest('address_id is required.');
+  if (!body.company_id) return fail(400, 'create_order.validation', 'company_id is required.');
+  if (!body.address_id) return fail(400, 'create_order.validation', 'address_id is required.');
   if (!['money', 'pix', 'card'].includes(body.payment_method)) {
-    return badRequest('payment_method must be money|pix|card.');
+    return fail(400, 'create_order.validation', 'payment_method must be money|pix|card.');
   }
   if (!body.idempotency_key || typeof body.idempotency_key !== 'string') {
-    return badRequest('idempotency_key is required.');
+    return fail(400, 'create_order.validation', 'idempotency_key is required.');
   }
   for (const it of body.items) {
     if (!it.product_id || !Number.isInteger(it.quantity) || it.quantity <= 0) {
-      return badRequest('each item must have product_id and integer quantity > 0.');
+      return fail(400, 'create_order.validation', 'each item must have product_id and integer quantity > 0.');
     }
   }
+
+  await audit('create_order.attempt', {
+    payload: { company_id: body.company_id, address_id: body.address_id, items: body.items, coupon: body.coupon_code ?? null, payment_method: body.payment_method },
+  });
 
   // 1) Address pertence ao usuário
   const { data: address, error: addrErr } = await adminClient
@@ -101,7 +141,7 @@ Deno.serve(async (req) => {
     .eq('id', body.address_id)
     .maybeSingle();
   if (addrErr || !address || address.user_id !== user.id) {
-    return json({ error: 'Address not found for this user.' }, 403);
+    return fail(403, 'create_order.address_forbidden', 'Address not found for this user.');
   }
 
   // 2) Company existe
@@ -110,7 +150,7 @@ Deno.serve(async (req) => {
     .select('id, name, address, latitude, longitude, delivery_fee')
     .eq('id', body.company_id)
     .maybeSingle();
-  if (compErr || !company) return badRequest('Company not found.', { company_id: body.company_id });
+  if (compErr || !company) return fail(400, 'create_order.company_missing', 'Company not found.');
 
   // 3) Re-fetch produtos canonicamente
   const productIds = Array.from(new Set(body.items.map((i) => i.product_id)));
@@ -118,14 +158,14 @@ Deno.serve(async (req) => {
     .from('products')
     .select('id, name, price, company_id, available')
     .in('id', productIds);
-  if (prodErr || !products) return json({ error: 'Failed to load products.' }, 500);
+  if (prodErr || !products) return fail(500, 'create_order.products_load_failed', 'Failed to load products.');
 
   const byId = new Map(products.map((p) => [p.id, p]));
   for (const it of body.items) {
     const p = byId.get(it.product_id);
-    if (!p) return badRequest(`Product ${it.product_id} not found.`);
-    if (p.company_id !== company.id) return badRequest('Item does not belong to the company.');
-    if (p.available === false) return badRequest(`Product ${p.name} is unavailable.`);
+    if (!p) return fail(400, 'create_order.product_missing', `Product ${it.product_id} not found.`);
+    if (p.company_id !== company.id) return fail(400, 'create_order.product_wrong_company', 'Item does not belong to the company.');
+    if (p.available === false) return fail(400, 'create_order.product_unavailable', `Product ${p.name} is unavailable.`);
   }
 
   // 4) Subtotal canônico
@@ -153,15 +193,15 @@ Deno.serve(async (req) => {
       .eq('code', code)
       .eq('active', true)
       .maybeSingle();
-    if (!coupon) return badRequest('Invalid or inactive coupon.');
+    if (!coupon) return fail(400, 'create_order.coupon_invalid', 'Invalid or inactive coupon.');
     if (coupon.expires_at && new Date(coupon.expires_at) < new Date()) {
-      return badRequest('Coupon expired.');
+      return fail(400, 'create_order.coupon_expired', 'Coupon expired.');
     }
     if (coupon.min_order_value && subtotal < Number(coupon.min_order_value)) {
-      return badRequest('Order below coupon minimum.');
+      return fail(400, 'create_order.coupon_below_min', 'Order below coupon minimum.');
     }
     if (coupon.company_id && coupon.company_id !== company.id) {
-      return badRequest('Coupon belongs to another store.');
+      return fail(400, 'create_order.coupon_other_store', 'Coupon belongs to another store.');
     }
     const { data: links } = await adminClient
       .from('coupon_products')
@@ -187,6 +227,9 @@ Deno.serve(async (req) => {
 
   // 6) Frete: usa company.delivery_fee se existir; senão tenta região por lat/lng.
   let deliveryFee = 0;
+  let regionId: string | null = null;
+  let regionName: string | null = null;
+  let outOfRegion = false;
   if (company.delivery_fee !== null && company.delivery_fee !== undefined) {
     deliveryFee = Number(company.delivery_fee) || 0;
   } else if (address.latitude && address.longitude) {
@@ -195,8 +238,17 @@ Deno.serve(async (req) => {
       .select('id, name, fee, polygon');
     if (regions && regions.length > 0) {
       const inside = pickRegion(regions, Number(address.latitude), Number(address.longitude));
-      if (inside) deliveryFee = Number(inside.fee) || 0;
+      if (inside) {
+        deliveryFee = Number(inside.fee) || 0;
+        regionId = inside.id;
+        regionName = inside.name;
+      } else {
+        outOfRegion = true;
+      }
     }
+  }
+  if (outOfRegion) {
+    return fail(400, 'create_order.out_of_region', 'Delivery unavailable for this address (out of region).');
   }
 
   const total = Math.max(0, subtotal - discount) + deliveryFee;
@@ -220,7 +272,7 @@ Deno.serve(async (req) => {
       })
       .select('id')
       .single();
-    if (createErr || !created) return json({ error: 'Failed to provision customer.' }, 500);
+    if (createErr || !created) return fail(500, 'create_order.customer_provision_failed', 'Failed to provision customer.');
     customerId = created.id;
   }
 
@@ -231,6 +283,7 @@ Deno.serve(async (req) => {
     .eq('idempotency_key', body.idempotency_key)
     .maybeSingle();
   if (existing?.id) {
+    await audit('create_order.idempotent_hit', { context: { order_id: existing.id } }, 200);
     return json({ order_id: existing.id, idempotent: true });
   }
 
@@ -267,9 +320,14 @@ Deno.serve(async (req) => {
         .select('id')
         .eq('idempotency_key', body.idempotency_key)
         .maybeSingle();
-      if (dup?.id) return json({ order_id: dup.id, idempotent: true });
+      if (dup?.id) {
+        await audit('create_order.idempotent_hit', { context: { order_id: dup.id, via: '23505' } }, 200);
+        return json({ order_id: dup.id, idempotent: true });
+      }
     }
-    return json({ error: orderErr?.message || 'Failed to create order.' }, 500);
+    return fail(500, 'create_order.insert_failed', orderErr?.message || 'Failed to create order.', {
+      error_code: (orderErr as any)?.code ?? null,
+    });
   }
 
   // 11) Insert items
@@ -284,7 +342,9 @@ Deno.serve(async (req) => {
   }));
   const { error: itemsErr } = await adminClient.from('order_items').insert(itemsRow);
   if (itemsErr) {
-    return json({ error: itemsErr.message, order_id: order.id }, 500);
+    return fail(500, 'create_order.items_insert_failed', itemsErr.message, {
+      context: { order_id: order.id },
+    });
   }
 
   // 12) Cupom usado
@@ -312,12 +372,32 @@ Deno.serve(async (req) => {
     price: deliveryFee,
   });
 
+  await audit(
+    'create_order.success',
+    {
+      context: {
+        order_id: order.id,
+        subtotal,
+        discount,
+        delivery_fee: deliveryFee,
+        total,
+        region_id: regionId,
+        region_name: regionName,
+        items: enrichedItems.length,
+        duration_ms: Date.now() - t0,
+      },
+    },
+    200,
+  );
+
   return json({
     order_id: order.id,
+    request_id: requestId,
     total,
     subtotal,
     discount,
     delivery_fee: deliveryFee,
+    region: regionName,
   });
 });
 
