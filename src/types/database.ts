@@ -149,8 +149,10 @@ export interface Address {
 }
 
 export interface CartItem {
+  id?: string; // unique id for cart item (product_id + options_hash)
   product: Product;
   quantity: number;
+  options?: any[];
 }
 
 export interface Review {

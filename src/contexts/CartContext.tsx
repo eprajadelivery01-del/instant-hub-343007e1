@@ -5,10 +5,10 @@ interface CartContextType {
   items: CartItem[];
   company: Company | null;
   notes: Record<string, string>;
-  addItem: (product: Product, company: Company) => void;
-  removeItem: (productId: string) => void;
-  updateQuantity: (productId: string, quantity: number) => void;
-  updateNote: (productId: string, note: string) => void;
+  addItem: (product: Product, company: Company, options?: any[], quantity?: number) => void;
+  removeItem: (cartItemId: string) => void;
+  updateQuantity: (cartItemId: string, quantity: number) => void;
+  updateNote: (cartItemId: string, note: string) => void;
   clearCart: () => void;
   subtotal: number;
   itemCount: number;
@@ -40,47 +40,52 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, [items, company, notes]);
 
-  const addItem = (product: Product, comp: Company) => {
+  const addItem = (product: Product, comp: Company, options: any[] = [], quantity: number = 1) => {
+    // Generate a unique ID for this item + options combo
+    const optionsHash = options.map(o => o.id).sort().join('-');
+    const cartItemId = `${product.id}${optionsHash ? `-${optionsHash}` : ''}`;
+
     if (company && company.id !== comp.id) {
-      setItems([{ product, quantity: 1 }]);
+      if (!confirm('Você já possui itens de outra loja na sacola. Deseja limpar a sacola e iniciar um novo pedido?')) return;
+      setItems([{ id: cartItemId, product, quantity, options }]);
       setCompany(comp);
       setNotes({});
       return;
     }
     setCompany(comp);
     setItems(prev => {
-      const existing = prev.find(i => i.product.id === product.id);
+      const existing = prev.find(i => i.id === cartItemId);
       if (existing) {
         return prev.map(i =>
-          i.product.id === product.id ? { ...i, quantity: i.quantity + 1 } : i
+          i.id === cartItemId ? { ...i, quantity: i.quantity + quantity } : i
         );
       }
-      return [...prev, { product, quantity: 1 }];
+      return [...prev, { id: cartItemId, product, quantity, options }];
     });
   };
 
-  const removeItem = (productId: string) => {
+  const removeItem = (cartItemId: string) => {
     setItems(prev => {
-      const filtered = prev.filter(i => i.product.id !== productId);
+      const filtered = prev.filter(i => i.id !== cartItemId);
       if (filtered.length === 0) setCompany(null);
       return filtered;
     });
     setNotes(prev => {
       const next = { ...prev };
-      delete next[productId];
+      delete next[cartItemId];
       return next;
     });
   };
 
-  const updateQuantity = (productId: string, quantity: number) => {
-    if (quantity <= 0) return removeItem(productId);
+  const updateQuantity = (cartItemId: string, quantity: number) => {
+    if (quantity <= 0) return removeItem(cartItemId);
     setItems(prev =>
-      prev.map(i => (i.product.id === productId ? { ...i, quantity } : i))
+      prev.map(i => (i.id === cartItemId ? { ...i, quantity } : i))
     );
   };
 
-  const updateNote = (productId: string, note: string) => {
-    setNotes(prev => ({ ...prev, [productId]: note }));
+  const updateNote = (cartItemId: string, note: string) => {
+    setNotes(prev => ({ ...prev, [cartItemId]: note }));
   };
 
   const clearCart = () => {
@@ -90,8 +95,18 @@ export function CartProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('cart_notes');
   };
 
+  const calculateItemPrice = (item: CartItem) => {
+    let price = Number(item.product.price || 0);
+    if (item.options) {
+      item.options.forEach(opt => {
+        price += Number(opt.price || 0);
+      });
+    }
+    return price;
+  };
+
   const subtotal = items.reduce(
-    (sum, i) => sum + (i.product.price || 0) * i.quantity,
+    (sum, i) => sum + calculateItemPrice(i) * i.quantity,
     0
   );
 
