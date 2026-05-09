@@ -12,7 +12,7 @@ interface ProductDetailDialogProps {
   product: Product | null;
   isOpen: boolean;
   onClose: () => void;
-  onAddToCart: (product: Product, quantity: number, options?: any[]) => void;
+  onAddToCart: (product: Product, quantity: number, options?: any[], note?: string) => void;
   initialQuantity?: number;
   isClosed?: boolean;
 }
@@ -39,11 +39,13 @@ export function ProductDetailDialog({ product, isOpen, onClose, onAddToCart, ini
   const [options, setOptions] = useState<Option[]>([]);
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string[]>>({});
   const [loadingOptions, setLoadingOptions] = useState(false);
+  const [note, setNote] = useState('');
 
   useEffect(() => {
     setQuantity(initialQuantity || 1);
     setCurrentImageIndex(0);
     setSelectedOptions({});
+    setNote('');
     
     if (product?.id && isOpen) {
       fetchOptions(product.id);
@@ -118,7 +120,7 @@ export function ProductDetailDialog({ product, isOpen, onClose, onAddToCart, ini
     }
 
     const flatOptions = Object.values(selectedOptions).flat().map(id => options.find(o => o.id === id));
-    onAddToCart(product, quantity, flatOptions);
+    onAddToCart(product, quantity, flatOptions, note);
     onClose();
   };
 
@@ -213,7 +215,7 @@ export function ProductDetailDialog({ product, isOpen, onClose, onAddToCart, ini
           </div>
 
           {/* Options Groups */}
-          <div className="space-y-8 pb-10">
+          <div className="space-y-8">
             {groups.map((group) => (
               <div key={group.id} className="animate-in fade-in slide-in-from-bottom-2 duration-300">
                 <div className="bg-secondary/30 p-4 rounded-2xl mb-3">
@@ -258,6 +260,37 @@ export function ProductDetailDialog({ product, isOpen, onClose, onAddToCart, ini
                 </div>
               </div>
             ))}
+          </div>
+
+          {/* Observation Field */}
+          <div className="mt-10 mb-6 space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-secondary">
+                  <span className="text-[12px]">💬</span>
+                </div>
+                <h3 className="text-sm font-black text-foreground uppercase tracking-tight">Alguma observação?</h3>
+              </div>
+              <span className={cn(
+                "text-[10px] font-bold tracking-widest uppercase",
+                note.length >= 140 ? "text-destructive" : "text-muted-foreground/60"
+              )}>
+                {note.length}/140
+              </span>
+            </div>
+            
+            <div className="relative">
+              <textarea
+                value={note}
+                onChange={(e) => setNote(e.target.value.slice(0, 140))}
+                placeholder="Ex: tirar a cebola, maionese à parte etc."
+                className="w-full min-h-[100px] p-4 rounded-2xl bg-muted/20 border-2 border-transparent focus:border-primary/20 focus:bg-background transition-all outline-none text-sm font-medium resize-none placeholder:text-muted-foreground/40"
+              />
+            </div>
+
+            <button className="text-[11px] font-black uppercase tracking-widest text-destructive/60 hover:text-destructive transition-colors">
+              Denunciar item
+            </button>
           </div>
 
           <div className="flex items-center gap-3 sm:gap-4 mt-auto sticky bottom-0 bg-card pt-4 pb-4">

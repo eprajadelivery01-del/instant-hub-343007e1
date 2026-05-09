@@ -224,7 +224,8 @@ export default function Checkout() {
         items: items.map((it) => ({
           product_id: it.product.id,
           quantity: it.quantity,
-          notes: itemNotes[it.product.id] || null,
+          notes: it.note || null,
+          options: it.options || [],
         })),
         company_id: company.id,
         address_id: selectedAddress,

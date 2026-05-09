@@ -472,8 +472,8 @@ export default function StoreDetail() {
         isOpen={!!selectedProduct}
         onClose={() => setSelectedProduct(null)}
         isClosed={!company.is_open}
-        onAddToCart={(product, quantity, options) => {
-          if (company) addItem(product, company, options, quantity);
+        onAddToCart={(product, quantity, options, note) => {
+          if (company) addItem(product, company, options, quantity, note);
         }}
         initialQuantity={selectedProduct ? getItemQty(selectedProduct.id) : 1}
       />

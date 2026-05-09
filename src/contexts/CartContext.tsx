@@ -5,7 +5,7 @@ interface CartContextType {
   items: CartItem[];
   company: Company | null;
   notes: Record<string, string>;
-  addItem: (product: Product, company: Company, options?: any[], quantity?: number) => void;
+  addItem: (product: Product, company: Company, options?: any[], quantity?: number, note?: string) => void;
   removeItem: (cartItemId: string) => void;
   updateQuantity: (cartItemId: string, quantity: number) => void;
   updateNote: (cartItemId: string, note: string) => void;
@@ -40,14 +40,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, [items, company, notes]);
 
-  const addItem = (product: Product, comp: Company, options: any[] = [], quantity: number = 1) => {
-    // Generate a unique ID for this item + options combo
+  const addItem = (product: Product, comp: Company, options: any[] = [], quantity: number = 1, note: string = '') => {
+    // Generate a unique ID for this item + options combo + note
     const optionsHash = options.map(o => o.id).sort().join('-');
-    const cartItemId = `${product.id}${optionsHash ? `-${optionsHash}` : ''}`;
+    const noteHash = note ? btoa(note).slice(0, 10) : '';
+    const cartItemId = `${product.id}${optionsHash ? `-${optionsHash}` : ''}${noteHash ? `-${noteHash}` : ''}`;
 
     if (company && company.id !== comp.id) {
       if (!confirm('Você já possui itens de outra loja na sacola. Deseja limpar a sacola e iniciar um novo pedido?')) return;
-      setItems([{ id: cartItemId, product, quantity, options }]);
+      setItems([{ id: cartItemId, product, quantity, options, note }]);
       setCompany(comp);
       setNotes({});
       return;
@@ -60,7 +61,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
           i.id === cartItemId ? { ...i, quantity: i.quantity + quantity } : i
         );
       }
-      return [...prev, { id: cartItemId, product, quantity, options }];
+      return [...prev, { id: cartItemId, product, quantity, options, note }];
     });
   };
 

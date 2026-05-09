@@ -15,6 +15,7 @@ interface CartItemInput {
   product_id: string;
   quantity: number;
   notes?: string | null;
+  options?: any[] | null;
 }
 
 interface CreateOrderBody {
@@ -178,6 +179,7 @@ Deno.serve(async (req) => {
       quantity: it.quantity,
       line_total: (Number(p.price) || 0) * it.quantity,
       notes: it.notes ?? null,
+      options: it.options ?? [],
     };
   });
   const subtotal = enrichedItems.reduce((acc, x) => acc + x.line_total, 0);
@@ -339,6 +341,7 @@ Deno.serve(async (req) => {
     unit_price: i.unit_price,
     product_name: i.product_name,
     notes: i.notes,
+    options: i.options,
   }));
   const { error: itemsErr } = await adminClient.from('order_items').insert(itemsRow);
   if (itemsErr) {
