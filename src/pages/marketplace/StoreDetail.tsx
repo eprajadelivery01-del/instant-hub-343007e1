@@ -345,7 +345,7 @@ export default function StoreDetail() {
         </div>
       )}
 
-      <div className="mx-auto max-w-7xl px-6 pb-40">
+      <div className="mx-auto max-w-7xl px-4 pb-40">
         {categories.length === 0 ? (
           <div className="flex flex-col items-center gap-4 py-24 text-muted-foreground">
             <div className="flex h-20 w-20 items-center justify-center rounded-full bg-secondary/50">
@@ -356,14 +356,14 @@ export default function StoreDetail() {
         ) : (
           <>
             {!company.is_open && (
-              <div className="mt-8 mb-2 animate-in fade-in slide-in-from-top-4 duration-700">
-                <div className="bg-destructive/10 border border-destructive/20 rounded-[2rem] p-6 flex flex-col items-center text-center gap-2">
+              <div className="mt-8 mb-2 animate-in fade-in slide-in-from-top-4 duration-700 px-2">
+                <div className="bg-destructive/10 border border-destructive/20 rounded-2xl p-6 flex flex-col items-center text-center gap-2">
                   <div className="w-12 h-12 rounded-2xl bg-destructive/20 flex items-center justify-center mb-1">
                     <Clock className="h-6 w-6 text-destructive" />
                   </div>
-                  <h3 className="text-lg font-black text-destructive uppercase tracking-tight">Loja Fechada no Momento</h3>
+                  <h3 className="text-lg font-black text-destructive uppercase tracking-tight">Loja Fechada</h3>
                   <p className="max-w-xs text-sm text-destructive/70 font-medium">
-                    {company.business_hours ? `Esta loja atende das: ${company.business_hours}` : 'Esta loja não está aceitando pedidos agora. Você pode navegar pelo cardápio, mas não poderá fazer pedidos.'}
+                    {company.business_hours ? `Esta loja atende das: ${company.business_hours}` : 'Esta loja não está aceitando pedidos agora.'}
                   </p>
                 </div>
               </div>
@@ -374,22 +374,22 @@ export default function StoreDetail() {
 
             return (
               <div key={category} id={category} className="animate-in fade-in slide-in-from-bottom-4 duration-700 first:pt-6 pt-10">
-                <div className="mb-4 px-1">
-                  <h3 className="text-xl font-bold tracking-tight text-foreground">{category}</h3>
+                <div className="mb-4 px-2">
+                  <h3 className="text-lg font-bold tracking-tight text-foreground">{category}</h3>
                 </div>
 
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div className="flex flex-col gap-px bg-border/20 rounded-3xl overflow-hidden border border-border/40">
                   {categoryProducts.map((product) => {
                     const qty = getItemQty(product.id);
                     return (
                         <div
                         key={product.id}
-                        className="group flex cursor-pointer gap-4 rounded-[32px] bg-card border border-white/10 p-5 shadow-2xl hover:border-primary/30 hover:shadow-primary/5 transition-all active:scale-[0.98]"
+                        className="group flex cursor-pointer gap-4 bg-background p-4 hover:bg-secondary/20 transition-all active:scale-[0.99]"
                         onClick={() => setSelectedProduct(product)}
                       >
                         <div className="flex min-w-0 flex-1 flex-col justify-between py-0.5">
                           <div>
-                            <h4 className="mb-1.5 line-clamp-2 text-[15px] font-bold leading-tight text-foreground group-hover:text-primary transition-colors">
+                            <h4 className="mb-1 text-[15px] font-bold leading-tight text-foreground group-hover:text-primary transition-colors">
                               {product.name}
                             </h4>
                             {product.description && (
@@ -399,62 +399,43 @@ export default function StoreDetail() {
                             )}
                           </div>
 
-                          <div className="mt-3 flex items-end justify-between">
+                          <div className="mt-3 flex items-center justify-between">
                             <p className="text-[15px] font-extrabold text-foreground">
                               {Number(product.price || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                             </p>
 
-                            <div className="relative">
-                              {qty > 0 ? (
-                                <div className="flex h-8 items-center gap-2 rounded-full border border-border bg-secondary/50 px-1">
-                                  <button
-                                    className="flex h-6 w-6 items-center justify-center rounded-full bg-background text-muted-foreground shadow-sm hover:text-primary"
-                                    onClick={(e) => { e.stopPropagation(); updateQuantity(product.id, qty - 1); }}
-                                  >
-                                    <Minus className="h-3 w-3" />
-                                  </button>
-                                  <span className="w-4 text-center text-xs font-bold text-foreground">{qty}</span>
-                                  <button
-                                    className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm"
-                                    onClick={(e) => { e.stopPropagation(); handleAdd(product); }}
-                                  >
-                                    <Plus className="h-3 w-3" />
-                                  </button>
-                                </div>
-                              ) : (
-                                 <button
-                                  onClick={(e) => { 
-                                    e.stopPropagation(); 
-                                    if (company.is_open) handleAdd(product);
-                                    else toast.error("Esta loja está fechada no momento.");
-                                  }}
-                                  className={cn(
-                                    "flex h-8 w-8 items-center justify-center rounded-full transition-all shadow-md",
-                                    company.is_open 
-                                      ? "bg-secondary/80 text-foreground hover:bg-primary hover:text-primary-foreground" 
-                                      : "bg-muted text-muted-foreground/40 cursor-not-allowed"
-                                  )}
-                                >
-                                  <Plus className="h-4 w-4" />
-                                </button>
-                              )}
-                            </div>
+                            {qty > 0 && (
+                              <div className="flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-2 py-1">
+                                <span className="text-[11px] font-bold text-primary">{qty} no carrinho</span>
+                              </div>
+                            )}
                           </div>
                         </div>
 
-                        <div className="relative h-[90px] w-[90px] shrink-0">
-                          <div className="h-full w-full overflow-hidden rounded-2xl bg-secondary/30">
+                        <div className="relative h-24 w-24 shrink-0">
+                          <div className="h-full w-full overflow-hidden rounded-xl bg-secondary/30">
                             <MediaImage
                               src={getPrimaryProductImage(product)}
-                              alt={product.name || 'Produto da loja'}
-                              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                              alt={product.name || 'Produto'}
+                              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                               fallback={
-                                <div className="flex h-full w-full items-center justify-center text-muted-foreground/30">
-                                  <Utensils className="h-6 w-6" />
+                                <div className="flex h-full w-full items-center justify-center text-muted-foreground/30 text-2xl">
+                                  🍛
                                 </div>
                               }
                             />
                           </div>
+                          {qty === 0 && company.is_open && (
+                            <button
+                              onClick={(e) => { 
+                                e.stopPropagation(); 
+                                setSelectedProduct(product);
+                              }}
+                              className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-background border border-border shadow-lg text-primary hover:scale-110 transition-transform"
+                            >
+                              <Plus className="h-4 w-4" />
+                            </button>
+                          )}
                         </div>
                       </div>
                     );
