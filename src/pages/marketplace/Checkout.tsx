@@ -182,7 +182,13 @@ export default function Checkout() {
         .filter(Boolean)
         .join(' • ') || null;
 
-      const ik = generateIdempotencyKey(user.id, items, total);
+      // Idempotency key baseado em (user, loja, endereço, cupom, itens).
+      // Não inclui total — o servidor é a autoridade de preço.
+      const ik = generateIdempotencyKey(
+        user.id,
+        items,
+        `${company.id}|${selectedAddress}|${appliedCoupon?.code ?? ''}|${paymentMethod}`,
+      );
 
       // Cálculo de total agora é autoridade do servidor (edge function).
       // Cliente envia apenas refs (items, address, coupon code) — total é apenas
@@ -215,15 +221,18 @@ export default function Checkout() {
       });
 
       if (fnError || !data?.order_id) {
-        const message = (data as any)?.error || fnError?.message || 'Erro ao criar pedido';
+        const rawMsg =
+          (data as any)?.error || (fnError as any)?.context?.error || fnError?.message || 'Erro ao criar pedido';
+        const friendly = mapServerError(String(rawMsg));
         void recordAuditLog({
           request_id: requestId,
           event: 'orders.insert.error',
           user_id: user.id,
-          error_message: message,
+          error_message: rawMsg,
           payload: requestBody,
+          context: { friendly },
         });
-        throw new Error(message);
+        throw new Error(friendly);
       }
 
       void recordAuditLog({
