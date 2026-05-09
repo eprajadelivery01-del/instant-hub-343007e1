@@ -80,6 +80,7 @@ Deno.serve(async (req) => {
 
   const requestId = newRequestId();
   const t0 = Date.now();
+  let body: CreateOrderBody | undefined;
   const audit = async (
     event: string,
     extra: Record<string, unknown> = {},
@@ -106,7 +107,6 @@ Deno.serve(async (req) => {
     return json({ error: message, request_id: requestId, ...((extra as any).public ?? {}) }, status);
   };
 
-  let body: CreateOrderBody;
   try {
     body = (await req.json()) as CreateOrderBody;
   } catch {
