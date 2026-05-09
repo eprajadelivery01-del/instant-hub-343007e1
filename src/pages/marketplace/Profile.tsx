@@ -13,7 +13,7 @@ import {
   LogOut, MapPin, ChevronRight, Camera, Loader2,
   Bike, FileText, ShieldCheck, Moon, Sun,
   Wallet, HelpCircle, X, Check, Phone,
-  Package, Clock, CheckCircle2, XCircle, Truck
+  Package, Clock, CheckCircle2, XCircle, Truck, Ticket, Copy
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -47,6 +47,9 @@ export default function Profile() {
   const [supportType, setSupportType] = useState<'support' | 'driver_application' | null>(null);
   const [orders, setOrders] = useState<any[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
+  const [showCoupons, setShowCoupons] = useState(false);
+  const [coupons, setCoupons] = useState<any[]>([]);
+  const [loadingCoupons, setLoadingCoupons] = useState(false);
 
   useEffect(() => {
     setFullName(profile?.full_name || '');
@@ -57,6 +60,26 @@ export default function Profile() {
     if (!user) return;
     fetchOrders();
   }, [user]);
+
+  const fetchCoupons = async () => {
+    if (coupons.length > 0) { setShowCoupons(true); return; }
+    setLoadingCoupons(true);
+    try {
+      const { data } = await supabase
+        .from('coupons')
+        .select('*')
+        .eq('active', true)
+        .order('created_at', { ascending: false });
+      const valid = (data || []).filter(c => !c.expires_at || new Date(c.expires_at) > new Date());
+      setCoupons(valid);
+    } catch { /* silent */ }
+    finally { setLoadingCoupons(false); setShowCoupons(true); }
+  };
+
+  const handleCopyCode = (code: string) => {
+    navigator.clipboard.writeText(code);
+    toast.success('Código copiado!', { description: 'Cole na tela de finalização do pedido.' });
+  };
 
   const fetchOrders = async () => {
     setLoadingOrders(true);
@@ -166,7 +189,12 @@ export default function Profile() {
                 <p className="text-[9px] font-black text-white/70 uppercase tracking-widest mb-1">Clube É Pra Já</p>
                 <p className="text-sm font-black text-white leading-snug">Economize com cupons<br/>no seu lanche favorito</p>
               </div>
-              <button className="shrink-0 h-9 px-4 rounded-xl bg-white text-primary text-xs font-black hover:opacity-90 transition-all">
+              <button
+                onClick={fetchCoupons}
+                disabled={loadingCoupons}
+                className="shrink-0 h-9 px-4 rounded-xl bg-white text-primary text-xs font-black hover:opacity-90 active:scale-95 transition-all flex items-center gap-1.5 disabled:opacity-70"
+              >
+                {loadingCoupons ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Ticket className="h-3.5 w-3.5" />}
                 Ver benefícios
               </button>
             </div>
@@ -398,6 +426,94 @@ export default function Profile() {
           </div>
         </SheetContent>
       </Sheet>
+      {/* ── CUPONS SHEET ── */}
+      <Sheet open={showCoupons} onOpenChange={setShowCoupons}>
+        <SheetContent side="bottom" hideClose className="h-[85vh] rounded-t-3xl border-none p-0">
+          <div className="h-full flex flex-col bg-background">
+            {/* Header */}
+            <div className="px-6 pt-6 pb-4 flex items-center justify-between border-b border-border shrink-0">
+              <div>
+                <p className="text-[10px] text-primary font-black uppercase tracking-widest">Clube É Pra Já</p>
+                <h3 className="text-xl font-black text-foreground">Cupons Disponíveis</h3>
+              </div>
+              <button onClick={() => setShowCoupons(false)} className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+                <X className="h-5 w-5 text-muted-foreground" />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto p-5 space-y-4">
+              {loadingCoupons ? (
+                <div className="py-16 flex items-center justify-center">
+                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground/40" />
+                </div>
+              ) : coupons.length === 0 ? (
+                <div className="py-16 flex flex-col items-center gap-3 text-center text-muted-foreground/40">
+                  <Ticket className="h-12 w-12" />
+                  <p className="font-black text-sm uppercase tracking-widest">Nenhum cupom ativo</p>
+                  <p className="text-xs text-muted-foreground">Aguarde novas promoções!</p>
+                </div>
+              ) : (
+                coupons.map((coupon) => (
+                  <div key={coupon.id} className="relative overflow-hidden rounded-2xl bg-card border border-border shadow-sm">
+                    <div className="p-4 flex gap-4 items-center">
+                      {/* Icon */}
+                      <div className="w-14 h-14 shrink-0 rounded-2xl bg-primary/10 flex flex-col items-center justify-center gap-0.5">
+                        <Ticket className="h-5 w-5 text-primary" />
+                        <span className="text-[7px] font-black text-primary uppercase tracking-widest">É PRA JÁ</span>
+                      </div>
+
+                      {/* Info */}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-base font-black text-foreground leading-tight">
+                          {coupon.discount_type === 'percentage'
+                            ? `${coupon.discount_value}% de Desconto`
+                            : `R$ ${Number(coupon.discount_value).toFixed(2).replace('.', ',')} OFF`}
+                        </p>
+                        {coupon.description && (
+                          <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{coupon.description}</p>
+                        )}
+                        <div className="flex items-center gap-3 mt-2 flex-wrap">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-muted text-[10px] font-bold uppercase tracking-wider">
+                            <span className="text-muted-foreground">Código:</span>
+                            <span className="text-primary">{coupon.code}</span>
+                          </span>
+                          {coupon.expires_at && (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-muted-foreground uppercase">
+                              <Clock className="h-3 w-3" />
+                              Expira: {new Date(coupon.expires_at).toLocaleDateString('pt-BR')}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Footer */}
+                    <div className="bg-muted/40 border-t border-dashed border-border px-4 py-2.5 flex items-center justify-between">
+                      <span className="text-[10px] font-bold text-muted-foreground">
+                        {coupon.min_order_value > 0
+                          ? `Pedidos acima de R$ ${Number(coupon.min_order_value).toFixed(2).replace('.', ',')}`
+                          : 'Válido para qualquer valor'}
+                      </span>
+                      <button
+                        onClick={() => handleCopyCode(coupon.code)}
+                        className="flex items-center gap-1 text-xs font-black text-primary active:scale-95 transition-transform uppercase tracking-widest"
+                      >
+                        <Copy className="h-3 w-3" /> Copiar
+                      </button>
+                    </div>
+
+                    {/* Ticket cutouts */}
+                    <div className="absolute top-[74px] -left-2.5 h-5 w-5 rounded-full bg-background border border-border/50" />
+                    <div className="absolute top-[74px] -right-2.5 h-5 w-5 rounded-full bg-background border border-border/50" />
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+
     </MarketplaceLayout>
   );
 }
