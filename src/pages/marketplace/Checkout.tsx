@@ -13,6 +13,24 @@ import { useOrderLock } from '@/hooks/useOrderLock';
 import { calculateDeliveryFee } from '@/utils/freight';
 import { recordAuditLog, newRequestId } from '@/lib/auditLog';
 
+function mapServerError(msg: string): string {
+  const m = msg.toLowerCase();
+  if (m.includes('invalid or inactive coupon')) return 'Cupom inválido ou inativo.';
+  if (m.includes('coupon expired')) return 'Este cupom já expirou.';
+  if (m.includes('coupon minimum') || m.includes('below coupon')) return 'Pedido abaixo do mínimo do cupom.';
+  if (m.includes('coupon belongs to another')) return 'Este cupom é exclusivo de outra loja.';
+  if (m.includes('address not found')) return 'Endereço inválido para este usuário.';
+  if (m.includes('out of range') || m.includes('out of region') || m.includes('delivery unavailable'))
+    return 'Entrega indisponível para este endereço.';
+  if (m.includes('product') && m.includes('unavailable')) return 'Um dos itens não está mais disponível.';
+  if (m.includes('product') && m.includes('not found')) return 'Um produto do carrinho não existe mais.';
+  if (m.includes('does not belong to the company')) return 'Há itens de outra loja no carrinho.';
+  if (m.includes('company not found')) return 'Loja indisponível no momento.';
+  if (m.includes('failed to provision customer')) return 'Não foi possível vincular seu cadastro. Tente novamente.';
+  if (m.includes('invalid session') || m.includes('missing authorization')) return 'Sessão expirada. Faça login novamente.';
+  return msg || 'Erro ao criar pedido.';
+}
+
 export default function Checkout() {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
