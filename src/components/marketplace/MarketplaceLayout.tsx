@@ -7,6 +7,8 @@ import { useOrderNotifications } from '@/hooks/useOrderNotifications';
 import { Home, Search, ShoppingBag, ClipboardList, User } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
+import { OrderRatingModal } from './OrderRatingModal';
+
 
 const navItems = [
   { path: '/marketplace', icon: Home, label: 'Início' },
@@ -201,6 +203,7 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
 
   return (
     <div className="app-shell h-full flex flex-col font-sans text-foreground">
+      <OrderRatingModal />
       <main className={cn(
         'flex flex-1 flex-col transition-all duration-300 overflow-y-auto custom-scrollbar', 
         !hideNav && (showCartFab ? 'pb-marketplace-nav-with-cart' : 'pb-marketplace-nav')
