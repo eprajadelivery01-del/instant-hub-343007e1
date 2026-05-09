@@ -1,9 +1,11 @@
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/lib/supabase';
 import MarketplaceLayout from '@/components/marketplace/MarketplaceLayout';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Minus, Plus, Trash2, ShoppingBag, MessageSquare } from 'lucide-react';
+import { ArrowLeft, Minus, Plus, Trash2, ShoppingBag, MessageSquare, AlertCircle, Clock, Loader2 } from 'lucide-react';
 import { MediaImage } from '@/components/shared/MediaImage';
 import { getPrimaryProductImage } from '@/lib/media';
 
@@ -11,6 +13,31 @@ export default function Cart() {
   const { items, company, notes, updateQuantity, updateNote, clearCart, subtotal } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [isStoreOpen, setIsStoreOpen] = useState<boolean | null>(null);
+  const [loadingStatus, setLoadingStatus] = useState(false);
+
+  useEffect(() => {
+    if (!company) return;
+    const fetchStatus = async () => {
+      setLoadingStatus(true);
+      const { data } = await supabase
+        .from('companies')
+        .select('is_open')
+        .eq('id', company.id)
+        .single();
+      if (data) setIsStoreOpen(data.is_open);
+      setLoadingStatus(false);
+    };
+    fetchStatus();
+
+    // Subscribe to changes
+    const channel = supabase.channel(`company-status-${company.id}`)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'companies', filter: `id=eq.${company.id}` }, 
+        (p) => setIsStoreOpen(p.new.is_open))
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [company?.id]);
 
   if (items.length === 0) {
     return (
@@ -43,6 +70,19 @@ export default function Cart() {
       </div>
 
       <div className="mx-auto max-w-lg space-y-3 px-4 py-4 pb-32">
+        {/* Warning if closed */}
+        {isStoreOpen === false && (
+          <div className="bg-destructive/10 border border-destructive/20 rounded-2xl p-4 flex items-start gap-3">
+            <AlertCircle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+            <div className="space-y-1">
+              <p className="text-sm font-bold text-destructive">Loja fechada no momento</p>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Este restaurante não está aceitando pedidos agora. Você pode manter os itens na sacola e finalizar assim que ele abrir!
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Itens com observação por item */}
         <div className="premium-card overflow-hidden rounded-[28px] divide-y divide-border">
           {items.map((item) => (
@@ -120,7 +160,8 @@ export default function Cart() {
       <div className="fixed bottom-0 left-0 right-0 border-t border-border bg-card p-4 safe-area-bottom">
         <div className="mx-auto max-w-lg">
           <Button
-            className="h-12 w-full rounded-xl text-base font-bold"
+            className="h-12 w-full rounded-xl text-base font-bold gap-2"
+            disabled={isStoreOpen === false || loadingStatus}
             onClick={() => {
               if (!user) {
                 navigate('/marketplace/login');
@@ -129,7 +170,12 @@ export default function Cart() {
               navigate('/marketplace/checkout');
             }}
           >
-            Continuar • R$ {subtotal.toFixed(2).replace('.', ',')}
+            {loadingStatus ? (
+              <Loader2 className="h-5 w-5 animate-spin" />
+            ) : isStoreOpen === false ? (
+              <Clock className="h-5 w-5" />
+            ) : null}
+            {isStoreOpen === false ? 'Aguardando abertura' : `Continuar • R$ ${subtotal.toFixed(2).replace('.', ',')}`}
           </Button>
         </div>
       </div>

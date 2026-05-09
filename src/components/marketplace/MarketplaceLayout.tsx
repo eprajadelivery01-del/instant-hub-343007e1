@@ -19,11 +19,52 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { itemCount } = useCart();
+  const { itemCount, company } = useCart();
 
   useOrderNotifications();
 
   const [orderCount, setOrderCount] = useState(0);
+
+  // Store opening notification logic
+  useEffect(() => {
+    if (!company) return;
+
+    let initialStatusChecked = false;
+    let wasClosed = false;
+
+    const checkInitialStatus = async () => {
+      const { data } = await supabase.from('companies').select('is_open').eq('id', company.id).single();
+      if (data) {
+        wasClosed = !data.is_open;
+        initialStatusChecked = true;
+      }
+    };
+    checkInitialStatus();
+
+    const channel = supabase.channel(`store-opening-notification-${company.id}`)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'companies', filter: `id=eq.${company.id}` }, 
+        (p) => {
+          const isNowOpen = p.new.is_open;
+          if (isNowOpen && wasClosed && initialStatusChecked) {
+            import('sonner').then(({ toast }) => {
+              toast.success(`🎉 Boas notícias! ${company.name} abriu!`, {
+                description: 'Finalize seu pedido agora que está na sacola.',
+                action: {
+                  label: 'Ver Sacola',
+                  onClick: () => navigate('/marketplace/cart')
+                },
+                duration: 10000
+              });
+            });
+            wasClosed = false;
+          } else if (!isNowOpen) {
+            wasClosed = true;
+          }
+        })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [company?.id, navigate]);
 
   useEffect(() => {
     if (!user) return;

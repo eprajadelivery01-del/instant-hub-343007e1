@@ -2,11 +2,13 @@ import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
-import { Order, OrderItem, Delivery, ChatMessage } from '@/types/database';
+import { useCart } from '@/contexts/CartContext';
+import { useEvaluation } from '@/hooks/useEvaluation';
+import { Order, OrderItem, Delivery, ChatMessage, Product } from '@/types/database';
 import MarketplaceLayout from '@/components/marketplace/MarketplaceLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, MessageCircle, Send, Star, Check, Navigation, Store } from 'lucide-react';
+import { ArrowLeft, MessageCircle, Send, Star, Check, Navigation, Store, RefreshCw, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { OrderStoreChat } from '@/components/marketplace/OrderStoreChat';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -40,6 +42,9 @@ export default function OrderDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { addItem, clearCart } = useCart();
+  const { submitRating, checkHasRated, loading: submittingReview } = useEvaluation();
+  
   const [order, setOrder] = useState<Order | null>(null);
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [delivery, setDelivery] = useState<Delivery | null>(null);
@@ -51,6 +56,7 @@ export default function OrderDetail() {
   const [orderRating, setOrderRating] = useState(5);
   const [driverRating, setDriverRating] = useState(5);
   const [reviewComment, setReviewComment] = useState('');
+  const [repeating, setRepeating] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -58,15 +64,25 @@ export default function OrderDetail() {
     const fetchAll = async () => {
       const [orderRes, itemsRes, deliveryRes] = await Promise.all([
         supabase.from('orders').select('*, company:companies(*)').eq('id', id).single(),
-        supabase.from('order_items').select('*').eq('order_id', id),
+        supabase.from('order_items').select('*, products(*)').eq('order_id', id),
         supabase.from('deliveries').select('*').eq('order_id', id).maybeSingle(),
       ]);
       setOrder(orderRes.data);
       setOrderItems(itemsRes.data || []);
       setDelivery(deliveryRes.data);
+      
       if (deliveryRes.data) {
         const { data: msgs } = await supabase.from('chat_messages').select('*').eq('delivery_id', deliveryRes.data.id).order('created_at');
         setMessages(msgs || []);
+      }
+
+      // Check if needs review ONLY ONCE after loading
+      const isFinished = orderRes.data?.status === 'delivered' || orderRes.data?.status === 'completed' || deliveryRes.data?.status === 'delivered';
+      if (isFinished) {
+        const alreadyRated = await checkHasRated(id);
+        if (!alreadyRated) {
+          setShowReview(true);
+        }
       }
     };
     fetchAll();
@@ -83,20 +99,6 @@ export default function OrderDetail() {
 
     return () => { supabase.removeChannel(orderChannel); supabase.removeChannel(deliveryChannel); };
   }, [id]);
-  
-  useEffect(() => {
-    const isFinished = (order?.status === 'delivered' || order?.status === 'completed') || 
-                       (delivery?.status === 'delivered' || delivery?.status === 'completed');
-                       
-    if (order && isFinished) {
-      // Check if already reviewed
-      supabase.from('reviews').select('id').eq('order_id', order.id).maybeSingle().then(({ data }) => {
-        if (!data) setShowReview(true);
-      });
-    }
-  }, [order?.status, delivery?.status]);
-
-
 
   useEffect(() => {
     if (!delivery) return;
@@ -115,31 +117,66 @@ export default function OrderDetail() {
     setNewMessage('');
   };
 
-  const submitReview = async () => {
+  const handleSubmitReview = async () => {
     if (!order || !user) return;
+    const success = await submitRating({
+      orderId: order.id,
+      userId: user.id,
+      companyId: order.company_id,
+      driverId: delivery?.driver_id,
+      orderRating,
+      driverRating,
+      comment: reviewComment
+    });
+    if (success) setShowReview(false);
+  };
+
+  const handleRepeatOrder = async () => {
+    if (!order || !order.company) return;
+    setRepeating(true);
     try {
-      await supabase.from('reviews').insert({
-        order_id: order.id, user_id: user.id, company_id: order.company_id,
-        driver_id: delivery?.driver_id, 
-        rating: Math.round((orderRating + driverRating) / 2), 
-        comment: `[Pedido: ${orderRating} Estrelas | Entregador: ${driverRating} Estrelas] ${reviewComment || ''}`.trim(),
-      });
-      toast.success('Avaliação enviada!');
-      setShowReview(false);
-    } catch { toast.error('Erro ao enviar avaliação'); }
+      // 1. Check if company is open
+      const { data: companyStatus } = await supabase
+        .from('companies')
+        .select('is_open')
+        .eq('id', order.company_id)
+        .single();
+
+      if (!companyStatus?.is_open) {
+        toast.error('Este restaurante está fechado no momento.', {
+          description: 'Você pode manter os itens no carrinho, mas só poderá finalizar o pedido quando ele abrir.'
+        });
+      }
+
+      // 2. Add items to cart
+      // We clear the cart first if it's a different company (addItem already handles this, but let's be explicit if we want a fresh repeat)
+      for (const item of orderItems) {
+        if (item.products) {
+          addItem(item.products as unknown as Product, order.company as any);
+        }
+      }
+
+      toast.success('Itens adicionados ao carrinho!');
+      navigate('/marketplace/cart');
+    } catch {
+      toast.error('Erro ao repetir pedido');
+    } finally {
+      setRepeating(false);
+    }
   };
 
   if (!order) {
     return (
       <MarketplaceLayout>
         <div className="flex items-center justify-center py-20">
-          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
+          <Loader2 className="animate-spin h-8 w-8 text-primary" />
         </div>
       </MarketplaceLayout>
     );
   }
 
   const currentOrderStatus = (delivery?.status === 'completed' || delivery?.status === 'delivered') ? 'delivered' : order.status;
+  const isCompleted = currentOrderStatus === 'delivered' || currentOrderStatus === 'completed';
   
   const currentStepIndex = statusSteps.indexOf(
     currentOrderStatus === 'in_route' || currentOrderStatus === 'in_transit' ? 'delivering' : 
@@ -150,11 +187,25 @@ export default function OrderDetail() {
   return (
     <MarketplaceLayout>
       <div className="max-w-lg mx-auto px-4 py-4 space-y-4 pb-24">
-        <div className="flex items-center gap-3">
-          <button onClick={() => navigate('/marketplace/orders')} className="h-9 w-9 rounded-full bg-secondary flex items-center justify-center">
-            <ArrowLeft className="h-4 w-4" />
-          </button>
-          <h1 className="text-lg font-semibold text-foreground">Acompanhar pedido</h1>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <button onClick={() => navigate('/marketplace/orders')} className="h-9 w-9 rounded-full bg-secondary flex items-center justify-center">
+              <ArrowLeft className="h-4 w-4" />
+            </button>
+            <h1 className="text-lg font-semibold text-foreground">Acompanhar pedido</h1>
+          </div>
+          {isCompleted && (
+            <Button 
+              size="sm" 
+              variant="outline" 
+              className="rounded-xl gap-2 text-xs font-bold border-primary/20 text-primary hover:bg-primary/5"
+              onClick={handleRepeatOrder}
+              disabled={repeating}
+            >
+              {repeating ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
+              Pedir novamente
+            </Button>
+          )}
         </div>
 
         {/* Status Delivery */}
@@ -170,7 +221,7 @@ export default function OrderDetail() {
           </div>
         )}
 
-        {/* Status */}
+        {/* Status Tracker */}
         <div className="bg-card border border-border rounded-2xl p-4">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-medium text-foreground text-sm">Acompanhamento</h3>
@@ -196,7 +247,7 @@ export default function OrderDetail() {
                       done
                         ? 'bg-primary text-primary-foreground'
                         : current
-                          ? `bg-primary text-primary-foreground ${['delivered', 'completed'].includes(currentOrderStatus) ? '' : 'ring-4 ring-primary/20 animate-pulse'}`
+                          ? `bg-primary text-primary-foreground ${isCompleted ? '' : 'ring-4 ring-primary/20 animate-pulse'}`
                           : 'bg-secondary text-muted-foreground'
                     }`}
                   >
@@ -220,7 +271,7 @@ export default function OrderDetail() {
           </div>
         </div>
 
-        {/* Chat com lojista — disponível assim que o pedido é aceito */}
+        {/* Store Chat */}
         {order.company_id && STORE_CHAT_STATUSES.includes(order.status) && (
           <div className="bg-card border border-border rounded-2xl p-4">
             <Button
@@ -242,7 +293,7 @@ export default function OrderDetail() {
           </div>
         )}
 
-        {/* Items */}
+        {/* Items Summary */}
         <div className="bg-card border border-border rounded-2xl p-4">
           <h3 className="font-medium text-foreground mb-3 text-sm">{order.company?.name}</h3>
           <div className="space-y-2">
@@ -265,7 +316,7 @@ export default function OrderDetail() {
           </div>
         </div>
 
-        {/* Chat */}
+        {/* Driver Chat */}
         {delivery && (
           <div className="bg-card border border-border rounded-2xl p-4">
             <Button variant="outline" className="w-full rounded-xl h-10" size="sm" onClick={() => setShowChat(!showChat)}>
@@ -305,9 +356,7 @@ export default function OrderDetail() {
           <DialogContent className="sm:max-w-md rounded-3xl mx-4">
             <DialogHeader>
               <DialogTitle className="text-center text-lg">Avalie sua experiência</DialogTitle>
-              <DialogDescription className="text-center text-xs text-muted-foreground sr-only">
-                Sua avaliação nos ajuda a melhorar o serviço da loja e do entregador.
-              </DialogDescription>
+              <DialogDescription className="sr-only">Avaliação do pedido</DialogDescription>
             </DialogHeader>
             <div className="space-y-6 pt-4 pb-2">
               <div className="space-y-3">
@@ -337,11 +386,16 @@ export default function OrderDetail() {
                   placeholder="Conte-nos mais sobre sua experiência..." 
                   value={reviewComment} 
                   onChange={e => setReviewComment(e.target.value)} 
-                  className="rounded-xl h-12 bg-secondary/50 border-none outline-none focus:ring-2 focus:ring-primary/20" 
+                  className="rounded-xl h-12 bg-secondary/50 border-none" 
                 />
               </div>
 
-              <Button className="w-full rounded-2xl h-12 text-base font-bold shadow-lg shadow-primary/20 transition-all active:scale-[0.98]" onClick={submitReview}>
+              <Button 
+                className="w-full rounded-2xl h-12 text-base font-bold" 
+                onClick={handleSubmitReview}
+                disabled={submittingReview}
+              >
+                {submittingReview ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                 Enviar Avaliação
               </Button>
             </div>

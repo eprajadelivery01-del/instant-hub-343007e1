@@ -191,26 +191,35 @@ export default function Checkout() {
     if (!selectedAddress) { toast.error('Selecione um endereço'); return; }
     if (unavailable) { toast.error('Entrega não disponível'); return; }
     if (loading || isLocked) return;
-    if (!acquireLock()) return;
+    
+    // Check store opening status one last time
     setLoading(true);
-    const requestId = newRequestId();
     try {
+      const { data: storeStatus } = await supabase.from('companies').select('is_open').eq('id', company.id).single();
+      if (!storeStatus?.is_open) {
+        toast.error('Este restaurante acabou de fechar. Tente novamente quando ele abrir.');
+        setLoading(false);
+        return;
+      }
+
+      if (!acquireLock()) {
+        setLoading(false);
+        return;
+      }
+
+      const requestId = newRequestId();
       const orderNotes = Object.values(itemNotes)
         .map((note) => note.trim())
         .filter(Boolean)
         .join(' • ') || null;
 
       // Idempotency key baseado em (user, loja, endereço, cupom, itens).
-      // Não inclui total — o servidor é a autoridade de preço.
       const ik = generateIdempotencyKey(
         user.id,
         items,
         `${company.id}|${selectedAddress}|${appliedCoupon?.code ?? ''}|${paymentMethod}`,
       );
 
-      // Cálculo de total agora é autoridade do servidor (edge function).
-      // Cliente envia apenas refs (items, address, coupon code) — total é apenas
-      // dica de UX e jamais é gravado direto em orders.
       const requestBody = {
         items: items.map((it) => ({
           product_id: it.product.id,
