@@ -11,13 +11,27 @@ import { SupportChat } from '@/components/chat/SupportChat';
 import { cn } from '@/lib/utils';
 import {
   LogOut, MapPin, ChevronRight, Camera, Loader2,
-  Bike, Ticket, FileText, ShieldCheck, Moon, Sun,
-  Wallet, HelpCircle, X, Check, Phone, Package, Heart, User
+  Bike, FileText, ShieldCheck, Moon, Sun,
+  Wallet, HelpCircle, X, Check, Phone,
+  Package, Clock, CheckCircle2, XCircle, Truck
 } from 'lucide-react';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger
 } from "@/components/ui/alert-dialog";
+
+const STATUS_MAP: Record<string, { label: string; color: string; icon: React.ElementType }> = {
+  pending:    { label: 'Aguardando',  color: 'text-yellow-500 bg-yellow-500/10',  icon: Clock },
+  confirmed:  { label: 'Confirmado',  color: 'text-blue-500 bg-blue-500/10',      icon: CheckCircle2 },
+  preparing:  { label: 'Preparando',  color: 'text-orange-500 bg-orange-500/10',  icon: Package },
+  ready:      { label: 'Pronto',      color: 'text-purple-500 bg-purple-500/10',  icon: CheckCircle2 },
+  delivering: { label: 'A caminho',   color: 'text-primary bg-primary/10',        icon: Truck },
+  delivered:  { label: 'Entregue',    color: 'text-green-500 bg-green-500/10',    icon: CheckCircle2 },
+  completed:  { label: 'Concluído',   color: 'text-green-500 bg-green-500/10',    icon: CheckCircle2 },
+  cancelled:  { label: 'Cancelado',   color: 'text-red-500 bg-red-500/10',        icon: XCircle },
+};
 
 export default function Profile() {
   const { user, profile, signOut, refreshProfile } = useAuth();
@@ -27,14 +41,12 @@ export default function Profile() {
 
   const [fullName, setFullName] = useState(profile?.full_name || '');
   const [phone, setPhone] = useState(profile?.phone || '');
-  const [bio, setBio] = useState('');
   const [saving, setSaving] = useState(false);
   const [editing, setEditing] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [supportType, setSupportType] = useState<'support' | 'driver_application' | null>(null);
-  const [stats, setStats] = useState({ orders: 0, favorites: 0, coupons: 0 });
-  const [recentOrders, setRecentOrders] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<'orders' | 'favorites'>('orders');
+  const [orders, setOrders] = useState<any[]>([]);
+  const [loadingOrders, setLoadingOrders] = useState(true);
 
   useEffect(() => {
     setFullName(profile?.full_name || '');
@@ -43,31 +55,24 @@ export default function Profile() {
 
   useEffect(() => {
     if (!user) return;
-    fetchStats();
+    fetchOrders();
   }, [user]);
 
-  const fetchStats = async () => {
+  const fetchOrders = async () => {
+    setLoadingOrders(true);
     try {
-      const [ordersRes, favRes, couponRes] = await Promise.allSettled([
-        supabase.from('orders').select('id', { count: 'exact', head: true }).or(`customer_id.eq.${user.id},user_id.eq.${user.id}`),
-        supabase.from('favorites').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
-        supabase.from('customer_coupons').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
-      ]);
-
-      setStats({
-        orders: ordersRes.status === 'fulfilled' ? (ordersRes.value.count || 0) : 0,
-        favorites: favRes.status === 'fulfilled' ? (favRes.value.count || 0) : 0,
-        coupons: couponRes.status === 'fulfilled' ? (couponRes.value.count || 0) : 0,
-      });
-
-      const { data: recent } = await supabase
+      const { data } = await supabase
         .from('orders')
-        .select('id, status, total, created_at')
+        .select(`
+          id, status, total, created_at,
+          companies ( name, logo_url )
+        `)
         .or(`customer_id.eq.${user.id},user_id.eq.${user.id}`)
         .order('created_at', { ascending: false })
-        .limit(9);
-      setRecentOrders(recent || []);
+        .limit(30);
+      setOrders(data || []);
     } catch { /* silent */ }
+    finally { setLoadingOrders(false); }
   };
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -102,27 +107,14 @@ export default function Profile() {
   if (!user) { navigate('/marketplace/login'); return null; }
 
   const displayName = profile?.full_name || user.email?.split('@')[0] || 'Usuário';
-  const firstName = displayName.split(' ')[0];
   const initial = displayName.charAt(0).toUpperCase();
-
-  const statusDot: Record<string, string> = {
-    delivered: 'bg-green-500',
-    completed: 'bg-green-500',
-    cancelled: 'bg-red-500',
-    delivering: 'bg-primary',
-    preparing: 'bg-orange-400',
-    confirmed: 'bg-blue-500',
-    pending: 'bg-yellow-400',
-  };
 
   return (
     <MarketplaceLayout>
       <div className="min-h-screen pb-32">
 
-        {/* ── HEADER SECTION ── */}
+        {/* ── AVATAR + NOME ── */}
         <div className="px-5 pt-10 pb-6 flex flex-col items-center text-center">
-
-          {/* Avatar with upload */}
           <div className="relative mb-4">
             <button
               onClick={() => fileInputRef.current?.click()}
@@ -149,19 +141,17 @@ export default function Profile() {
             <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
           </div>
 
-          {/* Name */}
           <h1 className="text-xl font-black text-foreground">{displayName}</h1>
           <p className="text-sm text-muted-foreground mt-0.5">{user.email}</p>
           {profile?.phone && (
-            <p className="text-xs text-muted-foreground mt-1 flex items-center justify-center gap-1">
+            <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
               <Phone className="h-3 w-3" /> {profile.phone}
             </p>
           )}
 
-          {/* Edit button */}
           <button
             onClick={() => setEditing(true)}
-            className="mt-4 px-6 py-2 rounded-xl border border-border text-sm font-bold text-foreground hover:bg-muted transition-all flex items-center gap-1.5"
+            className="mt-4 px-6 py-2 rounded-xl border border-border text-sm font-bold text-foreground hover:bg-muted transition-all"
           >
             Editar Dados
           </button>
@@ -169,21 +159,7 @@ export default function Profile() {
 
         <div className="px-5 space-y-4">
 
-          {/* ── STATS ROW ── */}
-          <div className="grid grid-cols-3 gap-0 border border-border rounded-2xl overflow-hidden bg-card">
-            {[
-              { count: stats.orders, label: 'Pedidos' },
-              { count: stats.favorites, label: 'Favoritos' },
-              { count: stats.coupons, label: 'Cupons' },
-            ].map((s, i) => (
-              <div key={s.label} className={cn("flex flex-col items-center justify-center py-4", i < 2 && "border-r border-border")}>
-                <span className="text-xl font-black text-foreground">{s.count}</span>
-                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mt-0.5">{s.label}</span>
-              </div>
-            ))}
-          </div>
-
-          {/* ── CLUBE CARD ── */}
+          {/* ── CLUBE ── */}
           <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary to-orange-600 p-5 shadow-lg shadow-primary/30">
             <div className="relative z-10 flex items-center justify-between gap-4">
               <div>
@@ -197,66 +173,106 @@ export default function Profile() {
             <span className="absolute -right-3 -bottom-5 text-[100px] opacity-10 select-none leading-none">🍔</span>
           </div>
 
-          {/* ── RECENT ORDERS TABS ── */}
-          <div className="bg-card border border-border rounded-2xl overflow-hidden">
-            {/* Tab header */}
-            <div className="flex border-b border-border">
-              <button
-                onClick={() => setActiveTab('orders')}
-                className={cn('flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-black uppercase tracking-widest transition-all border-b-2 -mb-px', activeTab === 'orders' ? 'border-foreground text-foreground' : 'border-transparent text-muted-foreground')}
-              >
-                <Package className="h-3.5 w-3.5" /> Pedidos
-              </button>
-              <button
-                onClick={() => setActiveTab('favorites')}
-                className={cn('flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-black uppercase tracking-widest transition-all border-b-2 -mb-px', activeTab === 'favorites' ? 'border-foreground text-foreground' : 'border-transparent text-muted-foreground')}
-              >
-                <Heart className="h-3.5 w-3.5" /> Favoritos
-              </button>
+          {/* ── HISTÓRICO DE PEDIDOS ── */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-black uppercase tracking-widest text-foreground">Histórico de Pedidos</h2>
+              {orders.length > 0 && (
+                <button
+                  onClick={() => navigate('/marketplace/orders')}
+                  className="text-[11px] font-bold text-primary"
+                >
+                  Ver todos
+                </button>
+              )}
             </div>
 
-            {activeTab === 'orders' && (
-              recentOrders.length > 0 ? (
-                <div className="grid grid-cols-3 gap-1 p-2">
-                  {recentOrders.map(order => (
-                    <button
-                      key={order.id}
-                      onClick={() => navigate(`/marketplace/orders/${order.id}`)}
-                      className="aspect-square rounded-xl bg-muted relative overflow-hidden hover:scale-95 transition-transform flex flex-col items-center justify-center gap-1 p-2"
-                    >
-                      <Package className="h-5 w-5 text-muted-foreground/40" />
-                      <div className={cn('w-2 h-2 rounded-full', statusDot[order.status] || 'bg-muted-foreground/30')} />
-                      <span className="text-[8px] font-bold text-muted-foreground">
-                        R$ {Number(order.total || 0).toFixed(2).replace('.', ',')}
-                      </span>
-                    </button>
-                  ))}
+            <div className="bg-card border border-border rounded-2xl overflow-hidden">
+              {loadingOrders ? (
+                <div className="py-10 flex items-center justify-center">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground/40" />
                 </div>
-              ) : (
+              ) : orders.length === 0 ? (
                 <div className="py-12 flex flex-col items-center gap-2 text-muted-foreground/40">
                   <Package className="h-10 w-10" />
                   <p className="text-[10px] font-black uppercase tracking-widest">Nenhum pedido ainda</p>
+                  <button
+                    onClick={() => navigate('/marketplace')}
+                    className="mt-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-black"
+                  >
+                    Explorar lojas
+                  </button>
                 </div>
-              )
-            )}
+              ) : (
+                <div className="divide-y divide-border/50">
+                  {orders.map((order) => {
+                    const s = STATUS_MAP[order.status] || STATUS_MAP.pending;
+                    const StatusIcon = s.icon;
 
-            {activeTab === 'favorites' && (
-              <div className="py-12 flex flex-col items-center gap-2 text-muted-foreground/40">
-                <Heart className="h-10 w-10" />
-                <p className="text-[10px] font-black uppercase tracking-widest">Nenhum favorito ainda</p>
-              </div>
-            )}
+                    let logoSrc = '';
+                    if (order.companies?.logo_url) {
+                      try {
+                        const parsed = JSON.parse(order.companies.logo_url);
+                        logoSrc = parsed.logo || parsed.cover || '';
+                      } catch {
+                        logoSrc = order.companies.logo_url;
+                      }
+                    }
+
+                    return (
+                      <button
+                        key={order.id}
+                        onClick={() => navigate(`/marketplace/orders/${order.id}`)}
+                        className="w-full flex items-center gap-3 px-4 py-3.5 text-left hover:bg-muted/30 active:bg-muted/50 transition-colors"
+                      >
+                        {/* Store logo or icon */}
+                        <div className="w-11 h-11 rounded-xl bg-muted overflow-hidden shrink-0 flex items-center justify-center border border-border/50">
+                          {logoSrc ? (
+                            <img src={logoSrc} className="w-full h-full object-cover" alt="" />
+                          ) : (
+                            <Package className="h-5 w-5 text-muted-foreground/40" />
+                          )}
+                        </div>
+
+                        {/* Info */}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-bold text-foreground truncate">
+                            {order.companies?.name || 'Pedido'}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {order.created_at
+                              ? format(new Date(order.created_at), "dd 'de' MMM, HH:mm", { locale: ptBR })
+                              : '—'}
+                          </p>
+                        </div>
+
+                        {/* Right: status + value */}
+                        <div className="flex flex-col items-end gap-1 shrink-0">
+                          <span className="text-sm font-black text-foreground">
+                            R$ {Number(order.total || 0).toFixed(2).replace('.', ',')}
+                          </span>
+                          <span className={cn('flex items-center gap-1 text-[10px] font-black px-2 py-0.5 rounded-full', s.color)}>
+                            <StatusIcon className="h-3 w-3" />
+                            {s.label}
+                          </span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* ── MENU ACTIONS ── */}
+          {/* ── MENU ── */}
           <div className="bg-card border border-border rounded-2xl overflow-hidden">
             {[
-              { icon: MapPin, label: 'Endereços', subtitle: 'Gerenciar locais salvos', onClick: () => navigate('/marketplace/addresses'), chevron: true },
-              { icon: Wallet, label: 'Carteira', subtitle: 'Saldo e recargas', onClick: () => toast('Em breve!') },
+              { icon: MapPin,    label: 'Endereços', subtitle: 'Gerenciar locais salvos',      onClick: () => navigate('/marketplace/addresses'), chevron: true },
+              { icon: Wallet,    label: 'Carteira',  subtitle: 'Saldo e recargas',              onClick: () => toast('Em breve!') },
               { icon: theme === 'dark' ? Moon : Sun, label: 'Aparência', subtitle: theme === 'dark' ? 'Modo escuro ativo' : 'Modo claro ativo', onClick: () => toggleTheme() },
-              { icon: HelpCircle, label: 'Ajuda', subtitle: 'Suporte e dúvidas', onClick: () => setSupportType('support') },
-              { icon: FileText, label: 'Termos de Uso', subtitle: 'Regras da plataforma', onClick: () => navigate('/marketplace/terms'), chevron: true },
-              { icon: ShieldCheck, label: 'Privacidade', subtitle: 'Seus dados protegidos', onClick: () => navigate('/marketplace/privacy'), chevron: true },
+              { icon: HelpCircle, label: 'Ajuda',   subtitle: 'Suporte e dúvidas',             onClick: () => setSupportType('support') },
+              { icon: FileText,  label: 'Termos de Uso', subtitle: 'Regras da plataforma',    onClick: () => navigate('/marketplace/terms'), chevron: true },
+              { icon: ShieldCheck, label: 'Privacidade', subtitle: 'Seus dados protegidos',   onClick: () => navigate('/marketplace/privacy'), chevron: true },
             ].map((item, i, arr) => (
               <button
                 key={item.label}
@@ -275,7 +291,7 @@ export default function Profile() {
             ))}
           </div>
 
-          {/* Entregador banner */}
+          {/* ── ENTREGADOR ── */}
           <button
             onClick={() => setSupportType('driver_application')}
             className="w-full flex items-center gap-4 p-5 rounded-2xl bg-foreground text-background hover:opacity-90 transition-all"
@@ -290,19 +306,17 @@ export default function Profile() {
             <ChevronRight className="ml-auto h-4 w-4 opacity-40" />
           </button>
 
-          {/* Logout */}
+          {/* ── SAIR ── */}
           <button
             onClick={() => signOut()}
             className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl border border-border text-muted-foreground font-bold text-sm hover:text-destructive hover:border-destructive/30 hover:bg-destructive/5 transition-all"
           >
-            <LogOut className="h-4 w-4" />
-            Sair da conta
+            <LogOut className="h-4 w-4" /> Sair da conta
           </button>
 
-          {/* Delete account */}
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <button className="w-full text-xs text-muted-foreground/40 hover:text-destructive transition-colors py-2 pb-6">
+              <button className="w-full text-xs text-muted-foreground/40 hover:text-destructive transition-colors py-2 pb-4">
                 Excluir minha conta
               </button>
             </AlertDialogTrigger>
@@ -325,9 +339,9 @@ export default function Profile() {
         </div>
       </div>
 
-      {/* ── EDIT SHEET ── */}
+      {/* ── EDITAR SHEET ── */}
       <Sheet open={editing} onOpenChange={setEditing}>
-        <SheetContent side="bottom" hideClose className="h-[75vh] rounded-t-3xl border-none p-0">
+        <SheetContent side="bottom" hideClose className="h-[70vh] rounded-t-3xl border-none p-0">
           <div className="h-full flex flex-col bg-background">
             <div className="p-6 pb-4 flex items-center justify-between border-b border-border">
               <div>
@@ -356,7 +370,7 @@ export default function Profile() {
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="w-full py-4 rounded-2xl gradient-primary text-primary-foreground font-black text-sm flex items-center justify-center gap-2 shadow-lg shadow-primary/20 hover:scale-[1.01] active:scale-95 transition-all disabled:opacity-50"
+                className="w-full py-4 rounded-2xl gradient-primary text-primary-foreground font-black text-sm flex items-center justify-center gap-2 shadow-lg shadow-primary/20 disabled:opacity-50"
               >
                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
                 {saving ? 'Salvando...' : 'Salvar Alterações'}
@@ -366,7 +380,7 @@ export default function Profile() {
         </SheetContent>
       </Sheet>
 
-      {/* ── SUPPORT SHEET ── */}
+      {/* ── SUPORTE SHEET ── */}
       <Sheet open={supportType !== null} onOpenChange={open => !open && setSupportType(null)}>
         <SheetContent side="bottom" hideClose className="h-[80vh] rounded-t-3xl border-none p-0 overflow-hidden">
           <div className="flex flex-col h-full bg-background relative">
