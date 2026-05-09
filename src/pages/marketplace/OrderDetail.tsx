@@ -42,7 +42,7 @@ export default function OrderDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { addItem, clearCart } = useCart();
+  const { addItem } = useCart();
   const { submitRating, checkHasRated, loading: submittingReview } = useEvaluation();
   
   const [order, setOrder] = useState<Order | null>(null);
@@ -50,18 +50,21 @@ export default function OrderDetail() {
   const [delivery, setDelivery] = useState<Delivery | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [reordering, setReordering] = useState(false);
   const [showChat, setShowChat] = useState(false);
   const [showStoreChat, setShowStoreChat] = useState(false);
   const [showReview, setShowReview] = useState(false);
+  const [hasCheckedRating, setHasCheckedRating] = useState(false);
   const [orderRating, setOrderRating] = useState(5);
   const [driverRating, setDriverRating] = useState(5);
   const [reviewComment, setReviewComment] = useState('');
-  const [repeating, setRepeating] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!id) return;
     const fetchAll = async () => {
+      setLoading(true);
       const [orderRes, itemsRes, deliveryRes] = await Promise.all([
         supabase.from('orders').select('*, company:companies(*)').eq('id', id).single(),
         supabase.from('order_items').select('*, products(*)').eq('order_id', id),
@@ -70,15 +73,16 @@ export default function OrderDetail() {
       setOrder(orderRes.data);
       setOrderItems(itemsRes.data || []);
       setDelivery(deliveryRes.data);
+      setLoading(false);
       
       if (deliveryRes.data) {
         const { data: msgs } = await supabase.from('chat_messages').select('*').eq('delivery_id', deliveryRes.data.id).order('created_at');
         setMessages(msgs || []);
       }
 
-      // Check if needs review ONLY ONCE after loading
       const isFinished = orderRes.data?.status === 'delivered' || orderRes.data?.status === 'completed' || deliveryRes.data?.status === 'delivered';
-      if (isFinished) {
+      if (isFinished && !hasCheckedRating) {
+        setHasCheckedRating(true);
         const alreadyRated = await checkHasRated(id);
         if (!alreadyRated) {
           setShowReview(true);
@@ -131,41 +135,30 @@ export default function OrderDetail() {
     if (success) setShowReview(false);
   };
 
-  const handleRepeatOrder = async () => {
-    if (!order || !order.company) return;
-    setRepeating(true);
+  const handleReorder = async () => {
+    if (!order || orderItems.length === 0) return;
+    setReordering(true);
     try {
-      // 1. Check if company is open
-      const { data: companyStatus } = await supabase
-        .from('companies')
-        .select('is_open')
-        .eq('id', order.company_id)
-        .single();
+      const { data: comp } = await supabase.from('companies').select('*').eq('id', order.company_id).single();
+      if (!comp) throw new Error('Loja não encontrada');
 
-      if (!companyStatus?.is_open) {
-        toast.error('Este restaurante está fechado no momento.', {
-          description: 'Você pode manter os itens no carrinho, mas só poderá finalizar o pedido quando ele abrir.'
-        });
-      }
-
-      // 2. Add items to cart
-      // We clear the cart first if it's a different company (addItem already handles this, but let's be explicit if we want a fresh repeat)
       for (const item of orderItems) {
-        if (item.products) {
-          addItem(item.products as unknown as Product, order.company as any);
+        const { data: product } = await supabase.from('products').select('*').eq('id', item.product_id).single();
+        if (product && product.active) {
+          addItem(product as Product, comp as any, item.options as any[] || [], item.quantity);
         }
       }
 
-      toast.success('Itens adicionados ao carrinho!');
-      navigate('/marketplace/cart');
-    } catch {
-      toast.error('Erro ao repetir pedido');
+      toast.success('Itens adicionados à sacola!');
+      navigate('/marketplace/checkout');
+    } catch (err) {
+      toast.error('Erro ao repetir pedido.');
     } finally {
-      setRepeating(false);
+      setReordering(false);
     }
   };
 
-  if (!order) {
+  if (loading) {
     return (
       <MarketplaceLayout>
         <div className="flex items-center justify-center py-20">
@@ -175,7 +168,7 @@ export default function OrderDetail() {
     );
   }
 
-  const currentOrderStatus = (delivery?.status === 'completed' || delivery?.status === 'delivered') ? 'delivered' : order.status;
+  const currentOrderStatus = (delivery?.status === 'completed' || delivery?.status === 'delivered') ? 'delivered' : order?.status || 'pending';
   const isCompleted = currentOrderStatus === 'delivered' || currentOrderStatus === 'completed';
   
   const currentStepIndex = statusSteps.indexOf(
@@ -187,22 +180,23 @@ export default function OrderDetail() {
   return (
     <MarketplaceLayout>
       <div className="max-w-lg mx-auto px-4 py-4 space-y-4 pb-24">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between p-4 border-b bg-background sticky top-0 z-10">
           <div className="flex items-center gap-3">
-            <button onClick={() => navigate('/marketplace/orders')} className="h-9 w-9 rounded-full bg-secondary flex items-center justify-center">
-              <ArrowLeft className="h-4 w-4" />
-            </button>
-            <h1 className="text-lg font-semibold text-foreground">Acompanhar pedido</h1>
+            <Button variant="ghost" size="icon" onClick={() => navigate('/marketplace/orders')} className="rounded-full">
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <h1 className="text-lg font-bold">Acompanhar pedido</h1>
           </div>
+          
           {isCompleted && (
             <Button 
-              size="sm" 
               variant="outline" 
-              className="rounded-xl gap-2 text-xs font-bold border-primary/20 text-primary hover:bg-primary/5"
-              onClick={handleRepeatOrder}
-              disabled={repeating}
+              size="sm" 
+              className="rounded-full h-9 px-4 font-bold border-primary text-primary hover:bg-primary/5"
+              onClick={handleReorder}
+              disabled={reordering}
             >
-              {repeating ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
+              {reordering ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> : <RefreshCw className="h-3.5 w-3.5 mr-1.5" />}
               Pedir novamente
             </Button>
           )}
@@ -226,7 +220,7 @@ export default function OrderDetail() {
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-medium text-foreground text-sm">Acompanhamento</h3>
             <span className="text-[11px] uppercase tracking-wide text-primary font-semibold">
-              {statusLabels[order.status] || 'Em andamento'}
+              {statusLabels[order?.status || 'pending'] || 'Em andamento'}
             </span>
           </div>
           <div className="relative">
@@ -272,7 +266,7 @@ export default function OrderDetail() {
         </div>
 
         {/* Store Chat */}
-        {order.company_id && STORE_CHAT_STATUSES.includes(order.status) && (
+        {order?.company_id && STORE_CHAT_STATUSES.includes(order.status) && (
           <div className="bg-card border border-border rounded-2xl p-4">
             <Button
               variant="outline"
@@ -295,7 +289,7 @@ export default function OrderDetail() {
 
         {/* Items Summary */}
         <div className="bg-card border border-border rounded-2xl p-4">
-          <h3 className="font-medium text-foreground mb-3 text-sm">{order.company?.name}</h3>
+          <h3 className="font-medium text-foreground mb-3 text-sm">{order?.company?.name}</h3>
           <div className="space-y-2">
             {orderItems.map(item => (
               <div key={item.id} className="flex justify-between text-sm">
@@ -306,11 +300,11 @@ export default function OrderDetail() {
             <div className="border-t border-border pt-2 mt-2 space-y-1">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Entrega</span>
-                <span>R$ {(order.delivery_fee || 0).toFixed(2).replace('.', ',')}</span>
+                <span>R$ {(order?.delivery_fee || 0).toFixed(2).replace('.', ',')}</span>
               </div>
               <div className="flex justify-between font-semibold">
                 <span>Total</span>
-                <span className="text-primary">R$ {(order.total || 0).toFixed(2).replace('.', ',')}</span>
+                <span className="text-primary">R$ {(order?.total || 0).toFixed(2).replace('.', ',')}</span>
               </div>
             </div>
           </div>
@@ -353,7 +347,7 @@ export default function OrderDetail() {
 
         {/* Review Modal */}
         <Dialog open={showReview} onOpenChange={setShowReview}>
-          <DialogContent className="sm:max-w-md rounded-3xl mx-4">
+          <DialogContent className="sm:max-w-md rounded-3xl mx-4 absolute top-[10%] translate-y-0">
             <DialogHeader>
               <DialogTitle className="text-center text-lg">Avalie sua experiência</DialogTitle>
               <DialogDescription className="sr-only">Avaliação do pedido</DialogDescription>
@@ -395,8 +389,7 @@ export default function OrderDetail() {
                 onClick={handleSubmitReview}
                 disabled={submittingReview}
               >
-                {submittingReview ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                Enviar Avaliação
+                {submittingReview ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : 'Enviar Avaliação'}
               </Button>
             </div>
           </DialogContent>

@@ -13,10 +13,14 @@ export function useEvaluation() {
         .eq('order_id', orderId)
         .maybeSingle();
       
-      if (error) return false;
+      if (error) {
+        console.error('[useEvaluation] Error checking rating:', error);
+        return true; // Assume true on error to avoid bothering user if DB is down
+      }
       return !!data;
-    } catch {
-      return false;
+    } catch (err) {
+      console.error('[useEvaluation] Exception checking rating:', err);
+      return true;
     }
   }, []);
 
@@ -47,22 +51,27 @@ export function useEvaluation() {
       }
 
       // 2. Insert the review
+      // We use Math.round for compatibility, but we store the detailed comment
       const { error } = await supabase.from('reviews').insert({
         order_id: orderId,
         user_id: userId,
         company_id: companyId,
-        driver_id: driverId,
+        driver_id: driverId || null,
         rating: Math.round((orderRating + driverRating) / 2),
-        comment: `[Pedido: ${orderRating} Estrelas | Entregador: ${driverRating} Estrelas] ${comment || ''}`.trim(),
+        comment: comment || '',
+        type: 'order', // Explicitly setting type
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('[useEvaluation] Insert error:', error);
+        throw error;
+      }
 
       toast.success('Avaliação enviada com sucesso!');
       return true;
     } catch (err: any) {
-      console.error('Error submitting review:', err);
-      toast.error('Erro ao enviar avaliação. Tente novamente.');
+      console.error('[useEvaluation] Error submitting review:', err);
+      toast.error('Erro ao enviar avaliação. Verifique sua conexão.');
       return false;
     } finally {
       setLoading(false);

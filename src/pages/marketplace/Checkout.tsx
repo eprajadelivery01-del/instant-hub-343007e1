@@ -195,9 +195,11 @@ export default function Checkout() {
     // Check store opening status one last time
     setLoading(true);
     try {
-      const { data: storeStatus } = await supabase.from('companies').select('is_open').eq('id', company.id).single();
+      const { data: storeStatus } = await supabase.from('companies').select('is_open, opening_hours').eq('id', company.id).single();
       if (!storeStatus?.is_open) {
-        toast.error('Este restaurante acabou de fechar. Tente novamente quando ele abrir.');
+        toast.error('Este restaurante ainda não abriu ou já fechou.', {
+          description: 'Verifique o horário de funcionamento na página da loja.'
+        });
         setLoading(false);
         return;
       }
