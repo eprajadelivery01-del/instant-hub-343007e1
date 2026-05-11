@@ -102,7 +102,7 @@ export default function Home() {
     <MarketplaceLayout>
       <div className="border-b border-border bg-background">
         <div className="mx-auto flex max-w-7xl flex-col gap-5 px-4 pb-4 pt-5 sm:px-6">
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center justify-between gap-4 md:hidden">
             <div className="flex min-w-0 items-center gap-4">
               <MarketplaceMenu onSelectCategory={setActiveCategory} onOpenPartnership={setPartnershipType}>
                 <button className="premium-card flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-muted-foreground transition-all hover:text-foreground">
@@ -134,14 +134,29 @@ export default function Home() {
             </button>
           </div>
 
-          <div className="premium-card relative rounded-[26px] p-1">
-            <Search className="absolute left-5 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="O que você deseja pedir hoje?"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="h-14 rounded-[22px] border-0 bg-transparent pl-12 text-sm font-bold placeholder:text-muted-foreground focus-visible:ring-0"
-            />
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+             {/* Show Address Selector on Desktop too, but styled better */}
+             <div className="hidden md:flex items-center gap-2">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                  <ChevronDown className="h-5 w-5" />
+                </div>
+                <button onClick={() => navigate('/marketplace/addresses')} className="text-left group outline-none">
+                  <span className="block text-[10px] font-black uppercase tracking-wider text-muted-foreground/60 leading-none mb-1">Entregar em:</span>
+                  <span className="block max-w-[300px] truncate text-sm font-bold text-foreground group-hover:text-primary transition-colors">
+                    {selectedAddress ? `${selectedAddress.street}, ${selectedAddress.number}` : 'Definir endereço'}
+                  </span>
+                </button>
+             </div>
+
+             <div className="premium-card relative rounded-[26px] p-1 flex-1 md:max-w-xl">
+               <Search className="absolute left-5 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-muted-foreground" />
+               <Input
+                 placeholder="O que você deseja pedir hoje?"
+                 value={search}
+                 onChange={(e) => setSearch(e.target.value)}
+                 className="h-14 rounded-[22px] border-0 bg-transparent pl-12 text-sm font-bold placeholder:text-muted-foreground focus-visible:ring-0"
+               />
+             </div>
           </div>
         </div>
       </div>
