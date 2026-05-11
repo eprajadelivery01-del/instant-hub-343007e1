@@ -160,7 +160,7 @@ export default function StoreDetail() {
   return (
     <MarketplaceLayout hideNav={false}>
       <div className={cn(
-        'fixed left-0 right-0 top-0 z-[100] flex h-16 items-center border-b border-border/60 bg-background/90 px-6 backdrop-blur-xl transition-all duration-300',
+        'fixed left-0 right-0 top-0 z-[100] flex h-16 items-center border-b border-border/60 bg-background/90 px-6 backdrop-blur-xl transition-all duration-300 md:hidden',
         isScrolled ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'
       )}>
         <button onClick={() => navigate('/marketplace')} className="mr-4">
@@ -197,12 +197,12 @@ export default function StoreDetail() {
           <div className="absolute left-6 right-6 top-6 z-20 flex justify-between">
             <button
               onClick={() => navigate('/marketplace')}
-              className="flex h-11 w-11 items-center justify-center rounded-2xl bg-background/15 text-primary-foreground backdrop-blur-xl transition-all hover:bg-background/25"
+              className="flex h-11 w-11 items-center justify-center rounded-2xl bg-background/15 text-primary-foreground backdrop-blur-xl transition-all hover:bg-background/25 md:hidden"
             >
               <ArrowLeft className="h-5 w-5" />
             </button>
 
-            <div className="flex gap-3">
+            <div className="flex gap-3 ml-auto">
               <button className="flex h-11 w-11 items-center justify-center rounded-2xl bg-background/15 text-primary-foreground backdrop-blur-xl transition-all hover:bg-background/25">
                 <Search className="h-5 w-5" />
               </button>
@@ -378,7 +378,7 @@ export default function StoreDetail() {
                   <h3 className="text-lg font-bold tracking-tight text-foreground">{category}</h3>
                 </div>
 
-                <div className="flex flex-col gap-px bg-border/20 rounded-3xl overflow-hidden border border-border/40">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
                   {categoryProducts.map((product) => {
                     const qty = getItemQty(product.id);
                     return (

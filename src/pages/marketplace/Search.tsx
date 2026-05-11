@@ -39,7 +39,7 @@ export default function Search() {
   return (
     <MarketplaceLayout hideNav={false}>
       <div className="sticky top-0 z-50 bg-background/95 backdrop-blur-lg px-4 py-3 border-b border-border">
-        <div className="relative max-w-lg mx-auto">
+        <div className="relative w-full mx-auto">
           <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             autoFocus
@@ -56,7 +56,7 @@ export default function Search() {
         </div>
       </div>
 
-      <div className="max-w-lg mx-auto px-4 pt-4 pb-24">
+      <div className="w-full mx-auto px-4 pt-4 pb-24">
         {loading ? (
           <div className="flex flex-col items-center py-16">
             <Loader2 className="h-8 w-8 text-primary animate-spin mb-3" />
@@ -99,7 +99,7 @@ export default function Search() {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {results.map((company) => (
               <StoreTabCard key={company.id} company={company} />
             ))}
