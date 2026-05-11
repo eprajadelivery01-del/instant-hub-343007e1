@@ -155,12 +155,12 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="-mx-4 flex gap-4 overflow-x-auto px-4 pb-2 scrollbar-hide">
+          <div className="-mx-4 flex gap-4 overflow-x-auto px-4 pb-4 scrollbar-hide md:mx-0 md:px-0 md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 md:overflow-visible">
             {featuredCompanies.map((company) => (
               <button
                 key={company.id}
                 onClick={() => navigate(`/marketplace/store/${company.id}`)}
-                className="premium-card premium-card-interactive group flex min-w-[252px] flex-col gap-3 overflow-hidden rounded-[30px] p-4 text-left"
+                className="premium-card premium-card-interactive group flex min-w-[252px] flex-col gap-3 overflow-hidden rounded-[30px] p-4 text-left md:min-w-0"
               >
                 <div className="flex items-center gap-3">
                   <div className="premium-chip flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-2xl p-2">
@@ -228,8 +228,8 @@ export default function Home() {
           </div>
 
           {loading ? (
-            <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
-              {[1, 2, 3, 4].map((item) => (
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {[1, 2, 3, 4, 5, 6].map((item) => (
                 <div key={item} className="premium-card rounded-[32px] p-4">
                   <Skeleton className="h-52 rounded-[28px]" />
                   <div className="mt-4 grid grid-cols-3 gap-3">
@@ -241,7 +241,7 @@ export default function Home() {
               ))}
             </div>
           ) : filtered.length > 0 ? (
-            <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
               {filtered.map((company) => (
                 <StoreTabCard key={company.id} company={company} />
               ))}

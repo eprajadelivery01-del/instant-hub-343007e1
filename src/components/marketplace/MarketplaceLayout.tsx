@@ -4,11 +4,10 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import { useOrderNotifications } from '@/hooks/useOrderNotifications';
-import { Home, Search, ShoppingBag, ClipboardList, User } from 'lucide-react';
+import { Home, Search, ShoppingBag, ClipboardList, User, Store } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
 import { OrderRatingModal } from './OrderRatingModal';
-
 
 const navItems = [
   { path: '/marketplace', icon: Home, label: 'Início' },
@@ -27,7 +26,6 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
 
   const [orderCount, setOrderCount] = useState(0);
 
-  // Store opening notification logic
   useEffect(() => {
     if (!company) return;
 
@@ -111,8 +109,6 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
     };
   }, [user]);
 
-  // Portal target — renderizamos a barra fora do app-shell para
-  // que nenhum wrapper com transform/filter/animation a "prenda".
   const [portalEl, setPortalEl] = useState<HTMLElement | null>(null);
   useEffect(() => {
     if (typeof document === 'undefined') return;
@@ -202,20 +198,70 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
   );
 
   return (
-    <div className="app-shell h-full flex flex-col font-sans text-foreground">
+    <div className="app-shell min-h-screen flex flex-col font-sans text-foreground bg-slate-50/30">
       <OrderRatingModal />
-      <main className={cn(
-        'flex flex-1 flex-col transition-all duration-300 overflow-y-auto custom-scrollbar', 
-        !hideNav && (showCartFab ? 'pb-marketplace-nav-with-cart' : 'pb-marketplace-nav')
-      )}>
-        <div className="flex-1 w-full max-w-lg mx-auto">{children}</div>
+      
+      {/* Desktop Header */}
+      {!hideNav && (
+        <header className="hidden md:block sticky top-0 z-[100] w-full border-b border-border/50 bg-white/80 backdrop-blur-xl">
+          <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6">
+            <Link to="/marketplace" className="flex items-center gap-2 outline-none">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-white shadow-lg shadow-primary/20">
+                <Store className="h-6 w-6" />
+              </div>
+              <span className="text-xl font-black tracking-tighter text-foreground">É Pra Já</span>
+            </Link>
 
-        <div className="mt-auto flex w-full justify-center py-8 opacity-20 pointer-events-none select-none">
-          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground">BONASOFT</p>
-        </div>
+            <nav className="flex items-center gap-8">
+              {navItems.map((item) => (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className={cn(
+                    "text-sm font-bold transition-all hover:text-primary",
+                    location.pathname === item.path ? "text-primary" : "text-muted-foreground"
+                  )}
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </nav>
+
+            <div className="flex items-center gap-4">
+              <Link to="/marketplace/cart" className="relative p-2 text-muted-foreground hover:text-primary transition-colors">
+                <ShoppingBag className="h-6 w-6" />
+                {itemCount > 0 && (
+                  <span className="absolute top-0 right-0 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-black text-primary-foreground">
+                    {itemCount}
+                  </span>
+                )}
+              </Link>
+              <Link to="/marketplace/profile" className="h-10 w-10 rounded-full bg-slate-100 overflow-hidden border border-border/50 transition-transform hover:scale-105">
+                <User className="h-full w-full p-2 text-muted-foreground" />
+              </Link>
+            </div>
+          </div>
+        </header>
+      )}
+
+      <main className={cn(
+        'flex flex-1 flex-col transition-all duration-300', 
+        !hideNav && (showCartFab ? 'pb-marketplace-nav-with-cart' : 'pb-marketplace-nav'),
+        'md:pb-0' // No bottom padding on desktop
+      )}>
+        <div className="flex-1 w-full max-w-7xl mx-auto">{children}</div>
+
+        <footer className="mt-auto flex w-full flex-col items-center justify-center py-12 border-t border-border/50 bg-white">
+          <p className="text-[11px] font-black uppercase tracking-[0.4em] text-muted-foreground opacity-30 mb-2">É Pra Já Delivery</p>
+          <p className="text-[10px] font-medium text-muted-foreground/40">© 2026 • Todos os direitos reservados</p>
+        </footer>
       </main>
 
-      {portalEl && createPortal(fixedUi, portalEl)}
+      {!hideNav && (
+        <div className="md:hidden">
+          {portalEl && createPortal(fixedUi, portalEl)}
+        </div>
+      )}
     </div>
   );
 }
