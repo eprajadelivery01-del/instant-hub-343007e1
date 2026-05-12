@@ -157,6 +157,24 @@ export default function StoreDetail() {
   const companyLogo = getCompanyLogoImage(company);
   const storeCategory = (company as any).category || categories[0] || 'Gastronomia';
 
+  const formatBusinessHours = (hours: string | null) => {
+    if (!hours) return null;
+    if (hours.startsWith('[')) {
+      try {
+        const parsed = JSON.parse(hours);
+        const today = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'][new Date().getDay()];
+        const schedule = parsed.find((d: any) => d.day === today);
+        if (schedule) {
+          if (!schedule.active) return 'Fechado hoje';
+          return `${schedule.start} às ${schedule.end}`;
+        }
+      } catch (e) { return hours; }
+    }
+    return hours;
+  };
+
+  const formattedHours = formatBusinessHours(company.business_hours);
+
   return (
     <MarketplaceLayout hideNav={false}>
       <div className={cn(
@@ -226,7 +244,7 @@ export default function StoreDetail() {
                     <span className="h-1 w-1 rounded-full bg-border" />
                     <span className="flex items-center gap-1">
                       <Clock className="h-3 w-3" />
-                      {company.business_hours}
+                      {formattedHours}
                     </span>
                   </>
                 )}
@@ -363,7 +381,7 @@ export default function StoreDetail() {
                   </div>
                   <h3 className="text-lg font-black text-destructive uppercase tracking-tight">Loja Fechada</h3>
                   <p className="max-w-xs text-sm text-destructive/70 font-medium">
-                    {company.business_hours ? `Esta loja atende das: ${company.business_hours}` : 'Esta loja não está aceitando pedidos agora.'}
+                    {formattedHours ? `Esta loja atende das: ${formattedHours}` : 'Esta loja não está aceitando pedidos agora.'}
                   </p>
                 </div>
               </div>
