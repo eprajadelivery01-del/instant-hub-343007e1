@@ -216,54 +216,56 @@ export default function OrderDetail() {
         )}
 
         {/* Status Tracker */}
-        <div className="bg-card border border-border rounded-2xl p-4">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-medium text-foreground text-sm">Acompanhamento</h3>
-            <span className="text-[11px] uppercase tracking-wide text-primary font-semibold">
-              {statusLabels[order?.status || 'pending'] || 'Em andamento'}
-            </span>
-          </div>
-          <div className="relative">
-            {statusSteps.map((step, i) => {
-              const done = i < currentStepIndex;
-              const current = i === currentStepIndex;
-              return (
-                <div key={step} className="flex items-start gap-3 relative pb-4 last:pb-0">
-                  {i < statusSteps.length - 1 && (
+        {!isCompleted && (
+          <div className="bg-card border border-border rounded-2xl p-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-medium text-foreground text-sm">Acompanhamento</h3>
+              <span className="text-[11px] uppercase tracking-wide text-primary font-semibold">
+                {statusLabels[order?.status || 'pending'] || 'Em andamento'}
+              </span>
+            </div>
+            <div className="relative">
+              {statusSteps.map((step, i) => {
+                const done = i < currentStepIndex;
+                const current = i === currentStepIndex;
+                return (
+                  <div key={step} className="flex items-start gap-3 relative pb-4 last:pb-0">
+                    {i < statusSteps.length - 1 && (
+                      <div
+                        className={`absolute left-[13px] top-7 w-0.5 h-[calc(100%-12px)] ${
+                          done ? 'bg-primary' : 'bg-border'
+                        }`}
+                      />
+                    )}
                     <div
-                      className={`absolute left-[13px] top-7 w-0.5 h-[calc(100%-12px)] ${
-                        done ? 'bg-primary' : 'bg-border'
-                      }`}
-                    />
-                  )}
-                  <div
-                    className={`h-7 w-7 rounded-full flex items-center justify-center text-xs font-medium shrink-0 z-10 transition-all ${
-                      done
-                        ? 'bg-primary text-primary-foreground'
-                        : current
-                          ? `bg-primary text-primary-foreground ${isCompleted ? '' : 'ring-4 ring-primary/20 animate-pulse'}`
-                          : 'bg-secondary text-muted-foreground'
-                    }`}
-                  >
-                    {done ? <Check className="h-3.5 w-3.5" /> : i + 1}
-                  </div>
-                  <div className="flex-1 pt-0.5">
-                    <p
-                      className={`text-sm leading-tight ${
-                        done || current ? 'text-foreground font-medium' : 'text-muted-foreground'
+                      className={`h-7 w-7 rounded-full flex items-center justify-center text-xs font-medium shrink-0 z-10 transition-all ${
+                        done
+                          ? 'bg-primary text-primary-foreground'
+                          : current
+                            ? `bg-primary text-primary-foreground ${isCompleted ? '' : 'ring-4 ring-primary/20 animate-pulse'}`
+                            : 'bg-secondary text-muted-foreground'
                       }`}
                     >
-                      {statusLabels[step]}
-                    </p>
-                    {current && statusDescriptions[step] && (
-                      <p className="text-xs text-muted-foreground mt-0.5">{statusDescriptions[step]}</p>
-                    )}
+                      {done ? <Check className="h-3.5 w-3.5" /> : i + 1}
+                    </div>
+                    <div className="flex-1 pt-0.5">
+                      <p
+                        className={`text-sm leading-tight ${
+                          done || current ? 'text-foreground font-medium' : 'text-muted-foreground'
+                        }`}
+                      >
+                        {statusLabels[step]}
+                      </p>
+                      {current && statusDescriptions[step] && (
+                        <p className="text-xs text-muted-foreground mt-0.5">{statusDescriptions[step]}</p>
+                      )}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Store Chat */}
         {order?.company_id && STORE_CHAT_STATUSES.includes(order.status) && (

@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, ShoppingBag } from 'lucide-react';
+import { ArrowLeft, ShoppingBag, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
 
@@ -13,6 +13,9 @@ export default function Signup() {
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [loading, setLoading] = useState(false);
   const { signUp } = useAuth();
@@ -21,6 +24,7 @@ export default function Signup() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!acceptedTerms) { toast.error('Aceite os termos para continuar'); return; }
+    if (password !== confirmPassword) { toast.error('As senhas não coincidem'); return; }
     setLoading(true);
     try {
       await signUp(email, password, fullName, phone);
@@ -66,7 +70,37 @@ export default function Signup() {
           </div>
           <div className="space-y-1.5">
             <Label className="text-sm font-medium text-foreground ml-1">Senha</Label>
-            <Input type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={6} placeholder="Mínimo 6 caracteres" className="h-12 rounded-xl bg-card border-border" />
+            <div className="relative">
+              <Input 
+                type={showPassword ? "text" : "password"} 
+                value={password} 
+                onChange={e => setPassword(e.target.value)} 
+                required 
+                minLength={6} 
+                placeholder="Mínimo 6 caracteres" 
+                className="h-12 rounded-xl bg-card border-border pr-10" 
+              />
+              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-sm font-medium text-foreground ml-1">Confirmar senha</Label>
+            <div className="relative">
+              <Input 
+                type={showConfirmPassword ? "text" : "password"} 
+                value={confirmPassword} 
+                onChange={e => setConfirmPassword(e.target.value)} 
+                required 
+                minLength={6} 
+                placeholder="Repita sua senha" 
+                className="h-12 rounded-xl bg-card border-border pr-10" 
+              />
+              <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
           </div>
           <div className="flex items-start gap-3 px-1 py-3">
             <input
