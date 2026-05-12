@@ -56,8 +56,8 @@ export default function Home() {
   const { profile } = useAuth();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchCompanies = async () => {
+  const fetchCompanies = async () => {
+    try {
       const { data } = await supabase.from('companies').select('*, products(*)');
       const processed = (data || []).map((company, index) => {
         let name = company.name;

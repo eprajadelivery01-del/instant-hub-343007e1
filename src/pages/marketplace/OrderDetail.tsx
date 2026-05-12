@@ -145,7 +145,7 @@ export default function OrderDetail() {
       for (const item of orderItems) {
         const { data: product } = await supabase.from('products').select('*').eq('id', item.product_id).single();
         if (product && product.active) {
-          addItem(product as Product, comp as any, item.options as any[] || [], item.quantity);
+          addItem(product as Product, comp as any, ((item as any).options as any[]) || [], item.quantity);
         }
       }
 
