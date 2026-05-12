@@ -23,7 +23,7 @@ export function StoreTabCard({ company }: StoreTabCardProps) {
       onClick={() => navigate(`/marketplace/store/${company.id}`)}
       className={cn(
         'premium-card premium-card-interactive group relative w-full overflow-hidden rounded-[32px] text-left active:scale-[0.99]',
-        !company.active && 'opacity-80 grayscale-[0.16]'
+        (!company.active || !company.is_open) && 'opacity-50 grayscale'
       )}
     >
       <div className="relative h-52 overflow-hidden">

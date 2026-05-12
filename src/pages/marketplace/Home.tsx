@@ -73,15 +73,44 @@ export default function Home() {
           active: company.active ?? company.is_active ?? false,
           products: (company.products || []).slice(0, 4),
           rating: company.rating && company.rating > 0 ? company.rating : 4.5 + Math.random() * 0.5,
-          isPremium: index < 5,
         };
-      }).sort((a, b) => b.rating - a.rating);
+      }).sort((a, b) => {
+        const aOpen = a.is_open === true && (a.active === true || a.is_active === true);
+        const bOpen = b.is_open === true && (b.active === true || b.is_active === true);
+        
+        if (aOpen && !bOpen) return -1;
+        if (!aOpen && bOpen) return 1;
+        
+        // If both have same open status, sort by rating
+        return (b.rating || 0) - (a.rating || 0);
+      }).map((company, index) => ({
+        ...company,
+        isPremium: index < 5,
+      }));
 
       setCompanies(processed as MarketplaceCompany[]);
       setLoading(false);
-    };
+    } catch (err: any) {
+      console.error("Error fetching companies:", err);
+      toast.error("Erro ao carregar lojas");
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchCompanies();
+
+    const channel = supabase
+      .channel("companies-realtime-v3")
+      .on("postgres_changes", { event: "*", schema: "public", table: "companies" }, (payload) => {
+        console.log("Realtime update received (V3):", payload);
+        fetchCompanies();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const filtered = useMemo(() => {
@@ -175,7 +204,10 @@ export default function Home() {
               <button
                 key={company.id}
                 onClick={() => navigate(`/marketplace/store/${company.id}`)}
-                className="premium-card premium-card-interactive group flex min-w-[252px] flex-col gap-3 overflow-hidden rounded-[30px] p-4 text-left md:min-w-0"
+                className={cn(
+                  "premium-card premium-card-interactive group flex min-w-[252px] flex-col gap-3 overflow-hidden rounded-[30px] p-4 text-left md:min-w-0",
+                  (!company.active || !company.is_open) && "opacity-50 grayscale"
+                )}
               >
                 <div className="flex items-center gap-3">
                   <div className="premium-chip flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-2xl p-2">

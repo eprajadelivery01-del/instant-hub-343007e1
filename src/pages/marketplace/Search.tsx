@@ -24,16 +24,34 @@ export default function Search() {
         const processed = (data || []).map((c) => ({
           ...c,
           products: (c.products || []).slice(0, 4),
-          rating: 4.0 + Math.random(),
+          rating: c.rating || 4.5 + Math.random() * 0.5,
           isPremium: false
-        }));
+        })).sort((a, b) => {
+          const aOpen = a.is_open === true;
+          const bOpen = b.is_open === true;
+          if (aOpen && !bOpen) return -1;
+          if (!aOpen && bOpen) return 1;
+          return (b.rating || 0) - (a.rating || 0);
+        });
         setResults(processed);
         setLoading(false);
       } else {
         setResults([]);
       }
     }, 500);
-    return () => clearTimeout(delayDebounceFn);
+
+    // Realtime subscription for search
+    const channel = supabase
+      .channel('search-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'companies' }, () => {
+        // Just invalidate/refetch if needed, but here we wait for next search or keysteoke
+      })
+      .subscribe();
+
+    return () => {
+      clearTimeout(delayDebounceFn);
+      supabase.removeChannel(channel);
+    };
   }, [search]);
 
   return (
