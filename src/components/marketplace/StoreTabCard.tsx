@@ -23,50 +23,52 @@ export function StoreTabCard({ company }: StoreTabCardProps) {
       onClick={() => navigate(`/marketplace/store/${company.id}`)}
       className={cn(
         'premium-card premium-card-interactive group relative w-full overflow-hidden rounded-[32px] text-left active:scale-[0.99]',
-        (!company.active || !company.is_open) && 'opacity-50 grayscale'
+        (!company.active || !company.is_open) && 'opacity-60 grayscale'
       )}
     >
-      <div className="relative h-52 overflow-hidden">
+      <div className="relative h-48 w-full overflow-hidden bg-muted">
         <MediaImage
           src={bannerImage}
           alt={`Capa da loja ${company.name}`}
-          className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+          className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
           fallback={
             <div className="flex h-full w-full items-center justify-center bg-secondary text-muted-foreground">
               <StoreIcon className="h-16 w-16 opacity-40" />
             </div>
           }
         />
-        <div className="hero-image-overlay absolute inset-0" />
+        <div className="hero-image-overlay absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
 
         <div className="absolute inset-x-0 top-0 z-20 flex items-start justify-between p-4">
           <span className={cn(
-            'rounded-full border border-primary-foreground/20 bg-background/15 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-primary-foreground backdrop-blur-md',
-            !company.is_open && 'bg-card/80 text-foreground border-border'
+            'rounded-full px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider backdrop-blur-md border shadow-lg transition-colors',
+            company.is_open 
+              ? 'bg-primary/90 text-primary-foreground border-primary/20' 
+              : 'bg-black/60 text-white/70 border-white/10'
           )}>
             {company.is_open ? 'Aberta agora' : 'Fechada'}
           </span>
 
-          <div className="flex items-center gap-1 rounded-full bg-card px-3 py-1 text-xs font-semibold text-foreground shadow-sm">
+          <div className="flex items-center gap-1 rounded-full bg-black/40 px-3 py-1.5 text-xs font-bold text-white border border-white/10 backdrop-blur-md">
             <Star className="h-3.5 w-3.5 fill-current text-warning" />
             <span>{rating.toFixed(1)}</span>
           </div>
         </div>
 
         <div className="absolute inset-x-0 bottom-0 z-20 p-5">
-          <div className="flex items-end gap-4">
-            <div className="premium-panel flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-[24px] bg-card/90">
+          <div className="flex items-center gap-4">
+            <div className="relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white p-1 shadow-2xl ring-2 ring-white/20">
               <MediaImage
                 src={logoImage}
                 alt={`Logo da loja ${company.name}`}
-                className="h-full w-full object-cover"
+                className="h-full w-full rounded-xl object-contain bg-white"
                 fallback={<StoreIcon className="h-7 w-7 text-muted-foreground" />}
               />
             </div>
 
-            <div className="min-w-0 text-primary-foreground">
-              <h3 className="truncate text-xl font-bold">{company.name}</h3>
-              <p className="mt-0.5 line-clamp-1 text-sm text-primary-foreground/75">{subtitle}</p>
+            <div className="min-w-0 flex-1 drop-shadow-md">
+              <h3 className="truncate text-xl font-black text-white leading-tight">{company.name}</h3>
+              <p className="mt-0.5 line-clamp-1 text-xs font-medium text-white/80">{subtitle}</p>
             </div>
           </div>
         </div>
