@@ -23,12 +23,10 @@ export function StoreTabCard({ company }: StoreTabCardProps) {
       onClick={() => navigate(`/marketplace/store/${company.id}`)}
       className={cn(
         'group relative w-full overflow-hidden rounded-[32px] bg-card border border-border text-left transition-all hover:shadow-xl active:scale-[0.98]',
-        (!company.active || !company.is_open) && 'opacity-60 grayscale',
-        company.isPremium && 'ring-2 ring-primary ring-offset-2'
+        (!company.active || !company.is_open) && 'opacity-60 grayscale'
       )}
     >
-      {/* Banner Section - Guaranteed No Gaps */}
-      <div className="relative h-48 w-full overflow-hidden bg-muted">
+      <div className="relative h-48 w-full overflow-hidden">
         <MediaImage
           src={bannerImage}
           alt={`Capa da loja ${company.name}`}
@@ -39,30 +37,25 @@ export function StoreTabCard({ company }: StoreTabCardProps) {
             </div>
           }
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+        <div className="hero-image-overlay absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
 
-        {/* Top Badges */}
         <div className="absolute inset-x-0 top-0 z-20 flex items-start justify-between p-4">
-          <div className={cn(
-            'rounded-full px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider backdrop-blur-md border shadow-sm',
-            company.is_open 
-              ? 'bg-primary text-primary-foreground border-primary/20' 
-              : 'bg-black/60 text-white/70 border-white/10'
+          <span className={cn(
+            'rounded-full border border-white/20 bg-black/40 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white backdrop-blur-md',
+            !company.is_open && 'bg-black/60 text-white/50 border-white/5'
           )}>
             {company.is_open ? 'Aberta agora' : 'Fechada'}
-          </div>
+          </span>
 
-          <div className="flex items-center gap-1 rounded-full bg-black/40 px-3 py-1.5 text-xs font-bold text-white border border-white/10 backdrop-blur-md">
+          <div className="flex items-center gap-1 rounded-full bg-black/40 px-3 py-1 text-xs font-bold text-white border border-white/10 backdrop-blur-md">
             <Star className="h-3.5 w-3.5 fill-current text-warning" />
             <span>{rating.toFixed(1)}</span>
           </div>
         </div>
 
-        {/* Profile Info Overlay */}
         <div className="absolute inset-x-0 bottom-0 z-20 p-5">
-          <div className="flex items-center gap-4">
-            {/* Standardized Profile Circle */}
-            <div className="h-16 w-16 shrink-0 overflow-hidden rounded-2xl bg-white p-1.5 shadow-lg ring-2 ring-white/10">
+          <div className="flex items-end gap-4">
+            <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white p-1.5 shadow-lg ring-2 ring-white/10">
               <MediaImage
                 src={logoImage}
                 alt={`Logo da loja ${company.name}`}
@@ -71,58 +64,63 @@ export function StoreTabCard({ company }: StoreTabCardProps) {
               />
             </div>
 
-            <div className="min-w-0 flex-1">
-              <h3 className="truncate text-xl font-black text-white leading-tight drop-shadow-md">{company.name}</h3>
-              <p className="mt-0.5 line-clamp-1 text-xs font-medium text-white/80 drop-shadow-md">{subtitle}</p>
+            <div className="min-w-0 text-white drop-shadow-md">
+              <h3 className="truncate text-xl font-bold leading-tight">{company.name}</h3>
+              <p className="mt-0.5 line-clamp-1 text-sm text-white/80">{subtitle}</p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Card Body */}
       <div className="space-y-5 p-5">
         <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-          <div className="flex items-center gap-2 rounded-full bg-muted/50 px-3 py-1.5">
+          <div className="premium-chip flex items-center gap-2 rounded-full px-3 py-2">
             <Clock3 className="h-3.5 w-3.5 text-primary" />
-            <span className="font-medium text-foreground">25-40 min</span>
+            <span>25-40 min</span>
           </div>
-          <div className="rounded-full bg-muted/50 px-3 py-1.5 font-medium text-foreground">
+          <div className="premium-chip rounded-full px-3 py-2">
             {company.delivery_fee ? `Entrega R$ ${company.delivery_fee.toFixed(2).replace('.', ',')}` : 'Entrega grátis'}
           </div>
+          {company.city && <div className="premium-chip rounded-full px-3 py-2">{company.city}</div>}
         </div>
 
         <div className="grid grid-cols-3 gap-3">
           {featuredProducts.length > 0 ? (
             featuredProducts.map((product) => (
-              <div key={product.id} className="group/item flex flex-col items-center rounded-[20px] bg-muted/30 p-2 transition-colors hover:bg-muted/50">
-                <div className="mb-2 aspect-square w-full overflow-hidden rounded-[14px]">
+              <div key={product.id} className="premium-chip overflow-hidden rounded-[22px] p-2">
+                <div className="mb-2 aspect-square overflow-hidden rounded-[16px] bg-secondary">
                   <MediaImage
                     src={getPrimaryProductImage(product)}
-                    alt={product.name || 'Produto'}
-                    className="h-full w-full object-cover transition-transform duration-300 group-hover/item:scale-110"
-                    fallback={<ShoppingBag className="h-5 w-5 opacity-50" />}
+                    alt={product.name || 'Produto da loja'}
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    fallback={
+                      <div className="flex h-full w-full items-center justify-center text-muted-foreground">
+                        <ShoppingBag className="h-5 w-5 opacity-50" />
+                      </div>
+                    }
                   />
                 </div>
-                <p className="w-full truncate text-[10px] font-medium text-foreground text-center">{product.name}</p>
-                <p className="mt-0.5 text-[10px] font-bold text-primary">
-                  R$ {Number(product.price || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                <p className="truncate text-xs font-medium text-foreground">{product.name}</p>
+                <p className="mt-0.5 text-xs font-semibold text-primary">
+                  R$ {Number(product.price || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </p>
               </div>
             ))
           ) : (
-            <div className="col-span-3 flex min-h-[100px] flex-col items-center justify-center rounded-[20px] bg-muted/30 text-center text-muted-foreground">
-              <ShoppingBag className="mb-2 h-6 w-6 opacity-30" />
-              <p className="text-[10px] font-medium">Cardápio em atualização</p>
+            <div className="premium-chip col-span-3 flex min-h-[112px] flex-col items-center justify-center rounded-[24px] text-center text-muted-foreground">
+              <ShoppingBag className="mb-2 h-8 w-8 opacity-50" />
+              <p className="text-xs text-muted-foreground">Cardápio em atualização</p>
             </div>
           )}
         </div>
 
-        <div className="flex items-center justify-between border-t border-border/50 pt-4">
+        <div className="flex items-center justify-between border-t border-border/70 pt-1">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Visitar loja</p>
-            <p className="mt-0.5 text-xs text-muted-foreground/70">Cardápio completo</p>
+            <p className="text-xs font-medium text-muted-foreground">Visitar loja</p>
+            <p className="mt-0.5 text-xs text-muted-foreground/70">Cardápio, combos e promoções</p>
           </div>
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary transition-transform group-hover:translate-x-1">
+
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary transition-transform duration-300 group-hover:translate-x-1">
             <ArrowRight className="h-5 w-5" />
           </div>
         </div>
