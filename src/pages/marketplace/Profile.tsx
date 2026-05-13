@@ -186,7 +186,7 @@ export default function Profile() {
           <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary to-orange-600 p-5 shadow-lg shadow-primary/30">
             <div className="relative z-10 flex items-center justify-between gap-4">
               <div>
-                <p className="text-[9px] font-black text-white/70 uppercase tracking-widest mb-1">Clube Ã‰ Pra Já</p>
+                <p className="text-[9px] font-black text-white/70 uppercase tracking-widest mb-1">Clube É Pra Já</p>
                 <p className="text-sm font-black text-white leading-snug">Economize com cupons<br/>no seu lanche favorito</p>
               </div>
               <button
@@ -433,7 +433,7 @@ export default function Profile() {
             {/* Header */}
             <div className="px-6 pt-6 pb-4 flex items-center justify-between border-b border-border shrink-0">
               <div>
-                <p className="text-[10px] text-primary font-black uppercase tracking-widest">Clube Ã‰ Pra Já</p>
+                <p className="text-[10px] text-primary font-black uppercase tracking-widest">Clube É Pra Já</p>
                 <h3 className="text-xl font-black text-foreground">Cupons Disponíveis</h3>
               </div>
               <button onClick={() => setShowCoupons(false)} className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
@@ -460,7 +460,7 @@ export default function Profile() {
                       {/* Icon */}
                       <div className="w-14 h-14 shrink-0 rounded-2xl bg-primary/10 flex flex-col items-center justify-center gap-0.5">
                         <Ticket className="h-5 w-5 text-primary" />
-                        <span className="text-[7px] font-black text-primary uppercase tracking-widest">Ã‰ PRA JÃ</span>
+                        <span className="text-[7px] font-black text-primary uppercase tracking-widest">É PRA JÃ</span>
                       </div>
 
                       {/* Info */}
