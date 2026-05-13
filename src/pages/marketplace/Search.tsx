@@ -4,26 +4,49 @@ import { supabase } from "@/lib/supabase";
 import MarketplaceLayout from "@/components/marketplace/MarketplaceLayout";
 import { Input } from "@/components/ui/input";
 import { StoreTabCard } from "@/components/marketplace/StoreTabCard";
-import { Search as SearchIcon, X, Loader2 } from "lucide-react";
+import { Search as SearchIcon, X, Loader2, Plus, Store } from "lucide-react";
+import { getPrimaryProductImage } from "@/lib/media";
+import { MediaImage } from "@/components/shared/MediaImage";
+import { useCart } from "@/contexts/CartContext";
+import { ProductDetailDialog } from "@/components/marketplace/ProductDetailDialog";
+import { Product, Company } from "@/types/database";
 
 export default function Search() {
   const [search, setSearch] = useState("");
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [selectedProductCompany, setSelectedProductCompany] = useState<Company | null>(null);
+  const { items, addItem } = useCart();
   const navigate = useNavigate();
 
   useEffect(() => {
     const delayDebounceFn = setTimeout(async () => {
       if (search.length > 2) {
         setLoading(true);
+        // Busca empresas com nome correspondente OU produtos com nome/descricao correspondente
+        // Para simplificar e garantir que pegue os produtos, vamos buscar todas as lojas ativas
+        // e filtrar os produtos no frontend, similar à Home.
         const { data } = await supabase
           .from("companies")
           .select("*, products(*)")
-          .ilike("name", `%${search}%`)
-          .eq("active", true);
-        const processed = (data || []).map((c) => ({
+          .eq("active", true)
+          .eq("is_active", true); // Handle potential dual boolean flags
+
+        // Se houver dados, combinamos as flags de active
+        let activeCompanies = data || [];
+        // Fallback for missing is_active/active consistency
+        if (activeCompanies.length === 0) {
+           const { data: fallbackData } = await supabase
+             .from("companies")
+             .select("*, products(*)")
+             .eq("active", true);
+           activeCompanies = fallbackData || [];
+        }
+
+        const processed = activeCompanies.map((c) => ({
           ...c,
-          products: (c.products || []).slice(0, 4),
+          products: (c.products || []),
           rating: c.rating || 4.5 + Math.random() * 0.5,
           isPremium: false
         })).sort((a, b) => {
@@ -53,6 +76,27 @@ export default function Search() {
       supabase.removeChannel(channel);
     };
   }, [search]);
+
+  const filteredProducts = React.useMemo(() => {
+    if (!search || results.length === 0) return [];
+    
+    const allProducts: (Product & { company: Company })[] = [];
+    results.forEach(c => {
+      (c.products || []).forEach((p: Product) => {
+        allProducts.push({ ...p, company: c });
+      });
+    });
+
+    return allProducts.filter(p => {
+      return (
+        (p.name && p.name.toLowerCase().includes(search.toLowerCase())) || 
+        (p.description && p.description.toLowerCase().includes(search.toLowerCase())) || 
+        (p.company.name && p.company.name.toLowerCase().includes(search.toLowerCase()))
+      );
+    });
+  }, [results, search]);
+
+  const getItemQty = (productId: string) => items.find((item) => item.product.id === productId)?.quantity || 0;
 
   return (
     <MarketplaceLayout hideNav={false}>
@@ -117,13 +161,83 @@ export default function Search() {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {results.map((company) => (
-              <StoreTabCard key={company.id} company={company} />
-            ))}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {filteredProducts.map((product) => {
+              const qty = getItemQty(product.id);
+              return (
+                <div
+                  key={product.id}
+                  className="group flex cursor-pointer gap-4 bg-background p-4 rounded-[32px] border border-border/50 shadow-sm hover:shadow-md transition-all active:scale-[0.99]"
+                  onClick={() => { setSelectedProduct(product); setSelectedProductCompany(product.company); }}
+                >
+                  <div className="flex min-w-0 flex-1 flex-col justify-between py-0.5">
+                    <div>
+                      <p className="text-[10px] font-black uppercase text-muted-foreground mb-1 tracking-wider line-clamp-1">{product.company.name}</p>
+                      <h4 className="mb-1 text-[15px] font-bold leading-tight text-foreground group-hover:text-primary transition-colors">
+                        {product.name}
+                      </h4>
+                      {product.description && (
+                        <p className="line-clamp-2 text-[13px] font-medium leading-snug text-muted-foreground/80">
+                          {product.description}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="mt-3 flex items-center justify-between">
+                      <p className="text-[15px] font-extrabold text-foreground">
+                        {Number(product.price || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                      </p>
+
+                      {qty > 0 && (
+                        <div className="flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-2 py-1">
+                          <span className="text-[11px] font-bold text-primary">{qty} no carrinho</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="relative h-24 w-24 shrink-0">
+                    <div className="h-full w-full overflow-hidden rounded-xl bg-secondary/30">
+                      <MediaImage
+                        src={getPrimaryProductImage(product)}
+                        alt={product.name || 'Produto'}
+                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        fallback={
+                          <div className="flex h-full w-full items-center justify-center text-muted-foreground/30 text-2xl">
+                            🍛
+                          </div>
+                        }
+                      />
+                    </div>
+                    {qty === 0 && product.company.is_open && (
+                      <button
+                        onClick={(e) => { 
+                          e.stopPropagation(); 
+                          setSelectedProduct(product);
+                          setSelectedProductCompany(product.company);
+                        }}
+                        className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-background border border-border shadow-lg text-primary hover:scale-110 transition-transform"
+                      >
+                        <Plus className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
+      <ProductDetailDialog
+        product={selectedProduct}
+        isOpen={!!selectedProduct && !!selectedProductCompany}
+        onClose={() => { setSelectedProduct(null); setSelectedProductCompany(null); }}
+        isClosed={selectedProductCompany ? !selectedProductCompany.is_open : false}
+        onAddToCart={(product, quantity, options, note) => {
+          if (selectedProductCompany) addItem(product, selectedProductCompany as Company, options, quantity, note);
+        }}
+        initialQuantity={selectedProduct ? getItemQty(selectedProduct.id) : 1}
+      />
     </MarketplaceLayout>
   );
 }

@@ -13,10 +13,12 @@ import { StoreTabCard } from '@/components/marketplace/StoreTabCard';
 import { MarketplaceMenu } from '@/components/marketplace/MarketplaceMenu';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MediaImage } from '@/components/shared/MediaImage';
-import { Search, Star, ChevronDown, Store, Utensils, Coffee, Pizza, Cake, Sandwich, Pill, ShoppingCart, User, PanelLeft, X, Dog, Beer } from 'lucide-react';
+import { Search, Star, ChevronDown, Store, Utensils, Coffee, Pizza, Cake, Sandwich, Pill, ShoppingCart, User, PanelLeft, X, Dog, Beer, Plus } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { getAvatarImage, getCompanyBannerImage, getCompanyLogoImage } from '@/lib/media';
+import { getAvatarImage, getCompanyBannerImage, getCompanyLogoImage, getPrimaryProductImage } from '@/lib/media';
+import { useCart } from '@/contexts/CartContext';
+import { ProductDetailDialog } from '@/components/marketplace/ProductDetailDialog';
 
 const categories = [
   { icon: Utensils, label: 'Todos', value: '' },
@@ -52,8 +54,11 @@ export default function Home() {
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('');
   const [partnershipType, setPartnershipType] = useState<'merchant' | 'driver' | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [selectedProductCompany, setSelectedProductCompany] = useState<MarketplaceCompany | null>(null);
   const { selectedAddress } = useAddress();
   const { profile } = useAuth();
+  const { items, addItem } = useCart();
   const navigate = useNavigate();
 
   const fetchCompanies = async () => {
@@ -120,12 +125,38 @@ export default function Home() {
     );
   }, [companies, search, activeCategory]);
 
+  const filteredProducts = useMemo(() => {
+    if (!search && !activeCategory) return [];
+    
+    const allProducts: (Product & { company: MarketplaceCompany })[] = [];
+    companies.forEach(c => {
+      (c.products || []).forEach(p => {
+        allProducts.push({ ...p, company: c });
+      });
+    });
+
+    return allProducts.filter(p => {
+      const matchSearch = search ? (
+        (p.name && p.name.toLowerCase().includes(search.toLowerCase())) || 
+        (p.description && p.description.toLowerCase().includes(search.toLowerCase())) || 
+        (p.company.name && p.company.name.toLowerCase().includes(search.toLowerCase()))
+      ) : true;
+      const matchCategory = activeCategory ? (
+        (p.category && p.category.toLowerCase().includes(activeCategory.toLowerCase())) || 
+        (p.company.category && p.company.category.toLowerCase().includes(activeCategory.toLowerCase()))
+      ) : true;
+      return matchSearch && matchCategory;
+    });
+  }, [companies, search, activeCategory]);
+
   const featuredCompanies = useMemo(() => 
     companies.filter((company) => 
       company.isPremium && 
       (activeCategory === '' || (company.description?.toLowerCase().includes(activeCategory.toLowerCase())) || (company.category?.toLowerCase().includes(activeCategory.toLowerCase())))
     ).slice(0, 5), 
   [companies, activeCategory]);
+
+  const getItemQty = (productId: string) => items.find((item) => item.product.id === productId)?.quantity || 0;
 
   return (
     <MarketplaceLayout>
@@ -266,11 +297,15 @@ export default function Home() {
         <section>
           <div className="mb-5 flex items-center justify-between gap-4 px-1">
             <div>
-              <h2 className="text-2xl font-bold text-foreground">Lojas</h2>
-              <p className="mt-0.5 text-sm text-muted-foreground">As melhores da cidade</p>
+              <h2 className="text-2xl font-bold text-foreground">
+                {(search || activeCategory) ? 'Produtos' : 'Lojas'}
+              </h2>
+              <p className="mt-0.5 text-sm text-muted-foreground">
+                {(search || activeCategory) ? 'Encontrados para sua busca' : 'As melhores da cidade'}
+              </p>
             </div>
             <span className="rounded-full bg-secondary px-3 py-1 text-xs font-medium text-muted-foreground">
-              {filtered.length}
+              {(search || activeCategory) ? filteredProducts.length : filtered.length}
             </span>
           </div>
 
@@ -287,7 +322,73 @@ export default function Home() {
                 </div>
               ))}
             </div>
-          ) : filtered.length > 0 ? (
+          ) : (search || activeCategory) && filteredProducts.length > 0 ? (
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-2">
+              {filteredProducts.map((product) => {
+                const qty = getItemQty(product.id);
+                return (
+                  <div
+                    key={product.id}
+                    className="group flex cursor-pointer gap-4 bg-background p-4 rounded-[32px] border border-border/50 shadow-sm hover:shadow-md transition-all active:scale-[0.99]"
+                    onClick={() => { setSelectedProduct(product); setSelectedProductCompany(product.company); }}
+                  >
+                    <div className="flex min-w-0 flex-1 flex-col justify-between py-0.5">
+                      <div>
+                        <p className="text-[10px] font-black uppercase text-muted-foreground mb-1 tracking-wider line-clamp-1">{product.company.name}</p>
+                        <h4 className="mb-1 text-[15px] font-bold leading-tight text-foreground group-hover:text-primary transition-colors">
+                          {product.name}
+                        </h4>
+                        {product.description && (
+                          <p className="line-clamp-2 text-[13px] font-medium leading-snug text-muted-foreground/80">
+                            {product.description}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="mt-3 flex items-center justify-between">
+                        <p className="text-[15px] font-extrabold text-foreground">
+                          {Number(product.price || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                        </p>
+
+                        {qty > 0 && (
+                          <div className="flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-2 py-1">
+                            <span className="text-[11px] font-bold text-primary">{qty} no carrinho</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="relative h-24 w-24 shrink-0">
+                      <div className="h-full w-full overflow-hidden rounded-xl bg-secondary/30">
+                        <MediaImage
+                          src={getPrimaryProductImage(product)}
+                          alt={product.name || 'Produto'}
+                          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          fallback={
+                            <div className="flex h-full w-full items-center justify-center text-muted-foreground/30 text-2xl">
+                              🍛
+                            </div>
+                          }
+                        />
+                      </div>
+                      {qty === 0 && product.company.is_open && (
+                        <button
+                          onClick={(e) => { 
+                            e.stopPropagation(); 
+                            setSelectedProduct(product);
+                            setSelectedProductCompany(product.company);
+                          }}
+                          className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-background border border-border shadow-lg text-primary hover:scale-110 transition-transform"
+                        >
+                          <Plus className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (!search && !activeCategory) && filtered.length > 0 ? (
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
               {filtered.map((company) => (
                 <StoreTabCard key={company.id} company={company} />
@@ -295,8 +396,8 @@ export default function Home() {
             </div>
           ) : (
             <div className="premium-card flex flex-col items-center rounded-[32px] px-6 py-14 text-center">
-              <Store className="h-12 w-12 text-muted-foreground/50" />
-              <h3 className="mt-4 text-lg font-semibold text-foreground">Nenhuma loja encontrada</h3>
+              <Utensils className="h-12 w-12 text-muted-foreground/50" />
+              <h3 className="mt-4 text-lg font-semibold text-foreground">Nenhuma loja ou produto encontrado</h3>
               <p className="mt-1.5 max-w-sm text-sm text-muted-foreground">Ajuste a busca ou troque a categoria para ver mais opções.</p>
             </div>
           )}
@@ -361,6 +462,16 @@ export default function Home() {
           </div>
         </SheetContent>
       </Sheet>
+      <ProductDetailDialog
+        product={selectedProduct}
+        isOpen={!!selectedProduct && !!selectedProductCompany}
+        onClose={() => { setSelectedProduct(null); setSelectedProductCompany(null); }}
+        isClosed={selectedProductCompany ? !selectedProductCompany.is_open : false}
+        onAddToCart={(product, quantity, options, note) => {
+          if (selectedProductCompany) addItem(product, selectedProductCompany as Company, options, quantity, note);
+        }}
+        initialQuantity={selectedProduct ? getItemQty(selectedProduct.id) : 1}
+      />
     </MarketplaceLayout>
   );
 }
