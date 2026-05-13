@@ -22,12 +22,12 @@ export function StoreTabCard({ company }: StoreTabCardProps) {
       type="button"
       onClick={() => navigate(`/marketplace/store/${company.id}`)}
       className={cn(
-        'group relative w-full overflow-hidden rounded-[32px] bg-card border border-border text-left transition-all hover:shadow-xl active:scale-[0.98]',
+        'group relative flex h-full w-full flex-col overflow-hidden rounded-[32px] bg-card border border-border text-left transition-all hover:shadow-xl active:scale-[0.98]',
         (!company.active || !company.is_open) && 'opacity-70 grayscale'
       )}
     >
       {/* Banner - Full Width and Fixed Height, Starting at the very top */}
-      <div className="relative h-52 w-full overflow-hidden">
+      <div className="relative h-52 w-full shrink-0 overflow-hidden">
         <MediaImage
           src={bannerImage}
           alt={`Capa da loja ${company.name}`}
@@ -77,16 +77,15 @@ export function StoreTabCard({ company }: StoreTabCardProps) {
         </div>
       </div>
 
-      <div className="space-y-5 p-5">
-        <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-          <div className="premium-chip flex items-center gap-2 rounded-full px-3 py-2">
+      <div className="flex flex-1 flex-col gap-5 p-5">
+        <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+          <div className="premium-chip flex items-center justify-center gap-2 rounded-full px-3 py-2">
             <Clock3 className="h-3.5 w-3.5 text-primary" />
             <span>25-40 min</span>
           </div>
-          <div className="premium-chip rounded-full px-3 py-2">
+          <div className="premium-chip flex items-center justify-center rounded-full px-3 py-2">
             {company.delivery_fee ? `Entrega R$ ${company.delivery_fee.toFixed(2).replace('.', ',')}` : 'Entrega grátis'}
           </div>
-          {company.city && <div className="premium-chip rounded-full px-3 py-2">{company.city}</div>}
         </div>
 
         <div className="grid grid-cols-3 gap-3">
@@ -119,7 +118,7 @@ export function StoreTabCard({ company }: StoreTabCardProps) {
           )}
         </div>
 
-        <div className="flex items-center justify-between border-t border-border/70 pt-1">
+        <div className="mt-auto flex items-center justify-between border-t border-border/70 pt-4">
           <div>
             <p className="text-xs font-medium text-muted-foreground">Visitar loja</p>
             <p className="mt-0.5 text-xs text-muted-foreground/70">Cardápio, combos e promoções</p>
