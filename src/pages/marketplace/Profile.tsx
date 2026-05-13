@@ -1,4 +1,4 @@
-// @ts-nocheck
+﻿// @ts-nocheck
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
@@ -29,7 +29,7 @@ const STATUS_MAP: Record<string, { label: string; color: string; icon: React.Ele
   ready:      { label: 'Pronto',      color: 'text-purple-500 bg-purple-500/10',  icon: CheckCircle2 },
   delivering: { label: 'A caminho',   color: 'text-primary bg-primary/10',        icon: Truck },
   delivered:  { label: 'Entregue',    color: 'text-green-500 bg-green-500/10',    icon: CheckCircle2 },
-  completed:  { label: 'Concluído',   color: 'text-green-500 bg-green-500/10',    icon: CheckCircle2 },
+  completed:  { label: 'ConcluÃ­do',   color: 'text-green-500 bg-green-500/10',    icon: CheckCircle2 },
   cancelled:  { label: 'Cancelado',   color: 'text-red-500 bg-red-500/10',        icon: XCircle },
 };
 
@@ -78,7 +78,7 @@ export default function Profile() {
 
   const handleCopyCode = (code: string) => {
     navigator.clipboard.writeText(code);
-    toast.success('Código copiado!', { description: 'Cole na tela de finalização do pedido.' });
+    toast.success('CÃ³digo copiado!', { description: 'Cole na tela de finalizaÃ§Ã£o do pedido.' });
   };
 
   const fetchOrders = async () => {
@@ -129,14 +129,14 @@ export default function Profile() {
 
   if (!user) { navigate('/marketplace/login'); return null; }
 
-  const displayName = profile?.full_name || user.email?.split('@')[0] || 'Usuário';
+  const displayName = profile?.full_name || user.email?.split('@')[0] || 'UsuÃ¡rio';
   const initial = displayName.charAt(0).toUpperCase();
 
   return (
     <MarketplaceLayout>
       <div className="min-h-screen pb-32">
 
-        {/* ── AVATAR + NOME ── */}
+        {/* â”€â”€ AVATAR + NOME â”€â”€ */}
         <div className="px-5 pt-10 pb-6 flex flex-col items-center text-center">
           <div className="relative mb-4">
             <button
@@ -161,7 +161,7 @@ export default function Profile() {
                 : <Camera className="h-3.5 w-3.5 text-background" />
               }
             </button>
-            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
+            <input ref={fileInputRef} type="file" capture="environment" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
           </div>
 
           <h1 className="text-xl font-black text-foreground">{displayName}</h1>
@@ -182,11 +182,11 @@ export default function Profile() {
 
         <div className="px-5 space-y-4">
 
-          {/* ── CLUBE ── */}
+          {/* â”€â”€ CLUBE â”€â”€ */}
           <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary to-orange-600 p-5 shadow-lg shadow-primary/30">
             <div className="relative z-10 flex items-center justify-between gap-4">
               <div>
-                <p className="text-[9px] font-black text-white/70 uppercase tracking-widest mb-1">Clube É Pra Já</p>
+                <p className="text-[9px] font-black text-white/70 uppercase tracking-widest mb-1">Clube Ã‰ Pra JÃ¡</p>
                 <p className="text-sm font-black text-white leading-snug">Economize com cupons<br/>no seu lanche favorito</p>
               </div>
               <button
@@ -195,16 +195,16 @@ export default function Profile() {
                 className="shrink-0 h-9 px-4 rounded-xl bg-white text-primary text-xs font-black hover:opacity-90 active:scale-95 transition-all flex items-center gap-1.5 disabled:opacity-70"
               >
                 {loadingCoupons ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Ticket className="h-3.5 w-3.5" />}
-                Ver benefícios
+                Ver benefÃ­cios
               </button>
             </div>
-            <span className="absolute -right-3 -bottom-5 text-[100px] opacity-10 select-none leading-none">🍔</span>
+            <span className="absolute -right-3 -bottom-5 text-[100px] opacity-10 select-none leading-none">ðŸ”</span>
           </div>
 
-          {/* ── HISTÓRICO DE PEDIDOS ── */}
+          {/* â”€â”€ HISTÃ“RICO DE PEDIDOS â”€â”€ */}
           <div>
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-black uppercase tracking-widest text-foreground">Histórico de Pedidos</h2>
+              <h2 className="text-sm font-black uppercase tracking-widest text-foreground">HistÃ³rico de Pedidos</h2>
               {orders.length > 0 && (
                 <button
                   onClick={() => navigate('/marketplace/orders')}
@@ -270,7 +270,7 @@ export default function Profile() {
                           <p className="text-xs text-muted-foreground mt-0.5">
                             {order.created_at
                               ? format(new Date(order.created_at), "dd 'de' MMM, HH:mm", { locale: ptBR })
-                              : '—'}
+                              : 'â€”'}
                           </p>
                         </div>
 
@@ -292,13 +292,13 @@ export default function Profile() {
             </div>
           </div>
 
-          {/* ── MENU ── */}
+          {/* â”€â”€ MENU â”€â”€ */}
           <div className="bg-card border border-border rounded-2xl overflow-hidden">
             {[
-              { icon: MapPin,    label: 'Endereços', subtitle: 'Gerenciar locais salvos',      onClick: () => navigate('/marketplace/addresses'), chevron: true },
+              { icon: MapPin,    label: 'EndereÃ§os', subtitle: 'Gerenciar locais salvos',      onClick: () => navigate('/marketplace/addresses'), chevron: true },
               { icon: Wallet,    label: 'Carteira',  subtitle: 'Saldo e recargas',              onClick: () => toast('Em breve!') },
-              { icon: theme === 'dark' ? Moon : Sun, label: 'Aparência', subtitle: theme === 'dark' ? 'Modo escuro ativo' : 'Modo claro ativo', onClick: () => toggleTheme() },
-              { icon: HelpCircle, label: 'Ajuda',   subtitle: 'Suporte e dúvidas',             onClick: () => setSupportType('support') },
+              { icon: theme === 'dark' ? Moon : Sun, label: 'AparÃªncia', subtitle: theme === 'dark' ? 'Modo escuro ativo' : 'Modo claro ativo', onClick: () => toggleTheme() },
+              { icon: HelpCircle, label: 'Ajuda',   subtitle: 'Suporte e dÃºvidas',             onClick: () => setSupportType('support') },
               { icon: FileText,  label: 'Termos de Uso', subtitle: 'Regras da plataforma',    onClick: () => navigate('/marketplace/terms'), chevron: true },
               { icon: ShieldCheck, label: 'Privacidade', subtitle: 'Seus dados protegidos',   onClick: () => navigate('/marketplace/privacy'), chevron: true },
             ].map((item, i, arr) => (
@@ -319,7 +319,7 @@ export default function Profile() {
             ))}
           </div>
 
-          {/* ── ENTREGADOR ── */}
+          {/* â”€â”€ ENTREGADOR â”€â”€ */}
           <button
             onClick={() => setSupportType('driver_application')}
             className="w-full flex items-center gap-4 p-5 rounded-2xl bg-foreground text-background hover:opacity-90 transition-all"
@@ -334,7 +334,7 @@ export default function Profile() {
             <ChevronRight className="ml-auto h-4 w-4 opacity-40" />
           </button>
 
-          {/* ── SAIR ── */}
+          {/* â”€â”€ SAIR â”€â”€ */}
           <button
             onClick={() => signOut()}
             className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl border border-border text-muted-foreground font-bold text-sm hover:text-destructive hover:border-destructive/30 hover:bg-destructive/5 transition-all"
@@ -351,7 +351,7 @@ export default function Profile() {
             <AlertDialogContent className="rounded-2xl">
               <AlertDialogHeader>
                 <AlertDialogTitle>Excluir conta?</AlertDialogTitle>
-                <AlertDialogDescription>Esta ação é permanente e não pode ser desfeita.</AlertDialogDescription>
+                <AlertDialogDescription>Esta aÃ§Ã£o Ã© permanente e nÃ£o pode ser desfeita.</AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter className="flex-col gap-2">
                 <AlertDialogAction
@@ -367,7 +367,7 @@ export default function Profile() {
         </div>
       </div>
 
-      {/* ── EDITAR SHEET ── */}
+      {/* â”€â”€ EDITAR SHEET â”€â”€ */}
       <Sheet open={editing} onOpenChange={setEditing}>
         <SheetContent side="bottom" hideClose className="h-[70vh] rounded-t-3xl border-none p-0">
           <div className="h-full flex flex-col bg-background">
@@ -401,14 +401,14 @@ export default function Profile() {
                 className="w-full py-4 rounded-2xl gradient-primary text-primary-foreground font-black text-sm flex items-center justify-center gap-2 shadow-lg shadow-primary/20 disabled:opacity-50"
               >
                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-                {saving ? 'Salvando...' : 'Salvar Alterações'}
+                {saving ? 'Salvando...' : 'Salvar AlteraÃ§Ãµes'}
               </button>
             </div>
           </div>
         </SheetContent>
       </Sheet>
 
-      {/* ── SUPORTE SHEET ── */}
+      {/* â”€â”€ SUPORTE SHEET â”€â”€ */}
       <Sheet open={supportType !== null} onOpenChange={open => !open && setSupportType(null)}>
         <SheetContent side="bottom" hideClose className="h-[80vh] rounded-t-3xl border-none p-0 overflow-hidden">
           <div className="flex flex-col h-full bg-background relative">
@@ -426,15 +426,15 @@ export default function Profile() {
           </div>
         </SheetContent>
       </Sheet>
-      {/* ── CUPONS SHEET ── */}
+      {/* â”€â”€ CUPONS SHEET â”€â”€ */}
       <Sheet open={showCoupons} onOpenChange={setShowCoupons}>
         <SheetContent side="bottom" hideClose className="h-[85vh] rounded-t-3xl border-none p-0">
           <div className="h-full flex flex-col bg-background">
             {/* Header */}
             <div className="px-6 pt-6 pb-4 flex items-center justify-between border-b border-border shrink-0">
               <div>
-                <p className="text-[10px] text-primary font-black uppercase tracking-widest">Clube É Pra Já</p>
-                <h3 className="text-xl font-black text-foreground">Cupons Disponíveis</h3>
+                <p className="text-[10px] text-primary font-black uppercase tracking-widest">Clube Ã‰ Pra JÃ¡</p>
+                <h3 className="text-xl font-black text-foreground">Cupons DisponÃ­veis</h3>
               </div>
               <button onClick={() => setShowCoupons(false)} className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
                 <X className="h-5 w-5 text-muted-foreground" />
@@ -451,7 +451,7 @@ export default function Profile() {
                 <div className="py-16 flex flex-col items-center gap-3 text-center text-muted-foreground/40">
                   <Ticket className="h-12 w-12" />
                   <p className="font-black text-sm uppercase tracking-widest">Nenhum cupom ativo</p>
-                  <p className="text-xs text-muted-foreground">Aguarde novas promoções!</p>
+                  <p className="text-xs text-muted-foreground">Aguarde novas promoÃ§Ãµes!</p>
                 </div>
               ) : (
                 coupons.map((coupon) => (
@@ -460,7 +460,7 @@ export default function Profile() {
                       {/* Icon */}
                       <div className="w-14 h-14 shrink-0 rounded-2xl bg-primary/10 flex flex-col items-center justify-center gap-0.5">
                         <Ticket className="h-5 w-5 text-primary" />
-                        <span className="text-[7px] font-black text-primary uppercase tracking-widest">É PRA JÁ</span>
+                        <span className="text-[7px] font-black text-primary uppercase tracking-widest">Ã‰ PRA JÃ</span>
                       </div>
 
                       {/* Info */}
@@ -475,7 +475,7 @@ export default function Profile() {
                         )}
                         <div className="flex items-center gap-3 mt-2 flex-wrap">
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-muted text-[10px] font-bold uppercase tracking-wider">
-                            <span className="text-muted-foreground">Código:</span>
+                            <span className="text-muted-foreground">CÃ³digo:</span>
                             <span className="text-primary">{coupon.code}</span>
                           </span>
                           {coupon.expires_at && (
@@ -493,7 +493,7 @@ export default function Profile() {
                       <span className="text-[10px] font-bold text-muted-foreground">
                         {coupon.min_order_value > 0
                           ? `Pedidos acima de R$ ${Number(coupon.min_order_value).toFixed(2).replace('.', ',')}`
-                          : 'Válido para qualquer valor'}
+                          : 'VÃ¡lido para qualquer valor'}
                       </span>
                       <button
                         onClick={() => handleCopyCode(coupon.code)}
@@ -517,3 +517,4 @@ export default function Profile() {
     </MarketplaceLayout>
   );
 }
+
