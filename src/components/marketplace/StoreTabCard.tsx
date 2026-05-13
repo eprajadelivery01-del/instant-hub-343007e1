@@ -23,10 +23,11 @@ export function StoreTabCard({ company }: StoreTabCardProps) {
       onClick={() => navigate(`/marketplace/store/${company.id}`)}
       className={cn(
         'group relative w-full overflow-hidden rounded-[32px] bg-card border border-border text-left transition-all hover:shadow-xl active:scale-[0.98]',
-        (!company.active || !company.is_open) && 'opacity-60 grayscale'
+        (!company.active || !company.is_open) && 'opacity-70 grayscale'
       )}
     >
-      <div className="relative h-48 w-full overflow-hidden">
+      {/* Banner - Full Width and Fixed Height, Starting at the very top */}
+      <div className="relative h-52 w-full overflow-hidden">
         <MediaImage
           src={bannerImage}
           alt={`Capa da loja ${company.name}`}
@@ -37,25 +38,29 @@ export function StoreTabCard({ company }: StoreTabCardProps) {
             </div>
           }
         />
-        <div className="hero-image-overlay absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
 
+        {/* Badges - Uniform Positioning */}
         <div className="absolute inset-x-0 top-0 z-20 flex items-start justify-between p-4">
-          <span className={cn(
-            'rounded-full border border-white/20 bg-black/40 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white backdrop-blur-md',
-            !company.is_open && 'bg-black/60 text-white/50 border-white/5'
+          <div className={cn(
+            'rounded-full px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider backdrop-blur-md border shadow-sm',
+            company.is_open 
+              ? 'bg-primary text-primary-foreground border-primary/20' 
+              : 'bg-black/60 text-white/70 border-white/10'
           )}>
             {company.is_open ? 'Aberta agora' : 'Fechada'}
-          </span>
+          </div>
 
-          <div className="flex items-center gap-1 rounded-full bg-black/40 px-3 py-1 text-xs font-bold text-white border border-white/10 backdrop-blur-md">
+          <div className="flex items-center gap-1 rounded-full bg-black/40 px-3 py-1.5 text-xs font-bold text-white border border-white/10 backdrop-blur-md">
             <Star className="h-3.5 w-3.5 fill-current text-warning" />
             <span>{rating.toFixed(1)}</span>
           </div>
         </div>
 
+        {/* Store Info Over Banner - Standardized */}
         <div className="absolute inset-x-0 bottom-0 z-20 p-5">
           <div className="flex items-end gap-4">
-            <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white p-1.5 shadow-lg ring-2 ring-white/10">
+            <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white p-1.5 shadow-xl ring-2 ring-white/10">
               <MediaImage
                 src={logoImage}
                 alt={`Logo da loja ${company.name}`}
@@ -64,9 +69,9 @@ export function StoreTabCard({ company }: StoreTabCardProps) {
               />
             </div>
 
-            <div className="min-w-0 text-white drop-shadow-md">
-              <h3 className="truncate text-xl font-bold leading-tight">{company.name}</h3>
-              <p className="mt-0.5 line-clamp-1 text-sm text-white/80">{subtitle}</p>
+            <div className="min-w-0 flex-1">
+              <h3 className="truncate text-xl font-black text-white leading-tight drop-shadow-lg">{company.name}</h3>
+              <p className="mt-1 line-clamp-1 text-xs font-medium text-white/80 drop-shadow-lg">{subtitle}</p>
             </div>
           </div>
         </div>
