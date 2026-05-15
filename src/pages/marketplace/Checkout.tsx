@@ -242,20 +242,21 @@ export default function Checkout() {
 
       /* audit log moved to edge function */
 
-      // --- ALTERAÇÃO: USANDO EDGE FUNCTION PARA MAIOR CONFIABILIDADE ---
-      const { data, error: functionError } = await supabase.functions.invoke('create-order', {
-        body: requestBody
+      // --- ALTERAÇÃO: VOLTANDO PARA RPC (SQL) PARA EVITAR PROBLEMAS DE DEPLOY/CORS ---
+      const { data, error: functionError } = await supabase.rpc('create_order_v3', {
+        p_items: requestBody.items,
+        p_company_id: requestBody.company_id,
+        p_address_id: requestBody.address_id,
+        p_payment_method: requestBody.payment_method,
+        p_coupon_code: requestBody.coupon_code,
+        p_notes: requestBody.notes,
+        p_needs_change: requestBody.needs_change,
+        p_change_for: requestBody.change_for,
+        p_idempotency_key: requestBody.idempotency_key
       });
 
       if (functionError) {
-        let msg = 'Erro ao processar pedido';
-        try {
-          // Tenta extrair a mensagem de erro do corpo da resposta (JSON)
-          const body = await functionError.context.json();
-          msg = body.error || body.message || msg;
-        } catch {
-          msg = functionError.message || msg;
-        }
+        let msg = functionError.message || 'Erro ao processar pedido';
 
         const friendly = mapServerError(msg);
         
