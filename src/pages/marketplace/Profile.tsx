@@ -121,7 +121,7 @@ export default function Profile() {
     setUploading(true);
     try {
       const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}-avatar-${Date.now()}.${fileExt}`;
+      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
       
       const { error: uploadError } = await supabase.storage
         .from('avatars')
@@ -157,7 +157,11 @@ export default function Profile() {
     setSaving(true);
     try {
       await supabase.from('profiles').update({ full_name: fullName, phone }).eq('id', user.id);
+      
+      // Delay to ensure DB replication/trigger finish before refetching
+      await new Promise(resolve => setTimeout(resolve, 500));
       await refreshProfile();
+      
       toast.success('Perfil atualizado!');
       setEditing(false);
     } catch { toast.error('Erro ao salvar'); }
