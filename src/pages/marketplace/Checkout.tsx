@@ -34,7 +34,7 @@ function mapServerError(msg: string): string {
 export default function Checkout() {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
-  const { items, company, notes: itemNotes, subtotal, clearCart } = useCart();
+  const { items, company, subtotal, clearCart } = useCart();
   const { isLocked, acquireLock, releaseLock, generateIdempotencyKey, resetIdempotencyKey } = useOrderLock();
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [selectedAddress, setSelectedAddress] = useState<string>('');
@@ -210,8 +210,8 @@ export default function Checkout() {
       }
 
       const requestId = newRequestId();
-      const orderNotes = Object.values(itemNotes)
-        .map((note) => note.trim())
+      const orderNotes = items
+        .map((it) => it.note?.trim())
         .filter(Boolean)
         .join(' • ') || null;
 

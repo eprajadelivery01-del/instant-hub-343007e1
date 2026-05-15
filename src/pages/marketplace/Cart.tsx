@@ -10,7 +10,7 @@ import { MediaImage } from '@/components/shared/MediaImage';
 import { getPrimaryProductImage } from '@/lib/media';
 
 export default function Cart() {
-  const { items, company, notes, updateQuantity, updateNote, clearCart, subtotal } = useCart();
+  const { items, company, updateQuantity, updateNote, clearCart, subtotal } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [isStoreOpen, setIsStoreOpen] = useState<boolean | null>(null);
@@ -108,14 +108,14 @@ export default function Cart() {
                 <div className="flex items-center gap-1">
                   <button
                     className="flex h-8 w-8 items-center justify-center rounded-full border border-border transition-transform active:scale-90"
-                    onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
+                    onClick={() => updateQuantity(item.id, item.quantity - 1)}
                   >
                     {item.quantity === 1 ? <Trash2 className="h-3 w-3 text-destructive" /> : <Minus className="h-3 w-3" />}
                   </button>
                   <span className="w-6 text-center text-sm font-bold">{item.quantity}</span>
                   <button
                     className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground transition-transform active:scale-90"
-                    onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
+                    onClick={() => updateQuantity(item.id, item.quantity + 1)}
                   >
                     <Plus className="h-3 w-3" />
                   </button>
@@ -129,8 +129,8 @@ export default function Cart() {
                   <span className="text-[11px] text-muted-foreground font-medium">Observação</span>
                 </div>
                 <textarea
-                  value={notes[item.product.id] || ''}
-                  onChange={(e) => updateNote(item.product.id, e.target.value)}
+                  value={item.note || ''}
+                  onChange={(e) => updateNote(item.id, e.target.value)}
                   placeholder={`Ex: sem cebola, sem sal, ponto bem passado...`}
                   rows={2}
                   className="w-full resize-none rounded-xl border border-border bg-muted/40 px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:bg-background transition-colors"

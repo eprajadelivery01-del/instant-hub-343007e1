@@ -4,7 +4,6 @@ import { CartItem, Product, Company } from '@/types/database';
 interface CartContextType {
   items: CartItem[];
   company: Company | null;
-  notes: Record<string, string>;
   addItem: (product: Product, company: Company, options?: any[], quantity?: number, note?: string) => void;
   removeItem: (cartItemId: string) => void;
   updateQuantity: (cartItemId: string, quantity: number) => void;
@@ -25,32 +24,26 @@ export function CartProvider({ children }: { children: ReactNode }) {
     const saved = localStorage.getItem('cart_company');
     return saved ? JSON.parse(saved) : null;
   });
-  const [notes, setNotes] = useState<Record<string, string>>(() => {
-    const saved = localStorage.getItem('cart_notes');
-    return saved ? JSON.parse(saved) : {};
-  });
 
   useEffect(() => {
     localStorage.setItem('cart_items', JSON.stringify(items));
-    localStorage.setItem('cart_notes', JSON.stringify(notes));
     if (company) {
       localStorage.setItem('cart_company', JSON.stringify(company));
     } else {
       localStorage.removeItem('cart_company');
     }
-  }, [items, company, notes]);
+  }, [items, company]);
 
   const addItem = (product: Product, comp: Company, options: any[] = [], quantity: number = 1, note: string = '') => {
-    // Generate a unique ID for this item + options combo + note
+    // Generate a unique ID for this item based on product + options
+    // Note is now editable and doesn't define the item's identity in the cart
     const optionsHash = options.map(o => o.id).sort().join('-');
-    const noteHash = note ? btoa(note).slice(0, 10) : '';
-    const cartItemId = `${product.id}${optionsHash ? `-${optionsHash}` : ''}${noteHash ? `-${noteHash}` : ''}`;
+    const cartItemId = `${product.id}${optionsHash ? `-${optionsHash}` : ''}`;
 
     if (company && company.id !== comp.id) {
       if (!confirm('Você já possui itens de outra loja na sacola. Deseja limpar a sacola e iniciar um novo pedido?')) return;
       setItems([{ id: cartItemId, product, quantity, options, note }]);
       setCompany(comp);
-      setNotes({});
       return;
     }
     setCompany(comp);
@@ -58,7 +51,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       const existing = prev.find(i => i.id === cartItemId);
       if (existing) {
         return prev.map(i =>
-          i.id === cartItemId ? { ...i, quantity: i.quantity + quantity } : i
+          i.id === cartItemId ? { ...i, quantity: i.quantity + quantity, note: note || i.note } : i
         );
       }
       return [...prev, { id: cartItemId, product, quantity, options, note }];
@@ -71,11 +64,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
       if (filtered.length === 0) setCompany(null);
       return filtered;
     });
-    setNotes(prev => {
-      const next = { ...prev };
-      delete next[cartItemId];
-      return next;
-    });
   };
 
   const updateQuantity = (cartItemId: string, quantity: number) => {
@@ -86,14 +74,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
   };
 
   const updateNote = (cartItemId: string, note: string) => {
-    setNotes(prev => ({ ...prev, [cartItemId]: note }));
+    setItems(prev =>
+      prev.map(i => (i.id === cartItemId ? { ...i, note } : i))
+    );
   };
 
   const clearCart = () => {
     setItems([]);
     setCompany(null);
-    setNotes({});
-    localStorage.removeItem('cart_notes');
   };
 
   const calculateItemPrice = (item: CartItem) => {
@@ -114,7 +102,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const itemCount = items.reduce((sum, i) => sum + i.quantity, 0);
 
   return (
-    <CartContext.Provider value={{ items, company, notes, addItem, removeItem, updateQuantity, updateNote, clearCart, subtotal, itemCount }}>
+    <CartContext.Provider value={{ items, company, addItem, removeItem, updateQuantity, updateNote, clearCart, subtotal, itemCount }}>
       {children}
     </CartContext.Provider>
   );
