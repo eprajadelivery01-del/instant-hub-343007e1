@@ -252,7 +252,7 @@ export default function Profile() {
                 Resgatar agora
               </button>
             </div>
-            <span className="absolute -right-4 -bottom-6 text-[110px] opacity-20 group-hover:scale-110 transition-transform duration-700 leading-none grayscale brightness-200">ðŸ”¥</span>
+            <span className="absolute -right-4 -bottom-6 text-[110px] opacity-20 group-hover:scale-110 transition-transform duration-700 leading-none grayscale brightness-200">🔥</span>
           </div>
 
           {/* ——— HISTÓRICO DE PEDIDOS ——— */}
