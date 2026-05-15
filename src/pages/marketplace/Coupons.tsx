@@ -2,11 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { Coupon } from '@/types/database';
+import { useAddress } from '@/contexts/AddressContext';
 import { ArrowLeft, Ticket, Search, Clock, PlusCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function Coupons() {
   const navigate = useNavigate();
+  const { selectedAddress } = useAddress();
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -15,12 +17,21 @@ export default function Coupons() {
       // Fetch available coupons that are active and not expired
       const { data } = await supabase
         .from('coupons')
-        .select('*')
+        .select('*, companies(name, logo_url, region_id)')
         .eq('active', true)
         .order('created_at', { ascending: false });
 
       // We do a soft filter for expiry since the policy handles most, but just to be safe
-      const valid = (data || []).filter(c => !c.expires_at || new Date(c.expires_at) > new Date());
+      let valid = (data || []).filter(c => !c.expires_at || new Date(c.expires_at) > new Date());
+      
+      // Filtrar por região se houver endereço selecionado
+      if (selectedAddress?.region_id) {
+        valid = valid.filter(c => 
+          !c.company_id || 
+          c.companies?.region_id === selectedAddress.region_id
+        );
+      }
+
       setCoupons(valid);
       setLoading(false);
     };
@@ -104,6 +115,9 @@ export default function Coupons() {
                           ? `${coupon.discount_value}% de Desconto` 
                           : `R$ ${coupon.discount_value.toLocaleString('pt-BR', {minimumFractionDigits:2})} OFF`}
                       </h3>
+                      <p className="text-[10px] font-bold text-primary uppercase mt-0.5">
+                        {coupon.companies?.name || 'É Pra Já Delivery'}
+                      </p>
                       {coupon.description && (
                          <p className="text-xs font-medium text-muted-foreground mt-0.5 truncate">{coupon.description}</p>
                       )}

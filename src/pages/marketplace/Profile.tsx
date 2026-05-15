@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useAddress } from '@/contexts/AddressContext';
 import MarketplaceLayout from '@/components/marketplace/MarketplaceLayout';
 import { toast } from 'sonner';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
@@ -36,6 +37,7 @@ const STATUS_MAP: Record<string, { label: string; color: string; icon: React.Ele
 export default function Profile() {
   const { user, profile, signOut, refreshProfile } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const { selectedAddress } = useAddress();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -62,15 +64,24 @@ export default function Profile() {
   }, [user]);
 
   const fetchCoupons = async () => {
-    if (coupons.length > 0) { setShowCoupons(true); return; }
     setLoadingCoupons(true);
     try {
       const { data } = await supabase
         .from('coupons')
-        .select('*')
+        .select('*, companies(name, logo_url, region_id)')
         .eq('active', true)
         .order('created_at', { ascending: false });
-      const valid = (data || []).filter(c => !c.expires_at || new Date(c.expires_at) > new Date());
+        
+      let valid = (data || []).filter(c => !c.expires_at || new Date(c.expires_at) > new Date());
+      
+      // Filtrar por região se houver endereço selecionado
+      if (selectedAddress?.region_id) {
+        valid = valid.filter(c => 
+          !c.company_id || 
+          c.companies?.region_id === selectedAddress.region_id
+        );
+      }
+
       setCoupons(valid);
     } catch { /* silent */ }
     finally { setLoadingCoupons(false); setShowCoupons(true); }
@@ -129,93 +140,136 @@ export default function Profile() {
 
   if (!user) { navigate('/marketplace/login'); return null; }
 
-  const displayName = profile?.full_name || user.email?.split('@')[0] || 'Usuário';
+  const displayName = profile?.full_name || user.email?.split('@')[0] || 'UsuÃ¡rio';
   const initial = displayName.charAt(0).toUpperCase();
 
   return (
     <MarketplaceLayout>
-      <div className="min-h-screen pb-32">
-
-        {/* â”€â”€ AVATAR + NOME â”€â”€ */}
-        <div className="px-5 pt-10 pb-6 flex flex-col items-center text-center">
-          <div className="relative mb-4">
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploading}
-              className="w-24 h-24 rounded-full bg-muted border-4 border-background shadow-xl overflow-hidden hover:scale-105 transition-transform"
-            >
-              {profile?.avatar_url ? (
-                <img src={profile.avatar_url} className="w-full h-full object-cover" alt="Foto" />
-              ) : (
-                <div className="w-full h-full gradient-primary flex items-center justify-center">
-                  <span className="text-3xl font-black text-white">{initial}</span>
-                </div>
-              )}
-            </button>
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-foreground border-2 border-background flex items-center justify-center shadow-md"
-            >
-              {uploading
-                ? <Loader2 className="h-3.5 w-3.5 animate-spin text-background" />
-                : <Camera className="h-3.5 w-3.5 text-background" />
-              }
-            </button>
-            <input ref={fileInputRef} type="file" capture="environment" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
+      <div className="min-h-screen pb-32 bg-background/50">
+        
+        {/* â”€â”€ HEADER (SOCIAL STYLE) â”€â”€ */}
+        <div className="relative">
+          {/* Banner */}
+          <div className="h-40 w-full bg-gradient-to-br from-primary via-orange-500 to-orange-600 relative overflow-hidden">
+            <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] animate-pulse" />
+            <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
           </div>
+          
+          {/* Avatar Overlay */}
+          <div className="px-5 -mt-14 relative z-10 flex flex-col items-center">
+            <div className="relative group">
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="w-28 h-28 rounded-[2rem] bg-background p-1.5 shadow-2xl overflow-hidden active:scale-95 transition-all"
+              >
+                <div className="w-full h-full rounded-[1.6rem] overflow-hidden bg-muted">
+                  {profile?.avatar_url ? (
+                    <img src={profile.avatar_url} className="w-full h-full object-cover" alt="Foto" />
+                  ) : (
+                    <div className="w-full h-full gradient-primary flex items-center justify-center">
+                      <span className="text-4xl font-black text-white">{initial}</span>
+                    </div>
+                  )}
+                </div>
+              </button>
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="absolute bottom-1 right-1 w-9 h-9 rounded-2xl bg-foreground text-background border-4 border-background flex items-center justify-center shadow-lg hover:scale-110 transition-transform"
+              >
+                {uploading
+                  ? <Loader2 className="h-4 w-4 animate-spin" />
+                  : <Camera className="h-4 w-4" />
+                }
+              </button>
+              <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
+            </div>
 
-          <h1 className="text-xl font-black text-foreground">{displayName}</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">{user.email}</p>
-          {profile?.phone && (
-            <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-              <Phone className="h-3 w-3" /> {profile.phone}
-            </p>
-          )}
+            <div className="mt-4 text-center">
+              <h1 className="text-2xl font-black text-foreground tracking-tight">{displayName}</h1>
+              <div className="flex items-center justify-center gap-2 mt-1">
+                <span className="px-2.5 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-black uppercase tracking-wider border border-primary/20">
+                  Cliente Premium
+                </span>
+                <p className="text-xs text-muted-foreground font-medium">{user.email}</p>
+              </div>
+            </div>
 
-          <button
-            onClick={() => setEditing(true)}
-            className="mt-4 px-6 py-2 rounded-xl border border-border text-sm font-bold text-foreground hover:bg-muted transition-all"
-          >
-            Editar Dados
+            <div className="flex gap-2 mt-6 w-full max-w-sm">
+              <button
+                onClick={() => setEditing(true)}
+                className="flex-1 h-11 rounded-2xl bg-foreground text-background text-sm font-black hover:opacity-90 active:scale-95 transition-all shadow-md"
+              >
+                Editar Perfil
+              </button>
+              <button
+                onClick={() => navigate('/marketplace/addresses')}
+                className="w-11 h-11 rounded-2xl bg-card border border-border flex items-center justify-center text-foreground hover:bg-muted active:scale-95 transition-all shadow-sm"
+              >
+                <MapPin className="h-5 w-5" />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* â”€â”€ STATS ROW â”€â”€ */}
+        <div className="px-5 mt-8 grid grid-cols-3 gap-3">
+          <div className="bg-card border border-border/50 rounded-[2rem] p-4 text-center shadow-sm">
+            <p className="text-xl font-black text-foreground">{orders.length}</p>
+            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-0.5">Pedidos</p>
+          </div>
+          <button onClick={fetchCoupons} className="bg-card border border-border/50 rounded-[2rem] p-4 text-center shadow-sm active:scale-95 transition-transform">
+            <p className="text-xl font-black text-primary">{coupons.length || 'â€”'}</p>
+            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-0.5">Cupons</p>
           </button>
+          <div className="bg-card border border-border/50 rounded-[2rem] p-4 text-center shadow-sm">
+            <p className="text-xl font-black text-foreground">MT</p>
+            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-0.5">RegiÃ£o</p>
+          </div>
         </div>
 
         <div className="px-5 space-y-4">
 
           {/* â”€â”€ CLUBE â”€â”€ */}
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary to-orange-600 p-5 shadow-lg shadow-primary/30">
+          <div className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-primary to-orange-600 p-6 shadow-xl shadow-primary/20 group">
+            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10" />
             <div className="relative z-10 flex items-center justify-between gap-4">
-              <div>
-                <p className="text-[9px] font-black text-white/70 uppercase tracking-widest mb-1">Clube É Pra Já</p>
-                <p className="text-sm font-black text-white leading-snug">Economize com cupons<br/>no seu lanche favorito</p>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <div className="h-5 w-5 rounded-full bg-white/20 flex items-center justify-center">
+                    <Ticket className="h-3 w-3 text-white" />
+                  </div>
+                  <p className="text-[10px] font-black text-white/80 uppercase tracking-[0.2em]">Clube VIP</p>
+                </div>
+                <p className="text-base font-black text-white leading-tight">Cupons exclusivos<br/>liberados para vocÃª</p>
               </div>
               <button
                 onClick={fetchCoupons}
                 disabled={loadingCoupons}
-                className="shrink-0 h-9 px-4 rounded-xl bg-white text-primary text-xs font-black hover:opacity-90 active:scale-95 transition-all flex items-center gap-1.5 disabled:opacity-70"
+                className="shrink-0 h-11 px-5 rounded-[1.2rem] bg-white text-primary text-[11px] font-black hover:scale-105 active:scale-95 transition-all flex items-center gap-2 shadow-lg"
               >
-                {loadingCoupons ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Ticket className="h-3.5 w-3.5" />}
-                Ver benefícios
+                {loadingCoupons ? <Loader2 className="h-4 w-4 animate-spin" /> : <ChevronRight className="h-4 w-4" />}
+                Resgatar agora
               </button>
             </div>
-            <span className="absolute -right-3 -bottom-5 text-[100px] opacity-10 select-none leading-none">ðŸ”</span>
+            <span className="absolute -right-4 -bottom-6 text-[110px] opacity-20 group-hover:scale-110 transition-transform duration-700 leading-none grayscale brightness-200">ðŸ”¥</span>
           </div>
 
           {/* â”€â”€ HISTÃ“RICO DE PEDIDOS â”€â”€ */}
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-black uppercase tracking-widest text-foreground">Histórico de Pedidos</h2>
+          <div className="pt-2">
+            <div className="flex items-center justify-between mb-4 px-1">
+              <h2 className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground/80">Seus Pedidos</h2>
               {orders.length > 0 && (
                 <button
                   onClick={() => navigate('/marketplace/orders')}
-                  className="text-[11px] font-bold text-primary"
+                  className="flex items-center gap-1 text-[11px] font-black text-primary hover:gap-2 transition-all"
                 >
-                  Ver todos
+                  Ver histÃ³rico <ChevronRight className="h-3 w-3" />
                 </button>
               )}
             </div>
 
-            <div className="bg-card border border-border rounded-2xl overflow-hidden">
+            <div className="bg-card border border-border/50 rounded-[2.5rem] overflow-hidden shadow-sm">
               {loadingOrders ? (
                 <div className="py-10 flex items-center justify-center">
                   <Loader2 className="h-6 w-6 animate-spin text-muted-foreground/40" />
@@ -251,10 +305,10 @@ export default function Profile() {
                       <button
                         key={order.id}
                         onClick={() => navigate(`/marketplace/orders/${order.id}`)}
-                        className="w-full flex items-center gap-3 px-4 py-3.5 text-left hover:bg-muted/30 active:bg-muted/50 transition-colors"
+                        className="w-full flex items-center gap-3 px-6 py-4.5 text-left hover:bg-muted/30 active:bg-muted/50 transition-colors"
                       >
                         {/* Store logo or icon */}
-                        <div className="w-11 h-11 rounded-xl bg-muted overflow-hidden shrink-0 flex items-center justify-center border border-border/50">
+                        <div className="w-12 h-12 rounded-[1.2rem] bg-muted overflow-hidden shrink-0 flex items-center justify-center border border-border/50">
                           {logoSrc ? (
                             <img src={logoSrc} className="w-full h-full object-cover" alt="" />
                           ) : (
@@ -264,10 +318,10 @@ export default function Profile() {
 
                         {/* Info */}
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-bold text-foreground truncate">
+                          <p className="text-sm font-black text-foreground truncate">
                             {order.companies?.name || 'Pedido'}
                           </p>
-                          <p className="text-xs text-muted-foreground mt-0.5">
+                          <p className="text-[11px] text-muted-foreground mt-0.5">
                             {order.created_at
                               ? format(new Date(order.created_at), "dd 'de' MMM, HH:mm", { locale: ptBR })
                               : 'â€”'}
@@ -292,46 +346,76 @@ export default function Profile() {
             </div>
           </div>
 
-          {/* â”€â”€ MENU â”€â”€ */}
-          <div className="bg-card border border-border rounded-2xl overflow-hidden">
-            {[
-              { icon: MapPin,    label: 'Endereços', subtitle: 'Gerenciar locais salvos',      onClick: () => navigate('/marketplace/addresses'), chevron: true },
-              { icon: Wallet,    label: 'Carteira',  subtitle: 'Saldo e recargas',              onClick: () => toast('Em breve!') },
-              { icon: theme === 'dark' ? Moon : Sun, label: 'Aparência', subtitle: theme === 'dark' ? 'Modo escuro ativo' : 'Modo claro ativo', onClick: () => toggleTheme() },
-              { icon: HelpCircle, label: 'Ajuda',   subtitle: 'Suporte e dúvidas',             onClick: () => setSupportType('support') },
-              { icon: FileText,  label: 'Termos de Uso', subtitle: 'Regras da plataforma',    onClick: () => navigate('/marketplace/terms'), chevron: true },
-              { icon: ShieldCheck, label: 'Privacidade', subtitle: 'Seus dados protegidos',   onClick: () => navigate('/marketplace/privacy'), chevron: true },
-            ].map((item, i, arr) => (
-              <button
-                key={item.label}
-                onClick={item.onClick}
-                className={cn('w-full flex items-center gap-3 px-5 py-4 text-left hover:bg-muted/40 transition-colors', i < arr.length - 1 && 'border-b border-border/50')}
-              >
-                <div className="w-9 h-9 rounded-xl bg-muted flex items-center justify-center shrink-0">
-                  <item.icon className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-bold text-foreground">{item.label}</p>
-                  <p className="text-xs text-muted-foreground">{item.subtitle}</p>
-                </div>
-                {item.chevron && <ChevronRight className="h-4 w-4 text-muted-foreground/40" />}
-              </button>
-            ))}
+          {/* â”€â”€ MENU CONFIG â”€â”€ */}
+          <div className="pt-4">
+            <h2 className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground/80 mb-4 px-1">Ajustes & Conta</h2>
+            <div className="bg-card border border-border/50 rounded-[2.5rem] overflow-hidden shadow-sm">
+              {[
+                { icon: MapPin,    label: 'EndereÃ§os', subtitle: 'Locais de entrega salvos',    onClick: () => navigate('/marketplace/addresses'), chevron: true },
+                { icon: Wallet,    label: 'Carteira',  subtitle: 'Saldo e transaÃ§Ãµes',           onClick: () => toast('Em breve!') },
+                { icon: theme === 'dark' ? Moon : Sun, label: 'AparÃªncia', subtitle: theme === 'dark' ? 'Modo Escuro' : 'Modo Claro', onClick: () => toggleTheme() },
+              ].map((item, i, arr) => (
+                <button
+                  key={item.label}
+                  onClick={item.onClick}
+                  className={cn('w-full flex items-center gap-3 px-6 py-4.5 text-left hover:bg-muted/40 transition-colors', i < arr.length - 1 && 'border-b border-border/50')}
+                >
+                  <div className="w-10 h-10 rounded-2xl bg-secondary flex items-center justify-center shrink-0">
+                    <item.icon className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-black text-foreground truncate">{item.label}</p>
+                    <p className="text-[11px] text-muted-foreground/70 truncate">{item.subtitle}</p>
+                  </div>
+                  {item.chevron && <ChevronRight className="h-4 w-4 text-muted-foreground/20" />}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* â”€â”€ SUPORTE & AJUDA â”€â”€ */}
+          <div className="pt-4">
+            <h2 className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground/80 mb-4 px-1">Suporte e Legal</h2>
+            <div className="bg-card border border-border/50 rounded-[2.5rem] overflow-hidden shadow-sm">
+              {[
+                { icon: HelpCircle, label: 'Central de Ajuda', subtitle: 'Suporte e dÃºvidas frequentes', onClick: () => setSupportType('support') },
+                { icon: FileText,   label: 'Termos de Uso',   subtitle: 'Regras de utilizaÃ§Ã£o',        onClick: () => navigate('/marketplace/terms'), chevron: true },
+                { icon: ShieldCheck, label: 'Privacidade',    subtitle: 'ProteÃ§Ã£o de seus dados',      onClick: () => navigate('/marketplace/privacy'), chevron: true },
+              ].map((item, i, arr) => (
+                <button
+                  key={item.label}
+                  onClick={item.onClick}
+                  className={cn('w-full flex items-center gap-3 px-6 py-4.5 text-left hover:bg-muted/40 transition-colors', i < arr.length - 1 && 'border-b border-border/50')}
+                >
+                  <div className="w-10 h-10 rounded-2xl bg-secondary flex items-center justify-center shrink-0">
+                    <item.icon className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-black text-foreground truncate">{item.label}</p>
+                    <p className="text-[11px] text-muted-foreground/70 truncate">{item.subtitle}</p>
+                  </div>
+                  {item.chevron && <ChevronRight className="h-4 w-4 text-muted-foreground/20" />}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* â”€â”€ ENTREGADOR â”€â”€ */}
           <button
             onClick={() => setSupportType('driver_application')}
-            className="w-full flex items-center gap-4 p-5 rounded-2xl bg-foreground text-background hover:opacity-90 transition-all"
+            className="w-full relative overflow-hidden flex items-center gap-4 p-6 rounded-[2.5rem] bg-foreground text-background hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-foreground/10"
           >
-            <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center shrink-0">
-              <Bike className="h-5 w-5" />
+            <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent pointer-events-none" />
+            <div className="w-12 h-12 rounded-[1.2rem] bg-background/10 backdrop-blur-sm flex items-center justify-center shrink-0">
+              <Bike className="h-6 w-6 text-background" />
             </div>
-            <div className="text-left">
-              <p className="font-black text-sm">Seja um Entregador</p>
-              <p className="text-[11px] opacity-60 font-medium">Trabalhe conosco e ganhe mais</p>
+            <div className="text-left relative z-10">
+              <p className="font-black text-base leading-tight">Seja um Entregador</p>
+              <p className="text-[11px] opacity-60 font-black uppercase tracking-widest mt-1">Ganhos extras por corrida</p>
             </div>
-            <ChevronRight className="ml-auto h-4 w-4 opacity-40" />
+            <div className="ml-auto w-8 h-8 rounded-full bg-background/10 flex items-center justify-center">
+              <ChevronRight className="h-4 w-4 text-background opacity-60" />
+            </div>
           </button>
 
           {/* â”€â”€ SAIR â”€â”€ */}
@@ -351,7 +435,7 @@ export default function Profile() {
             <AlertDialogContent className="rounded-2xl">
               <AlertDialogHeader>
                 <AlertDialogTitle>Excluir conta?</AlertDialogTitle>
-                <AlertDialogDescription>Esta ação é permanente e não pode ser desfeita.</AlertDialogDescription>
+                <AlertDialogDescription>Esta aÃ§Ã£o Ã© permanente e nÃ£o pode ser desfeita.</AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter className="flex-col gap-2">
                 <AlertDialogAction
@@ -401,7 +485,7 @@ export default function Profile() {
                 className="w-full py-4 rounded-2xl gradient-primary text-primary-foreground font-black text-sm flex items-center justify-center gap-2 shadow-lg shadow-primary/20 disabled:opacity-50"
               >
                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-                {saving ? 'Salvando...' : 'Salvar Alterações'}
+                {saving ? 'Salvando...' : 'Salvar AlteraÃ§Ãµes'}
               </button>
             </div>
           </div>
@@ -433,8 +517,8 @@ export default function Profile() {
             {/* Header */}
             <div className="px-6 pt-6 pb-4 flex items-center justify-between border-b border-border shrink-0">
               <div>
-                <p className="text-[10px] text-primary font-black uppercase tracking-widest">Clube É Pra Já</p>
-                <h3 className="text-xl font-black text-foreground">Cupons Disponíveis</h3>
+                <p className="text-[10px] text-primary font-black uppercase tracking-widest">Clube Ã‰ Pra JÃ¡</p>
+                <h3 className="text-xl font-black text-foreground">Cupons DisponÃveis</h3>
               </div>
               <button onClick={() => setShowCoupons(false)} className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
                 <X className="h-5 w-5 text-muted-foreground" />
@@ -451,7 +535,7 @@ export default function Profile() {
                 <div className="py-16 flex flex-col items-center gap-3 text-center text-muted-foreground/40">
                   <Ticket className="h-12 w-12" />
                   <p className="font-black text-sm uppercase tracking-widest">Nenhum cupom ativo</p>
-                  <p className="text-xs text-muted-foreground">Aguarde novas promoções!</p>
+                  <p className="text-xs text-muted-foreground">Aguarde novas promoÃ§Ãµes!</p>
                 </div>
               ) : (
                 coupons.map((coupon) => (
@@ -460,7 +544,7 @@ export default function Profile() {
                       {/* Icon */}
                       <div className="w-14 h-14 shrink-0 rounded-2xl bg-primary/10 flex flex-col items-center justify-center gap-0.5">
                         <Ticket className="h-5 w-5 text-primary" />
-                        <span className="text-[7px] font-black text-primary uppercase tracking-widest">É PRA JÃ</span>
+                        <span className="text-[7px] font-black text-primary uppercase tracking-widest">Ã‰ PRA JÃ€ </span>
                       </div>
 
                       {/* Info */}
@@ -470,12 +554,15 @@ export default function Profile() {
                             ? `${coupon.discount_value}% de Desconto`
                             : `R$ ${Number(coupon.discount_value).toFixed(2).replace('.', ',')} OFF`}
                         </p>
+                        <p className="text-[10px] font-bold text-primary uppercase mt-0.5">
+                          {coupon.companies?.name || 'Ã‰ Pra JÃ¡ Delivery'}
+                        </p>
                         {coupon.description && (
                           <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{coupon.description}</p>
                         )}
                         <div className="flex items-center gap-3 mt-2 flex-wrap">
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-muted text-[10px] font-bold uppercase tracking-wider">
-                            <span className="text-muted-foreground">Código:</span>
+                            <span className="text-muted-foreground">CÃ³digo:</span>
                             <span className="text-primary">{coupon.code}</span>
                           </span>
                           {coupon.expires_at && (
@@ -493,7 +580,7 @@ export default function Profile() {
                       <span className="text-[10px] font-bold text-muted-foreground">
                         {coupon.min_order_value > 0
                           ? `Pedidos acima de R$ ${Number(coupon.min_order_value).toFixed(2).replace('.', ',')}`
-                          : 'Válido para qualquer valor'}
+                          : 'VÃ¡lido para qualquer valor'}
                       </span>
                       <button
                         onClick={() => handleCopyCode(coupon.code)}
@@ -517,4 +604,3 @@ export default function Profile() {
     </MarketplaceLayout>
   );
 }
-

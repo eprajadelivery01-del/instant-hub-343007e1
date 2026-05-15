@@ -33,6 +33,13 @@ export function OrderStoreChat({ orderId, companyId, companyName }: OrderStoreCh
   const endRef = useRef<HTMLDivElement>(null);
   const topic = `order_${orderId}`;
 
+  const QUICK_MESSAGES = [
+    "Onde está meu pedido? 🛵",
+    "Pode mandar mais guardanapo? 🍽️",
+    "Preciso mudar o endereço 🏠",
+    "Já saiu para entrega? ✨"
+  ];
+
   useEffect(() => {
     if (!user) return;
     let active = true;
@@ -88,9 +95,10 @@ export function OrderStoreChat({ orderId, companyId, companyName }: OrderStoreCh
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const send = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!text.trim() || !sessionId || !user || sending) return;
+  const send = async (e?: React.FormEvent, customText?: string) => {
+    if (e) e.preventDefault();
+    const msg = (customText || text).trim();
+    if (!msg || !sessionId || !user || sending) return;
     const msg = text.trim();
     setText('');
     setSending(true);
@@ -137,6 +145,20 @@ export function OrderStoreChat({ orderId, companyId, companyName }: OrderStoreCh
         )}
         <div ref={endRef} />
       </div>
+
+      {/* Sugestões de Respostas */}
+      <div className="flex gap-2 overflow-x-auto pb-2 mb-1 scrollbar-hide">
+        {QUICK_MESSAGES.map((msg, i) => (
+          <button
+            key={i}
+            onClick={() => send(undefined, msg)}
+            className="shrink-0 px-3 py-1.5 rounded-full bg-primary/5 border border-primary/10 text-[10px] font-bold text-primary active:scale-95 transition-all"
+          >
+            {msg}
+          </button>
+        ))}
+      </div>
+
       <form onSubmit={send} className="flex gap-2">
         <Input
           value={text}
@@ -144,8 +166,8 @@ export function OrderStoreChat({ orderId, companyId, companyName }: OrderStoreCh
           placeholder="Digite sua mensagem..."
           className="rounded-xl h-10"
         />
-        <Button type="submit" size="icon" className="rounded-xl h-10 w-10 shrink-0" disabled={!text.trim() || !sessionId}>
-          <Send className="h-4 w-4" />
+        <Button type="submit" size="icon" id="btn-send-store" className="rounded-xl h-10 w-10 shrink-0" disabled={(!text.trim() && !sending) || !sessionId}>
+          {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
         </Button>
       </form>
     </div>

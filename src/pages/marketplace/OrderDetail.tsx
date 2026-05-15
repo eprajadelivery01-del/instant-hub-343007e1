@@ -61,6 +61,13 @@ export default function OrderDetail() {
   const [reviewComment, setReviewComment] = useState('');
   const chatEndRef = useRef<HTMLDivElement>(null);
 
+  const DRIVER_QUICK_MESSAGES = [
+    "Estou descendo! 🚪",
+    "Pode deixar na portaria 🏢",
+    "Onde você está? 📍",
+    "Vou abrir o portão 🏠"
+  ];
+
   useEffect(() => {
     if (!id) return;
     const fetchAll = async () => {
@@ -115,9 +122,14 @@ export default function OrderDetail() {
 
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
 
-  const sendMessage = async () => {
-    if (!newMessage.trim() || !delivery || !user) return;
-    await supabase.from('chat_messages').insert({ delivery_id: delivery.id, sender_id: user.id, message: newMessage.trim() });
+  const sendMessage = async (customText?: string) => {
+    const msg = (customText || newMessage).trim();
+    if (!msg || !delivery || !user) return;
+    await supabase.from('chat_messages').insert({ 
+      delivery_id: delivery.id, 
+      sender_id: user.id, 
+      message: msg 
+    });
     setNewMessage('');
   };
 
@@ -336,9 +348,34 @@ export default function OrderDetail() {
                   ))}
                   <div ref={chatEndRef} />
                 </div>
+
+                {/* Quick Replies Driver */}
+                <div className="flex gap-2 overflow-x-auto pb-2 mb-1 scrollbar-hide">
+                  {DRIVER_QUICK_MESSAGES.map((msg, i) => (
+                    <button
+                      key={i}
+                      onClick={() => sendMessage(msg)}
+                      className="shrink-0 px-3 py-1.5 rounded-full bg-primary/5 border border-primary/10 text-[10px] font-bold text-primary active:scale-95 transition-all"
+                    >
+                      {msg}
+                    </button>
+                  ))}
+                </div>
+
                 <div className="flex gap-2">
-                  <Input value={newMessage} onChange={e => setNewMessage(e.target.value)} placeholder="Digite..." className="rounded-xl h-10" onKeyDown={e => e.key === 'Enter' && sendMessage()} />
-                  <Button size="icon" className="rounded-xl h-10 w-10 shrink-0" onClick={sendMessage}>
+                  <Input 
+                    value={newMessage} 
+                    onChange={e => setNewMessage(e.target.value)} 
+                    placeholder="Digite..." 
+                    className="rounded-xl h-10" 
+                    onKeyDown={e => e.key === 'Enter' && sendMessage()} 
+                  />
+                  <Button 
+                    size="icon" 
+                    id="btn-send-driver"
+                    className="rounded-xl h-10 w-10 shrink-0" 
+                    onClick={() => sendMessage()}
+                  >
                     <Send className="h-4 w-4" />
                   </Button>
                 </div>

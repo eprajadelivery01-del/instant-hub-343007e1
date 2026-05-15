@@ -236,7 +236,7 @@ export default function Home() {
                 key={company.id}
                 onClick={() => navigate(`/marketplace/store/${company.id}`)}
                 className={cn(
-                  "premium-card premium-card-interactive group flex min-w-[252px] flex-col gap-3 overflow-hidden rounded-[30px] p-4 text-left md:min-w-0",
+                  "premium-card premium-card-interactive group flex min-w-[252px] h-full flex-col gap-3 overflow-hidden rounded-[30px] p-4 text-left md:min-w-0",
                   (!company.active || !company.is_open) && "opacity-50 grayscale"
                 )}
               >
@@ -262,7 +262,7 @@ export default function Home() {
                   <div className="hero-image-overlay absolute inset-0" />
                 </div>
 
-                <div className="flex items-center justify-between px-1">
+                <div className="flex items-center justify-between px-1 mt-auto">
                   <div className="flex items-center gap-1 text-xs font-semibold text-warning">
                     <Star className="h-3 w-3 fill-current" />
                     <span>{company.rating.toFixed(1)}</span>

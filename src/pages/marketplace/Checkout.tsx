@@ -246,40 +246,46 @@ export default function Checkout() {
         payload: requestBody,
       });
 
-      const { data, error: fnError } = await supabase.functions.invoke('create-order', {
-        body: requestBody,
+      // --- ALTERAÇÃO: USANDO RPC create_order_v3 PARA MAIOR CONFIABILIDADE ---
+      const { data, error: rpcError } = await supabase.rpc('create_order_v3', {
+        p_items: requestBody.items,
+        p_company_id: requestBody.company_id,
+        p_address_id: requestBody.address_id,
+        p_payment_method: requestBody.payment_method,
+        p_coupon_code: requestBody.coupon_code,
+        p_notes: requestBody.notes,
+        p_needs_change: requestBody.needs_change,
+        p_change_for: requestBody.change_for,
+        p_idempotency_key: requestBody.idempotency_key
       });
 
-      if (fnError || !data?.order_id) {
-        const rawMsg =
-          (data as any)?.error || (fnError as any)?.context?.error || fnError?.message || 'Erro ao criar pedido';
-        const friendly = mapServerError(String(rawMsg));
+      if (rpcError) {
+        const friendly = mapServerError(rpcError.message);
         void recordAuditLog({
           request_id: requestId,
           event: 'orders.insert.error',
           user_id: user.id,
-          error_message: rawMsg,
+          error_message: rpcError.message,
           payload: requestBody,
           context: { friendly },
         });
         throw new Error(friendly);
       }
 
+      const orderId = data?.order_id || data; // Dependendo de como o RPC retorna
+      if (!orderId) throw new Error('Falha ao obter ID do pedido.');
+
       void recordAuditLog({
         request_id: requestId,
         event: 'orders.insert.success',
         user_id: user.id,
-        context: { order_id: data.order_id, idempotent: !!data.idempotent },
+        context: { order_id: orderId },
       });
 
       clearCart();
       resetIdempotencyKey();
-      if (data.idempotent) {
-        toast.info('Esse pedido já foi criado. Abrimos os detalhes para você.');
-      } else {
-        toast.success('Pedido realizado!');
-      }
-      navigate(`/marketplace/orders/${data.order_id}`);
+      toast.success('Pedido realizado!');
+      navigate(`/marketplace/orders/${orderId}`);
     } catch (err: any) {
       toast.error(err.message || 'Erro ao criar pedido');
     } finally { setLoading(false); releaseLock(); }
