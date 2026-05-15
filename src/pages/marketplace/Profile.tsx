@@ -399,9 +399,8 @@ export default function Profile() {
           </div>
 
           {/* Footer Branding */}
-          <div className="py-12 flex flex-col items-center gap-1 opacity-20">
+          <div className="py-12 flex flex-col items-center opacity-20">
             <p className="text-[11px] font-black tracking-[0.8em] text-foreground ml-3">BONASOFT</p>
-            <p className="text-[8px] font-bold uppercase tracking-widest">Tecnologia para Delivery</p>
           </div>
         </div>
       </div>
