@@ -112,25 +112,44 @@ export function SupportChat({ topic, title, companyId = null }: SupportChatProps
     const msgText = (customText || newMessage).trim();
     if (!msgText || !user || !conversationId || sending) return;
 
+    const optimisticMsg: Message = {
+      id: Math.random().toString(36).substr(2, 9),
+      sender_id: user.id,
+      content: msgText,
+      created_at: new Date().toISOString()
+    };
+
     setNewMessage('');
     setSending(true);
 
     try {
-      const { error } = await supabase.from('messages').insert({
+      // Adiciona localmente para feedback instantâneo
+      setMessages(prev => [...prev, optimisticMsg]);
+
+      const { data, error } = await supabase.from('messages').insert({
         conversation_id: conversationId,
         sender_id: user.id,
         content: msgText
-      });
+      }).select().single();
 
-      if (error) throw error;
+      if (error) {
+        // Remove otimista se falhar
+        setMessages(prev => prev.filter(m => m.id !== optimisticMsg.id));
+        throw error;
+      }
 
-      // Atualiza o timestamp da conversa para ela subir na lista do admin
+      // Substitui a mensagem otimista pela real do banco (com ID correto)
+      if (data) {
+        setMessages(prev => prev.map(m => m.id === optimisticMsg.id ? data : m));
+      }
+
       await supabase.from('conversations').update({ 
         updated_at: new Date().toISOString() 
       }).eq('id', conversationId);
 
     } catch (err) {
       console.error("[SupportChat] Erro ao enviar:", err);
+      toast.error("Falha ao enviar mensagem");
     } finally {
       setSending(false);
     }
@@ -163,7 +182,8 @@ export function SupportChat({ topic, title, companyId = null }: SupportChatProps
                 <button
                   key={idx}
                   onClick={() => handleSend(undefined, m.text)}
-                  className="px-4 py-3 rounded-2xl bg-card border border-border/50 text-[11px] font-bold text-foreground text-left hover:border-primary hover:bg-primary/5 active:scale-95 transition-all shadow-sm"
+                  disabled={!conversationId || sending}
+                  className="px-4 py-3 rounded-2xl bg-card border border-border/50 text-[11px] font-bold text-foreground text-left hover:border-primary hover:bg-primary/5 active:scale-95 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {m.label}
                 </button>
