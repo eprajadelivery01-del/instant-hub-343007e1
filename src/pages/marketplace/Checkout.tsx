@@ -486,6 +486,7 @@ export default function Checkout() {
               <span className="text-primary">R$ {total.toFixed(2).replace('.', ',')}</span>
             </div>
           </div>
+        </div>
       </div>
       
       <div className="mt-16 mb-24 text-center">
