@@ -129,7 +129,7 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
   const fixedUi = (
     <>
       {!hideNav && (
-        <nav className="fixed inset-x-0 bottom-0 z-[80] w-full border-t border-border bg-background marketplace-bottom-nav">
+        <nav className="fixed inset-x-0 bottom-0 z-[80] w-full border-t border-white/5 bg-[#0a0a0a] marketplace-bottom-nav">
           <div className="flex h-16 items-center justify-around px-2">
             {navItems.map((item) => {
               const isHome = item.path === '/marketplace';
@@ -153,18 +153,18 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
                 >
                   <div className="relative">
                     <item.icon className={cn(
-                      'h-[22px] w-[22px] transition-all duration-200',
-                      active ? 'text-foreground stroke-[2.5px]' : 'text-muted-foreground stroke-[1.5px]'
+                      'h-[24px] w-[24px] transition-all duration-200',
+                      active ? 'text-white stroke-[2px]' : 'text-[#8a8a8a] stroke-[1.5px]'
                     )} />
                     {item.path === '/marketplace/orders' && orderCount > 0 && (
-                      <span className="absolute -top-1.5 -right-2.5 flex h-[14px] min-w-[14px] px-1 items-center justify-center rounded-full bg-primary text-[9px] font-black text-primary-foreground shadow-sm">
+                      <span className="absolute -top-1.5 -right-2.5 flex h-[15px] min-w-[15px] px-1 items-center justify-center rounded-full bg-primary text-[10px] font-black text-white shadow-sm">
                         {orderCount > 99 ? '99+' : orderCount}
                       </span>
                     )}
                   </div>
                   <span className={cn(
-                    'text-[10px] transition-all duration-200',
-                    active ? 'text-foreground font-bold' : 'text-muted-foreground font-medium'
+                    'text-[11px] transition-all duration-200 mt-0.5',
+                    active ? 'text-white font-semibold' : 'text-[#8a8a8a] font-medium'
                   )}>
                     {item.label}
                   </span>
