@@ -1,3 +1,4 @@
+// VERSION: 2026-05-15-1800 (FINAL_CLEANUP)
 import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
@@ -239,12 +240,7 @@ export default function Checkout() {
         idempotency_key: ik,
       };
 
-      void recordAuditLog({
-        request_id: requestId,
-        event: 'orders.insert.attempt',
-        user_id: user.id,
-        payload: requestBody,
-      });
+      /* audit log moved to edge function */
 
       // --- ALTERAÇÃO: USANDO EDGE FUNCTION PARA MAIOR CONFIABILIDADE ---
       const { data, error: functionError } = await supabase.functions.invoke('create-order', {
@@ -263,26 +259,14 @@ export default function Checkout() {
 
         const friendly = mapServerError(msg);
         
-        void recordAuditLog({
-          request_id: requestId,
-          event: 'orders.insert.error',
-          user_id: user.id,
-          error_message: msg,
-          payload: requestBody,
-          context: { friendly },
-        });
+        /* audit log moved to edge function */
         throw new Error(friendly);
       }
 
       const orderId = data?.order_id || data; // Dependendo de como o RPC retorna
       if (!orderId) throw new Error('Falha ao obter ID do pedido.');
 
-      void recordAuditLog({
-        request_id: requestId,
-        event: 'orders.insert.success',
-        user_id: user.id,
-        context: { order_id: orderId },
-      });
+      /* audit log moved to edge function */
 
       clearCart();
       resetIdempotencyKey();

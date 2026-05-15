@@ -42,7 +42,7 @@ export function OrderRatingModal() {
         .select(`
           id, created_at, company_id, 
           companies ( name, logo_url ),
-          deliveries ( driver_id, delivery_drivers ( id, profiles ( full_name ) ) )
+          deliveries ( driver_id, delivery_drivers ( id, full_name ) )
         `)
         .eq('customer_id', user.id)
         .in('status', ['delivered', 'completed'])
@@ -81,7 +81,7 @@ export function OrderRatingModal() {
         company_name: company.name,
         company_logo: logoUrl,
         driver_id: delivery?.driver_id,
-        driver_name: delivery?.delivery_drivers?.profiles?.full_name,
+        driver_name: delivery?.delivery_drivers?.full_name,
       });
     } catch (error) {
       console.error('Error checking for review:', error);

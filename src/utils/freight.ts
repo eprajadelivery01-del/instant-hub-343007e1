@@ -96,7 +96,7 @@ export async function calculateDeliveryFee(
       if (pointInPolygon(lat, lng, coords)) {
         // Tolerância: tenta 'price' (hub) ou 'delivery_fee' (cliente)
         const fee = Number(region.price ?? region.delivery_fee ?? 0);
-        console.log(`[freight] ✅ Região encontrada: ${region.name} — R$ ${fee.toFixed(2)}`);
+        // console.log(`[freight] ✅ Região encontrada: ${region.name} — R$ ${fee.toFixed(2)}`);
         return {
           fee,
           regionId: region.id,

@@ -8,7 +8,8 @@ const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers':
     'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS, GET, PUT, DELETE',
+  'Access-Control-Max-Age': '86400',
 };
 
 interface CartItemInput {
@@ -50,7 +51,9 @@ function newRequestId() {
 }
 
 Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { status: 204, headers: corsHeaders });
+  }
   if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
 
   const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
