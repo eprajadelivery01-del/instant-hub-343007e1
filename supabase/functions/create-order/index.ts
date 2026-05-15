@@ -237,11 +237,11 @@ Deno.serve(async (req) => {
   } else if (address.latitude && address.longitude) {
     const { data: regions } = await adminClient
       .from('regions')
-      .select('id, name, fee, polygon');
+      .select('id, name, price, delivery_fee, geometry');
     if (regions && regions.length > 0) {
       const inside = pickRegion(regions, Number(address.latitude), Number(address.longitude));
       if (inside) {
-        deliveryFee = Number(inside.fee) || 0;
+        deliveryFee = Number(inside.price ?? inside.delivery_fee ?? 0);
         regionId = inside.id;
         regionName = inside.name;
       } else {
@@ -408,7 +408,7 @@ Deno.serve(async (req) => {
 // ou array de {lat,lng}.
 function pickRegion(regions: any[], lat: number, lng: number) {
   for (const r of regions) {
-    const poly = normalizePolygon(r.polygon);
+    const poly = normalizePolygon(r.geometry);
     if (poly && pointInPolygon(lng, lat, poly)) return r;
   }
   return null;

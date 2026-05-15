@@ -246,26 +246,21 @@ export default function Checkout() {
         payload: requestBody,
       });
 
-      // --- ALTERAÇÃO: USANDO RPC create_order_v3 PARA MAIOR CONFIABILIDADE ---
-      const { data, error: rpcError } = await supabase.rpc('create_order_v3', {
-        p_items: requestBody.items,
-        p_company_id: requestBody.company_id,
-        p_address_id: requestBody.address_id,
-        p_payment_method: requestBody.payment_method,
-        p_coupon_code: requestBody.coupon_code,
-        p_notes: requestBody.notes,
-        p_needs_change: requestBody.needs_change,
-        p_change_for: requestBody.change_for,
-        p_idempotency_key: requestBody.idempotency_key
+      // --- ALTERAÇÃO: USANDO EDGE FUNCTION PARA MAIOR CONFIABILIDADE ---
+      const { data, error: functionError } = await supabase.functions.invoke('create-order', {
+        body: requestBody
       });
 
-      if (rpcError) {
-        const friendly = mapServerError(rpcError.message);
+      if (functionError) {
+        const errorData = typeof functionError.message === 'string' ? { message: functionError.message } : functionError;
+        const msg = errorData.error || errorData.message || 'Erro ao processar pedido';
+        const friendly = mapServerError(msg);
+        
         void recordAuditLog({
           request_id: requestId,
           event: 'orders.insert.error',
           user_id: user.id,
-          error_message: rpcError.message,
+          error_message: msg,
           payload: requestBody,
           context: { friendly },
         });
@@ -347,12 +342,6 @@ export default function Checkout() {
             <div className="flex items-center gap-2 p-3 rounded-xl bg-primary/5 text-primary text-sm">
               <Loader2 className="h-4 w-4 animate-spin shrink-0" />
               <span>Calculando frete da região...</span>
-            </div>
-          )}
-          {regionName && !loadingFee && (
-            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-primary/5 text-primary text-xs font-semibold">
-              <MapPin className="h-3.5 w-3.5" />
-              {regionName}
             </div>
           )}
         </div>
@@ -489,9 +478,7 @@ export default function Checkout() {
         </div>
       </div>
       
-      <div className="mt-16 mb-24 text-center">
-        <p className="text-[11px] font-black uppercase tracking-[0.6em] text-muted-foreground/30 ml-2">BONASOFT</p>
-      </div>
+
 
       <div className="fixed bottom-0 left-0 right-0 border-t border-border bg-background/95 backdrop-blur-lg p-4 safe-area-bottom">
         <div className="mx-auto max-w-lg">
