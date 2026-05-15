@@ -211,10 +211,7 @@ export default function Checkout() {
       }
 
       const requestId = newRequestId();
-      const orderNotes = items
-        .map((it) => it.note?.trim())
-        .filter(Boolean)
-        .join(' • ') || null;
+      const orderNotes = null; // Removed item notes concatenation to keep them item-specific
 
       // Idempotency key baseado em (user, loja, endereço, cupom, itens).
       const ik = generateIdempotencyKey(
