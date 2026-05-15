@@ -25,10 +25,11 @@ export default function Coupons() {
       let valid = (data || []).filter(c => !c.expires_at || new Date(c.expires_at) > new Date());
       
       // Filtrar por região se houver endereço selecionado
-      if (selectedAddress?.region_id) {
-        valid = valid.filter(c => 
+      const regionId = (selectedAddress as any)?.region_id;
+      if (regionId) {
+        valid = valid.filter((c: any) => 
           !c.company_id || 
-          c.companies?.region_id === selectedAddress.region_id
+          c.companies?.region_id === regionId
         );
       }
 
@@ -116,7 +117,7 @@ export default function Coupons() {
                           : `R$ ${coupon.discount_value.toLocaleString('pt-BR', {minimumFractionDigits:2})} OFF`}
                       </h3>
                       <p className="text-[10px] font-bold text-primary uppercase mt-0.5">
-                        {coupon.companies?.name || 'É Pra Já Delivery'}
+                        {(coupon as any).companies?.name || 'É Pra Já Delivery'}
                       </p>
                       {coupon.description && (
                          <p className="text-xs font-medium text-muted-foreground mt-0.5 truncate">{coupon.description}</p>
