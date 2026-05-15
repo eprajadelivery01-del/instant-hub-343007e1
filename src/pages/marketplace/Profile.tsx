@@ -600,6 +600,10 @@ export default function Profile() {
           </div>
         </SheetContent>
       </Sheet>
+        <div className="mt-16 mb-12 text-center">
+          <p className="text-[11px] font-black uppercase tracking-[0.6em] text-muted-foreground/30 ml-2">BONASOFT</p>
+        </div>
+      </div>
 
     </MarketplaceLayout>
   );

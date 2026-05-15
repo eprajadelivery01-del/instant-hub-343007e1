@@ -486,7 +486,10 @@ export default function Checkout() {
               <span className="text-primary">R$ {total.toFixed(2).replace('.', ',')}</span>
             </div>
           </div>
-        </div>
+      </div>
+      
+      <div className="mt-16 mb-24 text-center">
+        <p className="text-[11px] font-black uppercase tracking-[0.6em] text-muted-foreground/30 ml-2">BONASOFT</p>
       </div>
 
       <div className="fixed bottom-0 left-0 right-0 border-t border-border bg-background/95 backdrop-blur-lg p-4 safe-area-bottom">
