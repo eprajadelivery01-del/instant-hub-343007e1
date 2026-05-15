@@ -99,7 +99,6 @@ export function OrderStoreChat({ orderId, companyId, companyName }: OrderStoreCh
     if (e) e.preventDefault();
     const msg = (customText || text).trim();
     if (!msg || !sessionId || !user || sending) return;
-    const msg = text.trim();
     setText('');
     setSending(true);
     await supabase.from('chat_message_logs').insert({
