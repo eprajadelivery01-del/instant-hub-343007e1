@@ -312,6 +312,9 @@ Deno.serve(async (req) => {
       payment_method: body.payment_method,
       notes: finalNotes,
       idempotency_key: body.idempotency_key,
+      region_id: regionId,
+      delivery_latitude: address.latitude,
+      delivery_longitude: address.longitude,
     })
     .select('id')
     .single();
@@ -373,6 +376,7 @@ Deno.serve(async (req) => {
     status: 'pending',
     value: total,
     price: deliveryFee,
+    region_id: regionId,
   });
 
   await audit(

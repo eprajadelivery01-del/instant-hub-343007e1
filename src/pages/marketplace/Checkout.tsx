@@ -252,8 +252,15 @@ export default function Checkout() {
       });
 
       if (functionError) {
-        const errorData = typeof functionError.message === 'string' ? { message: functionError.message } : functionError;
-        const msg = errorData.error || errorData.message || 'Erro ao processar pedido';
+        let msg = 'Erro ao processar pedido';
+        try {
+          // Tenta extrair a mensagem de erro do corpo da resposta (JSON)
+          const body = await functionError.context.json();
+          msg = body.error || body.message || msg;
+        } catch {
+          msg = functionError.message || msg;
+        }
+
         const friendly = mapServerError(msg);
         
         void recordAuditLog({
