@@ -7,7 +7,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useAddress } from '@/contexts/AddressContext';
 import MarketplaceLayout from '@/components/marketplace/MarketplaceLayout';
 import { toast } from 'sonner';
-import { Sheet, SheetContent } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { SupportChat } from '@/components/chat/SupportChat';
 import { cn } from '@/lib/utils';
 import {
@@ -72,7 +72,7 @@ export default function Profile() {
         .from('coupons')
         .select('*, companies(name, logo_url, region_id)')
         .eq('active', true)
-        .order('created_at', { ascending: false });
+        .order('id', { ascending: false });
         
       let valid = (data || []).filter(c => !c.expires_at || new Date(c.expires_at) > new Date());
       
@@ -408,6 +408,7 @@ export default function Profile() {
       {/* Edit Profile Sheet */}
       <Sheet open={editing} onOpenChange={setEditing}>
         <SheetContent side="bottom" hideClose className="h-[75vh] rounded-t-[3rem] border-none p-0 shadow-2xl">
+          <SheetTitle className="sr-only">Editar Meus Dados</SheetTitle>
           <div className="h-full flex flex-col bg-background">
             <div className="p-8 pb-6 flex items-center justify-between border-b border-border/50">
               <div>
@@ -451,6 +452,7 @@ export default function Profile() {
       {/* Support Chat Sheet */}
       <Sheet open={supportType !== null} onOpenChange={open => !open && setSupportType(null)}>
         <SheetContent side="bottom" hideClose className="h-[85vh] rounded-t-[3rem] border-none p-0 overflow-hidden shadow-2xl">
+          <SheetTitle className="sr-only">Chat de Suporte</SheetTitle>
           <div className="flex flex-col h-full bg-background relative">
             <div className="absolute right-6 top-6 z-50">
               <button onClick={() => setSupportType(null)} className="w-10 h-10 rounded-full bg-background/80 backdrop-blur-md flex items-center justify-center border shadow-sm">
@@ -470,6 +472,7 @@ export default function Profile() {
       {/* Coupons List Sheet */}
       <Sheet open={showCoupons} onOpenChange={setShowCoupons}>
         <SheetContent side="bottom" hideClose className="h-[85vh] rounded-t-[3rem] border-none p-0 shadow-2xl">
+          <SheetTitle className="sr-only">Meus Cupons</SheetTitle>
           <div className="h-full flex flex-col bg-background">
             <div className="px-8 pt-8 pb-6 flex items-center justify-between border-b border-border shrink-0">
               <div>

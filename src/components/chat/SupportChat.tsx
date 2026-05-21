@@ -53,7 +53,6 @@ export function SupportChat({ topic, title, companyId = null }: SupportChatProps
             .insert({ 
               user_id: user.id, 
               topic, 
-              title,
               updated_at: new Date().toISOString()
             })
             .select()
