@@ -6,7 +6,7 @@ export async function fetchCompanies() {
   const { data, error } = await supabase
     .from("companies")
     .select("*")
-    .eq("active", true)
+    .eq("show_in_marketplace", true)
     .order("name");
 
   if (error) throw error;

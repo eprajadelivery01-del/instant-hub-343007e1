@@ -63,7 +63,8 @@ export default function Home() {
 
   const fetchCompanies = async () => {
     try {
-      const { data } = await supabase.from('companies').select('*, products(*)');
+      const { data } = await supabase.from('companies').select('*, products(*)')
+        .eq('show_in_marketplace', true);
       const processed = (data || []).map((company, index) => {
         let name = company.name;
         if (PROFESSIONAL_NAMES[name]) {
@@ -76,7 +77,7 @@ export default function Home() {
           ...company,
           name,
           active: company.active ?? company.is_active ?? false,
-          products: (company.products || []).slice(0, 4),
+          products: (company.products || []).filter((p: any) => p.is_active !== false).slice(0, 4),
           rating: company.rating && company.rating > 0 ? company.rating : 4.5 + Math.random() * 0.5,
         };
       }).sort((a, b) => {
