@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Send, Loader2, User as UserIcon, Trash2 } from 'lucide-react';
+import { Send, Loader2, User as UserIcon, Trash2, Check, CheckCheck } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface SupportChatProps {
@@ -173,50 +173,56 @@ export function SupportChat({ topic, title, companyId = null }: SupportChatProps
       setMessages([]);
       setConversationId(null);
       setLoading(true);
-      // Recarrega o componente forçando a criação de um novo chat
       setTimeout(() => window.location.reload(), 300);
     }
   };
 
   return (
-    <div className="flex flex-col h-full bg-background">
-      <div className="flex items-center gap-3 p-4 border-b border-border bg-card">
-        <div className="h-10 w-10 bg-primary/10 rounded-full flex items-center justify-center shrink-0">
-          <UserIcon className="h-5 w-5 text-primary" />
+    <div className="flex flex-col h-full bg-[#EFEAE2] dark:bg-[#0B141A] relative">
+      <div className="absolute inset-0 bg-[url('https://i.pinimg.com/736x/8c/98/99/8c98994518b575bfd8c949e91d20548b.jpg')] opacity-10 dark:opacity-[0.03] mix-blend-multiply dark:mix-blend-screen pointer-events-none z-0" />
+      
+      <div className="flex items-center gap-3 px-4 py-3 bg-[#008069] dark:bg-[#202C33] text-white z-10 shadow-sm">
+        <div className="h-10 w-10 bg-white/20 rounded-full flex items-center justify-center shrink-0">
+          <UserIcon className="h-6 w-6 text-white" />
         </div>
         <div className="flex-1 min-w-0">
-          <h3 className="text-sm font-bold truncate">{title}</h3>
-          <p className="text-xs text-muted-foreground truncate">O administrador responderá em breve</p>
+          <h3 className="text-[15px] font-medium truncate">{title}</h3>
+          <p className="text-[13px] text-white/80 truncate">online</p>
         </div>
         {conversationId && messages.length > 0 && (
           <button 
             onClick={handleEndChat}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-destructive/10 text-destructive text-xs font-bold hover:bg-destructive hover:text-white transition-all shrink-0"
+            className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-white/10 transition-all shrink-0"
+            title="Encerrar Chat"
           >
-            <Trash2 className="h-3.5 w-3.5" />
-            Encerrar
+            <Trash2 className="h-5 w-5" />
           </button>
         )}
       </div>
 
-      <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-3 z-10 custom-scrollbar">
         {loading ? (
           <div className="flex items-center justify-center h-full">
-            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            <div className="bg-white dark:bg-[#202C33] px-4 py-2 rounded-full shadow-sm flex items-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin text-[#008069] dark:text-[#00A884]" />
+              <span className="text-[13px] text-muted-foreground">Conectando...</span>
+            </div>
           </div>
         ) : (
           messages.filter(msg => !msg.content.startsWith('[Assunto:')).length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center px-4">
-              <p className="text-[10px] font-bold text-muted-foreground/50 mb-4 uppercase tracking-widest">
-                Sugestões de início
-              </p>
-              <div className="grid grid-cols-1 gap-2 w-full max-w-[280px]">
+              <div className="bg-[#FFEECD] dark:bg-[#182229] px-4 py-2 rounded-xl shadow-sm mb-6 max-w-[280px]">
+                <p className="text-[12.5px] text-[#54656F] dark:text-[#8696A0] leading-relaxed">
+                  As mensagens enviadas a este chat são seguras. Escolha uma opção abaixo para iniciar.
+                </p>
+              </div>
+              <div className="flex flex-wrap justify-center gap-2 w-full max-w-[320px]">
                 {QUICK_MESSAGES.map((m, idx) => (
                   <button
                     key={idx}
                     onClick={() => handleSend(undefined, m.text)}
                     disabled={!conversationId || sending}
-                    className="px-4 py-3 rounded-2xl bg-card border border-border/50 text-[11px] font-bold text-foreground text-left hover:border-primary hover:bg-primary/5 active:scale-95 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-4 py-2 rounded-full bg-white dark:bg-[#202C33] border border-border/10 text-[13px] font-medium text-[#111B21] dark:text-[#E9EDEF] hover:bg-[#F5F6F6] dark:hover:bg-[#2A3942] active:scale-95 transition-all shadow-sm disabled:opacity-50"
                   >
                     {m.label}
                   </button>
@@ -227,13 +233,28 @@ export function SupportChat({ topic, title, companyId = null }: SupportChatProps
             messages.filter(msg => !msg.content.startsWith('[Assunto:')).map(msg => {
               const isMe = msg.sender_id === user?.id;
               return (
-                <div key={msg.id} className={`flex flex-col max-w-[80%] ${isMe ? 'ml-auto items-end' : 'mr-auto items-start'}`}>
-                  <div className={`p-3 rounded-2xl ${isMe ? 'bg-primary text-primary-foreground rounded-br-sm' : 'bg-secondary text-foreground rounded-bl-sm shadow-sm'}`}>
-                    <p className="text-sm leading-relaxed">{msg.content}</p>
+                <div key={msg.id} className={`flex flex-col w-full ${isMe ? 'items-end' : 'items-start'}`}>
+                  <div 
+                    className={`relative max-w-[85%] px-2.5 py-1.5 rounded-[12px] shadow-[0_1px_0.5px_rgba(11,20,26,0.13)] ${
+                      isMe 
+                        ? 'bg-[#D9FDD3] dark:bg-[#005C4B] rounded-tr-[4px] text-[#111B21] dark:text-[#E9EDEF]' 
+                        : 'bg-white dark:bg-[#202C33] rounded-tl-[4px] text-[#111B21] dark:text-[#E9EDEF]'
+                    }`}
+                  >
+                    <div className="flex flex-col">
+                      <p className="text-[14.2px] leading-[19px] whitespace-pre-wrap pl-1 pr-2 pt-1 pb-4">
+                        {msg.content}
+                      </p>
+                      <div className="flex items-center justify-end gap-1 absolute bottom-1 right-2">
+                        <span className={`text-[11px] ${isMe ? 'text-[#667781] dark:text-[#8696A0]' : 'text-[#667781] dark:text-[#8696A0]'}`}>
+                          {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                        {isMe && (
+                          <CheckCheck className="h-[14px] w-[14px] text-[#53BDEB]" />
+                        )}
+                      </div>
+                    </div>
                   </div>
-                  <span className="text-[10px] text-muted-foreground mt-1 px-1 opacity-60">
-                    {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </span>
                 </div>
               );
             })
@@ -241,17 +262,30 @@ export function SupportChat({ topic, title, companyId = null }: SupportChatProps
         )}
       </div>
 
-      <form onSubmit={handleSend} className="p-4 bg-card border-t border-border flex items-center gap-2">
-        <Input 
-          value={newMessage}
-          onChange={e => setNewMessage(e.target.value)}
-          placeholder="Escreva sua mensagem..."
-          className="flex-1 rounded-full bg-background border-border/40 h-12 px-5"
-        />
-        <Button disabled={(!newMessage.trim() && !sending) || !conversationId || sending} type="submit" size="icon" className="rounded-full h-12 w-12 shrink-0 shadow-lg active:scale-95 transition-all">
-          {sending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
-        </Button>
-      </form>
+      <div className="px-4 py-3 bg-[#F0F2F5] dark:bg-[#202C33] z-10">
+        <form onSubmit={handleSend} className="flex items-center gap-2">
+          <div className="flex-1 bg-white dark:bg-[#2A3942] rounded-full flex items-center px-4 h-11 shadow-sm">
+            <input
+              type="text"
+              value={newMessage}
+              onChange={e => setNewMessage(e.target.value)}
+              placeholder="Mensagem"
+              className="flex-1 bg-transparent border-none focus:outline-none text-[15px] text-[#111B21] dark:text-[#E9EDEF] placeholder:text-[#8696A0]"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={!newMessage.trim() || !conversationId || sending}
+            className="w-11 h-11 rounded-full bg-[#00A884] flex items-center justify-center shrink-0 shadow-sm disabled:opacity-50 active:scale-95 transition-transform"
+          >
+            {sending ? (
+              <Loader2 className="h-5 w-5 animate-spin text-white" />
+            ) : (
+              <Send className="h-5 w-5 text-white ml-1" />
+            )}
+          </button>
+        </form>
+      </div>
     </div>
   );
 }
