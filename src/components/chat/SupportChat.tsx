@@ -43,7 +43,7 @@ export function SupportChat({ topic, title, companyId = null }: SupportChatProps
           .from('conversations')
           .select('*')
           .eq('user_id', user.id)
-          .eq('topic', topic)
+          // .eq('topic', topic) // REMOVIDO para evitar erro 400 se a coluna não existir
           .maybeSingle();
 
         if (!conversation) {
@@ -52,8 +52,8 @@ export function SupportChat({ topic, title, companyId = null }: SupportChatProps
             .from('conversations')
             .insert({ 
               user_id: user.id, 
-              topic, 
-              updated_at: new Date().toISOString()
+              // topic, // REMOVIDO para evitar erro de schema cache
+              // updated_at: new Date().toISOString()
             })
             .select()
             .single();

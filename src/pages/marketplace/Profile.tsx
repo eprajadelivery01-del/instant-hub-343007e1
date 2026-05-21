@@ -71,8 +71,7 @@ export default function Profile() {
       const { data } = await supabase
         .from('coupons')
         .select('*, companies(name, logo_url, region_id)')
-        .eq('active', true)
-        .order('id', { ascending: false });
+        .eq('active', true);
         
       let valid = (data || []).filter(c => !c.expires_at || new Date(c.expires_at) > new Date());
       
