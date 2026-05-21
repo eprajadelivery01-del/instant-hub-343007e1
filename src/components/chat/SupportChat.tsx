@@ -39,7 +39,7 @@ export function SupportChat({ topic, title, companyId = null }: SupportChatProps
 
     const initializeChat = async () => {
       try {
-        const storageKey = `epraja_chat_${topic}_${user.id}`;
+        const storageKey = `epraja_chat_${topic}_${user.id}_v2`;
         const storedConvId = localStorage.getItem(storageKey);
         
         let conversation = null;
@@ -168,7 +168,7 @@ export function SupportChat({ topic, title, companyId = null }: SupportChatProps
 
   const handleEndChat = () => {
     if (window.confirm("Deseja encerrar este chat e começar um novo?")) {
-      const storageKey = `epraja_chat_${topic}_${user.id}`;
+      const storageKey = `epraja_chat_${topic}_${user.id}_v2`;
       localStorage.removeItem(storageKey);
       setMessages([]);
       setConversationId(null);
