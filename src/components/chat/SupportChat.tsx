@@ -38,28 +38,30 @@ export function SupportChat({ topic, title, companyId = null }: SupportChatProps
 
     const initializeChat = async () => {
       try {
-        // Tenta encontrar uma conversa existente para este tópico e usuário
-        let { data: conversation } = await supabase
+        // Tenta encontrar uma conversa existente para este usuário
+        let { data: conversationsList } = await supabase
           .from('conversations')
           .select('*')
           .eq('user_id', user.id)
-          // .eq('topic', topic) // REMOVIDO para evitar erro 400 se a coluna não existir
-          .maybeSingle();
+          .limit(1);
+          
+        let conversation = conversationsList?.[0];
 
         if (!conversation) {
           // Cria uma nova conversa
           const { data: newConv, error: createError } = await supabase
             .from('conversations')
             .insert({ 
-              user_id: user.id, 
-              // topic, // REMOVIDO para evitar erro de schema cache
-              // updated_at: new Date().toISOString()
+              user_id: user.id
             })
-            .select()
-            .single();
+            .select();
           
-          if (createError) throw createError;
-          conversation = newConv;
+          if (createError) {
+             console.error("Falha ao criar conversa:", createError);
+             // Se falhar (por ex: falta de order_id), não crasha, só não atribui
+          } else if (newConv && newConv.length > 0) {
+             conversation = newConv[0];
+          }
         }
 
         if (conversation) {
