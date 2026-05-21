@@ -178,24 +178,23 @@ export function SupportChat({ topic, title, companyId = null }: SupportChatProps
   };
 
   return (
-    <div className="flex flex-col h-full bg-[#EFEAE2] dark:bg-[#0B141A] relative">
-      <div className="absolute inset-0 bg-[url('https://i.pinimg.com/736x/8c/98/99/8c98994518b575bfd8c949e91d20548b.jpg')] opacity-10 dark:opacity-[0.03] mix-blend-multiply dark:mix-blend-screen pointer-events-none z-0" />
-      
-      <div className="flex items-center gap-3 px-4 py-3 bg-[#008069] dark:bg-[#202C33] text-white z-10 shadow-sm">
-        <div className="h-10 w-10 bg-white/20 rounded-full flex items-center justify-center shrink-0">
+    <div className="flex flex-col h-full bg-[#0e1621] relative">
+      {/* Header estilo Telegram */}
+      <div className="flex items-center gap-3 px-4 py-3 bg-[#17212b] text-white z-10 shadow-sm border-b border-[#0e1621]">
+        <div className="h-10 w-10 bg-[#2b5278] rounded-full flex items-center justify-center shrink-0">
           <UserIcon className="h-6 w-6 text-white" />
         </div>
         <div className="flex-1 min-w-0">
-          <h3 className="text-[15px] font-medium truncate">{title}</h3>
-          <p className="text-[13px] text-white/80 truncate">online</p>
+          <h3 className="text-[15px] font-semibold text-[#ffffff] truncate">{title}</h3>
+          <p className="text-[13px] text-[#547c9e] truncate">online</p>
         </div>
         {conversationId && messages.length > 0 && (
           <button 
             onClick={handleEndChat}
-            className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-white/10 transition-all shrink-0"
+            className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-[#202b36] transition-all shrink-0"
             title="Encerrar Chat"
           >
-            <Trash2 className="h-5 w-5" />
+            <Trash2 className="h-5 w-5 text-[#7aa4c7]" />
           </button>
         )}
       </div>
@@ -203,16 +202,16 @@ export function SupportChat({ topic, title, companyId = null }: SupportChatProps
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-3 z-10 custom-scrollbar">
         {loading ? (
           <div className="flex items-center justify-center h-full">
-            <div className="bg-white dark:bg-[#202C33] px-4 py-2 rounded-full shadow-sm flex items-center gap-2">
-              <Loader2 className="h-4 w-4 animate-spin text-[#008069] dark:text-[#00A884]" />
-              <span className="text-[13px] text-muted-foreground">Conectando...</span>
+            <div className="bg-[#182533] px-4 py-2 rounded-full shadow-sm flex items-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin text-[#7aa4c7]" />
+              <span className="text-[13px] text-[#7aa4c7]">Conectando...</span>
             </div>
           </div>
         ) : (
           messages.filter(msg => !msg.content.startsWith('[Assunto:')).length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center px-4">
-              <div className="bg-[#FFEECD] dark:bg-[#182229] px-4 py-2 rounded-xl shadow-sm mb-6 max-w-[280px]">
-                <p className="text-[12.5px] text-[#54656F] dark:text-[#8696A0] leading-relaxed">
+              <div className="bg-[#182533] px-4 py-2 rounded-xl shadow-sm mb-6 max-w-[280px]">
+                <p className="text-[12.5px] text-[#7aa4c7] leading-relaxed">
                   As mensagens enviadas a este chat são seguras. Escolha uma opção abaixo para iniciar.
                 </p>
               </div>
@@ -222,7 +221,7 @@ export function SupportChat({ topic, title, companyId = null }: SupportChatProps
                     key={idx}
                     onClick={() => handleSend(undefined, m.text)}
                     disabled={!conversationId || sending}
-                    className="px-4 py-2 rounded-full bg-white dark:bg-[#202C33] border border-border/10 text-[13px] font-medium text-[#111B21] dark:text-[#E9EDEF] hover:bg-[#F5F6F6] dark:hover:bg-[#2A3942] active:scale-95 transition-all shadow-sm disabled:opacity-50"
+                    className="px-4 py-2 rounded-full bg-[#182533] border border-[#2b5278]/20 text-[13px] font-medium text-[#ffffff] hover:bg-[#202b36] active:scale-95 transition-all shadow-sm disabled:opacity-50"
                   >
                     {m.label}
                   </button>
@@ -231,22 +230,24 @@ export function SupportChat({ topic, title, companyId = null }: SupportChatProps
             </div>
           ) : (
             messages.filter(msg => !msg.content.startsWith('[Assunto:')).map(msg => {
+              // Quando testando com a mesma conta, o usuário sempre será 'isMe'. 
+              // Em produção, admin e cliente terão IDs diferentes.
               const isMe = msg.sender_id === user?.id;
               return (
                 <div key={msg.id} className={`flex flex-col w-full ${isMe ? 'items-end' : 'items-start'}`}>
                   <div 
-                    className={`relative max-w-[85%] px-2.5 py-1.5 rounded-[12px] shadow-[0_1px_0.5px_rgba(11,20,26,0.13)] ${
+                    className={`relative max-w-[85%] px-3 py-2 rounded-2xl shadow-sm ${
                       isMe 
-                        ? 'bg-[#D9FDD3] dark:bg-[#005C4B] rounded-tr-[4px] text-[#111B21] dark:text-[#E9EDEF]' 
-                        : 'bg-white dark:bg-[#202C33] rounded-tl-[4px] text-[#111B21] dark:text-[#E9EDEF]'
+                        ? 'bg-[#2b5278] rounded-br-[4px] text-[#ffffff]' 
+                        : 'bg-[#182533] rounded-bl-[4px] text-[#ffffff]'
                     }`}
                   >
                     <div className="flex flex-col">
-                      <p className="text-[14.2px] leading-[19px] whitespace-pre-wrap pl-1 pr-2 pt-1 pb-4">
+                      <p className="text-[15px] leading-[20px] whitespace-pre-wrap pr-10">
                         {msg.content}
                       </p>
                       <div className="flex items-center justify-end gap-1 absolute bottom-1 right-2">
-                        <span className={`text-[11px] ${isMe ? 'text-[#667781] dark:text-[#8696A0]' : 'text-[#667781] dark:text-[#8696A0]'}`}>
+                        <span className={`text-[11px] ${isMe ? 'text-[#7aa4c7]' : 'text-[#547c9e]'}`}>
                           {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </span>
                         {isMe && (
@@ -262,21 +263,22 @@ export function SupportChat({ topic, title, companyId = null }: SupportChatProps
         )}
       </div>
 
-      <div className="px-4 py-3 bg-[#F0F2F5] dark:bg-[#202C33] z-10">
+      {/* Input bar estilo Telegram */}
+      <div className="px-4 py-3 bg-[#17212b] z-10 pb-6 md:pb-3">
         <form onSubmit={handleSend} className="flex items-center gap-2">
-          <div className="flex-1 bg-white dark:bg-[#2A3942] rounded-full flex items-center px-4 h-11 shadow-sm">
+          <div className="flex-1 bg-[#242f3d] rounded-full flex items-center px-4 h-12 shadow-sm">
             <input
               type="text"
               value={newMessage}
               onChange={e => setNewMessage(e.target.value)}
-              placeholder="Mensagem"
-              className="flex-1 bg-transparent border-none focus:outline-none text-[15px] text-[#111B21] dark:text-[#E9EDEF] placeholder:text-[#8696A0]"
+              placeholder="Write a message..."
+              className="flex-1 bg-transparent border-none focus:outline-none text-[15px] text-[#ffffff] placeholder:text-[#547c9e]"
             />
           </div>
           <button
             type="submit"
             disabled={!newMessage.trim() || !conversationId || sending}
-            className="w-11 h-11 rounded-full bg-[#00A884] flex items-center justify-center shrink-0 shadow-sm disabled:opacity-50 active:scale-95 transition-transform"
+            className="w-12 h-12 rounded-full bg-[#2b5278] flex items-center justify-center shrink-0 shadow-sm disabled:opacity-50 active:scale-95 transition-transform"
           >
             {sending ? (
               <Loader2 className="h-5 w-5 animate-spin text-white" />

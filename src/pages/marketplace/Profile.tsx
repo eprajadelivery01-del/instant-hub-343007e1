@@ -464,7 +464,7 @@ export default function Profile() {
 
       {/* Support Chat Sheet */}
       <Sheet open={supportType !== null} onOpenChange={open => !open && setSupportType(null)}>
-        <SheetContent side="bottom" hideClose className="h-[85vh] rounded-t-[3rem] border-none p-0 overflow-hidden shadow-2xl">
+        <SheetContent side="bottom" hideClose className="h-[85vh] rounded-t-[3rem] border-none p-0 overflow-hidden shadow-2xl z-[100]">
           <SheetTitle className="sr-only">Chat de Suporte</SheetTitle>
           <div className="flex flex-col h-full bg-background relative">
             <div className="absolute right-6 top-6 z-50">
