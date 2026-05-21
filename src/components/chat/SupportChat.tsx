@@ -82,8 +82,9 @@ export function SupportChat({ topic, title, companyId = null }: SupportChatProps
 
           if (history) setMessages(history);
 
-          // Subscription Realtime
-          const channel = supabase.channel(`conversation_${conversation.id}`)
+          // Subscription Realtime com nome único para evitar conflitos de React StrictMode
+          const channelName = `conversation_${conversation.id}_${Math.random().toString(36).substring(7)}`;
+          const channel = supabase.channel(channelName)
             .on('postgres_changes', { 
               event: 'INSERT', 
               schema: 'public', 

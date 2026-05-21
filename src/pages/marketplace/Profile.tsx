@@ -70,10 +70,24 @@ export default function Profile() {
     try {
       const { data } = await supabase
         .from('coupons')
-        .select('*, companies(name, logo_url, region_id)')
+        .select('*')
         .eq('active', true);
         
       let valid = (data || []).filter(c => !c.expires_at || new Date(c.expires_at) > new Date());
+      
+      // Busca manualmente as empresas para evitar o Erro 400 (Bad Request) causado pela falta de Foreign Key
+      const companyIds = valid.map(c => c.company_id).filter(Boolean);
+      if (companyIds.length > 0) {
+        const { data: companiesData } = await supabase
+          .from('companies')
+          .select('user_id, name, logo_url, region_id')
+          .in('user_id', companyIds);
+          
+        valid = valid.map(c => ({
+          ...c,
+          companies: companiesData?.find(comp => comp.user_id === c.company_id) || null
+        }));
+      }
       
       if (selectedAddress?.region_id) {
         valid = valid.filter(c => 
