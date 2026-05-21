@@ -71,6 +71,13 @@ export function SupportChat({ topic, title, companyId = null }: SupportChatProps
           } else if (newConv && newConv.length > 0) {
              conversation = newConv[0];
              localStorage.setItem(storageKey, conversation.id);
+             
+             // Envia a mensagem de assunto para o Admin saber do que se trata
+             await supabase.from('messages').insert({
+               conversation_id: conversation.id,
+               sender_id: user.id,
+               content: `[Assunto: ${title}]`
+             });
           }
         }
 
@@ -197,38 +204,40 @@ export function SupportChat({ topic, title, companyId = null }: SupportChatProps
           <div className="flex items-center justify-center h-full">
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
           </div>
-        ) : messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center px-4">
-            <p className="text-[10px] font-bold text-muted-foreground/50 mb-4 uppercase tracking-widest">
-              Sugestões de início
-            </p>
-            <div className="grid grid-cols-1 gap-2 w-full max-w-[280px]">
-              {QUICK_MESSAGES.map((m, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => handleSend(undefined, m.text)}
-                  disabled={!conversationId || sending}
-                  className="px-4 py-3 rounded-2xl bg-card border border-border/50 text-[11px] font-bold text-foreground text-left hover:border-primary hover:bg-primary/5 active:scale-95 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {m.label}
-                </button>
-              ))}
-            </div>
-          </div>
         ) : (
-          messages.map(msg => {
-            const isMe = msg.sender_id === user?.id;
-            return (
-              <div key={msg.id} className={`flex flex-col max-w-[80%] ${isMe ? 'ml-auto items-end' : 'mr-auto items-start'}`}>
-                <div className={`p-3 rounded-2xl ${isMe ? 'bg-primary text-primary-foreground rounded-br-sm' : 'bg-secondary text-foreground rounded-bl-sm shadow-sm'}`}>
-                  <p className="text-sm leading-relaxed">{msg.content}</p>
-                </div>
-                <span className="text-[10px] text-muted-foreground mt-1 px-1 opacity-60">
-                  {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </span>
+          messages.filter(msg => !msg.content.startsWith('[Assunto:')).length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full text-center px-4">
+              <p className="text-[10px] font-bold text-muted-foreground/50 mb-4 uppercase tracking-widest">
+                Sugestões de início
+              </p>
+              <div className="grid grid-cols-1 gap-2 w-full max-w-[280px]">
+                {QUICK_MESSAGES.map((m, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => handleSend(undefined, m.text)}
+                    disabled={!conversationId || sending}
+                    className="px-4 py-3 rounded-2xl bg-card border border-border/50 text-[11px] font-bold text-foreground text-left hover:border-primary hover:bg-primary/5 active:scale-95 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {m.label}
+                  </button>
+                ))}
               </div>
-            );
-          })
+            </div>
+          ) : (
+            messages.filter(msg => !msg.content.startsWith('[Assunto:')).map(msg => {
+              const isMe = msg.sender_id === user?.id;
+              return (
+                <div key={msg.id} className={`flex flex-col max-w-[80%] ${isMe ? 'ml-auto items-end' : 'mr-auto items-start'}`}>
+                  <div className={`p-3 rounded-2xl ${isMe ? 'bg-primary text-primary-foreground rounded-br-sm' : 'bg-secondary text-foreground rounded-bl-sm shadow-sm'}`}>
+                    <p className="text-sm leading-relaxed">{msg.content}</p>
+                  </div>
+                  <span className="text-[10px] text-muted-foreground mt-1 px-1 opacity-60">
+                    {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                </div>
+              );
+            })
+          )
         )}
       </div>
 
