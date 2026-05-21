@@ -11,6 +11,14 @@ interface CartContextType {
   clearCart: () => void;
   subtotal: number;
   itemCount: number;
+  
+  // Coupon state
+  appliedCoupon: any | null;
+  applicableProductIds: string[];
+  setCouponData: (coupon: any, productIds: string[]) => void;
+  removeCoupon: () => void;
+  discountAmount: number;
+  total: number;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -25,6 +33,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
     return saved ? JSON.parse(saved) : null;
   });
 
+  const [appliedCoupon, setAppliedCoupon] = useState<any | null>(() => {
+    const saved = localStorage.getItem('cart_coupon');
+    return saved ? JSON.parse(saved) : null;
+  });
+  const [applicableProductIds, setApplicableProductIds] = useState<string[]>(() => {
+    const saved = localStorage.getItem('cart_coupon_pids');
+    return saved ? JSON.parse(saved) : [];
+  });
+
   useEffect(() => {
     localStorage.setItem('cart_items', JSON.stringify(items));
     if (company) {
@@ -32,7 +49,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
     } else {
       localStorage.removeItem('cart_company');
     }
-  }, [items, company]);
+    
+    if (appliedCoupon) {
+      localStorage.setItem('cart_coupon', JSON.stringify(appliedCoupon));
+      localStorage.setItem('cart_coupon_pids', JSON.stringify(applicableProductIds));
+    } else {
+      localStorage.removeItem('cart_coupon');
+      localStorage.removeItem('cart_coupon_pids');
+    }
+  }, [items, company, appliedCoupon, applicableProductIds]);
 
   const addItem = (product: Product, comp: Company, options: any[] = [], quantity: number = 1, note: string = '') => {
     // Generate a unique ID for this item based on product + options
@@ -82,6 +107,18 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const clearCart = () => {
     setItems([]);
     setCompany(null);
+    setAppliedCoupon(null);
+    setApplicableProductIds([]);
+  };
+
+  const setCouponData = (coupon: any, pids: string[]) => {
+    setAppliedCoupon(coupon);
+    setApplicableProductIds(pids);
+  };
+
+  const removeCoupon = () => {
+    setAppliedCoupon(null);
+    setApplicableProductIds([]);
   };
 
   const calculateItemPrice = (item: CartItem) => {
@@ -101,8 +138,36 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const itemCount = items.reduce((sum, i) => sum + i.quantity, 0);
 
+  const discountAmount = (() => {
+    if (!appliedCoupon) return 0;
+    
+    const isSpecific = applicableProductIds.length > 0;
+    const eligibleItems = isSpecific 
+      ? items.filter(item => applicableProductIds.includes(item.product.id))
+      : items;
+    
+    const eligibleSubtotal = eligibleItems.reduce(
+      (acc, item) => acc + (calculateItemPrice(item) * item.quantity),
+      0
+    );
+    
+    if (eligibleSubtotal === 0) return 0;
+
+    if (appliedCoupon.discount_type === 'percentage') {
+      const discount = (eligibleSubtotal * (appliedCoupon.discount_value / 100));
+      return Math.min(discount, appliedCoupon.max_discount_value || Infinity);
+    }
+    
+    return Math.min(eligibleSubtotal, appliedCoupon.discount_value);
+  })();
+
+  const total = Math.max(0, subtotal - discountAmount);
+
   return (
-    <CartContext.Provider value={{ items, company, addItem, removeItem, updateQuantity, updateNote, clearCart, subtotal, itemCount }}>
+    <CartContext.Provider value={{ 
+      items, company, addItem, removeItem, updateQuantity, updateNote, clearCart, 
+      subtotal, itemCount, appliedCoupon, applicableProductIds, setCouponData, removeCoupon, discountAmount, total 
+    }}>
       {children}
     </CartContext.Provider>
   );

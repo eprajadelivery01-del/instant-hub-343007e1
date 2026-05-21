@@ -1,5 +1,5 @@
-// VERSION: 2026-05-15-1800 (FINAL_CLEANUP)
-import { useEffect, useState, useMemo } from 'react';
+// VERSION: 2026-05-21-CHECKOUT-MODAL
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
@@ -8,18 +8,14 @@ import { Address } from '@/types/database';
 import MarketplaceLayout from '@/components/marketplace/MarketplaceLayout';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { toast } from 'sonner';
-import { MapPin, CreditCard, Banknote, QrCode, Plus, AlertCircle, ArrowLeft, Ticket, CheckCircle2, Loader2 } from 'lucide-react';
+import { MapPin, Banknote, AlertCircle, ArrowLeft, Loader2, FileText, Smartphone, Bike, Ticket } from 'lucide-react';
 import { useOrderLock } from '@/hooks/useOrderLock';
 import { calculateDeliveryFee } from '@/utils/freight';
-import { recordAuditLog, newRequestId } from '@/lib/auditLog';
 
 function mapServerError(msg: string): string {
   const m = msg.toLowerCase();
-  if (m.includes('invalid or inactive coupon')) return 'Cupom inválido ou inativo.';
-  if (m.includes('coupon expired')) return 'Este cupom já expirou.';
-  if (m.includes('coupon minimum') || m.includes('below coupon')) return 'Pedido abaixo do mínimo do cupom.';
-  if (m.includes('coupon belongs to another')) return 'Este cupom é exclusivo de outra loja.';
   if (m.includes('address not found')) return 'Endereço inválido para este usuário.';
   if (m.includes('out of range') || m.includes('out of region') || m.includes('delivery unavailable'))
     return 'Entrega indisponível para este endereço.';
@@ -34,27 +30,26 @@ function mapServerError(msg: string): string {
 
 export default function Checkout() {
   const navigate = useNavigate();
-  const { user, profile } = useAuth();
-  const { items, company, subtotal, clearCart } = useCart();
+  const { user } = useAuth();
+  const { items, company, clearCart, appliedCoupon, cartTotal: _, discountAmount, subtotal } = useCart();
   const { isLocked, acquireLock, releaseLock, generateIdempotencyKey, resetIdempotencyKey } = useOrderLock();
+  
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [selectedAddress, setSelectedAddress] = useState<string>('');
+  
   const [paymentMethod, setPaymentMethod] = useState('money');
   const [needsChange, setNeedsChange] = useState(false);
   const [changeFor, setChangeFor] = useState('');
+  
+  const [cpf, setCpf] = useState('');
 
   const [deliveryFee, setDeliveryFee] = useState<number | null>(null);
-  const [regionId, setRegionId] = useState<string | null>(null);
-  const [regionName, setRegionName] = useState<string | null>(null);
   const [unavailable, setUnavailable] = useState(false);
   const [loadingFee, setLoadingFee] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loadingAddresses, setLoadingAddresses] = useState(true);
-
-  const [couponCode, setCouponCode] = useState('');
-  const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
-  const [applicableProductIds, setApplicableProductIds] = useState<string[]>([]);
-  const [validatingCoupon, setValidatingCoupon] = useState(false);
+  
+  const [showReviewModal, setShowReviewModal] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -72,8 +67,6 @@ export default function Checkout() {
     const addr = addresses.find(a => a.id === selectedAddress);
     if (!addr || !addr.latitude || !addr.longitude) {
       setDeliveryFee(null);
-      setRegionId(null);
-      setRegionName(null);
       setUnavailable(false);
       return;
     }
@@ -82,35 +75,21 @@ export default function Checkout() {
       setLoadingFee(true);
       setUnavailable(false);
       try {
-        // Se a loja tem taxa fixa configurada, usa ela mas ainda tenta identificar a região
         if (company?.delivery_fee !== null && company?.delivery_fee !== undefined) {
           setDeliveryFee(company.delivery_fee);
-          const result = await calculateDeliveryFee(addr.latitude!, addr.longitude!, supabase);
-          if (result.regionId) {
-            setRegionId(result.regionId);
-            setRegionName(result.regionName);
-          }
           return;
         }
 
-        // Cálculo automático baseado nas regiões do mapa
         const result = await calculateDeliveryFee(addr.latitude!, addr.longitude!, supabase);
 
         if (result.isOutOfRange) {
           setDeliveryFee(null);
-          setRegionId(null);
-          setRegionName(null);
           setUnavailable(true);
           toast.warning('Este endereço está fora da área de entrega.');
         } else if (result.fee !== null) {
           setDeliveryFee(result.fee);
-          setRegionId(result.regionId);
-          setRegionName(result.regionName);
         } else {
-          // Nenhuma região cadastrada ainda — sem bloqueio
           setDeliveryFee(0);
-          setRegionId(null);
-          setRegionName(null);
         }
       } finally {
         setLoadingFee(false);
@@ -118,90 +97,31 @@ export default function Checkout() {
     };
 
     checkRegion();
-  }, [selectedAddress, addresses]);
+  }, [selectedAddress, addresses, company?.delivery_fee]);
 
-  const handleApplyCoupon = async () => {
-    if (!couponCode.trim()) return;
-    setValidatingCoupon(true);
-    try {
-      const code = couponCode.trim().toUpperCase();
-      const { data, error } = await supabase.from('coupons').select('*').eq('code', code).eq('active', true).maybeSingle();
-      
-      if (error || !data) {
-        toast.error('Cupom inválido ou inativo.');
-        setAppliedCoupon(null);
-        return;
-      }
-      if (data.expires_at && new Date(data.expires_at) < new Date()) {
-        toast.error('Este cupom já expirou.');
-        setAppliedCoupon(null);
-        return;
-      }
-      if (data.min_order_value && subtotal < data.min_order_value) {
-        toast.error(`Valor mínimo para aplicar é de R$ ${data.min_order_value.toLocaleString('pt-BR')}`);
-        setAppliedCoupon(null);
-        return;
-      }
-      if (data.company_id && data.company_id !== company?.id) {
-        toast.error('Este cupom é exclusivo de outra loja.');
-        setAppliedCoupon(null);
-        return;
-      }
-      
-      // Fetch linked products
-      const { data: links } = await supabase.from('coupon_products').select('product_id').eq('coupon_id', data.id);
-      const pids = (links || []).map((l: any) => l.product_id);
-      
-      setApplicableProductIds(pids);
-      setAppliedCoupon(data);
-      toast.success('🎉 Cupom aplicado com sucesso!');
-    } catch (err) {
-      toast.error('Falha ao checar o cupom.');
-    } finally {
-      setValidatingCoupon(false);
-    }
+  // Recalculate total manually because cartTotal might not update instantly when we are at Checkout
+  const finalTotal = Math.max(0, subtotal - discountAmount) + (deliveryFee || 0);
+
+  const handleOpenReview = () => {
+    if (!selectedAddress) { toast.error('Selecione um endereço'); return; }
+    if (unavailable) { toast.error('Entrega não disponível'); return; }
+    if (loadingFee) { toast.error('Calculando frete, aguarde'); return; }
+    setShowReviewModal(true);
   };
-
-  const discountAmount = useMemo(() => {
-    if (!appliedCoupon) return 0;
-    
-    const isSpecific = applicableProductIds.length > 0;
-    const eligibleItems = isSpecific 
-      ? items.filter(item => applicableProductIds.includes(item.product.id))
-      : items;
-    
-    const eligibleSubtotal = eligibleItems.reduce(
-      (acc, item) => acc + ((item.product.price || 0) * item.quantity),
-      0,
-    );
-    
-    if (eligibleSubtotal === 0) return 0;
-
-    if (appliedCoupon.discount_type === 'percentage') {
-      const discount = (eligibleSubtotal * (appliedCoupon.discount_value / 100));
-      return Math.min(discount, appliedCoupon.max_discount_value || Infinity);
-    }
-    
-    return Math.min(eligibleSubtotal, appliedCoupon.discount_value);
-  }, [appliedCoupon, applicableProductIds, items]);
-
-  const total = Math.max(0, subtotal - discountAmount) + (deliveryFee || 0);
 
   const handleSubmit = async () => {
     if (!user || !company || items.length === 0) return;
-    if (!selectedAddress) { toast.error('Selecione um endereço'); return; }
-    if (unavailable) { toast.error('Entrega não disponível'); return; }
     if (loading || isLocked) return;
     
-    // Check store opening status one last time
     setLoading(true);
     try {
-      const { data: storeStatus } = await supabase.from('companies').select('is_open, opening_hours').eq('id', company.id).single();
+      const { data: storeStatus } = await supabase.from('companies').select('is_open').eq('id', company.id).single();
       if (!storeStatus?.is_open) {
         toast.error('Este restaurante ainda não abriu ou já fechou.', {
           description: 'Verifique o horário de funcionamento na página da loja.'
         });
         setLoading(false);
+        setShowReviewModal(false);
         return;
       }
 
@@ -210,10 +130,8 @@ export default function Checkout() {
         return;
       }
 
-      const requestId = newRequestId();
-      const orderNotes = null; // Removed item notes concatenation to keep them item-specific
+      const orderNotes = cpf ? `CPF na nota: ${cpf}` : null;
 
-      // Idempotency key baseado em (user, loja, endereço, cupom, itens).
       const ik = generateIdempotencyKey(
         user.id,
         items,
@@ -237,9 +155,6 @@ export default function Checkout() {
         idempotency_key: ik,
       };
 
-      /* audit log moved to edge function */
-
-      // --- ALTERAÇÃO: VOLTANDO PARA RPC (SQL) PARA EVITAR PROBLEMAS DE DEPLOY/CORS ---
       const { data, error: functionError } = await supabase.rpc('create_order_v3', {
         p_items: requestBody.items,
         p_company_id: requestBody.company_id,
@@ -253,22 +168,16 @@ export default function Checkout() {
       });
 
       if (functionError) {
-        let msg = functionError.message || 'Erro ao processar pedido';
-
-        const friendly = mapServerError(msg);
-        
-        /* audit log moved to edge function */
-        throw new Error(friendly);
+        throw new Error(mapServerError(functionError.message || 'Erro ao processar pedido'));
       }
 
-      const orderId = data?.order_id || data; // Dependendo de como o RPC retorna
+      const orderId = data?.order_id || data;
       if (!orderId) throw new Error('Falha ao obter ID do pedido.');
-
-      /* audit log moved to edge function */
 
       clearCart();
       resetIdempotencyKey();
       toast.success('Pedido realizado!');
+      setShowReviewModal(false);
       navigate(`/marketplace/orders/${orderId}`);
     } catch (err: any) {
       toast.error(err.message || 'Erro ao criar pedido');
@@ -278,111 +187,126 @@ export default function Checkout() {
   if (!user) { navigate('/marketplace/login'); return null; }
   if (items.length === 0) { navigate('/marketplace/cart'); return null; }
 
+  const selAddrObj = addresses.find(a => a.id === selectedAddress);
+
   return (
     <MarketplaceLayout hideNav>
-      <div className="sticky top-0 z-30 flex items-center gap-3 border-b border-border bg-background/95 backdrop-blur-lg px-4 py-3">
-        <button onClick={() => navigate(-1)} className="h-9 w-9 rounded-full bg-secondary flex items-center justify-center">
-          <ArrowLeft className="h-4 w-4" />
+      <div className="sticky top-0 z-30 flex items-center gap-3 border-b border-border bg-background px-4 py-3">
+        <button onClick={() => navigate(-1)} className="flex h-9 w-9 items-center justify-center rounded-full">
+          <ArrowLeft className="h-5 w-5 text-primary" />
         </button>
-        <h1 className="font-semibold text-foreground">Finalizar pedido</h1>
+        <div className="flex-1 text-center pr-9">
+          <h1 className="font-bold text-sm tracking-widest text-foreground uppercase">SACOLA</h1>
+        </div>
       </div>
 
-      <div className="mx-auto max-w-lg space-y-4 px-4 py-4 pb-32">
-        {/* Endereço */}
-        <div className="bg-card border border-border rounded-2xl p-4 space-y-3">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-              <MapPin className="h-4 w-4 text-primary" /> Endereço
-            </h3>
-            <Button size="sm" variant="outline" className="h-8 rounded-lg text-xs" onClick={() => navigate('/marketplace/addresses')}>
-              <Plus className="h-3 w-3 mr-1" /> Novo
-            </Button>
-          </div>
+      <div className="mx-auto max-w-lg px-0 py-4 pb-40">
+        {/* Endereço estilo iFood */}
+        <div className="px-4 mb-6">
+          <h3 className="text-base font-bold text-foreground mb-3">Entregar no endereço</h3>
           {loadingAddresses ? (
             <p className="text-sm text-muted-foreground">Carregando...</p>
           ) : addresses.length === 0 ? (
-            <div className="text-center py-4">
+            <div className="text-center py-4 border border-border rounded-xl">
               <p className="text-sm text-muted-foreground">Nenhum endereço cadastrado</p>
               <Button size="sm" className="mt-2 rounded-lg" onClick={() => navigate('/marketplace/addresses')}>Adicionar</Button>
             </div>
           ) : (
-            <RadioGroup value={selectedAddress} onValueChange={setSelectedAddress}>
-              {addresses.map(addr => (
-                <div key={addr.id} className="flex items-start gap-3 p-3 rounded-xl border border-border hover:border-primary/20 transition-colors">
-                  <RadioGroupItem value={addr.id} id={addr.id} className="mt-0.5" />
-                  <label htmlFor={addr.id} className="text-sm cursor-pointer flex-1">
-                    <p className="font-medium text-foreground">{addr.street}, {addr.number}</p>
-                    <p className="text-xs text-muted-foreground">{addr.neighborhood} - {addr.city}</p>
-                  </label>
+            <div className="flex items-start justify-between gap-3 bg-background">
+              <div className="flex gap-3 min-w-0">
+                <MapPin className="h-5 w-5 text-foreground shrink-0 mt-0.5" />
+                <div className="min-w-0">
+                  <p className="font-medium text-foreground truncate">{selAddrObj?.street}, {selAddrObj?.number}</p>
+                  <p className="text-sm text-muted-foreground truncate">{selAddrObj?.neighborhood} - {selAddrObj?.complement || 'Casa'}</p>
                 </div>
-              ))}
-            </RadioGroup>
-          )}
-          {unavailable && (
-            <div className="flex items-center gap-2 p-3 rounded-xl bg-destructive/10 text-destructive text-sm">
-              <AlertCircle className="h-4 w-4 shrink-0" />
-              <div>
-                <p className="font-semibold">Entrega não disponível</p>
-                <p className="text-xs opacity-80">Este endereço está fora da área de atendimento.</p>
               </div>
-            </div>
-          )}
-          {loadingFee && (
-            <div className="flex items-center gap-2 p-3 rounded-xl bg-primary/5 text-primary text-sm">
-              <Loader2 className="h-4 w-4 animate-spin shrink-0" />
-              <span>Calculando frete da região...</span>
+              <button className="text-sm font-semibold text-primary shrink-0" onClick={() => navigate('/marketplace/addresses')}>
+                Trocar
+              </button>
             </div>
           )}
         </div>
 
-        {/* Pagamento */}
-        <div className="bg-card border border-border rounded-2xl p-4 space-y-3">
-          <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-            <CreditCard className="h-4 w-4 text-primary" /> Pagamento
+        {/* Opções de entrega */}
+        <div className="px-4 mb-8">
+          <h3 className="text-base font-bold text-foreground mb-3 flex items-center gap-1">
+            Opções de entrega <AlertCircle className="h-4 w-4 text-muted-foreground" />
           </h3>
-          <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="space-y-1">
+          <div className="border border-[#111111] rounded-xl p-4 flex items-center justify-between">
+            <div>
+              <p className="font-semibold text-foreground text-sm">Padrão</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Hoje, 30 - 45min</p>
+            </div>
+            <div className="flex items-center gap-3">
+              {loadingFee ? (
+                 <Loader2 className="h-4 w-4 animate-spin text-primary" />
+              ) : deliveryFee === 0 ? (
+                 <span className="text-[#00A868] font-bold text-sm">Grátis</span>
+              ) : deliveryFee !== null ? (
+                 <span className="font-bold text-sm">R$ {deliveryFee.toFixed(2).replace('.', ',')}</span>
+              ) : unavailable ? (
+                 <span className="text-destructive font-bold text-xs">Indisponível</span>
+              ) : null}
+              <div className="h-5 w-5 rounded-full border-4 border-primary/20 flex items-center justify-center">
+                 <div className="h-2.5 w-2.5 rounded-full bg-primary" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="h-2 w-full bg-secondary mb-6" />
+
+        {/* Formas de Pagamento restritas */}
+        <div className="px-4 mb-6">
+          <h3 className="text-base font-bold text-foreground mb-4">Pagamento na entrega</h3>
+          <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="space-y-3">
             {[
-              { value: 'money', icon: Banknote, label: 'Dinheiro' },
-              { value: 'pix', icon: QrCode, label: 'PIX' },
-              { value: 'card', icon: CreditCard, label: 'Cartão (na entrega)' },
+              { value: 'money', icon: Banknote, label: 'Dinheiro', desc: 'Solicite troco se precisar' },
+              { value: 'card', icon: Smartphone, label: 'Máquina', desc: 'Cartão de crédito, débito ou PIX na máquina' },
             ].map(m => (
-              <div key={m.value} className="flex items-center gap-3 p-3 rounded-xl border border-border hover:border-primary/20 transition-colors">
+              <div key={m.value} className="flex items-center gap-4 border-b border-border/50 pb-3 last:border-0 last:pb-0">
                 <RadioGroupItem value={m.value} id={m.value} />
-                <m.icon className="h-4 w-4 text-muted-foreground" />
-                <label htmlFor={m.value} className="text-sm cursor-pointer">{m.label}</label>
+                <div className="flex gap-3 flex-1 items-center">
+                  <m.icon className="h-5 w-5 text-muted-foreground" />
+                  <div>
+                    <label htmlFor={m.value} className="text-sm font-semibold cursor-pointer">{m.label}</label>
+                    <p className="text-xs text-muted-foreground">{m.desc}</p>
+                  </div>
+                </div>
               </div>
             ))}
           </RadioGroup>
+
           {paymentMethod === 'money' && (
-            <div className="rounded-xl border border-border p-3 space-y-2">
-              <div className="flex items-center gap-2">
+            <div className="mt-4 rounded-xl border border-border p-4 bg-muted/20 space-y-3">
+              <div className="flex items-center gap-3">
                 <input
                   id="needs-change"
                   type="checkbox"
                   checked={needsChange}
                   onChange={(e) => setNeedsChange(e.target.checked)}
-                  className="h-4 w-4 accent-primary"
+                  className="h-4 w-4 accent-primary rounded"
                 />
-                <label htmlFor="needs-change" className="text-sm cursor-pointer">
+                <label htmlFor="needs-change" className="text-sm font-semibold cursor-pointer">
                   Preciso de troco
                 </label>
               </div>
               {needsChange && (
-                <div className="space-y-1">
-                  <label className="text-xs text-muted-foreground">Troco para quanto?</label>
+                <div className="pl-7 space-y-1">
+                  <label className="text-xs text-muted-foreground font-medium">Troco para quanto?</label>
                   <input
                     type="number"
                     inputMode="decimal"
-                    min={total}
+                    min={finalTotal}
                     step="0.01"
-                    placeholder={`Ex: ${(Math.ceil(total / 10) * 10).toFixed(2)}`}
+                    placeholder={`Ex: ${(Math.ceil(finalTotal / 10) * 10).toFixed(2)}`}
                     value={changeFor}
                     onChange={(e) => setChangeFor(e.target.value)}
-                    className="w-full h-11 bg-background border border-border rounded-xl px-4 text-sm focus:outline-none focus:border-primary transition-colors"
+                    className="w-full h-11 bg-background border border-border rounded-xl px-4 text-sm font-semibold focus:outline-none focus:border-primary transition-colors"
                   />
-                  {changeFor && Number(changeFor) > total && (
-                    <p className="text-xs text-muted-foreground">
-                      Troco de R$ {(Number(changeFor) - total).toFixed(2).replace('.', ',')}
+                  {changeFor && Number(changeFor) > finalTotal && (
+                    <p className="text-xs font-bold text-primary mt-1">
+                      Troco de R$ {(Number(changeFor) - finalTotal).toFixed(2).replace('.', ',')}
                     </p>
                   )}
                 </div>
@@ -391,91 +315,139 @@ export default function Checkout() {
           )}
         </div>
 
+        <div className="h-2 w-full bg-secondary mb-6" />
 
-        {/* Cupom */}
-        <div className="bg-card border border-border rounded-2xl p-4 space-y-3">
-          <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-            <Ticket className="h-4 w-4 text-primary" /> Cupom de Desconto
-          </h3>
-          {appliedCoupon ? (
-            <div className="flex items-center justify-between bg-primary/10 border border-primary/20 rounded-xl p-3">
-              <div className="flex items-center gap-2 text-primary">
-                <CheckCircle2 className="h-5 w-5" />
-                <span className="font-bold text-sm uppercase">{appliedCoupon.code}</span>
+        {/* CPF na nota */}
+        <div className="px-4 mb-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <FileText className="h-5 w-5 text-foreground" />
+              <div>
+                <h3 className="font-bold text-sm text-foreground">CPF na nota</h3>
+                <p className="text-xs text-muted-foreground">Opcional</p>
               </div>
-              <button onClick={() => setAppliedCoupon(null)} className="text-xs font-semibold text-muted-foreground underline">Remover</button>
             </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              <input 
-                type="text" 
-                placeholder="Insira o código" 
-                value={couponCode}
-                onChange={e => setCouponCode(e.target.value)}
-                className="flex-1 h-11 bg-background border border-border rounded-xl px-4 text-sm font-bold uppercase placeholder:normal-case placeholder:font-normal focus:outline-none focus:border-primary transition-colors"
-                disabled={validatingCoupon}
+            {!cpf ? (
+              <button className="text-sm font-semibold text-primary" onClick={() => setCpf('000.000.000-00')}>Adicionar</button>
+            ) : (
+              <button className="text-sm font-semibold text-destructive" onClick={() => setCpf('')}>Remover</button>
+            )}
+          </div>
+          {cpf && (
+            <div className="mt-3">
+              <input
+                type="text"
+                value={cpf}
+                onChange={(e) => setCpf(e.target.value)}
+                placeholder="000.000.000-00"
+                className="w-full h-12 bg-background border border-border rounded-xl px-4 text-sm font-semibold focus:outline-none focus:border-primary transition-colors"
               />
-              <Button 
-                variant="secondary" 
-                className="h-11 rounded-xl text-primary font-bold" 
-                disabled={!couponCode.trim() || validatingCoupon}
-                onClick={handleApplyCoupon}
-              >
-                {validatingCoupon ? '...' : 'Aplicar'}
-              </Button>
             </div>
           )}
         </div>
+      </div>
 
-        {/* Resumo */}
-        <div className="bg-card border border-border rounded-2xl p-4 space-y-2">
-          <h3 className="text-sm font-semibold text-foreground mb-2">Resumo</h3>
-          {items.map(item => (
-            <div key={item.product.id} className="flex justify-between text-sm">
-              <span className="text-muted-foreground">{item.quantity}x {item.product.name}</span>
-              <span className="text-foreground">R$ {((item.product.price || 0) * item.quantity).toFixed(2).replace('.', ',')}</span>
+      {/* Sticky footer Checkout */}
+      <div className="fixed bottom-0 left-0 right-0 border-t border-border bg-card p-4 safe-area-bottom shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-40">
+        <div className="mx-auto max-w-lg space-y-2">
+          {deliveryFee === 0 ? (
+            <p className="text-[13px] text-muted-foreground font-medium mb-2 px-1">
+              Total com <span className="text-foreground font-bold">entrega grátis</span>
+            </p>
+          ) : (
+             <p className="text-[13px] text-muted-foreground font-medium mb-2 px-1">
+              Total a pagar
+             </p>
+          )}
+          
+          <div className="flex items-center gap-4">
+            <div className="flex-1">
+              <p className="font-bold text-xl text-foreground">
+                R$ {finalTotal.toFixed(2).replace('.', ',')}
+                <span className="text-xs text-muted-foreground font-medium ml-1">/ {items.reduce((a, b) => a + b.quantity, 0)} item{items.length > 1 ? 's' : ''}</span>
+              </p>
             </div>
-          ))}
-          <div className="border-t border-border pt-2 mt-2 space-y-1">
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Subtotal</span>
-              <span>R$ {subtotal.toFixed(2).replace('.', ',')}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Entrega</span>
-              <span>
-                {loadingFee ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin inline" />
-                ) : deliveryFee !== null ? (
-                  `R$ ${deliveryFee.toFixed(2).replace('.', ',')}`
-                ) : unavailable ? (
-                  <span className="text-destructive text-xs font-semibold">Fora da área</span>
-                ) : '—'}
-              </span>
-            </div>
-            {appliedCoupon && (
-              <div className="flex justify-between text-sm text-primary font-medium">
-                <span>Desconto ({appliedCoupon.code})</span>
-                <span>- R$ {discountAmount.toFixed(2).replace('.', ',')}</span>
-              </div>
-            )}
-            <div className="border-t border-border pt-2 flex justify-between font-bold">
-              <span>Total</span>
-              <span className="text-primary">R$ {total.toFixed(2).replace('.', ',')}</span>
-            </div>
+            <Button 
+              className="h-14 w-[60%] rounded-xl text-base font-bold bg-[#EA1D2C] hover:bg-[#D11825] text-white" 
+              onClick={handleOpenReview} 
+              disabled={unavailable || !selectedAddress || loadingFee}
+            >
+              Revisar pedido
+            </Button>
           </div>
         </div>
       </div>
-      
 
+      {/* Sheet Modal - Revise o seu pedido */}
+      <Sheet open={showReviewModal} onOpenChange={setShowReviewModal}>
+        <SheetContent side="bottom" className="h-auto max-h-[90vh] overflow-y-auto rounded-t-[32px] px-0 pb-0 pt-6">
+          <div className="mx-auto w-12 h-1.5 rounded-full bg-muted mb-6" />
+          <SheetHeader className="px-6 mb-6">
+            <SheetTitle className="text-center text-xl font-bold">Revise o seu pedido</SheetTitle>
+          </SheetHeader>
 
-      <div className="fixed bottom-0 left-0 right-0 border-t border-border bg-background/95 backdrop-blur-lg p-4 safe-area-bottom">
-        <div className="mx-auto max-w-lg">
-          <Button className="h-12 w-full rounded-xl font-semibold" onClick={handleSubmit} disabled={loading || unavailable || !selectedAddress}>
-            {loading ? 'Confirmando...' : `Confirmar • R$ ${total.toFixed(2).replace('.', ',')}`}
-          </Button>
-        </div>
-      </div>
+          <div className="px-6 space-y-6">
+            <div className="flex items-start gap-4">
+              <Bike className="h-6 w-6 text-foreground mt-0.5" />
+              <div>
+                <p className="font-bold text-[15px]">Entrega hoje</p>
+                <p className="text-sm text-muted-foreground">Hoje, 30 - 45 min</p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-4">
+              <MapPin className="h-6 w-6 text-foreground mt-0.5" />
+              <div>
+                <p className="font-bold text-[15px]">{selAddrObj?.street}, {selAddrObj?.number}</p>
+                <p className="text-sm text-muted-foreground">{selAddrObj?.complement || 'Casa'}</p>
+              </div>
+            </div>
+
+            {appliedCoupon && (
+              <div className="flex items-start gap-4">
+                <Ticket className="h-6 w-6 text-foreground mt-0.5" />
+                <div className="flex-1 flex justify-between items-center">
+                  <div>
+                    <p className="font-bold text-[15px]">Cupom aplicado</p>
+                    <p className="text-sm text-primary uppercase">{appliedCoupon.code}</p>
+                  </div>
+                  <span className="font-bold text-primary">- R$ {discountAmount.toFixed(2).replace('.', ',')}</span>
+                </div>
+              </div>
+            )}
+
+            <div className="flex items-start gap-4 pb-2 border-b border-border/50">
+              <Banknote className="h-6 w-6 text-[#00A868] mt-0.5" />
+              <div className="flex-1 flex justify-between items-start">
+                <div>
+                  <p className="font-bold text-[15px] flex items-center gap-1">Pagamento na entrega <span className="text-[#EA1D2C]">*</span></p>
+                  <p className="text-sm text-muted-foreground">
+                    {paymentMethod === 'money' ? `Dinheiro${needsChange && changeFor ? ` - Troco para R$ ${Number(changeFor).toFixed(2).replace('.', ',')}` : ''}` : 'Máquina (Cartão/PIX)'}
+                  </p>
+                </div>
+                <span className="font-bold text-base mt-0.5">R$ {finalTotal.toFixed(2).replace('.', ',')}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-6 pt-4 pb-8 space-y-3 bg-background">
+            <Button 
+              className="w-full h-14 rounded-xl text-base font-bold bg-[#EA1D2C] hover:bg-[#D11825] text-white"
+              onClick={handleSubmit}
+              disabled={loading}
+            >
+              {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Fazer pedido'}
+            </Button>
+            <Button 
+              variant="ghost" 
+              className="w-full h-14 rounded-xl text-[15px] font-semibold text-[#EA1D2C] hover:bg-transparent hover:text-[#D11825]"
+              onClick={() => setShowReviewModal(false)}
+            >
+              Alterar pedido
+            </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
     </MarketplaceLayout>
   );
 }

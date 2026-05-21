@@ -1,79 +1,33 @@
+// VERSION: 2026-05-21-ORDER-TRACKER
 import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
-import { useCart } from '@/contexts/CartContext';
-import { useEvaluation } from '@/hooks/useEvaluation';
-import { Order, OrderItem, Delivery, ChatMessage, Product } from '@/types/database';
+import { Order, OrderItem, Delivery, Product } from '@/types/database';
 import MarketplaceLayout from '@/components/marketplace/MarketplaceLayout';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { ArrowLeft, MessageCircle, Send, Star, Check, Navigation, Store, RefreshCw, Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
+import { ArrowLeft, MessageCircle, MapPin, Banknote, Smartphone } from 'lucide-react';
 import { OrderStoreChat } from '@/components/marketplace/OrderStoreChat';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 const statusSteps = ['pending', 'confirmed', 'preparing', 'ready', 'delivering', 'delivered'];
-const statusLabels: Record<string, string> = {
-  pending: 'Pedido solicitado',
-  confirmed: 'Aceito pelo lojista',
-  preparing: 'Em preparo',
-  ready: 'Pronto para retirada',
-  delivering: 'Saiu para entrega',
-  in_transit: 'Saiu para entrega',
-  in_route: 'Saiu para entrega',
-  delivered: 'Entregue',
-  completed: 'Entregue',
-};
-const statusDescriptions: Record<string, string> = {
-  pending: 'Aguardando confirmação do lojista.',
-  confirmed: 'O lojista aceitou seu pedido.',
-  preparing: 'Seu pedido está sendo preparado.',
-  ready: 'Pedido pronto, aguardando entregador.',
-  delivering: 'O entregador está a caminho.',
-  in_transit: 'O entregador está a caminho.',
-  delivered: 'Pedido entregue. Bom apetite!',
-  completed: 'Pedido entregue. Bom apetite!',
-};
-
-const STORE_CHAT_STATUSES = ['confirmed', 'preparing', 'ready', 'delivering', 'in_route', 'delivered'];
 
 export default function OrderDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { addItem } = useCart();
-  const { submitRating, checkHasRated, loading: submittingReview } = useEvaluation();
   
   const [order, setOrder] = useState<Order | null>(null);
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [delivery, setDelivery] = useState<Delivery | null>(null);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
-  const [reordering, setReordering] = useState(false);
-  const [showChat, setShowChat] = useState(false);
   const [showStoreChat, setShowStoreChat] = useState(false);
-  const [showReview, setShowReview] = useState(false);
-  const [hasCheckedRating, setHasCheckedRating] = useState(false);
-  const [orderRating, setOrderRating] = useState(5);
-  const [driverRating, setDriverRating] = useState(5);
-  const [reviewComment, setReviewComment] = useState('');
-  const chatEndRef = useRef<HTMLDivElement>(null);
-
-  const DRIVER_QUICK_MESSAGES = [
-    "Estou descendo! 🚪",
-    "Pode deixar na portaria 🏢",
-    "Onde você está? 📍",
-    "Vou abrir o portão 🏠"
-  ];
 
   useEffect(() => {
     if (!id) return;
     const fetchAll = async () => {
       setLoading(true);
       const [orderRes, itemsRes, deliveryRes] = await Promise.all([
-        supabase.from('orders').select('*, company:companies(*)').eq('id', id).single(),
+        supabase.from('orders').select('*, company:companies(*), address:addresses(*)').eq('id', id).single(),
         supabase.from('order_items').select('*, products(*)').eq('order_id', id),
         supabase.from('deliveries').select('*').eq('order_id', id).maybeSingle(),
       ]);
@@ -81,20 +35,6 @@ export default function OrderDetail() {
       setOrderItems(itemsRes.data || []);
       setDelivery(deliveryRes.data);
       setLoading(false);
-      
-      if (deliveryRes.data) {
-        const { data: msgs } = await supabase.from('chat_messages').select('*').eq('delivery_id', deliveryRes.data.id).order('created_at');
-        setMessages(msgs || []);
-      }
-
-      const isFinished = orderRes.data?.status === 'delivered' || orderRes.data?.status === 'completed' || deliveryRes.data?.status === 'delivered';
-      if (isFinished && !hasCheckedRating) {
-        setHasCheckedRating(true);
-        const alreadyRated = await checkHasRated(id);
-        if (!alreadyRated) {
-          setShowReview(true);
-        }
-      }
     };
     fetchAll();
 
@@ -103,84 +43,20 @@ export default function OrderDetail() {
         (p) => setOrder(prev => prev ? { ...prev, ...p.new } : null))
       .subscribe();
 
-    const deliveryChannel = supabase.channel(`delivery-order-${id}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'deliveries', filter: `order_id=eq.${id}` },
-        (p) => { if (p.eventType === 'INSERT' || p.eventType === 'UPDATE') setDelivery(p.new as Delivery); })
-      .subscribe();
-
-    return () => { supabase.removeChannel(orderChannel); supabase.removeChannel(deliveryChannel); };
+    return () => { supabase.removeChannel(orderChannel); };
   }, [id]);
 
-  useEffect(() => {
-    if (!delivery) return;
-    const channel = supabase.channel(`chat-${delivery.id}`)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages', filter: `delivery_id=eq.${delivery.id}` },
-        (p) => setMessages(prev => [...prev, p.new as ChatMessage]))
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [delivery]);
-
-  useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
-
-  const sendMessage = async (customText?: string) => {
-    const msg = (customText || newMessage).trim();
-    if (!msg || !delivery || !user) return;
-    await supabase.from('chat_messages').insert({ 
-      delivery_id: delivery.id, 
-      sender_id: user.id, 
-      message: msg 
-    });
-    setNewMessage('');
-  };
-
-  const handleSubmitReview = async () => {
-    if (!order || !user) return;
-    const success = await submitRating({
-      orderId: order.id,
-      userId: user.id,
-      companyId: order.company_id,
-      driverId: delivery?.driver_id,
-      orderRating,
-      driverRating,
-      comment: reviewComment
-    });
-    if (success) setShowReview(false);
-  };
-
-  const handleReorder = async () => {
-    if (!order || orderItems.length === 0) return;
-    setReordering(true);
-    try {
-      const { data: comp } = await supabase.from('companies').select('*').eq('id', order.company_id).single();
-      if (!comp) throw new Error('Loja não encontrada');
-
-      for (const item of orderItems) {
-        const { data: product } = await supabase.from('products').select('*').eq('id', item.product_id).single();
-        if (product && product.active) {
-          addItem(product as Product, comp as any, ((item as any).options as any[]) || [], item.quantity);
-        }
-      }
-
-      toast.success('Itens adicionados à sacola!');
-      navigate('/marketplace/checkout');
-    } catch (err) {
-      toast.error('Erro ao repetir pedido.');
-    } finally {
-      setReordering(false);
-    }
-  };
-
-  if (loading) {
+  if (loading || !order) {
     return (
       <MarketplaceLayout>
-        <div className="flex items-center justify-center py-20">
-          <Loader2 className="animate-spin h-8 w-8 text-primary" />
+        <div className="flex h-[70vh] items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
         </div>
       </MarketplaceLayout>
     );
   }
 
-  const currentOrderStatus = (delivery?.status === 'completed' || delivery?.status === 'delivered') ? 'delivered' : order?.status || 'pending';
+  const currentOrderStatus = (delivery?.status === 'completed' || delivery?.status === 'delivered') ? 'delivered' : order.status || 'pending';
   const isCompleted = currentOrderStatus === 'delivered' || currentOrderStatus === 'completed';
   
   const currentStepIndex = statusSteps.indexOf(
@@ -189,251 +65,197 @@ export default function OrderDetail() {
     currentOrderStatus
   );
 
+  // Derivações textuais
+  let title = "Seu pedido foi solicitado";
+  if (currentStepIndex >= 1) title = "O lojista está confirmando o pedido";
+  if (currentStepIndex >= 2) title = "Seu pedido está sendo preparado";
+  if (currentStepIndex >= 4) title = "O entregador está a caminho";
+  if (isCompleted) title = "Seu pedido foi entregue";
+
+  // Gera código aleatório (mock) com base no ID
+  const deliveryCode = id ? parseInt(id.replace(/[^0-9]/g, '').substring(0, 4)) || 6656 : 6656;
+
+  // Calculo total
+  const itemsCount = orderItems.reduce((acc, curr) => acc + curr.quantity, 0);
+
   return (
     <MarketplaceLayout>
-      <div className="max-w-lg mx-auto px-4 py-4 space-y-4 pb-24">
-        <div className="flex items-center justify-between p-4 border-b bg-background sticky top-0 z-10">
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" onClick={() => navigate('/marketplace/orders')} className="rounded-full">
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <h1 className="text-lg font-bold">Acompanhar pedido</h1>
+      <div className="relative min-h-[calc(100vh-64px)] pb-32">
+        {/* Background Mapa Fictício */}
+        <div 
+          className="absolute top-0 left-0 right-0 h-[40vh] z-0 opacity-80" 
+          style={{
+            backgroundImage: `url('https://images.unsplash.com/photo-1524661135-423995f22d0b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80')`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            filter: 'blur(1px) sepia(20%) hue-rotate(-10deg)',
+          }}
+        >
+          {/* Degradê para misturar com o fundo */}
+          <div className="absolute inset-0 bg-gradient-to-b from-background/30 via-background/60 to-background" />
+        </div>
+
+        {/* Top Bar Nav */}
+        <div className="sticky top-0 z-20 px-4 py-3 flex justify-between items-center bg-transparent backdrop-blur-sm">
+          <button onClick={() => navigate('/marketplace/orders')} className="flex h-10 w-10 items-center justify-center rounded-full bg-background shadow-md border border-border/50">
+            <ArrowLeft className="h-5 w-5 text-primary" />
+          </button>
+          <div className="flex gap-2">
+            <button className="px-4 py-2 bg-background shadow-md rounded-full text-sm font-bold text-primary border border-border/50">
+              Ajuda
+            </button>
+            <button className="flex h-10 w-10 items-center justify-center rounded-full bg-background shadow-md border border-border/50" onClick={() => setShowStoreChat(true)}>
+              <MessageCircle className="h-5 w-5 text-primary" />
+            </button>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="relative z-10 mx-auto max-w-lg px-4 pt-16 space-y-4">
+          
+          {/* Card Principal: Tracking */}
+          <div className="bg-background rounded-3xl p-5 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] border border-border">
+            <h2 className="text-xl font-bold text-foreground mb-4 pr-4">{title}</h2>
+            
+            {/* Barra de Progresso Verde Segmentada */}
+            <div className="flex gap-1 mb-5">
+              {[0, 1, 2, 3, 4, 5].map((step, idx) => (
+                <div 
+                  key={idx} 
+                  className={`h-1.5 flex-1 rounded-full ${idx <= currentStepIndex ? 'bg-[#00A868]' : 'bg-muted'}`} 
+                />
+              ))}
+            </div>
+
+            <div className="flex items-center justify-between border-b border-border/50 pb-4 mb-4">
+              <span className="text-[15px] text-muted-foreground font-medium">Previsão de entrega: <span className="text-foreground font-bold ml-1">30 - 45 min</span></span>
+            </div>
+
+            <div className="flex justify-between items-center bg-secondary/30 p-3 rounded-2xl border border-border/50">
+              <span className="text-sm font-medium text-muted-foreground">Código de entrega</span>
+              <div className="flex items-center gap-2 bg-muted px-3 py-1.5 rounded-lg">
+                <span className="text-xs font-bold text-foreground">•••</span>
+                <span className="text-sm font-bold tracking-widest">{deliveryCode}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Notificações Mock */}
+          <div className="bg-background rounded-3xl p-5 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] border border-border">
+            <div className="flex justify-between items-center">
+              <div className="pr-4">
+                <h3 className="font-bold text-base mb-1">Ative as notificações e acompanhe seu pedido</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">Fique sabendo na hora se houver algum problema com seu pedido ou se alguém te enviar uma mensagem.</p>
+              </div>
+              <div className="w-12 h-6 bg-muted rounded-full relative shrink-0">
+                <div className="w-5 h-5 bg-background border border-border shadow-sm rounded-full absolute top-0.5 left-0.5" />
+              </div>
+            </div>
+          </div>
+
+          {/* Endereço de entrega */}
+          <div className="bg-background rounded-3xl p-5 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] border border-border">
+            <h3 className="font-bold text-base mb-4">Endereço de entrega</h3>
+            <div className="flex gap-3 mb-4">
+              <div className="mt-0.5 bg-secondary/50 p-1.5 rounded-full h-fit">
+                <MapPin className="h-5 w-5 text-foreground" />
+              </div>
+              <div>
+                <p className="font-bold text-[15px]">
+                  {(order.address as any)?.street || 'Endereço'}, {(order.address as any)?.number || 'S/N'}
+                </p>
+                <p className="text-sm text-muted-foreground mt-0.5">
+                  {(order.address as any)?.neighborhood} - {(order.address as any)?.complement || 'Casa'}
+                </p>
+              </div>
+            </div>
+            <div className="bg-muted/50 p-3 rounded-xl border border-border flex items-center justify-between">
+              <span className="text-xs font-medium text-muted-foreground">Esta entrega é feita pela loja e não pode ser rastreada</span>
+              <div className="h-4 w-4 rounded-full bg-secondary text-muted-foreground flex items-center justify-center text-[10px] font-bold">?</div>
+            </div>
+          </div>
+
+          {/* Detalhes do Pedido */}
+          <div className="bg-background rounded-3xl p-5 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] border border-border">
+            <h3 className="font-bold text-base mb-4">Detalhes do pedido</h3>
+            
+            <div className="flex items-center justify-between mb-5 cursor-pointer">
+              <div className="flex gap-3 items-center">
+                <div className="h-10 w-10 rounded-full bg-secondary border border-border shrink-0 flex items-center justify-center overflow-hidden">
+                   <img src="https://ui-avatars.com/api/?name=L&background=random" className="w-full h-full object-cover" />
+                </div>
+                <div>
+                  <p className="font-bold text-[15px]">{order.company?.name}</p>
+                  <p className="text-xs text-muted-foreground">Pedido Nº {id?.split('-')[0]} • {itemsCount} item{itemsCount > 1 ? 's' : ''}</p>
+                </div>
+              </div>
+              <ArrowLeft className="h-4 w-4 text-muted-foreground rotate-180" />
+            </div>
+
+            <div className="flex gap-3 mb-5">
+              {order.payment_method === 'money' ? (
+                <Banknote className="h-5 w-5 text-[#00A868] shrink-0 mt-0.5" />
+              ) : (
+                <Smartphone className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+              )}
+              <div>
+                <p className="font-bold text-[15px] flex items-center gap-1">Pagamento na entrega <span className="text-[#00A868]">●</span> {order.payment_method === 'money' ? 'Dinheiro' : 'Máquina'}</p>
+                <p className="text-sm text-muted-foreground">
+                   {order.payment_method === 'money' && (order as any).needs_change && (order as any).change_for 
+                    ? `Troco para R$ ${Number((order as any).change_for).toFixed(2).replace('.', ',')}` 
+                    : 'Sem troco necessário'}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex justify-between items-center font-bold text-base mb-6">
+              <span className="text-foreground">Total com entrega</span>
+              <span>R$ {(order.total || 0).toFixed(2).replace('.', ',')}</span>
+            </div>
+
+            <div className="border-t border-border/50 pt-5 text-center">
+              <button 
+                className="text-[#EA1D2C] font-bold text-[15px] flex items-center justify-center gap-2 mx-auto"
+                onClick={() => setShowStoreChat(true)}
+              >
+                <MessageCircle className="h-4 w-4" /> Chat com a loja
+              </button>
+            </div>
           </div>
           
-          {isCompleted && (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="rounded-full h-9 px-4 font-bold border-primary text-primary hover:bg-primary/5"
-              onClick={handleReorder}
-              disabled={reordering}
-            >
-              {reordering ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> : <RefreshCw className="h-3.5 w-3.5 mr-1.5" />}
-              Pedir novamente
-            </Button>
-          )}
         </div>
 
-        {/* Status Delivery */}
-        {delivery && ['delivering', 'in_route', 'in_transit'].includes(currentOrderStatus) && (
-          <div className="bg-primary/5 border border-primary/20 rounded-2xl p-4 flex items-center gap-3">
-            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-              <Navigation className="h-5 w-5 text-primary animate-pulse" />
+        {/* Ad Banner Overlay (Fake) */}
+        <div className="fixed bottom-[64px] left-0 right-0 z-30 p-4 pb-0 pointer-events-none">
+          <div className="mx-auto max-w-lg bg-black text-white rounded-t-3xl p-4 flex items-center justify-between shadow-2xl pointer-events-auto cursor-pointer">
+            <div className="flex gap-3 items-center">
+               <div className="h-8 w-8 rounded bg-white text-black flex items-center justify-center font-bold text-lg">%</div>
+               <div>
+                  <p className="font-bold text-sm">Até R$30 off + entrega grátis</p>
+                  <p className="text-xs text-zinc-400">Para pedir em Farmácia</p>
+               </div>
             </div>
-            <div>
-              <p className="text-sm font-bold text-foreground">Entregador a caminho</p>
-              <p className="text-xs text-muted-foreground">O entregador já coletou seu pedido e está se deslocando.</p>
-            </div>
-          </div>
-        )}
-
-        {/* Status Tracker */}
-        {!isCompleted && (
-          <div className="bg-card border border-border rounded-2xl p-4">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-medium text-foreground text-sm">Acompanhamento</h3>
-              <span className="text-[11px] uppercase tracking-wide text-primary font-semibold">
-                {statusLabels[order?.status || 'pending'] || 'Em andamento'}
-              </span>
-            </div>
-            <div className="relative">
-              {statusSteps.map((step, i) => {
-                const done = i < currentStepIndex;
-                const current = i === currentStepIndex;
-                return (
-                  <div key={step} className="flex items-start gap-3 relative pb-4 last:pb-0">
-                    {i < statusSteps.length - 1 && (
-                      <div
-                        className={`absolute left-[13px] top-7 w-0.5 h-[calc(100%-12px)] ${
-                          done ? 'bg-primary' : 'bg-border'
-                        }`}
-                      />
-                    )}
-                    <div
-                      className={`h-7 w-7 rounded-full flex items-center justify-center text-xs font-medium shrink-0 z-10 transition-all ${
-                        done
-                          ? 'bg-primary text-primary-foreground'
-                          : current
-                            ? `bg-primary text-primary-foreground ${isCompleted ? '' : 'ring-4 ring-primary/20 animate-pulse'}`
-                            : 'bg-secondary text-muted-foreground'
-                      }`}
-                    >
-                      {done ? <Check className="h-3.5 w-3.5" /> : i + 1}
-                    </div>
-                    <div className="flex-1 pt-0.5">
-                      <p
-                        className={`text-sm leading-tight ${
-                          done || current ? 'text-foreground font-medium' : 'text-muted-foreground'
-                        }`}
-                      >
-                        {statusLabels[step]}
-                      </p>
-                      {current && statusDescriptions[step] && (
-                        <p className="text-xs text-muted-foreground mt-0.5">{statusDescriptions[step]}</p>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* Store Chat */}
-        {order?.company_id && STORE_CHAT_STATUSES.includes(order.status) && (
-          <div className="bg-card border border-border rounded-2xl p-4">
-            <Button
-              variant="outline"
-              className="w-full rounded-xl h-10"
-              size="sm"
-              onClick={() => setShowStoreChat((v) => !v)}
-            >
-              <Store className="h-4 w-4 mr-2" />
-              {showStoreChat ? 'Fechar chat com lojista' : `Chat com ${order.company?.name || 'lojista'}`}
-            </Button>
-            {showStoreChat && (
-              <OrderStoreChat
-                orderId={order.id}
-                companyId={order.company_id}
-                companyName={order.company?.name}
-              />
-            )}
-          </div>
-        )}
-
-        {/* Items Summary */}
-        <div className="bg-card border border-border rounded-2xl p-4">
-          <h3 className="font-medium text-foreground mb-3 text-sm">{order?.company?.name}</h3>
-          <div className="space-y-2">
-            {orderItems.map(item => (
-              <div key={item.id} className="flex justify-between text-sm">
-                <span className="text-muted-foreground">{item.quantity}x {item.product_name || (item as any).products?.name || 'Produto'}</span>
-                <span className="text-foreground">R$ {((item.price || 0) * item.quantity).toFixed(2).replace('.', ',')}</span>
-              </div>
-            ))}
-            <div className="border-t border-border pt-2 mt-2 space-y-1">
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Entrega</span>
-                <span>R$ {(order?.delivery_fee || 0).toFixed(2).replace('.', ',')}</span>
-              </div>
-              <div className="flex justify-between font-semibold">
-                <span>Total</span>
-                <span className="text-primary">R$ {(order?.total || 0).toFixed(2).replace('.', ',')}</span>
-              </div>
+            <div className="bg-[#EA1D2C] rounded-full px-3 py-1 flex items-center gap-1">
+              <span className="text-xs font-bold">⏱ 29:39</span>
             </div>
           </div>
         </div>
-
-        {/* Driver Chat */}
-        {delivery && (
-          <div className="bg-card border border-border rounded-2xl p-4">
-            <Button variant="outline" className="w-full rounded-xl h-10" size="sm" onClick={() => setShowChat(!showChat)}>
-              <MessageCircle className="h-4 w-4 mr-2" />
-              {showChat ? 'Fechar chat com entregador' : 'Chat com entregador'}
-            </Button>
-            {showChat && (
-              <div className="mt-3">
-                <div className="h-44 overflow-y-auto space-y-2 mb-3 p-3 border border-border rounded-xl bg-secondary/30">
-                  {messages.length === 0 && <p className="text-sm text-muted-foreground text-center py-6">Nenhuma mensagem</p>}
-                  {messages.map(msg => (
-                    <div key={msg.id} className={`flex ${msg.sender_id === user?.id ? 'justify-end' : 'justify-start'}`}>
-                      <div className={`rounded-2xl px-3 py-2 max-w-[80%] text-sm ${
-                        msg.sender_id === user?.id
-                          ? 'bg-primary text-primary-foreground rounded-br-md'
-                          : 'bg-card text-foreground rounded-bl-md border border-border'
-                      }`}>
-                        {msg.message}
-                      </div>
-                    </div>
-                  ))}
-                  <div ref={chatEndRef} />
-                </div>
-
-                {/* Quick Replies Driver */}
-                <div className="flex gap-2 overflow-x-auto pb-2 mb-1 scrollbar-hide">
-                  {DRIVER_QUICK_MESSAGES.map((msg, i) => (
-                    <button
-                      key={i}
-                      onClick={() => sendMessage(msg)}
-                      className="shrink-0 px-3 py-1.5 rounded-full bg-primary/5 border border-primary/10 text-[10px] font-bold text-primary active:scale-95 transition-all"
-                    >
-                      {msg}
-                    </button>
-                  ))}
-                </div>
-
-                <div className="flex gap-2">
-                  <Input 
-                    value={newMessage} 
-                    onChange={e => setNewMessage(e.target.value)} 
-                    placeholder="Digite..." 
-                    className="rounded-xl h-10" 
-                    onKeyDown={e => e.key === 'Enter' && sendMessage()} 
-                  />
-                  <Button 
-                    size="icon" 
-                    id="btn-send-driver"
-                    className="rounded-xl h-10 w-10 shrink-0" 
-                    onClick={() => sendMessage()}
-                  >
-                    <Send className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Review Modal */}
-        <Dialog open={showReview} onOpenChange={setShowReview}>
-          <DialogContent className="sm:max-w-md rounded-3xl mx-4 absolute top-[10%] translate-y-0">
-            <DialogHeader>
-              <DialogTitle className="text-center text-lg">Avalie sua experiência</DialogTitle>
-              <DialogDescription className="sr-only">Avaliação do pedido</DialogDescription>
-            </DialogHeader>
-            <div className="space-y-6 pt-4 pb-2">
-              <div className="space-y-3">
-                <p className="text-sm font-medium text-center text-muted-foreground">Como estava o pedido?</p>
-                <div className="flex gap-2 justify-center">
-                  {[1, 2, 3, 4, 5].map(s => (
-                    <button key={s} onClick={() => setOrderRating(s)} className="transition-transform active:scale-90">
-                      <Star className={`h-8 w-8 transition-colors ${s <= orderRating ? 'text-warning fill-warning' : 'text-muted-foreground/30'}`} />
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-3 border-t border-border pt-4">
-                <p className="text-sm font-medium text-center text-muted-foreground">Como foi a entrega?</p>
-                <div className="flex gap-2 justify-center">
-                  {[1, 2, 3, 4, 5].map(s => (
-                    <button key={s} onClick={() => setDriverRating(s)} className="transition-transform active:scale-90">
-                      <Star className={`h-8 w-8 transition-colors ${s <= driverRating ? 'text-warning fill-warning' : 'text-muted-foreground/30'}`} />
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Input 
-                  placeholder="Conte-nos mais sobre sua experiência..." 
-                  value={reviewComment} 
-                  onChange={e => setReviewComment(e.target.value)} 
-                  className="rounded-xl h-12 bg-secondary/50 border-none" 
-                />
-              </div>
-
-              <Button 
-                className="w-full rounded-2xl h-12 text-base font-bold" 
-                onClick={handleSubmitReview}
-                disabled={submittingReview}
-              >
-                {submittingReview ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : 'Enviar Avaliação'}
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
       </div>
+      
+      {/* Store Chat Drawer */}
+      {showStoreChat && (
+        <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm">
+          <div className="fixed inset-x-0 bottom-0 z-50 mt-24 h-[85vh] rounded-t-3xl border bg-background shadow-lg overflow-hidden flex flex-col">
+            <div className="p-4 border-b flex justify-between items-center">
+              <h2 className="font-bold text-lg">Chat com {order.company?.name}</h2>
+              <Button variant="ghost" size="sm" onClick={() => setShowStoreChat(false)}>Fechar</Button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4">
+              <OrderStoreChat orderId={order.id} companyId={order.company_id} companyName={order.company?.name} />
+            </div>
+          </div>
+        </div>
+      )}
     </MarketplaceLayout>
   );
 }
