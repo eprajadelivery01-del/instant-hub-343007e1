@@ -230,9 +230,12 @@ export function SupportChat({ topic, title, companyId = null }: SupportChatProps
             </div>
           ) : (
             messages.filter(msg => !msg.content.startsWith('[Assunto:')).map(msg => {
-              // Quando testando com a mesma conta, o usuário sempre será 'isMe'. 
-              // Em produção, admin e cliente terão IDs diferentes.
-              const isMe = msg.sender_id === user?.id;
+              // Em produção, admin e cliente terão IDs diferentes. Mas para permitir que você teste com a MESMA conta, 
+              // adicionamos um hack: as mensagens do painel admin terminam com um zero-width space invisível (\u200B).
+              const isAdminMessage = msg.content.endsWith('\u200B');
+              const isMe = msg.sender_id === user?.id && !isAdminMessage;
+              const displayContent = msg.content.replace(/\u200B/g, '');
+              
               return (
                 <div key={msg.id} className={`flex flex-col w-full ${isMe ? 'items-end' : 'items-start'}`}>
                   <div 
@@ -244,7 +247,7 @@ export function SupportChat({ topic, title, companyId = null }: SupportChatProps
                   >
                     <div className="flex flex-col">
                       <p className="text-[15px] leading-[20px] whitespace-pre-wrap pr-10">
-                        {msg.content}
+                        {displayContent}
                       </p>
                       <div className="flex items-center justify-end gap-1 absolute bottom-1 right-2">
                         <span className={`text-[11px] ${isMe ? 'text-[#7aa4c7]' : 'text-[#547c9e]'}`}>
