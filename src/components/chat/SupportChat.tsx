@@ -39,11 +39,12 @@ export function SupportChat({ topic, title, companyId = null }: SupportChatProps
 
     const initializeChat = async () => {
       try {
-        // Usa 'participants' ao invés de 'user_id' que não existe
+        // Busca conversas exclusivas de suporte (sem order_id)
         let { data: conversationsList } = await supabase
           .from('conversations')
           .select('*')
           .contains('participants', [user.id])
+          .is('order_id', null)
           .limit(1);
           
         let conversation = conversationsList?.[0];
