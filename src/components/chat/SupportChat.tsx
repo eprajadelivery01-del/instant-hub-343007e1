@@ -39,18 +39,26 @@ export function SupportChat({ topic, title, companyId = null }: SupportChatProps
 
     const initializeChat = async () => {
       try {
-        // Busca conversas exclusivas de suporte (sem order_id)
-        let { data: conversationsList } = await supabase
-          .from('conversations')
-          .select('*')
-          .contains('participants', [user.id])
-          .is('order_id', null)
-          .limit(1);
-          
-        let conversation = conversationsList?.[0];
+        const storageKey = `epraja_chat_${topic}_${user.id}`;
+        const storedConvId = localStorage.getItem(storageKey);
+        
+        let conversation = null;
 
+        // Se já temos um chat salvo para esse tópico, tenta buscar ele
+        if (storedConvId) {
+          const { data: existingConv } = await supabase
+            .from('conversations')
+            .select('*')
+            .eq('id', storedConvId)
+            .maybeSingle();
+            
+          if (existingConv) {
+            conversation = existingConv;
+          }
+        }
+
+        // Se não encontrou, cria um novo chat limpo para esse tópico!
         if (!conversation) {
-          // Cria uma nova conversa sem usar as colunas inexistentes (topic, title)
           const { data: newConv, error: createError } = await supabase
             .from('conversations')
             .insert({ 
@@ -62,6 +70,7 @@ export function SupportChat({ topic, title, companyId = null }: SupportChatProps
              console.error("Falha ao criar conversa:", createError);
           } else if (newConv && newConv.length > 0) {
              conversation = newConv[0];
+             localStorage.setItem(storageKey, conversation.id);
              
              // Envia mensagem inicial automática para o admin saber o assunto
              await supabase.from('messages').insert({
