@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Send, Loader2, User as UserIcon } from 'lucide-react';
+import { Send, Loader2, User as UserIcon, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface SupportChatProps {
@@ -71,13 +71,6 @@ export function SupportChat({ topic, title, companyId = null }: SupportChatProps
           } else if (newConv && newConv.length > 0) {
              conversation = newConv[0];
              localStorage.setItem(storageKey, conversation.id);
-             
-             // Envia mensagem inicial automática para o admin saber o assunto
-             await supabase.from('messages').insert({
-               conversation_id: conversation.id,
-               sender_id: user.id,
-               content: `[Assunto: ${title}]`
-             });
           }
         }
 
@@ -166,16 +159,37 @@ export function SupportChat({ topic, title, companyId = null }: SupportChatProps
     }
   };
 
+  const handleEndChat = () => {
+    if (window.confirm("Deseja encerrar este chat e começar um novo?")) {
+      const storageKey = `epraja_chat_${topic}_${user.id}`;
+      localStorage.removeItem(storageKey);
+      setMessages([]);
+      setConversationId(null);
+      setLoading(true);
+      // Recarrega o componente forçando a criação de um novo chat
+      setTimeout(() => window.location.reload(), 300);
+    }
+  };
+
   return (
     <div className="flex flex-col h-full bg-background">
       <div className="flex items-center gap-3 p-4 border-b border-border bg-card">
-        <div className="h-10 w-10 bg-primary/10 rounded-full flex items-center justify-center">
+        <div className="h-10 w-10 bg-primary/10 rounded-full flex items-center justify-center shrink-0">
           <UserIcon className="h-5 w-5 text-primary" />
         </div>
-        <div>
-          <h3 className="text-sm font-bold">{title}</h3>
-          <p className="text-xs text-muted-foreground">O administrador responderá em breve</p>
+        <div className="flex-1 min-w-0">
+          <h3 className="text-sm font-bold truncate">{title}</h3>
+          <p className="text-xs text-muted-foreground truncate">O administrador responderá em breve</p>
         </div>
+        {conversationId && messages.length > 0 && (
+          <button 
+            onClick={handleEndChat}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-destructive/10 text-destructive text-xs font-bold hover:bg-destructive hover:text-white transition-all shrink-0"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+            Encerrar
+          </button>
+        )}
       </div>
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4">
