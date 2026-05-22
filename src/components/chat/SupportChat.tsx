@@ -178,7 +178,6 @@ export function SupportChat({ topic, title, companyId = null }: SupportChatProps
   };
 
   return (
-  return (
     <div className="flex flex-col h-full bg-background relative">
       {/* Header */}
       <div className="flex items-center gap-3 px-4 py-3 bg-card border-b z-10 shadow-sm">
