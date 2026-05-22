@@ -162,10 +162,10 @@ export default function OrderDetail() {
               </div>
               <div>
                 <p className="font-bold text-[15px]">
-                  {(order.address as any)?.street || 'Endereço'}, {(order.address as any)?.number || 'S/N'}
+                  {((order as any).address)?.street || 'Endereço'}, {((order as any).address)?.number || 'S/N'}
                 </p>
                 <p className="text-sm text-muted-foreground mt-0.5">
-                  {(order.address as any)?.neighborhood} - {(order.address as any)?.complement || 'Casa'}
+                  {((order as any).address)?.neighborhood} - {((order as any).address)?.complement || 'Casa'}
                 </p>
               </div>
             </div>

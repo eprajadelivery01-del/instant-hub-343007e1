@@ -31,7 +31,7 @@ function mapServerError(msg: string): string {
 export default function Checkout() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { items, company, clearCart, appliedCoupon, cartTotal: _, discountAmount, subtotal } = useCart();
+  const { items, company, clearCart, appliedCoupon, discountAmount, subtotal } = useCart();
   const { isLocked, acquireLock, releaseLock, generateIdempotencyKey, resetIdempotencyKey } = useOrderLock();
   
   const [addresses, setAddresses] = useState<Address[]>([]);

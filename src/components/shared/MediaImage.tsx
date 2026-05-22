@@ -2,7 +2,7 @@ import { ImgHTMLAttributes, ReactNode, useEffect, useState } from 'react';
 
 interface MediaImageProps extends Omit<ImgHTMLAttributes<HTMLImageElement>, 'src'> {
   src?: string | null;
-  fallback: ReactNode;
+  fallback?: ReactNode;
 }
 
 export function MediaImage({ src, fallback, onError, loading, decoding, ...props }: MediaImageProps) {
