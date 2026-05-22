@@ -178,23 +178,24 @@ export function SupportChat({ topic, title, companyId = null }: SupportChatProps
   };
 
   return (
-    <div className="flex flex-col h-full bg-[#0e1621] relative">
-      {/* Header estilo Telegram */}
-      <div className="flex items-center gap-3 px-4 py-3 bg-[#17212b] text-white z-10 shadow-sm border-b border-[#0e1621]">
-        <div className="h-10 w-10 bg-[#2b5278] rounded-full flex items-center justify-center shrink-0">
-          <UserIcon className="h-6 w-6 text-white" />
+  return (
+    <div className="flex flex-col h-full bg-background relative">
+      {/* Header */}
+      <div className="flex items-center gap-3 px-4 py-3 bg-card border-b z-10 shadow-sm">
+        <div className="h-10 w-10 bg-primary/10 rounded-full flex items-center justify-center shrink-0">
+          <UserIcon className="h-6 w-6 text-primary" />
         </div>
         <div className="flex-1 min-w-0">
-          <h3 className="text-[15px] font-semibold text-[#ffffff] truncate">{title}</h3>
-          <p className="text-[13px] text-[#547c9e] truncate">online</p>
+          <h3 className="text-[15px] font-semibold text-foreground truncate">{title}</h3>
+          <p className="text-[13px] text-muted-foreground truncate">online</p>
         </div>
         {conversationId && messages.length > 0 && (
           <button 
             onClick={handleEndChat}
-            className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-[#202b36] transition-all shrink-0"
+            className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-muted transition-all shrink-0"
             title="Encerrar Chat"
           >
-            <Trash2 className="h-5 w-5 text-[#7aa4c7]" />
+            <Trash2 className="h-5 w-5 text-destructive/70 hover:text-destructive" />
           </button>
         )}
       </div>
@@ -202,16 +203,16 @@ export function SupportChat({ topic, title, companyId = null }: SupportChatProps
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-3 z-10 custom-scrollbar">
         {loading ? (
           <div className="flex items-center justify-center h-full">
-            <div className="bg-[#182533] px-4 py-2 rounded-full shadow-sm flex items-center gap-2">
-              <Loader2 className="h-4 w-4 animate-spin text-[#7aa4c7]" />
-              <span className="text-[13px] text-[#7aa4c7]">Conectando...</span>
+            <div className="bg-muted/50 px-4 py-2 rounded-full shadow-sm flex items-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin text-primary" />
+              <span className="text-[13px] text-muted-foreground">Conectando...</span>
             </div>
           </div>
         ) : (
           messages.filter(msg => !msg.content.startsWith('[Assunto:')).length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center px-4">
-              <div className="bg-[#182533] px-4 py-2 rounded-xl shadow-sm mb-6 max-w-[280px]">
-                <p className="text-[12.5px] text-[#7aa4c7] leading-relaxed">
+              <div className="bg-muted/30 px-4 py-2 rounded-xl shadow-sm mb-6 max-w-[280px]">
+                <p className="text-[12.5px] text-muted-foreground leading-relaxed">
                   As mensagens enviadas a este chat são seguras. Escolha uma opção abaixo para iniciar.
                 </p>
               </div>
@@ -221,7 +222,7 @@ export function SupportChat({ topic, title, companyId = null }: SupportChatProps
                     key={idx}
                     onClick={() => handleSend(undefined, m.text)}
                     disabled={!conversationId || sending}
-                    className="px-4 py-2 rounded-full bg-[#182533] border border-[#2b5278]/20 text-[13px] font-medium text-[#ffffff] hover:bg-[#202b36] active:scale-95 transition-all shadow-sm disabled:opacity-50"
+                    className="px-4 py-2 rounded-full bg-card border border-border text-[13px] font-medium text-foreground hover:bg-muted active:scale-95 transition-all shadow-sm disabled:opacity-50"
                   >
                     {m.label}
                   </button>
@@ -242,8 +243,8 @@ export function SupportChat({ topic, title, companyId = null }: SupportChatProps
                   <div 
                     className={`relative max-w-[85%] px-3 py-2 rounded-2xl shadow-sm ${
                       isMe 
-                        ? 'bg-[#2b5278] rounded-br-[4px] text-[#ffffff]' 
-                        : 'bg-[#182533] rounded-bl-[4px] text-[#ffffff]'
+                        ? 'bg-primary rounded-br-[4px] text-primary-foreground' 
+                        : 'bg-muted rounded-bl-[4px] text-foreground'
                     }`}
                   >
                     <div className="flex flex-col">
@@ -251,11 +252,11 @@ export function SupportChat({ topic, title, companyId = null }: SupportChatProps
                         {displayContent}
                       </p>
                       <div className="flex items-center justify-end gap-1 absolute bottom-1 right-2">
-                        <span className={`text-[11px] ${isMe ? 'text-[#7aa4c7]' : 'text-[#547c9e]'}`}>
+                        <span className={`text-[11px] ${isMe ? 'text-primary-foreground/70' : 'text-muted-foreground/70'}`}>
                           {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </span>
                         {isMe && (
-                          <CheckCheck className="h-[14px] w-[14px] text-[#53BDEB]" />
+                          <CheckCheck className="h-[14px] w-[14px] text-primary-foreground/90" />
                         )}
                       </div>
                     </div>
@@ -267,31 +268,23 @@ export function SupportChat({ topic, title, companyId = null }: SupportChatProps
         )}
       </div>
 
-      {/* Input bar estilo Telegram */}
-      <div className="px-4 py-3 bg-[#17212b] z-10 pb-6 md:pb-3">
-        <form onSubmit={handleSend} className="flex items-center gap-2">
-          <div className="flex-1 bg-[#242f3d] rounded-full flex items-center px-4 h-12 shadow-sm">
-            <input
-              type="text"
-              value={newMessage}
-              onChange={e => setNewMessage(e.target.value)}
-              placeholder="Write a message..."
-              className="flex-1 bg-transparent border-none focus:outline-none text-[15px] text-[#ffffff] placeholder:text-[#547c9e]"
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={!newMessage.trim() || !conversationId || sending}
-            className="w-12 h-12 rounded-full bg-[#2b5278] flex items-center justify-center shrink-0 shadow-sm disabled:opacity-50 active:scale-95 transition-transform"
-          >
-            {sending ? (
-              <Loader2 className="h-5 w-5 animate-spin text-white" />
-            ) : (
-              <Send className="h-5 w-5 text-white ml-1" />
-            )}
-          </button>
-        </form>
-      </div>
+      {/* Input de mensagem */}
+      <form onSubmit={handleSend} className="px-4 py-3 bg-card border-t flex items-center gap-2 z-10 shrink-0">
+        <input
+          type="text"
+          value={newMessage}
+          onChange={(e) => setNewMessage(e.target.value)}
+          placeholder="Escreva sua mensagem..."
+          className="flex-1 bg-muted/50 rounded-full px-4 py-2 text-[15px] text-foreground placeholder:text-muted-foreground/50 border-none outline-none focus:ring-1 focus:ring-primary/30 transition-all"
+        />
+        <button
+          type="submit"
+          disabled={!newMessage.trim() || sending || !conversationId}
+          className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:bg-primary/90 disabled:opacity-50 transition-colors shadow-sm shrink-0"
+        >
+          {sending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5 ml-0.5" />}
+        </button>
+      </form>
     </div>
   );
 }
