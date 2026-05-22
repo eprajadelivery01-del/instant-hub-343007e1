@@ -3,13 +3,14 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Send, Loader2, User as UserIcon, Trash2, Check, CheckCheck } from 'lucide-react';
+import { Send, Loader2, User as UserIcon, Trash2, Check, CheckCheck, X } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface SupportChatProps {
   topic: string;
   title: string;
   companyId?: string | null;
+  onClose?: () => void;
 }
 
 interface Message {
@@ -19,7 +20,7 @@ interface Message {
   created_at: string;
 }
 
-export function SupportChat({ topic, title, companyId = null }: SupportChatProps) {
+export function SupportChat({ topic, title, companyId = null, onClose }: SupportChatProps) {
   const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
@@ -188,13 +189,27 @@ export function SupportChat({ topic, title, companyId = null }: SupportChatProps
           <h3 className="text-[15px] font-semibold text-foreground truncate">{title}</h3>
           <p className="text-[13px] text-muted-foreground truncate">online</p>
         </div>
+        
+        {/* Botão de Encerrar Chat (Volta para as opções) */}
         {conversationId && messages.length > 0 && (
           <button 
             onClick={handleEndChat}
-            className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-muted transition-all shrink-0"
-            title="Encerrar Chat"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted hover:bg-destructive/10 transition-all shrink-0"
+            title="Encerrar Conversa e ver Opções"
           >
-            <Trash2 className="h-5 w-5 text-destructive/70 hover:text-destructive" />
+            <Trash2 className="h-4 w-4 text-destructive/70" />
+            <span className="text-[11px] font-bold text-destructive/70 uppercase">Encerrar</span>
+          </button>
+        )}
+
+        {/* Botão de Fechar Janela */}
+        {onClose && (
+          <button 
+            onClick={onClose}
+            className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-muted transition-all shrink-0 ml-1"
+            title="Fechar"
+          >
+            <X className="h-5 w-5 text-muted-foreground" />
           </button>
         )}
       </div>

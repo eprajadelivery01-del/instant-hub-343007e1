@@ -464,18 +464,14 @@ export default function Profile() {
 
       {/* Support Chat Sheet */}
       <Sheet open={supportType !== null} onOpenChange={open => !open && setSupportType(null)}>
-        <SheetContent side="bottom" hideClose className="h-[85vh] rounded-t-[3rem] border-none p-0 overflow-hidden shadow-2xl z-[100]">
+        <SheetContent side="bottom" hideClose className="h-[85vh] rounded-t-[3rem] border-none p-0 overflow-hidden shadow-2xl z-[100]" aria-describedby={undefined}>
           <SheetTitle className="sr-only">Chat de Suporte</SheetTitle>
           <div className="flex flex-col h-full bg-background relative">
-            <div className="absolute right-6 top-6 z-50">
-              <button onClick={() => setSupportType(null)} className="w-10 h-10 rounded-full bg-background/80 backdrop-blur-md flex items-center justify-center border shadow-sm">
-                <X className="h-5 w-5 text-muted-foreground" />
-              </button>
-            </div>
             {supportType && (
               <SupportChat
                 title={supportType === 'support' ? 'Central de Ajuda' : 'Cadastro de Entregador'}
                 topic={supportType}
+                onClose={() => setSupportType(null)}
               />
             )}
           </div>
