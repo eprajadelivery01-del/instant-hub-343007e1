@@ -202,7 +202,7 @@ export default function Profile() {
 
   return (
     <MarketplaceLayout>
-      <div className="min-h-screen pb-40 bg-[#1a1a1a] dark:bg-[#0f0f0f] text-white font-sans">
+      <div className="min-h-screen pb-40 bg-background text-foreground font-sans">
         <div className="max-w-md mx-auto px-4 pt-6 space-y-3">
 
           {/* HERO compacto — uma linha */}
@@ -211,7 +211,7 @@ export default function Profile() {
               <button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploading}
-                className="relative w-16 h-16 rounded-full overflow-hidden ring-2 ring-[#e85d3a] ring-offset-2 ring-offset-[#1a1a1a] active:scale-95 transition-transform"
+                className="relative w-16 h-16 rounded-full overflow-hidden ring-2 ring-primary ring-offset-2 ring-offset-background active:scale-95 transition-transform"
               >
                 {profile?.avatar_url ? (
                   <img src={profile.avatar_url} className="w-full h-full object-cover" alt="" />
@@ -229,14 +229,14 @@ export default function Profile() {
             </div>
             <div className="flex-1 min-w-0">
               <h1 className="text-lg font-display font-bold tracking-tight truncate">{displayName}</h1>
-              <p className="text-xs text-white/50 truncate">{user.email}</p>
+              <p className="text-xs text-muted-foreground truncate">{user.email}</p>
             </div>
             <button
               onClick={() => setEditing(true)}
               aria-label="Editar perfil"
-              className="w-11 h-11 rounded-full bg-[#2d2d2d] border border-white/5 flex items-center justify-center active:scale-95 transition-transform"
+              className="w-11 h-11 rounded-full bg-card border border-border flex items-center justify-center active:scale-95 transition-transform"
             >
-              <Cog className="h-5 w-5 text-white/80" />
+              <Cog className="h-5 w-5 text-foreground/80" />
             </button>
           </div>
 
@@ -244,29 +244,29 @@ export default function Profile() {
           <div className="grid grid-cols-2 gap-3">
             <button
               onClick={() => toast('Carteira em breve!')}
-              className="relative overflow-hidden rounded-3xl bg-[#2d2d2d] border border-white/5 p-5 text-left active:scale-[0.98] transition-transform"
+              className="relative overflow-hidden rounded-3xl bg-card border border-border p-5 text-left active:scale-[0.98] transition-transform"
             >
               <div className="flex items-center justify-between mb-4">
-                <div className="w-9 h-9 rounded-xl bg-[#3a3a3a] flex items-center justify-center">
-                  <Wallet className="h-4 w-4 text-white/80" />
+                <div className="w-9 h-9 rounded-xl bg-muted flex items-center justify-center">
+                  <Wallet className="h-4 w-4 text-foreground/80" />
                 </div>
-                <Plus className="h-4 w-4 text-[#e85d3a]" />
+                <Plus className="h-4 w-4 text-primary" />
               </div>
-              <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-white/50">Carteira</p>
+              <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">Carteira</p>
               <p className="font-display text-2xl font-bold tracking-tight mt-1">R$ 0,00</p>
             </button>
 
             <button
               onClick={() => navigate('/marketplace/orders')}
-              className="relative overflow-hidden rounded-3xl bg-[#2d2d2d] border border-white/5 p-5 text-left active:scale-[0.98] transition-transform"
+              className="relative overflow-hidden rounded-3xl bg-card border border-border p-5 text-left active:scale-[0.98] transition-transform"
             >
               <div className="flex items-center justify-between mb-4">
                 <div className={cn("w-9 h-9 rounded-xl bg-gradient-to-br flex items-center justify-center", tier.color)}>
                   <Trophy className="h-4 w-4 text-black" />
                 </div>
-                <span className="text-[9px] font-bold uppercase tracking-widest text-white/40">{ordersCount}{tier.next ? `/${tier.next}` : ''}</span>
+                <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/70">{ordersCount}{tier.next ? `/${tier.next}` : ''}</span>
               </div>
-              <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-white/50">Nível</p>
+              <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">Nível</p>
               <p className="font-display text-2xl font-bold tracking-tight mt-1">{tier.name}</p>
               <div className="mt-2 h-1 rounded-full bg-white/10 overflow-hidden">
                 <div
@@ -316,7 +316,7 @@ export default function Profile() {
                 )}
               </div>
               <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shrink-0">
-                {loadingCoupons ? <Loader2 className="h-4 w-4 animate-spin text-[#e85d3a]" /> : <ArrowUpRight className="h-4 w-4 text-[#e85d3a]" />}
+                {loadingCoupons ? <Loader2 className="h-4 w-4 animate-spin text-primary" /> : <ArrowUpRight className="h-4 w-4 text-primary" />}
               </div>
             </div>
           </button>
@@ -325,51 +325,51 @@ export default function Profile() {
           <div className="grid grid-cols-2 gap-3">
             <button
               onClick={() => navigate('/marketplace/orders')}
-              className="rounded-3xl bg-[#2d2d2d] border border-white/5 p-5 text-left active:scale-[0.98] transition-transform"
+              className="rounded-3xl bg-card border border-border p-5 text-left active:scale-[0.98] transition-transform"
             >
               <div className="flex items-center justify-between mb-4">
-                <div className="w-9 h-9 rounded-xl bg-[#3a3a3a] flex items-center justify-center">
-                  <ShoppingBag className="h-4 w-4 text-white/80" />
+                <div className="w-9 h-9 rounded-xl bg-muted flex items-center justify-center">
+                  <ShoppingBag className="h-4 w-4 text-foreground/80" />
                 </div>
-                <ArrowUpRight className="h-4 w-4 text-white/40" />
+                <ArrowUpRight className="h-4 w-4 text-muted-foreground/70" />
               </div>
               <p className="font-display text-3xl font-bold tracking-tight">{ordersCount}</p>
-              <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-white/50 mt-1">Pedidos</p>
+              <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground mt-1">Pedidos</p>
             </button>
 
             <button
               onClick={() => fetchCoupons(true)}
-              className="rounded-3xl bg-[#2d2d2d] border border-white/5 p-5 text-left active:scale-[0.98] transition-transform"
+              className="rounded-3xl bg-card border border-border p-5 text-left active:scale-[0.98] transition-transform"
             >
               <div className="flex items-center justify-between mb-4">
-                <div className="w-9 h-9 rounded-xl bg-[#e85d3a]/15 flex items-center justify-center">
-                  <Ticket className="h-4 w-4 text-[#e85d3a]" />
+                <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <Ticket className="h-4 w-4 text-primary" />
                 </div>
-                <ArrowUpRight className="h-4 w-4 text-white/40" />
+                <ArrowUpRight className="h-4 w-4 text-muted-foreground/70" />
               </div>
               <p className="font-display text-3xl font-bold tracking-tight">{coupons.length}</p>
-              <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-white/50 mt-1">Cupons</p>
+              <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground mt-1">Cupons</p>
             </button>
           </div>
 
           {/* ENDEREÇO ATIVO — wide */}
           <button
             onClick={() => navigate('/marketplace/addresses')}
-            className="w-full rounded-3xl bg-[#2d2d2d] border border-white/5 p-5 flex items-center gap-4 active:scale-[0.99] transition-transform text-left"
+            className="w-full rounded-3xl bg-card border border-border p-5 flex items-center gap-4 active:scale-[0.99] transition-transform text-left"
           >
-            <div className="w-11 h-11 rounded-2xl bg-[#3a3a3a] flex items-center justify-center shrink-0">
-              <MapPin className="h-5 w-5 text-[#e85d3a]" />
+            <div className="w-11 h-11 rounded-2xl bg-muted flex items-center justify-center shrink-0">
+              <MapPin className="h-5 w-5 text-primary" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-white/50">Entregar em</p>
+              <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">Entregar em</p>
               <p className="font-display text-base font-bold tracking-tight truncate mt-0.5">
                 {selectedAddress?.label || selectedAddress?.street || 'Adicionar endereço'}
               </p>
               {selectedAddress?.city && (
-                <p className="text-[11px] text-white/50 truncate">{selectedAddress.city} — {selectedAddress.state || 'MT'}</p>
+                <p className="text-[11px] text-muted-foreground truncate">{selectedAddress.city} — {selectedAddress.state || 'MT'}</p>
               )}
             </div>
-            <ChevronRight className="h-4 w-4 text-white/40" />
+            <ChevronRight className="h-4 w-4 text-muted-foreground/70" />
           </button>
 
           {/* AÇÕES RÁPIDAS — grid 4 */}
@@ -383,18 +383,18 @@ export default function Profile() {
               <button
                 key={q.label}
                 onClick={q.onClick}
-                className="rounded-2xl bg-[#2d2d2d] border border-white/5 p-3 flex flex-col items-center gap-2 active:scale-95 transition-transform"
+                className="rounded-2xl bg-card border border-border p-3 flex flex-col items-center gap-2 active:scale-95 transition-transform"
               >
-                <q.icon className="h-5 w-5 text-white/80" />
-                <span className="text-[10px] font-medium text-white/70">{q.label}</span>
+                <q.icon className="h-5 w-5 text-foreground/80" />
+                <span className="text-[10px] font-medium text-muted-foreground">{q.label}</span>
               </button>
             ))}
           </div>
 
           {/* SECTION — Conta */}
           <div className="pt-4">
-            <h2 className="text-[10px] font-medium uppercase tracking-[0.25em] text-white/40 px-2 mb-2">Minha Conta</h2>
-            <div className="rounded-3xl bg-[#2d2d2d] border border-white/5 overflow-hidden divide-y divide-white/5">
+            <h2 className="text-[10px] font-medium uppercase tracking-[0.25em] text-muted-foreground/70 px-2 mb-2">Minha Conta</h2>
+            <div className="rounded-3xl bg-card border border-border overflow-hidden divide-y divide-border">
               {[
                 { icon: MapPin, label: 'Endereços', subtitle: 'Locais de entrega', onClick: () => navigate('/marketplace/addresses') },
                 { icon: Wallet, label: 'Carteira', subtitle: 'Saldo e transações', onClick: () => toast('Em breve!') },
@@ -403,16 +403,16 @@ export default function Profile() {
                 <button
                   key={item.label}
                   onClick={item.onClick}
-                  className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-white/[0.03] transition-colors active:bg-white/5"
+                  className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-muted/60 transition-colors active:bg-muted"
                 >
-                  <div className="w-9 h-9 rounded-xl bg-[#3a3a3a] flex items-center justify-center shrink-0">
-                    <item.icon className="h-[16px] w-[16px] text-white/75" />
+                  <div className="w-9 h-9 rounded-xl bg-muted flex items-center justify-center shrink-0">
+                    <item.icon className="h-[16px] w-[16px] text-foreground/75" />
                   </div>
                   <div className="flex-1 min-w-0 text-left">
                     <p className="text-[14px] font-display font-semibold tracking-tight">{item.label}</p>
-                    <p className="text-[11px] text-white/45 mt-0.5 truncate">{item.subtitle}</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5 truncate">{item.subtitle}</p>
                   </div>
-                  <ChevronRight className="h-4 w-4 text-white/30" />
+                  <ChevronRight className="h-4 w-4 text-muted-foreground/50" />
                 </button>
               ))}
             </div>
@@ -420,8 +420,8 @@ export default function Profile() {
 
           {/* SECTION — Ajuda & Legal */}
           <div className="pt-3">
-            <h2 className="text-[10px] font-medium uppercase tracking-[0.25em] text-white/40 px-2 mb-2">Ajuda & Legal</h2>
-            <div className="rounded-3xl bg-[#2d2d2d] border border-white/5 overflow-hidden divide-y divide-white/5">
+            <h2 className="text-[10px] font-medium uppercase tracking-[0.25em] text-muted-foreground/70 px-2 mb-2">Ajuda & Legal</h2>
+            <div className="rounded-3xl bg-card border border-border overflow-hidden divide-y divide-border">
               {[
                 { icon: HelpCircle, label: 'Central de Ajuda', subtitle: 'Suporte e dúvidas', onClick: () => setSupportType('support') },
                 { icon: FileText, label: 'Termos de Uso', subtitle: 'Regras da plataforma', onClick: () => navigate('/marketplace/terms') },
@@ -430,16 +430,16 @@ export default function Profile() {
                 <button
                   key={item.label}
                   onClick={item.onClick}
-                  className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-white/[0.03] transition-colors active:bg-white/5"
+                  className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-muted/60 transition-colors active:bg-muted"
                 >
-                  <div className="w-9 h-9 rounded-xl bg-[#3a3a3a] flex items-center justify-center shrink-0">
-                    <item.icon className="h-[16px] w-[16px] text-white/75" />
+                  <div className="w-9 h-9 rounded-xl bg-muted flex items-center justify-center shrink-0">
+                    <item.icon className="h-[16px] w-[16px] text-foreground/75" />
                   </div>
                   <div className="flex-1 min-w-0 text-left">
                     <p className="text-[14px] font-display font-semibold tracking-tight">{item.label}</p>
-                    <p className="text-[11px] text-white/45 mt-0.5 truncate">{item.subtitle}</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5 truncate">{item.subtitle}</p>
                   </div>
-                  <ChevronRight className="h-4 w-4 text-white/30" />
+                  <ChevronRight className="h-4 w-4 text-muted-foreground/50" />
                 </button>
               ))}
             </div>
@@ -448,22 +448,22 @@ export default function Profile() {
           {/* CTA Entregador — full bleed */}
           <button
             onClick={() => setSupportType('driver_application')}
-            className="w-full mt-4 relative overflow-hidden rounded-3xl p-5 text-left active:scale-[0.99] transition-transform border border-white/5"
+            className="w-full mt-4 relative overflow-hidden rounded-3xl p-5 text-left active:scale-[0.99] transition-transform border border-white/5 text-white"
             style={{ background: 'linear-gradient(135deg, #2d2d2d 0%, #1a1a1a 100%)' }}
           >
             <div className="absolute -right-4 -bottom-4 opacity-[0.07]">
               <Bike className="h-32 w-32 text-white" />
             </div>
             <div className="relative flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-[#e85d3a] flex items-center justify-center shrink-0 shadow-lg shadow-[#e85d3a]/30">
+              <div className="w-12 h-12 rounded-2xl bg-primary flex items-center justify-center shrink-0 shadow-lg shadow-primary/30">
                 <Bike className="h-5 w-5 text-white" />
               </div>
               <div className="flex-1">
-                <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-[#e85d3a]">Oportunidade</p>
+                <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-primary-foreground/90">Oportunidade</p>
                 <p className="font-display text-base font-bold tracking-tight mt-0.5">Seja um entregador</p>
-                <p className="text-[11px] text-white/50 mt-0.5">Ganhos extras e liberdade total</p>
+                <p className="text-[11px] text-white/60 mt-0.5">Ganhos extras e liberdade total</p>
               </div>
-              <ChevronRight className="h-5 w-5 text-white/50" />
+              <ChevronRight className="h-5 w-5 text-white/60" />
             </div>
           </button>
 
@@ -471,14 +471,14 @@ export default function Profile() {
           <div className="pt-4 space-y-2">
             <button
               onClick={() => signOut()}
-              className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl bg-[#2d2d2d] border border-white/5 text-white font-display font-semibold text-[13px] active:scale-[0.98] transition-transform"
+              className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl bg-card border border-border text-foreground font-display font-semibold text-[13px] active:scale-[0.98] transition-transform"
             >
               <LogOut className="h-4 w-4" /> Sair da conta
             </button>
 
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <button className="w-full text-[10px] text-white/30 hover:text-red-400 transition-colors py-3 font-medium uppercase tracking-[0.25em]">
+                <button className="w-full text-[10px] text-muted-foreground/50 hover:text-red-400 transition-colors py-3 font-medium uppercase tracking-[0.25em]">
                   Excluir minha conta
                 </button>
               </AlertDialogTrigger>
@@ -506,7 +506,7 @@ export default function Profile() {
 
           {/* Footer */}
           <div className="py-8 flex flex-col items-center opacity-20">
-            <p className="text-[10px] font-display font-bold tracking-[1em] text-white ml-3">BONASOFT</p>
+            <p className="text-[10px] font-display font-bold tracking-[1em] text-foreground ml-3">BONASOFT</p>
           </div>
         </div>
 
