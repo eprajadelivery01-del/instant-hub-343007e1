@@ -15,7 +15,8 @@ import {
   Bike, FileText, ShieldCheck, Moon, Sun,
   Wallet, HelpCircle, X, Check, Phone,
   Package, Clock, CheckCircle2, XCircle, Truck, Ticket, Copy,
-  Crown, Sparkles, ShoppingBag, Settings2, Star
+  Crown, Sparkles, ShoppingBag, Settings2, Star, Heart,
+  ArrowUpRight, Plus, Trophy, Cog
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -187,267 +188,303 @@ export default function Profile() {
   const displayName = profile?.full_name || user.email?.split('@')[0] || 'Usuário';
   const initial = displayName.charAt(0).toUpperCase();
 
+  // Derived: tier & featured coupon
+  const ordersCount = orders.length;
+  const tier = ordersCount >= 15
+    ? { name: 'Ouro', next: null, progress: 100, color: 'from-yellow-400 to-orange-500' }
+    : ordersCount >= 5
+    ? { name: 'Prata', next: 15, progress: ((ordersCount - 5) / 10) * 100, color: 'from-zinc-300 to-zinc-500' }
+    : { name: 'Bronze', next: 5, progress: (ordersCount / 5) * 100, color: 'from-amber-700 to-orange-600' };
+
+  const featuredCoupon = [...coupons].sort((a, b) =>
+    Number(b.discount_value || 0) - Number(a.discount_value || 0)
+  )[0];
+
   return (
     <MarketplaceLayout>
-      <div className="min-h-screen pb-40 bg-background relative overflow-hidden">
+      <div className="min-h-screen pb-40 bg-[#1a1a1a] dark:bg-[#0f0f0f] text-white font-sans">
+        <div className="max-w-md mx-auto px-4 pt-6 space-y-3">
 
-        {/* Cinematic gradient backdrop */}
-        <div className="absolute inset-x-0 top-0 h-[420px] pointer-events-none overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-b from-primary/25 via-primary/5 to-transparent" />
-          <div className="absolute -top-32 -left-20 h-72 w-72 rounded-full bg-primary/30 blur-[120px]" />
-          <div className="absolute -top-20 right-0 h-64 w-64 rounded-full bg-orange-400/20 blur-[120px]" />
-          <div className="absolute top-40 left-1/2 -translate-x-1/2 h-40 w-[120%] bg-gradient-to-b from-transparent to-background" />
-        </div>
-
-        {/* HERO — Identity card */}
-        <div className="relative px-5 pt-10">
-          <div className="relative rounded-[2.25rem] overflow-hidden border border-border/60 bg-card/70 backdrop-blur-2xl shadow-[0_20px_80px_-30px_hsl(var(--primary)/0.45)] p-6">
-            {/* inner shine */}
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent" />
-            <div className="pointer-events-none absolute -top-24 -right-16 h-56 w-56 rounded-full bg-primary/20 blur-3xl" />
-
-            <div className="relative flex items-center gap-5">
-              {/* Avatar */}
-              <div className="relative shrink-0">
-                <div className="absolute -inset-1 rounded-full bg-gradient-to-tr from-primary via-orange-400 to-yellow-300 blur-[6px] opacity-70" />
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={uploading}
-                  className="relative w-24 h-24 rounded-full bg-background p-[3px] active:scale-95 transition-transform"
-                >
-                  <div className="w-full h-full rounded-full overflow-hidden bg-muted">
-                    {profile?.avatar_url ? (
-                      <img src={profile.avatar_url} className="w-full h-full object-cover" alt="Foto de perfil" />
-                    ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-primary to-orange-500 flex items-center justify-center">
-                        <span className="text-4xl font-black text-white">{initial}</span>
-                      </div>
-                    )}
+          {/* HERO compacto — uma linha */}
+          <div className="flex items-center gap-3 pb-2">
+            <div className="relative shrink-0">
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="relative w-16 h-16 rounded-full overflow-hidden ring-2 ring-[#e85d3a] ring-offset-2 ring-offset-[#1a1a1a] active:scale-95 transition-transform"
+              >
+                {profile?.avatar_url ? (
+                  <img src={profile.avatar_url} className="w-full h-full object-cover" alt="" />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-[#e85d3a] to-[#c0421f] flex items-center justify-center">
+                    <span className="text-2xl font-display font-bold text-white">{initial}</span>
                   </div>
-                  {uploading && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full">
-                      <Loader2 className="h-6 w-6 animate-spin text-white" />
-                    </div>
-                  )}
-                </button>
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="absolute -bottom-0.5 -right-0.5 w-8 h-8 rounded-full bg-foreground text-background border-2 border-card flex items-center justify-center shadow-lg hover:scale-110 transition-transform"
-                >
-                  <Camera className="h-4 w-4" />
-                </button>
-              </div>
-
-              {/* Identity */}
-              <div className="flex-1 min-w-0">
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 border border-primary/20 mb-2">
-                  <Sparkles className="h-3 w-3 text-primary" />
-                  <span className="text-[9px] font-black text-primary uppercase tracking-[0.18em]">Membro</span>
-                </div>
-                <h1 className="text-2xl font-black text-foreground tracking-tight truncate">{displayName}</h1>
-                <p className="text-xs font-medium text-muted-foreground truncate mt-0.5">{user.email}</p>
-              </div>
-            </div>
-
-            {/* Action row inside the card */}
-            <div className="relative mt-5 flex gap-2">
-              <button
-                onClick={() => setEditing(true)}
-                className="flex-1 h-12 rounded-2xl bg-foreground text-background text-[13px] font-black hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
-              >
-                <Settings2 className="h-4 w-4" /> Editar Perfil
-              </button>
-              <button
-                onClick={() => navigate('/marketplace/addresses')}
-                className="h-12 px-4 rounded-2xl bg-muted/60 border border-border/60 flex items-center gap-2 text-foreground active:scale-[0.98] transition-all"
-              >
-                <MapPin className="h-4 w-4" />
-                <span className="text-[12px] font-black truncate max-w-[100px]">
-                  {selectedAddress?.label || 'Endereços'}
-                </span>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Stats strip */}
-        <div className="relative px-5 mt-4">
-          <div className="grid grid-cols-3 gap-2.5">
-            {[
-              { label: 'Pedidos', value: orders.length, icon: ShoppingBag, accent: 'text-foreground', tint: 'bg-card', onClick: () => navigate('/marketplace/orders') },
-              { label: 'Cupons',  value: coupons.length, icon: Ticket, accent: 'text-primary', tint: 'bg-primary/8', onClick: () => fetchCoupons(true) },
-              { label: 'Região',  value: 'MT', icon: MapPin, accent: 'text-foreground', tint: 'bg-card' },
-            ].map((stat) => (
-              <button
-                key={stat.label}
-                onClick={stat.onClick}
-                disabled={!stat.onClick}
-                className={cn(
-                  "relative overflow-hidden rounded-2xl border border-border/60 p-3.5 text-left transition-all",
-                  stat.tint,
-                  stat.onClick && "hover:-translate-y-0.5 active:scale-[0.97]"
                 )}
-              >
-                <stat.icon className={cn("h-4 w-4 mb-3 opacity-70", stat.accent)} />
-                <p className={cn("text-xl font-black leading-none tracking-tight", stat.accent)}>{stat.value}</p>
-                <p className="text-[9px] font-black uppercase tracking-[0.18em] text-muted-foreground/70 mt-1.5">{stat.label}</p>
+                {uploading && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/60">
+                    <Loader2 className="h-5 w-5 animate-spin text-white" />
+                  </div>
+                )}
               </button>
-            ))}
+            </div>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-lg font-display font-bold tracking-tight truncate">{displayName}</h1>
+              <p className="text-xs text-white/50 truncate">{user.email}</p>
+            </div>
+            <button
+              onClick={() => setEditing(true)}
+              aria-label="Editar perfil"
+              className="w-11 h-11 rounded-full bg-[#2d2d2d] border border-white/5 flex items-center justify-center active:scale-95 transition-transform"
+            >
+              <Cog className="h-5 w-5 text-white/80" />
+            </button>
           </div>
-        </div>
 
-        {/* Main content */}
-        <div className="relative px-5 mt-5 space-y-5">
+          {/* BENTO ROW 1 — Carteira + Nível */}
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              onClick={() => toast('Carteira em breve!')}
+              className="relative overflow-hidden rounded-3xl bg-[#2d2d2d] border border-white/5 p-5 text-left active:scale-[0.98] transition-transform"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-9 h-9 rounded-xl bg-[#3a3a3a] flex items-center justify-center">
+                  <Wallet className="h-4 w-4 text-white/80" />
+                </div>
+                <Plus className="h-4 w-4 text-[#e85d3a]" />
+              </div>
+              <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-white/50">Carteira</p>
+              <p className="font-display text-2xl font-bold tracking-tight mt-1">R$ 0,00</p>
+            </button>
 
-          {/* VIP — cinematic dark card */}
+            <button
+              onClick={() => navigate('/marketplace/orders')}
+              className="relative overflow-hidden rounded-3xl bg-[#2d2d2d] border border-white/5 p-5 text-left active:scale-[0.98] transition-transform"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className={cn("w-9 h-9 rounded-xl bg-gradient-to-br flex items-center justify-center", tier.color)}>
+                  <Trophy className="h-4 w-4 text-black" />
+                </div>
+                <span className="text-[9px] font-bold uppercase tracking-widest text-white/40">{ordersCount}{tier.next ? `/${tier.next}` : ''}</span>
+              </div>
+              <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-white/50">Nível</p>
+              <p className="font-display text-2xl font-bold tracking-tight mt-1">{tier.name}</p>
+              <div className="mt-2 h-1 rounded-full bg-white/10 overflow-hidden">
+                <div
+                  className={cn("h-full bg-gradient-to-r", tier.color)}
+                  style={{ width: `${Math.min(100, tier.progress)}%` }}
+                />
+              </div>
+            </button>
+          </div>
+
+          {/* CUPOM EM DESTAQUE — wide */}
           <button
             onClick={() => fetchCoupons(true)}
             disabled={loadingCoupons}
-            className="w-full text-left relative overflow-hidden rounded-[2rem] p-6 bg-[#0b0b10] active:scale-[0.99] transition-transform shadow-[0_25px_60px_-20px_rgba(0,0,0,0.6)]"
+            className="w-full relative overflow-hidden rounded-3xl p-5 text-left active:scale-[0.99] transition-transform"
+            style={{ background: 'linear-gradient(135deg, #e85d3a 0%, #c0421f 100%)' }}
           >
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,hsl(var(--primary)/0.55),transparent_60%)]" />
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,rgba(255,180,80,0.25),transparent_55%)]" />
-            <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full border border-white/10" />
-            <div className="absolute -right-20 -top-20 h-60 w-60 rounded-full border border-white/5" />
+            <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-white/10" />
+            <div className="absolute -right-16 -bottom-12 h-40 w-40 rounded-full border border-white/15" />
 
-            <div className="relative flex items-start justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-yellow-300 to-orange-500 flex items-center justify-center shadow-lg shadow-orange-500/40">
-                  <Crown className="h-4 w-4 text-black" />
-                </div>
-                <div>
-                  <p className="text-[9px] font-black text-white/60 uppercase tracking-[0.3em]">Clube</p>
-                  <p className="text-sm font-black text-white tracking-wide">É Pra Já VIP</p>
-                </div>
+            <div className="relative flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-black/25 backdrop-blur-md flex items-center justify-center shrink-0">
+                <Ticket className="h-5 w-5 text-white" />
               </div>
-              <div className="px-2.5 py-1 rounded-full bg-white/10 border border-white/15 backdrop-blur-md">
-                <span className="text-[9px] font-black text-white uppercase tracking-widest">{coupons.length} Ativos</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-white/70">
+                  {featuredCoupon ? 'Cupom em destaque' : 'Cupons disponíveis'}
+                </p>
+                {featuredCoupon ? (
+                  <>
+                    <p className="font-display text-2xl font-bold tracking-tight text-white leading-tight">
+                      {featuredCoupon.discount_type === 'percentage'
+                        ? `${featuredCoupon.discount_value}% OFF`
+                        : `R$ ${Number(featuredCoupon.discount_value).toFixed(2).replace('.', ',')} OFF`}
+                    </p>
+                    <p className="text-[11px] text-white/80 mt-0.5 truncate">
+                      Código <span className="font-bold">{featuredCoupon.code}</span>
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="font-display text-2xl font-bold tracking-tight text-white leading-tight">
+                      Sem cupons agora
+                    </p>
+                    <p className="text-[11px] text-white/80 mt-0.5">Fique de olho nas próximas promoções</p>
+                  </>
+                )}
               </div>
-            </div>
-
-            <div className="relative mt-7">
-              <p className="text-[28px] leading-[1.05] font-black text-white tracking-tight">
-                Benefícios<br/>
-                <span className="bg-gradient-to-r from-white via-orange-200 to-yellow-300 bg-clip-text text-transparent">exclusivos</span>
-              </p>
-              <p className="text-xs text-white/55 mt-2 font-medium max-w-[240px]">
-                Cupons selecionados e descontos premium nos seus pedidos favoritos.
-              </p>
-            </div>
-
-            <div className="relative mt-6 flex items-center justify-between">
-              <div className="inline-flex items-center gap-2 px-4 h-11 rounded-full bg-white text-black text-[12px] font-black">
-                {loadingCoupons ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Ver meus cupons <ChevronRight className="h-4 w-4" /></>}
-              </div>
-              <div className="flex -space-x-1">
-                {[0,1,2].map(i => (
-                  <Star key={i} className="h-3.5 w-3.5 fill-yellow-300 text-yellow-300" />
-                ))}
+              <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shrink-0">
+                {loadingCoupons ? <Loader2 className="h-4 w-4 animate-spin text-[#e85d3a]" /> : <ArrowUpRight className="h-4 w-4 text-[#e85d3a]" />}
               </div>
             </div>
           </button>
 
-          {/* Settings list — minha conta */}
-          <div className="rounded-[2rem] border border-border/60 bg-card/60 backdrop-blur-xl overflow-hidden">
-            <div className="px-5 pt-5 pb-2 flex items-center justify-between">
-              <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/70">Minha Conta</h2>
+          {/* BENTO ROW 2 — Pedidos + Favoritos */}
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              onClick={() => navigate('/marketplace/orders')}
+              className="rounded-3xl bg-[#2d2d2d] border border-white/5 p-5 text-left active:scale-[0.98] transition-transform"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-9 h-9 rounded-xl bg-[#3a3a3a] flex items-center justify-center">
+                  <ShoppingBag className="h-4 w-4 text-white/80" />
+                </div>
+                <ArrowUpRight className="h-4 w-4 text-white/40" />
+              </div>
+              <p className="font-display text-3xl font-bold tracking-tight">{ordersCount}</p>
+              <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-white/50 mt-1">Pedidos</p>
+            </button>
+
+            <button
+              onClick={() => fetchCoupons(true)}
+              className="rounded-3xl bg-[#2d2d2d] border border-white/5 p-5 text-left active:scale-[0.98] transition-transform"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-9 h-9 rounded-xl bg-[#e85d3a]/15 flex items-center justify-center">
+                  <Ticket className="h-4 w-4 text-[#e85d3a]" />
+                </div>
+                <ArrowUpRight className="h-4 w-4 text-white/40" />
+              </div>
+              <p className="font-display text-3xl font-bold tracking-tight">{coupons.length}</p>
+              <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-white/50 mt-1">Cupons</p>
+            </button>
+          </div>
+
+          {/* ENDEREÇO ATIVO — wide */}
+          <button
+            onClick={() => navigate('/marketplace/addresses')}
+            className="w-full rounded-3xl bg-[#2d2d2d] border border-white/5 p-5 flex items-center gap-4 active:scale-[0.99] transition-transform text-left"
+          >
+            <div className="w-11 h-11 rounded-2xl bg-[#3a3a3a] flex items-center justify-center shrink-0">
+              <MapPin className="h-5 w-5 text-[#e85d3a]" />
             </div>
-            <div className="p-2">
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-white/50">Entregar em</p>
+              <p className="font-display text-base font-bold tracking-tight truncate mt-0.5">
+                {selectedAddress?.label || selectedAddress?.street || 'Adicionar endereço'}
+              </p>
+              {selectedAddress?.city && (
+                <p className="text-[11px] text-white/50 truncate">{selectedAddress.city} — {selectedAddress.state || 'MT'}</p>
+              )}
+            </div>
+            <ChevronRight className="h-4 w-4 text-white/40" />
+          </button>
+
+          {/* AÇÕES RÁPIDAS — grid 4 */}
+          <div className="grid grid-cols-4 gap-2.5 pt-1">
+            {[
+              { icon: ShoppingBag, label: 'Pedidos', onClick: () => navigate('/marketplace/orders') },
+              { icon: Ticket, label: 'Cupons', onClick: () => fetchCoupons(true) },
+              { icon: HelpCircle, label: 'Ajuda', onClick: () => setSupportType('support') },
+              { icon: theme === 'dark' ? Sun : Moon, label: 'Tema', onClick: () => toggleTheme() },
+            ].map((q) => (
+              <button
+                key={q.label}
+                onClick={q.onClick}
+                className="rounded-2xl bg-[#2d2d2d] border border-white/5 p-3 flex flex-col items-center gap-2 active:scale-95 transition-transform"
+              >
+                <q.icon className="h-5 w-5 text-white/80" />
+                <span className="text-[10px] font-medium text-white/70">{q.label}</span>
+              </button>
+            ))}
+          </div>
+
+          {/* SECTION — Conta */}
+          <div className="pt-4">
+            <h2 className="text-[10px] font-medium uppercase tracking-[0.25em] text-white/40 px-2 mb-2">Minha Conta</h2>
+            <div className="rounded-3xl bg-[#2d2d2d] border border-white/5 overflow-hidden divide-y divide-white/5">
               {[
-                { icon: MapPin,    label: 'Endereços', subtitle: 'Locais de entrega', onClick: () => navigate('/marketplace/addresses') },
-                { icon: Wallet,    label: 'Carteira',  subtitle: 'Saldo e transações', onClick: () => toast('Em breve!') },
-                { icon: theme === 'dark' ? Moon : Sun, label: 'Aparência', subtitle: theme === 'dark' ? 'Modo escuro ativo' : 'Modo claro ativo', onClick: () => toggleTheme() },
+                { icon: MapPin, label: 'Endereços', subtitle: 'Locais de entrega', onClick: () => navigate('/marketplace/addresses') },
+                { icon: Wallet, label: 'Carteira', subtitle: 'Saldo e transações', onClick: () => toast('Em breve!') },
+                { icon: theme === 'dark' ? Moon : Sun, label: 'Aparência', subtitle: theme === 'dark' ? 'Modo escuro' : 'Modo claro', onClick: () => toggleTheme() },
               ].map((item) => (
                 <button
                   key={item.label}
                   onClick={item.onClick}
-                  className="w-full flex items-center gap-3.5 px-3 py-3 rounded-2xl hover:bg-muted/60 transition-colors active:scale-[0.98]"
+                  className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-white/[0.03] transition-colors active:bg-white/5"
                 >
-                  <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-muted to-secondary flex items-center justify-center shrink-0 border border-border/40">
-                    <item.icon className="h-[18px] w-[18px] text-foreground/80" />
+                  <div className="w-9 h-9 rounded-xl bg-[#3a3a3a] flex items-center justify-center shrink-0">
+                    <item.icon className="h-[16px] w-[16px] text-white/75" />
                   </div>
                   <div className="flex-1 min-w-0 text-left">
-                    <p className="text-[14px] font-extrabold text-foreground tracking-tight">{item.label}</p>
-                    <p className="text-[11px] font-medium text-muted-foreground mt-0.5 truncate">{item.subtitle}</p>
+                    <p className="text-[14px] font-display font-semibold tracking-tight">{item.label}</p>
+                    <p className="text-[11px] text-white/45 mt-0.5 truncate">{item.subtitle}</p>
                   </div>
-                  <ChevronRight className="h-4 w-4 text-muted-foreground/60" />
+                  <ChevronRight className="h-4 w-4 text-white/30" />
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Settings list — ajuda & legal */}
-          <div className="rounded-[2rem] border border-border/60 bg-card/60 backdrop-blur-xl overflow-hidden">
-            <div className="px-5 pt-5 pb-2">
-              <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/70">Ajuda & Legal</h2>
-            </div>
-            <div className="p-2">
+          {/* SECTION — Ajuda & Legal */}
+          <div className="pt-3">
+            <h2 className="text-[10px] font-medium uppercase tracking-[0.25em] text-white/40 px-2 mb-2">Ajuda & Legal</h2>
+            <div className="rounded-3xl bg-[#2d2d2d] border border-white/5 overflow-hidden divide-y divide-white/5">
               {[
-                { icon: HelpCircle, label: 'Central de Ajuda', subtitle: 'Suporte e dúvidas',    onClick: () => setSupportType('support') },
-                { icon: FileText,   label: 'Termos de Uso',   subtitle: 'Regras da plataforma',  onClick: () => navigate('/marketplace/terms') },
-                { icon: ShieldCheck, label: 'Privacidade',    subtitle: 'Segurança dos dados',   onClick: () => navigate('/marketplace/privacy') },
+                { icon: HelpCircle, label: 'Central de Ajuda', subtitle: 'Suporte e dúvidas', onClick: () => setSupportType('support') },
+                { icon: FileText, label: 'Termos de Uso', subtitle: 'Regras da plataforma', onClick: () => navigate('/marketplace/terms') },
+                { icon: ShieldCheck, label: 'Privacidade', subtitle: 'Segurança dos dados', onClick: () => navigate('/marketplace/privacy') },
               ].map((item) => (
                 <button
                   key={item.label}
                   onClick={item.onClick}
-                  className="w-full flex items-center gap-3.5 px-3 py-3 rounded-2xl hover:bg-muted/60 transition-colors active:scale-[0.98]"
+                  className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-white/[0.03] transition-colors active:bg-white/5"
                 >
-                  <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-muted to-secondary flex items-center justify-center shrink-0 border border-border/40">
-                    <item.icon className="h-[18px] w-[18px] text-foreground/80" />
+                  <div className="w-9 h-9 rounded-xl bg-[#3a3a3a] flex items-center justify-center shrink-0">
+                    <item.icon className="h-[16px] w-[16px] text-white/75" />
                   </div>
                   <div className="flex-1 min-w-0 text-left">
-                    <p className="text-[14px] font-extrabold text-foreground tracking-tight">{item.label}</p>
-                    <p className="text-[11px] font-medium text-muted-foreground mt-0.5 truncate">{item.subtitle}</p>
+                    <p className="text-[14px] font-display font-semibold tracking-tight">{item.label}</p>
+                    <p className="text-[11px] text-white/45 mt-0.5 truncate">{item.subtitle}</p>
                   </div>
-                  <ChevronRight className="h-4 w-4 text-muted-foreground/60" />
+                  <ChevronRight className="h-4 w-4 text-white/30" />
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Driver CTA */}
+          {/* CTA Entregador — full bleed */}
           <button
             onClick={() => setSupportType('driver_application')}
-            className="w-full relative overflow-hidden rounded-[2rem] p-5 text-white active:scale-[0.99] transition-transform"
-            style={{ background: 'linear-gradient(135deg, #0f1115 0%, #1a1f2b 100%)' }}
+            className="w-full mt-4 relative overflow-hidden rounded-3xl p-5 text-left active:scale-[0.99] transition-transform border border-white/5"
+            style={{ background: 'linear-gradient(135deg, #2d2d2d 0%, #1a1a1a 100%)' }}
           >
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_right,hsl(var(--primary)/0.4),transparent_60%)]" />
-            <div className="absolute right-4 top-4 opacity-10">
-              <Bike className="h-24 w-24" />
+            <div className="absolute -right-4 -bottom-4 opacity-[0.07]">
+              <Bike className="h-32 w-32 text-white" />
             </div>
             <div className="relative flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-orange-500 flex items-center justify-center shadow-lg shadow-primary/40 shrink-0">
+              <div className="w-12 h-12 rounded-2xl bg-[#e85d3a] flex items-center justify-center shrink-0 shadow-lg shadow-[#e85d3a]/30">
                 <Bike className="h-5 w-5 text-white" />
               </div>
-              <div className="flex-1 text-left">
-                <p className="text-[10px] font-black text-white/60 uppercase tracking-[0.25em]">Oportunidade</p>
-                <p className="font-black text-base tracking-tight mt-0.5">Seja um entregador</p>
-                <p className="text-[11px] text-white/55 font-medium mt-0.5">Ganhos extras com liberdade total</p>
+              <div className="flex-1">
+                <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-[#e85d3a]">Oportunidade</p>
+                <p className="font-display text-base font-bold tracking-tight mt-0.5">Seja um entregador</p>
+                <p className="text-[11px] text-white/50 mt-0.5">Ganhos extras e liberdade total</p>
               </div>
-              <div className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center backdrop-blur-md border border-white/10">
-                <ChevronRight className="h-4 w-4 text-white" />
-              </div>
+              <ChevronRight className="h-5 w-5 text-white/50" />
             </div>
           </button>
 
           {/* Danger zone */}
-          <div className="pt-2 space-y-2">
+          <div className="pt-4 space-y-2">
             <button
               onClick={() => signOut()}
-              className="w-full flex items-center justify-center gap-2 h-13 py-4 rounded-2xl bg-card border border-border text-foreground font-extrabold text-[13px] hover:bg-muted active:scale-[0.98] transition-all"
+              className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl bg-[#2d2d2d] border border-white/5 text-white font-display font-semibold text-[13px] active:scale-[0.98] transition-transform"
             >
               <LogOut className="h-4 w-4" /> Sair da conta
             </button>
 
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <button className="w-full text-[10px] text-muted-foreground/50 hover:text-destructive transition-colors py-3 font-black uppercase tracking-[0.25em]">
+                <button className="w-full text-[10px] text-white/30 hover:text-red-400 transition-colors py-3 font-medium uppercase tracking-[0.25em]">
                   Excluir minha conta
                 </button>
               </AlertDialogTrigger>
               <AlertDialogContent className="rounded-3xl border-none p-8">
                 <AlertDialogHeader>
-                  <AlertDialogTitle className="text-xl font-black">Excluir sua conta?</AlertDialogTitle>
+                  <AlertDialogTitle className="text-xl font-display font-bold">Excluir sua conta?</AlertDialogTitle>
                   <AlertDialogDescription className="text-sm font-medium leading-relaxed">
                     Esta ação é permanente e todos os seus dados de pedidos e cupons serão perdidos para sempre.
                   </AlertDialogDescription>
@@ -455,11 +492,11 @@ export default function Profile() {
                 <AlertDialogFooter className="flex-col gap-3 mt-6">
                   <AlertDialogAction
                     onClick={async () => { await supabase.from('profiles').delete().eq('id', user.id); await signOut(); navigate('/marketplace/login'); }}
-                    className="bg-destructive hover:bg-destructive/90 h-14 rounded-2xl text-white font-black"
+                    className="bg-destructive hover:bg-destructive/90 h-14 rounded-2xl text-white font-bold"
                   >
                     Sim, excluir definitivamente
                   </AlertDialogAction>
-                  <AlertDialogCancel className="h-14 rounded-2xl border-none bg-muted text-foreground font-black">
+                  <AlertDialogCancel className="h-14 rounded-2xl border-none bg-muted text-foreground font-bold">
                     Manter minha conta
                   </AlertDialogCancel>
                 </AlertDialogFooter>
@@ -467,13 +504,12 @@ export default function Profile() {
             </AlertDialog>
           </div>
 
-          {/* Footer Branding */}
-          <div className="py-10 flex flex-col items-center opacity-25">
-            <p className="text-[10px] font-black tracking-[1em] text-foreground ml-3">BONASOFT</p>
+          {/* Footer */}
+          <div className="py-8 flex flex-col items-center opacity-20">
+            <p className="text-[10px] font-display font-bold tracking-[1em] text-white ml-3">BONASOFT</p>
           </div>
         </div>
 
-        {/* hidden file input */}
         <input
           ref={fileInputRef}
           type="file"
