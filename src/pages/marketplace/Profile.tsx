@@ -378,7 +378,7 @@ export default function Profile() {
               { icon: ShoppingBag, label: 'Pedidos', onClick: () => navigate('/marketplace/orders') },
               { icon: Ticket, label: 'Cupons', onClick: () => fetchCoupons(true) },
               { icon: HelpCircle, label: 'Ajuda', onClick: () => setSupportType('support') },
-              { icon: theme === 'dark' ? Sun : Moon, label: 'Tema', onClick: () => toggleTheme() },
+              { icon: theme === 'dark' ? Sun : Moon, label: theme === 'dark' ? 'Claro' : 'Escuro', onClick: () => toggleTheme() },
             ].map((q) => (
               <button
                 key={q.label}
@@ -398,8 +398,8 @@ export default function Profile() {
               {[
                 { icon: MapPin, label: 'Endereços', subtitle: 'Locais de entrega', onClick: () => navigate('/marketplace/addresses') },
                 { icon: Wallet, label: 'Carteira', subtitle: 'Saldo e transações', onClick: () => toast('Em breve!') },
-                { icon: theme === 'dark' ? Moon : Sun, label: 'Aparência', subtitle: theme === 'dark' ? 'Modo escuro' : 'Modo claro', onClick: () => toggleTheme() },
-              ].map((item) => (
+                { icon: theme === 'dark' ? Sun : Moon, label: 'Aparência', subtitle: theme === 'dark' ? 'Modo escuro ativo' : 'Modo claro ativo', onClick: () => toggleTheme(), isThemeToggle: true },
+              ].map((item: any) => (
                 <button
                   key={item.label}
                   onClick={item.onClick}
@@ -412,7 +412,19 @@ export default function Profile() {
                     <p className="text-[14px] font-display font-semibold tracking-tight">{item.label}</p>
                     <p className="text-[11px] text-muted-foreground mt-0.5 truncate">{item.subtitle}</p>
                   </div>
-                  <ChevronRight className="h-4 w-4 text-muted-foreground/50" />
+                  {item.isThemeToggle ? (
+                    <div className={cn(
+                      "relative w-11 h-6 rounded-full transition-colors",
+                      theme === 'dark' ? 'bg-primary' : 'bg-muted-foreground/30'
+                    )}>
+                      <div className={cn(
+                        "absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform",
+                        theme === 'dark' ? 'translate-x-5' : 'translate-x-0.5'
+                      )} />
+                    </div>
+                  ) : (
+                    <ChevronRight className="h-4 w-4 text-muted-foreground/50" />
+                  )}
                 </button>
               ))}
             </div>
