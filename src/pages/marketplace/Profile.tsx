@@ -14,7 +14,8 @@ import {
   LogOut, MapPin, ChevronRight, Camera, Loader2,
   Bike, FileText, ShieldCheck, Moon, Sun,
   Wallet, HelpCircle, X, Check, Phone,
-  Package, Clock, CheckCircle2, XCircle, Truck, Ticket, Copy
+  Package, Clock, CheckCircle2, XCircle, Truck, Ticket, Copy,
+  Crown, Sparkles, ShoppingBag, Settings2, Star
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -188,250 +189,298 @@ export default function Profile() {
 
   return (
     <MarketplaceLayout>
-      <div className="min-h-screen pb-40 bg-background/50">
-        
-        {/* Profile Header (Glassmorphism & Bento) */}
-        <div className="relative pt-12 px-6 flex flex-col items-center text-center">
-          {/* Subtle Glow Background */}
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-64 bg-gradient-to-b from-primary/10 to-transparent pointer-events-none" />
-          
-          <div className="relative group mb-6 flex items-center justify-center">
-            {/* Avatar container */}
-            <div className="relative">
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploading}
-                className="w-36 h-36 rounded-full bg-background p-1.5 shadow-2xl overflow-hidden active:scale-95 transition-all relative z-10"
-              >
-                <div className="w-full h-full rounded-full overflow-hidden bg-muted">
-                  {profile?.avatar_url ? (
-                    <img src={profile.avatar_url} className="w-full h-full object-cover" alt="Foto de perfil" />
-                  ) : (
-                    <div className="w-full h-full gradient-primary flex items-center justify-center">
-                      <span className="text-6xl font-black text-white">{initial}</span>
+      <div className="min-h-screen pb-40 bg-background relative overflow-hidden">
+
+        {/* Cinematic gradient backdrop */}
+        <div className="absolute inset-x-0 top-0 h-[420px] pointer-events-none overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-b from-primary/25 via-primary/5 to-transparent" />
+          <div className="absolute -top-32 -left-20 h-72 w-72 rounded-full bg-primary/30 blur-[120px]" />
+          <div className="absolute -top-20 right-0 h-64 w-64 rounded-full bg-orange-400/20 blur-[120px]" />
+          <div className="absolute top-40 left-1/2 -translate-x-1/2 h-40 w-[120%] bg-gradient-to-b from-transparent to-background" />
+        </div>
+
+        {/* HERO — Identity card */}
+        <div className="relative px-5 pt-10">
+          <div className="relative rounded-[2.25rem] overflow-hidden border border-border/60 bg-card/70 backdrop-blur-2xl shadow-[0_20px_80px_-30px_hsl(var(--primary)/0.45)] p-6">
+            {/* inner shine */}
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent" />
+            <div className="pointer-events-none absolute -top-24 -right-16 h-56 w-56 rounded-full bg-primary/20 blur-3xl" />
+
+            <div className="relative flex items-center gap-5">
+              {/* Avatar */}
+              <div className="relative shrink-0">
+                <div className="absolute -inset-1 rounded-full bg-gradient-to-tr from-primary via-orange-400 to-yellow-300 blur-[6px] opacity-70" />
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                  className="relative w-24 h-24 rounded-full bg-background p-[3px] active:scale-95 transition-transform"
+                >
+                  <div className="w-full h-full rounded-full overflow-hidden bg-muted">
+                    {profile?.avatar_url ? (
+                      <img src={profile.avatar_url} className="w-full h-full object-cover" alt="Foto de perfil" />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-primary to-orange-500 flex items-center justify-center">
+                        <span className="text-4xl font-black text-white">{initial}</span>
+                      </div>
+                    )}
+                  </div>
+                  {uploading && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full">
+                      <Loader2 className="h-6 w-6 animate-spin text-white" />
                     </div>
                   )}
+                </button>
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="absolute -bottom-0.5 -right-0.5 w-8 h-8 rounded-full bg-foreground text-background border-2 border-card flex items-center justify-center shadow-lg hover:scale-110 transition-transform"
+                >
+                  <Camera className="h-4 w-4" />
+                </button>
+              </div>
+
+              {/* Identity */}
+              <div className="flex-1 min-w-0">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 border border-primary/20 mb-2">
+                  <Sparkles className="h-3 w-3 text-primary" />
+                  <span className="text-[9px] font-black text-primary uppercase tracking-[0.18em]">Membro</span>
                 </div>
-                {uploading && (
-                  <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/40 rounded-full">
-                    <Loader2 className="h-8 w-8 animate-spin text-white" />
-                  </div>
-                )}
+                <h1 className="text-2xl font-black text-foreground tracking-tight truncate">{displayName}</h1>
+                <p className="text-xs font-medium text-muted-foreground truncate mt-0.5">{user.email}</p>
+              </div>
+            </div>
+
+            {/* Action row inside the card */}
+            <div className="relative mt-5 flex gap-2">
+              <button
+                onClick={() => setEditing(true)}
+                className="flex-1 h-12 rounded-2xl bg-foreground text-background text-[13px] font-black hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+              >
+                <Settings2 className="h-4 w-4" /> Editar Perfil
               </button>
               <button
-                onClick={() => fileInputRef.current?.click()}
-                className="absolute bottom-1 right-1 w-11 h-11 rounded-full bg-foreground text-background border-4 border-background flex items-center justify-center shadow-lg hover:scale-110 transition-transform z-30"
+                onClick={() => navigate('/marketplace/addresses')}
+                className="h-12 px-4 rounded-2xl bg-muted/60 border border-border/60 flex items-center gap-2 text-foreground active:scale-[0.98] transition-all"
               >
-                <Camera className="h-5 w-5" />
+                <MapPin className="h-4 w-4" />
+                <span className="text-[12px] font-black truncate max-w-[100px]">
+                  {selectedAddress?.label || 'Endereços'}
+                </span>
               </button>
             </div>
           </div>
-
-          <h1 className="text-3xl font-black text-foreground tracking-tight mb-1">{displayName}</h1>
-          <p className="text-sm font-medium text-muted-foreground/60 mb-6">{user.email}</p>
-
-          <div className="flex gap-3 w-full max-w-sm relative z-20">
-            <button
-              onClick={() => setEditing(true)}
-              className="flex-1 h-14 rounded-[1.5rem] bg-foreground text-background text-sm font-black hover:opacity-90 active:scale-95 transition-all shadow-xl shadow-foreground/10"
-            >
-              Editar Perfil
-            </button>
-            <button
-              onClick={() => navigate('/marketplace/addresses')}
-              className="w-14 h-14 rounded-[1.5rem] bg-card border border-border flex items-center justify-center text-foreground hover:bg-muted active:scale-95 transition-all shadow-sm"
-            >
-              <MapPin className="h-6 w-6" />
-            </button>
-          </div>
         </div>
 
-        {/* User Stats Bento Box */}
-        <div className="px-6 mt-12">
-          <div className="grid grid-cols-3 gap-3">
+        {/* Stats strip */}
+        <div className="relative px-5 mt-4">
+          <div className="grid grid-cols-3 gap-2.5">
             {[
-              { label: 'Pedidos', value: orders.length, color: 'text-foreground', bg: 'bg-card' },
-              { label: 'Cupons',  value: coupons.length, color: 'text-primary', bg: 'bg-primary/5', border: 'border-primary/10', onClick: () => fetchCoupons(true) },
-              { label: 'Região',  value: 'MT', color: 'text-foreground', bg: 'bg-card' }
-            ].map((stat, i) => (
-              <button 
+              { label: 'Pedidos', value: orders.length, icon: ShoppingBag, accent: 'text-foreground', tint: 'bg-card', onClick: () => navigate('/marketplace/orders') },
+              { label: 'Cupons',  value: coupons.length, icon: Ticket, accent: 'text-primary', tint: 'bg-primary/8', onClick: () => fetchCoupons(true) },
+              { label: 'Região',  value: 'MT', icon: MapPin, accent: 'text-foreground', tint: 'bg-card' },
+            ].map((stat) => (
+              <button
                 key={stat.label}
                 onClick={stat.onClick}
                 disabled={!stat.onClick}
                 className={cn(
-                  "flex flex-col items-center justify-center py-6 rounded-[2rem] border border-border/50 shadow-sm backdrop-blur-md transition-all",
-                  stat.bg,
-                  stat.border,
-                  stat.onClick && "hover:scale-105 active:scale-95"
+                  "relative overflow-hidden rounded-2xl border border-border/60 p-3.5 text-left transition-all",
+                  stat.tint,
+                  stat.onClick && "hover:-translate-y-0.5 active:scale-[0.97]"
                 )}
               >
-                <span className={cn("text-2xl font-black leading-none mb-2", stat.color)}>{stat.value}</span>
-                <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60">{stat.label}</span>
+                <stat.icon className={cn("h-4 w-4 mb-3 opacity-70", stat.accent)} />
+                <p className={cn("text-xl font-black leading-none tracking-tight", stat.accent)}>{stat.value}</p>
+                <p className="text-[9px] font-black uppercase tracking-[0.18em] text-muted-foreground/70 mt-1.5">{stat.label}</p>
               </button>
             ))}
           </div>
         </div>
 
-        {/* Main Content Area */}
-        <div className="px-6 mt-8 space-y-6">
-          
-          {/* VIP Premium Card */}
-          <div className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] p-8 shadow-2xl shadow-primary/20 group">
-            <div className="absolute inset-0 bg-gradient-to-tr from-primary/20 to-transparent opacity-50" />
-            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-20" />
-            
-            <div className="relative z-10 flex flex-col gap-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-primary to-orange-500 flex items-center justify-center shadow-lg shadow-primary/30">
-                    <Ticket className="h-4 w-4 text-white" />
-                  </div>
-                  <p className="text-[10px] font-black text-white/90 uppercase tracking-[0.3em]">Clube VIP</p>
+        {/* Main content */}
+        <div className="relative px-5 mt-5 space-y-5">
+
+          {/* VIP — cinematic dark card */}
+          <button
+            onClick={() => fetchCoupons(true)}
+            disabled={loadingCoupons}
+            className="w-full text-left relative overflow-hidden rounded-[2rem] p-6 bg-[#0b0b10] active:scale-[0.99] transition-transform shadow-[0_25px_60px_-20px_rgba(0,0,0,0.6)]"
+          >
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,hsl(var(--primary)/0.55),transparent_60%)]" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,rgba(255,180,80,0.25),transparent_55%)]" />
+            <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full border border-white/10" />
+            <div className="absolute -right-20 -top-20 h-60 w-60 rounded-full border border-white/5" />
+
+            <div className="relative flex items-start justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-yellow-300 to-orange-500 flex items-center justify-center shadow-lg shadow-orange-500/40">
+                  <Crown className="h-4 w-4 text-black" />
                 </div>
-                <div className="px-3 py-1 rounded-full bg-white/10 border border-white/10 backdrop-blur-md">
-                  <span className="text-[9px] font-black text-white uppercase tracking-widest">{coupons.length} Ativos</span>
+                <div>
+                  <p className="text-[9px] font-black text-white/60 uppercase tracking-[0.3em]">Clube</p>
+                  <p className="text-sm font-black text-white tracking-wide">É Pra Já VIP</p>
                 </div>
               </div>
-              
-              <div>
-                <p className="text-2xl font-black text-white leading-tight tracking-tight">Benefícios<br/>Exclusivos</p>
-                <p className="text-xs text-white/50 mt-2 font-medium max-w-[200px]">Economize nos seus próximos pedidos com ofertas VIP.</p>
+              <div className="px-2.5 py-1 rounded-full bg-white/10 border border-white/15 backdrop-blur-md">
+                <span className="text-[9px] font-black text-white uppercase tracking-widest">{coupons.length} Ativos</span>
               </div>
-              
-              <button
-                onClick={() => fetchCoupons(true)}
-                disabled={loadingCoupons}
-                className="w-full h-14 rounded-2xl bg-white text-black text-sm font-black hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-white/10 flex items-center justify-center gap-2"
-              >
-                {loadingCoupons ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Acessar Meus Cupons'}
-              </button>
             </div>
-            
-            {/* Decorative Glow */}
-            <div className="absolute -right-20 -bottom-20 w-64 h-64 bg-primary/30 rounded-full blur-[80px] pointer-events-none" />
+
+            <div className="relative mt-7">
+              <p className="text-[28px] leading-[1.05] font-black text-white tracking-tight">
+                Benefícios<br/>
+                <span className="bg-gradient-to-r from-white via-orange-200 to-yellow-300 bg-clip-text text-transparent">exclusivos</span>
+              </p>
+              <p className="text-xs text-white/55 mt-2 font-medium max-w-[240px]">
+                Cupons selecionados e descontos premium nos seus pedidos favoritos.
+              </p>
+            </div>
+
+            <div className="relative mt-6 flex items-center justify-between">
+              <div className="inline-flex items-center gap-2 px-4 h-11 rounded-full bg-white text-black text-[12px] font-black">
+                {loadingCoupons ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Ver meus cupons <ChevronRight className="h-4 w-4" /></>}
+              </div>
+              <div className="flex -space-x-1">
+                {[0,1,2].map(i => (
+                  <Star key={i} className="h-3.5 w-3.5 fill-yellow-300 text-yellow-300" />
+                ))}
+              </div>
+            </div>
+          </button>
+
+          {/* Settings list — minha conta */}
+          <div className="rounded-[2rem] border border-border/60 bg-card/60 backdrop-blur-xl overflow-hidden">
+            <div className="px-5 pt-5 pb-2 flex items-center justify-between">
+              <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/70">Minha Conta</h2>
+            </div>
+            <div className="p-2">
+              {[
+                { icon: MapPin,    label: 'Endereços', subtitle: 'Locais de entrega', onClick: () => navigate('/marketplace/addresses') },
+                { icon: Wallet,    label: 'Carteira',  subtitle: 'Saldo e transações', onClick: () => toast('Em breve!') },
+                { icon: theme === 'dark' ? Moon : Sun, label: 'Aparência', subtitle: theme === 'dark' ? 'Modo escuro ativo' : 'Modo claro ativo', onClick: () => toggleTheme() },
+              ].map((item) => (
+                <button
+                  key={item.label}
+                  onClick={item.onClick}
+                  className="w-full flex items-center gap-3.5 px-3 py-3 rounded-2xl hover:bg-muted/60 transition-colors active:scale-[0.98]"
+                >
+                  <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-muted to-secondary flex items-center justify-center shrink-0 border border-border/40">
+                    <item.icon className="h-[18px] w-[18px] text-foreground/80" />
+                  </div>
+                  <div className="flex-1 min-w-0 text-left">
+                    <p className="text-[14px] font-extrabold text-foreground tracking-tight">{item.label}</p>
+                    <p className="text-[11px] font-medium text-muted-foreground mt-0.5 truncate">{item.subtitle}</p>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground/60" />
+                </button>
+              ))}
+            </div>
           </div>
 
-          {/* Settings Groups */}
-          <div className="space-y-6">
-            {/* Minha Conta Bento */}
-            <div className="bg-card/80 backdrop-blur-xl border border-border rounded-[2.5rem] overflow-hidden shadow-sm p-2">
-              <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/50 px-6 py-4">Minha Conta</h2>
-              <div className="space-y-1">
-                {[
-                  { icon: MapPin,    label: 'Endereços', subtitle: 'Locais de entrega', onClick: () => navigate('/marketplace/addresses') },
-                  { icon: Wallet,    label: 'Carteira',  subtitle: 'Saldo e transações', onClick: () => toast('Em breve!') },
-                  { icon: theme === 'dark' ? Moon : Sun, label: 'Aparência', subtitle: theme === 'dark' ? 'Escuro Ativo' : 'Claro Ativo', onClick: () => toggleTheme() },
-                ].map((item, i) => (
-                  <button
-                    key={item.label}
-                    onClick={item.onClick}
-                    className="w-full flex items-center gap-4 px-4 py-4 rounded-[2rem] hover:bg-muted/50 transition-colors active:scale-[0.98]"
-                  >
-                    <div className="w-12 h-12 rounded-[1.2rem] bg-secondary flex items-center justify-center shrink-0 shadow-sm">
-                      <item.icon className="h-5 w-5 text-foreground/70" />
-                    </div>
-                    <div className="flex-1 min-w-0 text-left">
-                      <p className="text-sm font-black text-foreground">{item.label}</p>
-                      <p className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-widest mt-0.5">{item.subtitle}</p>
-                    </div>
-                    <div className="w-8 h-8 rounded-full bg-muted/50 flex items-center justify-center">
-                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                    </div>
-                  </button>
-                ))}
+          {/* Settings list — ajuda & legal */}
+          <div className="rounded-[2rem] border border-border/60 bg-card/60 backdrop-blur-xl overflow-hidden">
+            <div className="px-5 pt-5 pb-2">
+              <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/70">Ajuda & Legal</h2>
+            </div>
+            <div className="p-2">
+              {[
+                { icon: HelpCircle, label: 'Central de Ajuda', subtitle: 'Suporte e dúvidas',    onClick: () => setSupportType('support') },
+                { icon: FileText,   label: 'Termos de Uso',   subtitle: 'Regras da plataforma',  onClick: () => navigate('/marketplace/terms') },
+                { icon: ShieldCheck, label: 'Privacidade',    subtitle: 'Segurança dos dados',   onClick: () => navigate('/marketplace/privacy') },
+              ].map((item) => (
+                <button
+                  key={item.label}
+                  onClick={item.onClick}
+                  className="w-full flex items-center gap-3.5 px-3 py-3 rounded-2xl hover:bg-muted/60 transition-colors active:scale-[0.98]"
+                >
+                  <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-muted to-secondary flex items-center justify-center shrink-0 border border-border/40">
+                    <item.icon className="h-[18px] w-[18px] text-foreground/80" />
+                  </div>
+                  <div className="flex-1 min-w-0 text-left">
+                    <p className="text-[14px] font-extrabold text-foreground tracking-tight">{item.label}</p>
+                    <p className="text-[11px] font-medium text-muted-foreground mt-0.5 truncate">{item.subtitle}</p>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground/60" />
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Driver CTA */}
+          <button
+            onClick={() => setSupportType('driver_application')}
+            className="w-full relative overflow-hidden rounded-[2rem] p-5 text-white active:scale-[0.99] transition-transform"
+            style={{ background: 'linear-gradient(135deg, #0f1115 0%, #1a1f2b 100%)' }}
+          >
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_right,hsl(var(--primary)/0.4),transparent_60%)]" />
+            <div className="absolute right-4 top-4 opacity-10">
+              <Bike className="h-24 w-24" />
+            </div>
+            <div className="relative flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-orange-500 flex items-center justify-center shadow-lg shadow-primary/40 shrink-0">
+                <Bike className="h-5 w-5 text-white" />
+              </div>
+              <div className="flex-1 text-left">
+                <p className="text-[10px] font-black text-white/60 uppercase tracking-[0.25em]">Oportunidade</p>
+                <p className="font-black text-base tracking-tight mt-0.5">Seja um entregador</p>
+                <p className="text-[11px] text-white/55 font-medium mt-0.5">Ganhos extras com liberdade total</p>
+              </div>
+              <div className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center backdrop-blur-md border border-white/10">
+                <ChevronRight className="h-4 w-4 text-white" />
               </div>
             </div>
+          </button>
 
-            {/* Suporte Bento */}
-            <div className="bg-card/80 backdrop-blur-xl border border-border rounded-[2.5rem] overflow-hidden shadow-sm p-2">
-              <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/50 px-6 py-4">Ajuda & Legal</h2>
-              <div className="space-y-1">
-                {[
-                  { icon: HelpCircle, label: 'Central de Ajuda', subtitle: 'Suporte e dúvidas',    onClick: () => setSupportType('support') },
-                  { icon: FileText,   label: 'Termos de Uso',   subtitle: 'Regras da plataforma',  onClick: () => navigate('/marketplace/terms') },
-                  { icon: ShieldCheck, label: 'Privacidade',    subtitle: 'Segurança dos dados',   onClick: () => navigate('/marketplace/privacy') },
-                ].map((item, i) => (
-                  <button
-                    key={item.label}
-                    onClick={item.onClick}
-                    className="w-full flex items-center gap-4 px-4 py-4 rounded-[2rem] hover:bg-muted/50 transition-colors active:scale-[0.98]"
-                  >
-                    <div className="w-12 h-12 rounded-[1.2rem] bg-secondary flex items-center justify-center shrink-0 shadow-sm">
-                      <item.icon className="h-5 w-5 text-foreground/70" />
-                    </div>
-                    <div className="flex-1 min-w-0 text-left">
-                      <p className="text-sm font-black text-foreground">{item.label}</p>
-                      <p className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-widest mt-0.5">{item.subtitle}</p>
-                    </div>
-                    <div className="w-8 h-8 rounded-full bg-muted/50 flex items-center justify-center">
-                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Premium Partner CTA */}
+          {/* Danger zone */}
+          <div className="pt-2 space-y-2">
             <button
-              onClick={() => setSupportType('driver_application')}
-              className="w-full relative overflow-hidden flex items-center gap-5 p-6 rounded-[2.5rem] bg-[#111] text-white hover:scale-[1.02] active:scale-95 transition-all shadow-2xl"
+              onClick={() => signOut()}
+              className="w-full flex items-center justify-center gap-2 h-13 py-4 rounded-2xl bg-card border border-border text-foreground font-extrabold text-[13px] hover:bg-muted active:scale-[0.98] transition-all"
             >
-              <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-transparent pointer-events-none" />
-              <div className="w-14 h-14 rounded-[1.2rem] bg-white/10 backdrop-blur-md flex items-center justify-center shrink-0 border border-white/10">
-                <Bike className="h-6 w-6 text-white" />
-              </div>
-              <div className="text-left relative z-10 flex-1">
-                <p className="font-black text-lg leading-none tracking-tight">Seja um Entregador</p>
-                <p className="text-[9px] text-white/50 font-black uppercase tracking-[0.2em] mt-1.5">Ganhos extras e liberdade</p>
-              </div>
-              <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center backdrop-blur-md">
-                <ChevronRight className="h-5 w-5 text-white/80" />
-              </div>
+              <LogOut className="h-4 w-4" /> Sair da conta
             </button>
 
-            {/* Danger Zone */}
-            <div className="pt-6 space-y-3">
-              <button
-                onClick={() => signOut()}
-                className="w-full flex items-center justify-center gap-2 py-5 rounded-[2rem] bg-card border border-border text-foreground font-black text-sm hover:bg-muted active:scale-95 transition-all shadow-sm"
-              >
-                <LogOut className="h-4 w-4" /> Sair da conta
-              </button>
-
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <button className="w-full text-[10px] text-muted-foreground/40 hover:text-destructive transition-colors py-4 font-black uppercase tracking-[0.2em]">
-                    Excluir minha conta
-                  </button>
-                </AlertDialogTrigger>
-                <AlertDialogContent className="rounded-3xl border-none p-8">
-                  <AlertDialogHeader>
-                    <AlertDialogTitle className="text-xl font-black">Excluir sua conta?</AlertDialogTitle>
-                    <AlertDialogDescription className="text-sm font-medium leading-relaxed">
-                      Esta ação é permanente e todos os seus dados de pedidos e cupons serão perdidos para sempre.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter className="flex-col gap-3 mt-6">
-                    <AlertDialogAction
-                      onClick={async () => { await supabase.from('profiles').delete().eq('id', user.id); await signOut(); navigate('/marketplace/login'); }}
-                      className="bg-destructive hover:bg-destructive/90 h-14 rounded-2xl text-white font-black"
-                    >
-                      Sim, excluir definitivamente
-                    </AlertDialogAction>
-                    <AlertDialogCancel className="h-14 rounded-2xl border-none bg-muted text-foreground font-black">
-                      Manter minha conta
-                    </AlertDialogCancel>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </div>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <button className="w-full text-[10px] text-muted-foreground/50 hover:text-destructive transition-colors py-3 font-black uppercase tracking-[0.25em]">
+                  Excluir minha conta
+                </button>
+              </AlertDialogTrigger>
+              <AlertDialogContent className="rounded-3xl border-none p-8">
+                <AlertDialogHeader>
+                  <AlertDialogTitle className="text-xl font-black">Excluir sua conta?</AlertDialogTitle>
+                  <AlertDialogDescription className="text-sm font-medium leading-relaxed">
+                    Esta ação é permanente e todos os seus dados de pedidos e cupons serão perdidos para sempre.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter className="flex-col gap-3 mt-6">
+                  <AlertDialogAction
+                    onClick={async () => { await supabase.from('profiles').delete().eq('id', user.id); await signOut(); navigate('/marketplace/login'); }}
+                    className="bg-destructive hover:bg-destructive/90 h-14 rounded-2xl text-white font-black"
+                  >
+                    Sim, excluir definitivamente
+                  </AlertDialogAction>
+                  <AlertDialogCancel className="h-14 rounded-2xl border-none bg-muted text-foreground font-black">
+                    Manter minha conta
+                  </AlertDialogCancel>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
 
           {/* Footer Branding */}
-          <div className="py-12 flex flex-col items-center opacity-20">
+          <div className="py-10 flex flex-col items-center opacity-25">
             <p className="text-[10px] font-black tracking-[1em] text-foreground ml-3">BONASOFT</p>
           </div>
         </div>
+
+        {/* hidden file input */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handlePhotoUpload}
+        />
       </div>
 
       {/* Edit Profile Sheet */}
