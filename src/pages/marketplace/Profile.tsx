@@ -190,201 +190,217 @@ export default function Profile() {
     <MarketplaceLayout>
       <div className="min-h-screen pb-40 bg-background/50">
         
-        {/* Profile Header (Social Style) */}
-        <div className="relative pt-8 px-6 flex flex-col items-center text-center">
-          <div className="relative group mb-4">
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploading}
-              className="w-32 h-32 rounded-[2.5rem] bg-background p-1 shadow-2xl overflow-hidden active:scale-95 transition-all relative z-10"
-            >
-              <div className="w-full h-full rounded-[2.2rem] overflow-hidden bg-muted">
-                {profile?.avatar_url ? (
-                  <img src={profile.avatar_url} className="w-full h-full object-cover" alt="Foto de perfil" />
-                ) : (
-                  <div className="w-full h-full gradient-primary flex items-center justify-center">
-                    <span className="text-5xl font-black text-white">{initial}</span>
+        {/* Profile Header (Glassmorphism & Bento) */}
+        <div className="relative pt-12 px-6 flex flex-col items-center text-center">
+          {/* Subtle Glow Background */}
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-64 bg-gradient-to-b from-primary/10 to-transparent pointer-events-none" />
+          
+          <div className="relative group mb-6 flex items-center justify-center">
+            {/* Avatar container */}
+            <div className="relative">
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="w-36 h-36 rounded-full bg-background p-1.5 shadow-2xl overflow-hidden active:scale-95 transition-all relative z-10"
+              >
+                <div className="w-full h-full rounded-full overflow-hidden bg-muted">
+                  {profile?.avatar_url ? (
+                    <img src={profile.avatar_url} className="w-full h-full object-cover" alt="Foto de perfil" />
+                  ) : (
+                    <div className="w-full h-full gradient-primary flex items-center justify-center">
+                      <span className="text-6xl font-black text-white">{initial}</span>
+                    </div>
+                  )}
+                </div>
+                {uploading && (
+                  <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/40 rounded-full">
+                    <Loader2 className="h-8 w-8 animate-spin text-white" />
                   </div>
                 )}
-              </div>
-              {uploading && (
-                <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/40 rounded-[2.5rem]">
-                  <Loader2 className="h-8 w-8 animate-spin text-white" />
-                </div>
-              )}
-            </button>
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              className="absolute bottom-2 right-2 w-10 h-10 rounded-2xl bg-foreground text-background border-4 border-background flex items-center justify-center shadow-lg hover:scale-110 transition-transform z-30"
-            >
-              <Camera className="h-5 w-5" />
-            </button>
-            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
+              </button>
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="absolute bottom-1 right-1 w-11 h-11 rounded-full bg-foreground text-background border-4 border-background flex items-center justify-center shadow-lg hover:scale-110 transition-transform z-30"
+              >
+                <Camera className="h-5 w-5" />
+              </button>
+            </div>
           </div>
 
           <h1 className="text-3xl font-black text-foreground tracking-tight mb-1">{displayName}</h1>
           <p className="text-sm font-medium text-muted-foreground/60 mb-6">{user.email}</p>
 
-          <div className="flex gap-3 w-full max-w-sm">
+          <div className="flex gap-3 w-full max-w-sm relative z-20">
             <button
               onClick={() => setEditing(true)}
-              className="flex-1 h-12 rounded-2xl bg-foreground text-background text-sm font-black hover:opacity-90 active:scale-95 transition-all shadow-lg"
+              className="flex-1 h-14 rounded-[1.5rem] bg-foreground text-background text-sm font-black hover:opacity-90 active:scale-95 transition-all shadow-xl shadow-foreground/10"
             >
               Editar Perfil
             </button>
             <button
               onClick={() => navigate('/marketplace/addresses')}
-              className="w-12 h-12 rounded-2xl bg-card border border-border flex items-center justify-center text-foreground hover:bg-muted active:scale-95 transition-all shadow-sm"
+              className="w-14 h-14 rounded-[1.5rem] bg-card border border-border flex items-center justify-center text-foreground hover:bg-muted active:scale-95 transition-all shadow-sm"
             >
-              <MapPin className="h-5 w-5" />
+              <MapPin className="h-6 w-6" />
             </button>
           </div>
         </div>
 
-        {/* User Stats Bar */}
-        <div className="px-6 mt-10">
-          <div className="bg-card/40 backdrop-blur-md border border-border/50 rounded-[2.5rem] p-2 flex items-center justify-between shadow-sm">
+        {/* User Stats Bento Box */}
+        <div className="px-6 mt-12">
+          <div className="grid grid-cols-3 gap-3">
             {[
-              { label: 'Pedidos', value: orders.length, color: 'text-foreground' },
-              { label: 'Cupons',  value: coupons.length, color: 'text-primary', onClick: () => fetchCoupons(true) },
-              { label: 'Região',  value: 'MT', color: 'text-foreground' }
+              { label: 'Pedidos', value: orders.length, color: 'text-foreground', bg: 'bg-card' },
+              { label: 'Cupons',  value: coupons.length, color: 'text-primary', bg: 'bg-primary/5', border: 'border-primary/10', onClick: () => fetchCoupons(true) },
+              { label: 'Região',  value: 'MT', color: 'text-foreground', bg: 'bg-card' }
             ].map((stat, i) => (
               <button 
                 key={stat.label}
                 onClick={stat.onClick}
                 disabled={!stat.onClick}
                 className={cn(
-                  "flex-1 flex flex-col items-center py-3",
-                  i < 2 && "border-r border-border/30"
+                  "flex flex-col items-center justify-center py-6 rounded-[2rem] border border-border/50 shadow-sm backdrop-blur-md transition-all",
+                  stat.bg,
+                  stat.border,
+                  stat.onClick && "hover:scale-105 active:scale-95"
                 )}
               >
-                <span className={cn("text-xl font-black leading-none", stat.color)}>{stat.value}</span>
-                <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/50 mt-1">{stat.label}</span>
+                <span className={cn("text-2xl font-black leading-none mb-2", stat.color)}>{stat.value}</span>
+                <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60">{stat.label}</span>
               </button>
             ))}
           </div>
         </div>
 
         {/* Main Content Area */}
-        <div className="px-6 mt-8 space-y-8">
+        <div className="px-6 mt-8 space-y-6">
           
-          {/* Clube Promo Card */}
-          <div className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-primary to-orange-600 p-8 shadow-xl shadow-primary/10 group">
-            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10" />
-            <div className="relative z-10 flex flex-col gap-5">
-              <div className="flex items-center gap-2">
-                <div className="h-6 w-6 rounded-lg bg-white/20 flex items-center justify-center">
-                  <Ticket className="h-4 w-4 text-white" />
+          {/* VIP Premium Card */}
+          <div className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] p-8 shadow-2xl shadow-primary/20 group">
+            <div className="absolute inset-0 bg-gradient-to-tr from-primary/20 to-transparent opacity-50" />
+            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-20" />
+            
+            <div className="relative z-10 flex flex-col gap-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-primary to-orange-500 flex items-center justify-center shadow-lg shadow-primary/30">
+                    <Ticket className="h-4 w-4 text-white" />
+                  </div>
+                  <p className="text-[10px] font-black text-white/90 uppercase tracking-[0.3em]">Clube VIP</p>
                 </div>
-                <p className="text-[10px] font-black text-white/80 uppercase tracking-[0.2em]">Clube VIP É Pra Já</p>
+                <div className="px-3 py-1 rounded-full bg-white/10 border border-white/10 backdrop-blur-md">
+                  <span className="text-[9px] font-black text-white uppercase tracking-widest">{coupons.length} Ativos</span>
+                </div>
               </div>
+              
               <div>
-                <p className="text-xl font-black text-white leading-tight">Você tem cupons<br/>exclusivos disponíveis</p>
-                <p className="text-xs text-white/60 mt-2 font-medium">Economize agora no seu próximo pedido</p>
+                <p className="text-2xl font-black text-white leading-tight tracking-tight">Benefícios<br/>Exclusivos</p>
+                <p className="text-xs text-white/50 mt-2 font-medium max-w-[200px]">Economize nos seus próximos pedidos com ofertas VIP.</p>
               </div>
+              
               <button
                 onClick={() => fetchCoupons(true)}
                 disabled={loadingCoupons}
-                className="w-full h-12 rounded-2xl bg-white text-primary text-sm font-black hover:scale-[1.02] active:scale-95 transition-all shadow-lg flex items-center justify-center gap-2"
+                className="w-full h-14 rounded-2xl bg-white text-black text-sm font-black hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-white/10 flex items-center justify-center gap-2"
               >
-                {loadingCoupons ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Ver Meus Cupons'}
+                {loadingCoupons ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Acessar Meus Cupons'}
               </button>
             </div>
-            <span className="absolute -right-6 -bottom-8 text-[140px] opacity-20 group-hover:scale-110 transition-transform duration-700 leading-none grayscale brightness-200">🔥</span>
+            
+            {/* Decorative Glow */}
+            <div className="absolute -right-20 -bottom-20 w-64 h-64 bg-primary/30 rounded-full blur-[80px] pointer-events-none" />
           </div>
 
           {/* Settings Groups */}
-          <div className="space-y-10">
-            {/* Group: Minha Conta */}
-            <div>
-              <h2 className="text-[11px] font-black uppercase tracking-[0.3em] text-muted-foreground/40 mb-4 ml-4">Minha Conta</h2>
-              <div className="bg-card border border-border/50 rounded-[2.5rem] overflow-hidden shadow-sm">
+          <div className="space-y-6">
+            {/* Minha Conta Bento */}
+            <div className="bg-card/80 backdrop-blur-xl border border-border rounded-[2.5rem] overflow-hidden shadow-sm p-2">
+              <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/50 px-6 py-4">Minha Conta</h2>
+              <div className="space-y-1">
                 {[
-                  { icon: MapPin,    label: 'Endereços', subtitle: 'Gerenciar locais de entrega', onClick: () => navigate('/marketplace/addresses') },
-                  { icon: Wallet,    label: 'Carteira',  subtitle: 'Saldo e transações',           onClick: () => toast('Em breve!') },
-                  { icon: theme === 'dark' ? Moon : Sun, label: 'Aparência', subtitle: theme === 'dark' ? 'Modo Escuro Ativo' : 'Modo Claro Ativo', onClick: () => toggleTheme() },
-                ].map((item, i, arr) => (
+                  { icon: MapPin,    label: 'Endereços', subtitle: 'Locais de entrega', onClick: () => navigate('/marketplace/addresses') },
+                  { icon: Wallet,    label: 'Carteira',  subtitle: 'Saldo e transações', onClick: () => toast('Em breve!') },
+                  { icon: theme === 'dark' ? Moon : Sun, label: 'Aparência', subtitle: theme === 'dark' ? 'Escuro Ativo' : 'Claro Ativo', onClick: () => toggleTheme() },
+                ].map((item, i) => (
                   <button
                     key={item.label}
                     onClick={item.onClick}
-                    className={cn(
-                      'w-full flex items-center gap-4 px-6 py-5 text-left hover:bg-muted/40 transition-colors',
-                      i < arr.length - 1 && 'border-b border-border/40'
-                    )}
+                    className="w-full flex items-center gap-4 px-4 py-4 rounded-[2rem] hover:bg-muted/50 transition-colors active:scale-[0.98]"
                   >
-                    <div className="w-11 h-11 rounded-2xl bg-secondary flex items-center justify-center shrink-0">
-                      <item.icon className="h-5 w-5 text-muted-foreground" />
+                    <div className="w-12 h-12 rounded-[1.2rem] bg-secondary flex items-center justify-center shrink-0 shadow-sm">
+                      <item.icon className="h-5 w-5 text-foreground/70" />
                     </div>
-                    <div className="flex-1 min-w-0">
+                    <div className="flex-1 min-w-0 text-left">
                       <p className="text-sm font-black text-foreground">{item.label}</p>
-                      <p className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-wider mt-0.5">{item.subtitle}</p>
+                      <p className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-widest mt-0.5">{item.subtitle}</p>
                     </div>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground/20" />
+                    <div className="w-8 h-8 rounded-full bg-muted/50 flex items-center justify-center">
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    </div>
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Group: Suporte & Legal */}
-            <div>
-              <h2 className="text-[11px] font-black uppercase tracking-[0.3em] text-muted-foreground/40 mb-4 ml-4">Ajuda & Legal</h2>
-              <div className="bg-card border border-border/50 rounded-[2.5rem] overflow-hidden shadow-sm">
+            {/* Suporte Bento */}
+            <div className="bg-card/80 backdrop-blur-xl border border-border rounded-[2.5rem] overflow-hidden shadow-sm p-2">
+              <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/50 px-6 py-4">Ajuda & Legal</h2>
+              <div className="space-y-1">
                 {[
                   { icon: HelpCircle, label: 'Central de Ajuda', subtitle: 'Suporte e dúvidas',    onClick: () => setSupportType('support') },
                   { icon: FileText,   label: 'Termos de Uso',   subtitle: 'Regras da plataforma',  onClick: () => navigate('/marketplace/terms') },
                   { icon: ShieldCheck, label: 'Privacidade',    subtitle: 'Segurança dos dados',   onClick: () => navigate('/marketplace/privacy') },
-                ].map((item, i, arr) => (
+                ].map((item, i) => (
                   <button
                     key={item.label}
                     onClick={item.onClick}
-                    className={cn(
-                      'w-full flex items-center gap-4 px-6 py-5 text-left hover:bg-muted/40 transition-colors',
-                      i < arr.length - 1 && 'border-b border-border/40'
-                    )}
+                    className="w-full flex items-center gap-4 px-4 py-4 rounded-[2rem] hover:bg-muted/50 transition-colors active:scale-[0.98]"
                   >
-                    <div className="w-11 h-11 rounded-2xl bg-secondary flex items-center justify-center shrink-0">
-                      <item.icon className="h-5 w-5 text-muted-foreground" />
+                    <div className="w-12 h-12 rounded-[1.2rem] bg-secondary flex items-center justify-center shrink-0 shadow-sm">
+                      <item.icon className="h-5 w-5 text-foreground/70" />
                     </div>
-                    <div className="flex-1 min-w-0">
+                    <div className="flex-1 min-w-0 text-left">
                       <p className="text-sm font-black text-foreground">{item.label}</p>
-                      <p className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-wider mt-0.5">{item.subtitle}</p>
+                      <p className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-widest mt-0.5">{item.subtitle}</p>
                     </div>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground/20" />
+                    <div className="w-8 h-8 rounded-full bg-muted/50 flex items-center justify-center">
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    </div>
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Partner CTA */}
+            {/* Premium Partner CTA */}
             <button
               onClick={() => setSupportType('driver_application')}
-              className="w-full relative overflow-hidden flex items-center gap-5 p-7 rounded-[2.8rem] bg-foreground text-background hover:scale-[1.01] active:scale-[0.99] transition-all shadow-xl shadow-foreground/10"
+              className="w-full relative overflow-hidden flex items-center gap-5 p-6 rounded-[2.5rem] bg-[#111] text-white hover:scale-[1.02] active:scale-95 transition-all shadow-2xl"
             >
               <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-transparent pointer-events-none" />
-              <div className="w-14 h-14 rounded-[1.4rem] bg-background/10 backdrop-blur-sm flex items-center justify-center shrink-0 border border-background/20">
-                <Bike className="h-7 w-7 text-background" />
+              <div className="w-14 h-14 rounded-[1.2rem] bg-white/10 backdrop-blur-md flex items-center justify-center shrink-0 border border-white/10">
+                <Bike className="h-6 w-6 text-white" />
               </div>
               <div className="text-left relative z-10 flex-1">
-                <p className="font-black text-lg leading-tight">Seja um Entregador</p>
-                <p className="text-[10px] opacity-60 font-black uppercase tracking-[0.2em] mt-1.5">Ganhos extras e liberdade</p>
+                <p className="font-black text-lg leading-none tracking-tight">Seja um Entregador</p>
+                <p className="text-[9px] text-white/50 font-black uppercase tracking-[0.2em] mt-1.5">Ganhos extras e liberdade</p>
               </div>
-              <div className="w-10 h-10 rounded-full bg-background/10 flex items-center justify-center">
-                <ChevronRight className="h-5 w-5 text-background opacity-60" />
+              <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center backdrop-blur-md">
+                <ChevronRight className="h-5 w-5 text-white/80" />
               </div>
             </button>
 
             {/* Danger Zone */}
-            <div className="space-y-3">
+            <div className="pt-6 space-y-3">
               <button
                 onClick={() => signOut()}
-                className="w-full flex items-center justify-center gap-2 py-4.5 rounded-2xl border border-border text-muted-foreground font-black text-sm hover:text-destructive hover:border-destructive/30 hover:bg-destructive/5 transition-all"
+                className="w-full flex items-center justify-center gap-2 py-5 rounded-[2rem] bg-card border border-border text-foreground font-black text-sm hover:bg-muted active:scale-95 transition-all shadow-sm"
               >
                 <LogOut className="h-4 w-4" /> Sair da conta
               </button>
 
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <button className="w-full text-xs text-muted-foreground/30 hover:text-destructive transition-colors py-2 font-bold uppercase tracking-widest">
+                  <button className="w-full text-[10px] text-muted-foreground/40 hover:text-destructive transition-colors py-4 font-black uppercase tracking-[0.2em]">
                     Excluir minha conta
                   </button>
                 </AlertDialogTrigger>
@@ -413,7 +429,7 @@ export default function Profile() {
 
           {/* Footer Branding */}
           <div className="py-12 flex flex-col items-center opacity-20">
-            <p className="text-[11px] font-black tracking-[0.8em] text-foreground ml-3">BONASOFT</p>
+            <p className="text-[10px] font-black tracking-[1em] text-foreground ml-3">BONASOFT</p>
           </div>
         </div>
       </div>
