@@ -378,7 +378,7 @@ export default function Profile() {
               { icon: ShoppingBag, label: 'Pedidos', onClick: () => navigate('/marketplace/orders') },
               { icon: Ticket, label: 'Cupons', onClick: () => fetchCoupons(true) },
               { icon: HelpCircle, label: 'Ajuda', onClick: () => setSupportType('support') },
-              { icon: theme === 'dark' ? Sun : Moon, label: 'Tema', onClick: () => toggleTheme() },
+              { icon: theme === 'dark' ? Sun : Moon, label: theme === 'dark' ? 'Claro' : 'Escuro', onClick: () => toggleTheme() },
             ].map((q) => (
               <button
                 key={q.label}
@@ -398,7 +398,7 @@ export default function Profile() {
               {[
                 { icon: MapPin, label: 'Endereços', subtitle: 'Locais de entrega', onClick: () => navigate('/marketplace/addresses') },
                 { icon: Wallet, label: 'Carteira', subtitle: 'Saldo e transações', onClick: () => toast('Em breve!') },
-                { icon: theme === 'dark' ? Moon : Sun, label: 'Aparência', subtitle: theme === 'dark' ? 'Modo escuro' : 'Modo claro', onClick: () => toggleTheme() },
+                { icon: theme === 'dark' ? Sun : Moon, label: 'Aparência', subtitle: theme === 'dark' ? 'Tocar para modo claro' : 'Tocar para modo escuro', onClick: () => toggleTheme() },
               ].map((item) => (
                 <button
                   key={item.label}
