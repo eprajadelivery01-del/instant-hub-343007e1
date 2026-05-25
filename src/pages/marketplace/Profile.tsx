@@ -448,22 +448,22 @@ export default function Profile() {
           {/* CTA Entregador — full bleed */}
           <button
             onClick={() => setSupportType('driver_application')}
-            className="w-full mt-4 relative overflow-hidden rounded-3xl p-5 text-left active:scale-[0.99] transition-transform border border-white/5"
+            className="w-full mt-4 relative overflow-hidden rounded-3xl p-5 text-left active:scale-[0.99] transition-transform border border-white/5 text-white"
             style={{ background: 'linear-gradient(135deg, #2d2d2d 0%, #1a1a1a 100%)' }}
           >
             <div className="absolute -right-4 -bottom-4 opacity-[0.07]">
               <Bike className="h-32 w-32 text-white" />
             </div>
             <div className="relative flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-[#e85d3a] flex items-center justify-center shrink-0 shadow-lg shadow-[#e85d3a]/30">
+              <div className="w-12 h-12 rounded-2xl bg-primary flex items-center justify-center shrink-0 shadow-lg shadow-primary/30">
                 <Bike className="h-5 w-5 text-white" />
               </div>
               <div className="flex-1">
-                <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-primary">Oportunidade</p>
+                <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-primary-foreground/90">Oportunidade</p>
                 <p className="font-display text-base font-bold tracking-tight mt-0.5">Seja um entregador</p>
-                <p className="text-[11px] text-muted-foreground mt-0.5">Ganhos extras e liberdade total</p>
+                <p className="text-[11px] text-white/60 mt-0.5">Ganhos extras e liberdade total</p>
               </div>
-              <ChevronRight className="h-5 w-5 text-muted-foreground" />
+              <ChevronRight className="h-5 w-5 text-white/60" />
             </div>
           </button>
 
