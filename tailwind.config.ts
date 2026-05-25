@@ -96,6 +96,10 @@ export default {
       backgroundImage: {
         "sunset": "linear-gradient(135deg, #FF5A1F, #FF7A3D, #FFB199)",
       },
+      fontFamily: {
+        sans: ['"DM Sans"', 'Inter', 'system-ui', 'sans-serif'],
+        display: ['"Space Grotesk"', '"DM Sans"', 'system-ui', 'sans-serif'],
+      },
       boxShadow: {
         glow: "0 0 20px rgba(255, 90, 31, 0.5), 0 0 40px rgba(255, 90, 31, 0.2)",
       },
