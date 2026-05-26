@@ -19,6 +19,7 @@ import { Button } from '@/components/ui/button';
 import { getAvatarImage, getCompanyBannerImage, getCompanyLogoImage, getPrimaryProductImage } from '@/lib/media';
 import { useCart } from '@/contexts/CartContext';
 import { ProductDetailDialog } from '@/components/marketplace/ProductDetailDialog';
+import { ThemeToggle } from '@/components/shared/ThemeToggle';
 
 const categories = [
   { icon: Utensils, label: 'Todos', value: '' },
@@ -182,17 +183,20 @@ export default function Home() {
               </div>
             </div>
 
-            <button
-              onClick={() => navigate('/marketplace/profile')}
-              className="premium-card flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl"
-            >
-              <MediaImage
-                src={getAvatarImage(profile)}
-                alt="Foto do perfil"
-                className="h-full w-full object-cover"
-                fallback={<User className="h-6 w-6 text-muted-foreground/50" />}
-              />
-            </button>
+            <div className="flex items-center gap-2 shrink-0">
+              <ThemeToggle className="h-12 w-12 rounded-2xl" />
+              <button
+                onClick={() => navigate('/marketplace/profile')}
+                className="premium-card flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl"
+              >
+                <MediaImage
+                  src={getAvatarImage(profile)}
+                  alt="Foto do perfil"
+                  className="h-full w-full object-cover"
+                  fallback={<User className="h-6 w-6 text-muted-foreground/50" />}
+                />
+              </button>
+            </div>
           </div>
 
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">

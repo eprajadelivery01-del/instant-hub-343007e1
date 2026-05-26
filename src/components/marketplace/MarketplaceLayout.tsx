@@ -8,6 +8,7 @@ import { Home, Search, ShoppingBag, ClipboardList, User, Store } from 'lucide-re
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
 import { OrderRatingModal } from './OrderRatingModal';
+import { ThemeToggle } from '../shared/ThemeToggle';
 
 const navItems = [
   { path: '/marketplace', icon: Home, label: 'Início' },
@@ -228,6 +229,7 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
             </nav>
 
             <div className="flex items-center gap-4">
+              <ThemeToggle className="h-10 w-10 rounded-full shrink-0 shadow-none border-border/30 bg-background/20" />
               <Link to="/marketplace/cart" className="relative p-2 text-muted-foreground hover:text-primary transition-colors">
                 <ShoppingBag className="h-6 w-6" />
                 {itemCount > 0 && (
