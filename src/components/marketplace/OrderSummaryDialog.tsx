@@ -6,6 +6,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from '@/components/ui/dialog';
 import { MapPin, CreditCard, StickyNote, Receipt, Package } from 'lucide-react';
 
@@ -70,6 +71,7 @@ export default function OrderSummaryDialog({ orderId, open, onOpenChange }: Prop
             <Receipt className="h-4 w-4 text-primary" />
             Resumo do pedido
           </DialogTitle>
+          <DialogDescription className="sr-only">Demonstrativo detalhado dos produtos, quantidades, preços e valores totais para este pedido.</DialogDescription>
         </DialogHeader>
 
         {loading || !order ? (
@@ -98,16 +100,23 @@ export default function OrderSummaryDialog({ orderId, open, onOpenChange }: Prop
                 <p className="text-xs text-muted-foreground">Sem itens.</p>
               ) : (
                 items.map((item) => (
-                  <div key={item.id} className="flex justify-between gap-3">
-                    <span className="text-foreground">
-                      {item.quantity}x {item.product_name || 'Produto'}
-                    </span>
-                    <span className="text-foreground shrink-0">
-                      R${' '}
-                      {((item.price || 0) * item.quantity)
-                        .toFixed(2)
-                        .replace('.', ',')}
-                    </span>
+                  <div key={item.id} className="flex flex-col space-y-1 py-1 border-b border-border/10 last:border-0">
+                    <div className="flex justify-between gap-3">
+                      <span className="text-foreground font-medium">
+                        {item.quantity}x {item.product_name || 'Produto'}
+                      </span>
+                      <span className="text-foreground shrink-0 font-semibold">
+                        R${' '}
+                        {((item.price || 0) * item.quantity)
+                          .toFixed(2)
+                          .replace('.', ',')}
+                      </span>
+                    </div>
+                    {item.notes && (
+                      <span className="text-[10px] text-amber-600 bg-amber-50 dark:bg-amber-950/20 dark:text-amber-400 px-2 py-0.5 rounded border border-amber-200/50 dark:border-amber-900/30 self-start ml-5 font-medium">
+                        Obs: {item.notes}
+                      </span>
+                    )}
                   </div>
                 ))
               )}

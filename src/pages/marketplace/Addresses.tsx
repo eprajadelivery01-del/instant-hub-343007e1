@@ -10,9 +10,10 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, MapPin, Plus, Pencil, Trash2, Map as MapIcon, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { LocationPicker } from '@/components/marketplace/LocationPicker';
 import { geocodeAddress } from '@/utils/freight';
+import { cn } from '@/lib/utils';
 
 export default function Addresses() {
   const { user } = useAuth();
@@ -27,6 +28,7 @@ export default function Addresses() {
     complement: '', reference: '', latitude: '', longitude: '', label: '',
   });
   const [showMap, setShowMap] = useState(false);
+  const [selectedLabel, setSelectedLabel] = useState<string>('Casa');
 
   const fetchAddresses = async () => {
     if (!user) return;
@@ -39,7 +41,8 @@ export default function Addresses() {
 
   const openNew = () => {
     setEditing(null);
-    setForm({ street: '', number: '', neighborhood: '', city: '', complement: '', reference: '', latitude: '', longitude: '', label: '' });
+    setForm({ street: '', number: '', neighborhood: '', city: '', complement: '', reference: '', latitude: '', longitude: '', label: 'Casa' });
+    setSelectedLabel('Casa');
     setShowForm(true);
   };
 
@@ -51,6 +54,14 @@ export default function Addresses() {
       latitude: addr.latitude?.toString() || '', longitude: addr.longitude?.toString() || '',
       label: addr.label || '',
     });
+    const standardLabels = ['Casa', 'Trabalho', 'Família'];
+    if (addr.label && standardLabels.includes(addr.label)) {
+      setSelectedLabel(addr.label);
+    } else if (addr.label) {
+      setSelectedLabel('Outro');
+    } else {
+      setSelectedLabel('');
+    }
     setShowForm(true);
   };
 
@@ -154,14 +165,58 @@ export default function Addresses() {
           )}
 
           <Dialog open={showForm} onOpenChange={setShowForm}>
-            <DialogContent className="max-w-md rounded-2xl">
+            <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto rounded-2xl p-6 scrollbar-thin">
               <DialogHeader>
                 <DialogTitle className="text-lg">{editing ? 'Editar endereço' : 'Novo endereço'}</DialogTitle>
+                <DialogDescription className="sr-only">Preencha os campos abaixo para salvar o apelido, rua, número e coordenadas do endereço.</DialogDescription>
               </DialogHeader>
               <div className="space-y-3">
-                <div className="space-y-1">
-                  <Label className="text-xs">Apelido</Label>
-                  <Input placeholder="Ex: Casa, Trabalho" value={form.label} onChange={e => setForm(f => ({ ...f, label: e.target.value }))} className="h-10 rounded-lg" />
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Apelido do Endereço</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {[
+                      { value: 'Casa', label: '🏠 Casa' },
+                      { value: 'Trabalho', label: '💼 Trabalho' },
+                      { value: 'Família', label: '👨‍👩‍👧 Família' },
+                      { value: 'Outro', label: '⚙️ Outro' }
+                    ].map((opt) => {
+                      const active = selectedLabel === opt.value;
+                      return (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          onClick={() => {
+                            setSelectedLabel(opt.value);
+                            if (opt.value !== 'Outro') {
+                              setForm(f => ({ ...f, label: opt.value }));
+                            } else {
+                              setForm(f => ({ ...f, label: '' }));
+                            }
+                          }}
+                          className={cn(
+                            "px-4 py-2 text-xs font-bold rounded-xl border transition-all duration-200 active:scale-95",
+                            active 
+                              ? "bg-primary border-primary text-white shadow-md shadow-primary/20" 
+                              : "bg-card border-border hover:border-primary/20 text-foreground"
+                          )}
+                        >
+                          {opt.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {selectedLabel === 'Outro' && (
+                    <div className="pt-1.5 animate-in slide-in-from-top-2 duration-200">
+                      <Input 
+                        placeholder="Digite o apelido (ex: Escola, Faculdade...)" 
+                        value={form.label} 
+                        onChange={e => setForm(f => ({ ...f, label: e.target.value }))} 
+                        className="h-10 rounded-lg border-border focus:border-primary/50 text-xs" 
+                        maxLength={20}
+                        autoFocus
+                      />
+                    </div>
+                  )}
                 </div>
                 <Button type="button" variant="outline" className="w-full h-10 rounded-xl border-primary/20 text-primary" onClick={() => setShowMap(true)}>
                   <MapIcon className="h-4 w-4 mr-2" /> Selecionar no Mapa
@@ -221,6 +276,10 @@ export default function Addresses() {
       </MarketplaceLayout>
       <Dialog open={showMap} onOpenChange={setShowMap}>
         <DialogContent className="max-w-2xl p-0 overflow-hidden rounded-2xl border-none">
+          <DialogHeader className="sr-only">
+            <DialogTitle>Escolher no mapa</DialogTitle>
+            <DialogDescription>Arraste o pin no mapa para escolher as coordenadas do endereço de entrega.</DialogDescription>
+          </DialogHeader>
           <LocationPicker
             initialCoords={form.latitude && form.longitude ? { lat: parseFloat(form.latitude), lng: parseFloat(form.longitude) } : undefined}
             onConfirm={(data) => {

@@ -11,6 +11,105 @@ import { getPrimaryProductImage, getCompanyLogoImage } from '@/lib/media';
 import { Product } from '@/types/database';
 import { toast } from 'sonner';
 
+interface CartItemRowProps {
+  item: any;
+  companyId?: string;
+  updateQuantity: (id: string, qty: number) => void;
+  updateNote: (id: string, note: string) => void;
+  navigate: any;
+}
+
+function CartItemRow({ item, companyId, updateQuantity, updateNote, navigate }: CartItemRowProps) {
+  const [localNote, setLocalNote] = useState(item.note || '');
+
+  // Keep local state in sync if item.note changes from outside
+  useEffect(() => {
+    setLocalNote(item.note || '');
+  }, [item.note]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setLocalNote(e.target.value);
+  };
+
+  const handleBlur = () => {
+    updateNote(item.id, localNote);
+  };
+
+  return (
+    <div className="flex flex-col border-b border-border/50 pb-4 last:border-0 animate-in fade-in duration-300">
+      <div className="flex gap-3">
+        <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-secondary relative">
+          <MediaImage
+            src={getPrimaryProductImage(item.product)}
+            alt={item.product.name || 'Produto no carrinho'}
+            className="h-full w-full object-cover animate-pulse-subtle"
+          />
+          <button 
+            onClick={() => navigate(`/marketplace/store/${companyId}`)}
+            className="absolute top-1 right-1 bg-background/90 backdrop-blur-sm rounded-full p-1 shadow-sm border border-border text-primary transition-all hover:scale-105 active:scale-95"
+          >
+            <Pencil className="h-3 w-3" />
+          </button>
+        </div>
+
+        <div className="min-w-0 flex-1 flex flex-col justify-between py-0.5">
+          <div>
+            <h4 className="text-sm font-semibold text-foreground tracking-tight">{item.product.name}</h4>
+            {item.options && item.options.length > 0 ? (
+              <div className="mt-1 flex flex-col gap-0.5">
+                {item.options.map((opt: any, idx: number) => (
+                  <span key={idx} className="text-xs text-muted-foreground flex gap-2">
+                    <span className="w-4 text-center">1</span>
+                    {opt.name} {opt.price > 0 && `(+ R$ ${opt.price.toFixed(2).replace('.', ',')})`}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1 font-medium">{item.product.description}</p>
+            )}
+          </div>
+          <div className="mt-2 text-sm font-bold text-foreground">
+            R$ {((Number(item.product.price || 0) + (item.options?.reduce((acc, opt) => acc + Number(opt.price || 0), 0) || 0))).toFixed(2).replace('.', ',')}
+          </div>
+        </div>
+
+        <div className="flex flex-col items-center justify-between shrink-0">
+          <div className="flex items-center gap-2 rounded-lg border border-border/50 bg-background px-2 py-1 shadow-sm">
+            <button
+              className="flex h-6 w-6 items-center justify-center text-primary transition-all active:scale-90"
+              onClick={() => updateQuantity(item.id, item.quantity - 1)}
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+            <span className="w-4 text-center text-sm font-semibold text-foreground">{item.quantity}</span>
+            <button
+              className="flex h-6 w-6 items-center justify-center text-primary transition-all active:scale-90"
+              onClick={() => updateQuantity(item.id, item.quantity + 1)}
+            >
+              <Plus className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-3">
+        <div className="flex items-center gap-1.5 mb-1.5">
+          <MessageSquare className="h-3 w-3 text-muted-foreground" />
+          <span className="text-[11px] text-muted-foreground font-semibold">Observação</span>
+        </div>
+        <textarea
+          value={localNote}
+          onChange={handleChange}
+          onBlur={handleBlur}
+          placeholder={`Ex: sem cebola, sem sal...`}
+          rows={1}
+          className="w-full resize-none rounded-xl border border-border bg-muted/40 px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/50 focus:bg-background transition-all"
+        />
+      </div>
+    </div>
+  );
+}
+
 export default function Cart() {
   const { items, company, updateQuantity, updateNote, clearCart, subtotal, appliedCoupon, applicableProductIds, setCouponData, removeCoupon, discountAmount, total } = useCart();
   const { user } = useAuth();
@@ -176,76 +275,14 @@ export default function Cart() {
           <h3 className="font-bold text-base text-foreground mb-4">Itens adicionados</h3>
           <div className="space-y-4">
             {items.map((item) => (
-              <div key={item.id} className="flex flex-col border-b border-border/50 pb-4 last:border-0">
-                <div className="flex gap-3">
-                  <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-secondary relative">
-                    <MediaImage
-                      src={getPrimaryProductImage(item.product)}
-                      alt={item.product.name || 'Produto no carrinho'}
-                      className="h-full w-full object-cover"
-                    />
-                    <button 
-                      onClick={() => navigate(`/marketplace/store/${company?.id}`)}
-                      className="absolute top-1 right-1 bg-background rounded-full p-1 shadow-sm border border-border text-primary"
-                    >
-                      <Pencil className="h-3 w-3" />
-                    </button>
-                  </div>
-
-                  <div className="min-w-0 flex-1 flex flex-col justify-between py-0.5">
-                    <div>
-                      <h4 className="text-sm font-medium text-foreground">{item.product.name}</h4>
-                      {item.options && item.options.length > 0 ? (
-                        <div className="mt-1 flex flex-col gap-0.5">
-                          {item.options.map((opt: any, idx) => (
-                            <span key={idx} className="text-xs text-muted-foreground flex gap-2">
-                              <span className="w-4 text-center">1</span>
-                              {opt.name} {opt.price > 0 && `(+ R$ ${opt.price.toFixed(2).replace('.', ',')})`}
-                            </span>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{item.product.description}</p>
-                      )}
-                    </div>
-                    <div className="mt-2 text-sm font-bold text-foreground">
-                      R$ {((Number(item.product.price || 0) + (item.options?.reduce((acc, opt) => acc + Number(opt.price || 0), 0) || 0))).toFixed(2).replace('.', ',')}
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col items-center justify-between shrink-0">
-                    <div className="flex items-center gap-2 rounded-lg border border-border/50 bg-background px-2 py-1 shadow-sm">
-                      <button
-                        className="flex h-6 w-6 items-center justify-center text-primary"
-                        onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                      <span className="w-4 text-center text-sm font-medium">{item.quantity}</span>
-                      <button
-                        className="flex h-6 w-6 items-center justify-center text-primary"
-                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                      >
-                        <Plus className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-3">
-                  <div className="flex items-center gap-1.5 mb-1.5">
-                    <MessageSquare className="h-3 w-3 text-muted-foreground" />
-                    <span className="text-[11px] text-muted-foreground font-medium">Observação</span>
-                  </div>
-                  <textarea
-                    value={item.note || ''}
-                    onChange={(e) => updateNote(item.id, e.target.value)}
-                    placeholder={`Ex: sem cebola, sem sal...`}
-                    rows={1}
-                    className="w-full resize-none rounded-xl border border-border bg-muted/40 px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors"
-                  />
-                </div>
-              </div>
+              <CartItemRow
+                key={item.id}
+                item={item}
+                companyId={company?.id}
+                updateQuantity={updateQuantity}
+                updateNote={updateNote}
+                navigate={navigate}
+              />
             ))}
           </div>
 

@@ -1,5 +1,5 @@
 import { Product } from '@/types/database';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Minus, Plus, X, ChevronLeft, ChevronRight, MessageSquare } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -177,7 +177,8 @@ export function ProductDetailDialog({ product, isOpen, onClose, onAddToCart, ini
           </div>
 
           <div className="px-6 py-6">
-            <h2 className="text-2xl font-bold text-foreground leading-tight">{product.name}</h2>
+            <DialogTitle className="text-2xl font-bold text-foreground leading-tight">{product.name}</DialogTitle>
+            <DialogDescription className="sr-only">{product.description || 'Escolha as opções e observações para adicionar à sacola.'}</DialogDescription>
             {product.description && (
               <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
                 {product.description}
