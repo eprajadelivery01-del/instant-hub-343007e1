@@ -1,5 +1,5 @@
 // VERSION: 2026-05-21-ORDER-TRACKER
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
@@ -21,6 +21,12 @@ export default function OrderDetail() {
   const [delivery, setDelivery] = useState<Delivery | null>(null);
   const [loading, setLoading] = useState(true);
   const [showStoreChat, setShowStoreChat] = useState(false);
+  const [notifEnabled, setNotifEnabled] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    if (!('Notification' in window)) return false;
+    return Notification.permission === 'granted' && localStorage.getItem('epj_order_notif') === 'true';
+  });
+  const [notifLoading, setNotifLoading] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -40,11 +46,63 @@ export default function OrderDetail() {
 
     const orderChannel = supabase.channel(`order-${id}`)
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders', filter: `id=eq.${id}` },
-        (p) => setOrder(prev => prev ? { ...prev, ...p.new } : null))
+        (p) => {
+          const prev = order;
+          setOrder(prev => prev ? { ...prev, ...p.new } : null);
+          // Dispara notificação nativa se permitido
+          if (notifEnabled && Notification.permission === 'granted') {
+            const statusLabels: Record<string, string> = {
+              confirmed: '✅ Pedido confirmado pela loja!',
+              preparing: '👨‍🍳 Seu pedido está sendo preparado',
+              ready: '📦 Pedido pronto! Aguardando entregador',
+              delivering: '🛵 Entregador saiu para entrega!',
+              delivered: '🎉 Pedido entregue! Bom apetite!',
+              cancelled: '❌ Pedido cancelado',
+            };
+            const msg = statusLabels[p.new.status as string];
+            if (msg) {
+              new Notification('É Pra Já Delivery', {
+                body: msg,
+                icon: '/logo.png',
+                badge: '/logo.png',
+              });
+            }
+          }
+        })
       .subscribe();
 
     return () => { supabase.removeChannel(orderChannel); };
-  }, [id]);
+  }, [id, notifEnabled]);
+
+  const handleToggleNotif = useCallback(async () => {
+    if (!('Notification' in window)) {
+      alert('Seu navegador não suporta notificações.');
+      return;
+    }
+    if (notifEnabled) {
+      // Desligar
+      localStorage.setItem('epj_order_notif', 'false');
+      setNotifEnabled(false);
+      return;
+    }
+    // Ligar: pedir permissão
+    setNotifLoading(true);
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission === 'granted') {
+        localStorage.setItem('epj_order_notif', 'true');
+        setNotifEnabled(true);
+        new Notification('É Pra Já Delivery', {
+          body: '🔔 Notificações ativadas! Você será avisado sobre seu pedido.',
+          icon: '/logo.png',
+        });
+      } else {
+        alert('Permissão negada. Verifique as configurações do seu navegador e permita notificações para este site.');
+      }
+    } finally {
+      setNotifLoading(false);
+    }
+  }, [notifEnabled]);
 
   if (loading || !order) {
     return (
@@ -140,16 +198,36 @@ export default function OrderDetail() {
             </div>
           </div>
 
-          {/* Notificações Mock */}
+          {/* Notificações */}
           <div className="bg-background rounded-3xl p-5 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] border border-border">
             <div className="flex justify-between items-center">
               <div className="pr-4">
                 <h3 className="font-bold text-base mb-1">Ative as notificações e acompanhe seu pedido</h3>
-                <p className="text-xs text-muted-foreground leading-relaxed">Fique sabendo na hora se houver algum problema com seu pedido ou se alguém te enviar uma mensagem.</p>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  {Notification.permission === 'denied'
+                    ? 'Notificações bloqueadas. Habilite nas configurações do navegador.'
+                    : 'Fique sabendo na hora se houver algum problema com seu pedido.'}
+                </p>
               </div>
-              <div className="w-12 h-6 bg-muted rounded-full relative shrink-0">
-                <div className="w-5 h-5 bg-background border border-border shadow-sm rounded-full absolute top-0.5 left-0.5" />
-              </div>
+              <button
+                onClick={handleToggleNotif}
+                disabled={notifLoading || Notification.permission === 'denied'}
+                aria-label={notifEnabled ? 'Desativar notificações' : 'Ativar notificações'}
+                className={`relative w-12 h-6 rounded-full shrink-0 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-40 disabled:cursor-not-allowed ${
+                  notifEnabled ? 'bg-[#00A868]' : 'bg-muted'
+                }`}
+              >
+                <span
+                  className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-300 ${
+                    notifEnabled ? 'translate-x-[26px]' : 'translate-x-0.5'
+                  }`}
+                />
+                {notifLoading && (
+                  <span className="absolute inset-0 flex items-center justify-center">
+                    <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  </span>
+                )}
+              </button>
             </div>
           </div>
 
