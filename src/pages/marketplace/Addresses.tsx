@@ -23,6 +23,7 @@ export default function Addresses() {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Address | null>(null);
   const [geocoding, setGeocoding] = useState(false);
+  const [customerId, setCustomerId] = useState<string | null>(null);
   const [form, setForm] = useState({
     street: '', number: '', neighborhood: '', city: '',
     complement: '', reference: '', latitude: '', longitude: '', label: '',
@@ -30,14 +31,64 @@ export default function Addresses() {
   const [showMap, setShowMap] = useState(false);
   const [selectedLabel, setSelectedLabel] = useState<string>('Casa');
 
-  const fetchAddresses = async () => {
-    if (!user) return;
-    const { data } = await supabase.from('addresses').select('*').eq('user_id', user.id).order('created_at', { ascending: false });
-    setAddresses(data || []);
+  const fetchAddresses = async (cid: string) => {
+    const { data, error } = await supabase
+      .from('addresses')
+      .select('*')
+      .eq('customer_id', cid)
+      .order('created_at', { ascending: false });
+    
+    if (error) {
+      console.error("[Addresses] Erro ao buscar endereços:", error);
+    } else {
+      setAddresses(data || []);
+    }
     setLoading(false);
   };
 
-  useEffect(() => { fetchAddresses(); }, [user]);
+  useEffect(() => {
+    const initCustomer = async () => {
+      if (!user) return;
+      try {
+        const { data: customer, error } = await supabase
+          .from('customers')
+          .select('id')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (error) throw error;
+
+        let cid = '';
+        if (customer) {
+          cid = customer.id;
+          setCustomerId(cid);
+        } else {
+          // Se o perfil do cliente não existe na tabela de clientes, criamos um automaticamente
+          const { data: newCustomer, error: createError } = await supabase
+            .from('customers')
+            .insert([{ user_id: user.id, name: user.email?.split('@')[0] || 'Cliente' }])
+            .select('id')
+            .single();
+
+          if (createError) throw createError;
+          if (newCustomer) {
+            cid = newCustomer.id;
+            setCustomerId(cid);
+          }
+        }
+
+        if (cid) {
+          await fetchAddresses(cid);
+        }
+      } catch (err: any) {
+        console.error("[Addresses] Erro de inicialização:", err);
+        toast.error("Erro ao carregar dados do cliente: " + err.message);
+        setLoading(false);
+      }
+    };
+
+    initCustomer();
+  }, [user]);
 
   const openNew = () => {
     setEditing(null);
@@ -66,7 +117,10 @@ export default function Addresses() {
   };
 
   const handleSave = async () => {
-    if (!user || !form.street || !form.number || !form.neighborhood || !form.city) {
+    if (!user || !customerId) {
+      toast.error('Cliente não identificado. Faça login novamente.'); return;
+    }
+    if (!form.street || !form.number || !form.neighborhood || !form.city) {
       toast.error('Preencha os campos obrigatórios'); return;
     }
 
@@ -89,7 +143,7 @@ export default function Addresses() {
     }
 
     const payload = {
-      user_id: user.id, street: form.street, number: form.number,
+      customer_id: customerId, street: form.street, number: form.number,
       neighborhood: form.neighborhood, city: form.city,
       complement: form.complement || null, reference: form.reference || null,
       latitude: lat,
@@ -98,7 +152,7 @@ export default function Addresses() {
     };
     if (editing) {
       const { error } = await supabase.from('addresses').update(payload).eq('id', editing.id);
-      if (error) { toast.error('Erro ao atualizar'); return; }
+      if (error) { toast.error('Erro ao atualizar: ' + error.message); return; }
       toast.success('Endereço atualizado');
     } else {
       const { error } = await supabase.from('addresses').insert(payload);
@@ -106,13 +160,15 @@ export default function Addresses() {
       toast.success('Endereço adicionado');
     }
     setShowForm(false);
-    fetchAddresses();
+    fetchAddresses(customerId);
   };
 
   const handleDelete = async (id: string) => {
     await supabase.from('addresses').delete().eq('id', id);
     toast.success('Endereço removido');
-    fetchAddresses();
+    if (customerId) {
+      fetchAddresses(customerId);
+    }
   };
 
   return (
