@@ -64,9 +64,8 @@ export default function Home() {
 
   const fetchCompanies = async () => {
     try {
-      const { data } = await supabase.from('companies').select('*, products(*)')
-        .eq('show_in_marketplace', true);
-      const processed = (data || []).map((company, index) => {
+      const { data } = await supabase.from('companies').select('*, products(*)');
+      const processed = (data || []).filter(c => c.show_in_marketplace !== false).map((company, index) => {
         let name = company.name;
         if (PROFESSIONAL_NAMES[name]) {
           name = PROFESSIONAL_NAMES[name];
