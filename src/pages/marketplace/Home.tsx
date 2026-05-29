@@ -66,10 +66,10 @@ export default function Home() {
     try {
       const { data } = await supabase.from('companies').select('*, products(*)');
       const processed = (data || []).map((company, index) => {
-        let name = company.name;
+        let name = company.name || "Loja Parceira";
         if (PROFESSIONAL_NAMES[name]) {
           name = PROFESSIONAL_NAMES[name];
-        } else if (name.includes('Fake')) {
+        } else if (name.includes && name.includes('Fake')) {
           name = name.replace('Fake', '').trim();
         }
 
