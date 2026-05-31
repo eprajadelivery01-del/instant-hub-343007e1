@@ -31,11 +31,11 @@ export default function Addresses() {
   const [showMap, setShowMap] = useState(false);
   const [selectedLabel, setSelectedLabel] = useState<string>('Casa');
 
-  const fetchAddresses = async (cid: string) => {
+  const fetchAddresses = async (userId: string) => {
     const { data, error } = await supabase
       .from('addresses')
       .select('*')
-      .eq('customer_id', cid)
+      .eq('user_id', userId)
       .order('created_at', { ascending: false });
     
     if (error) {
@@ -58,10 +58,9 @@ export default function Addresses() {
 
         if (error) throw error;
 
-        let cid = '';
         if (customer) {
-          cid = customer.id;
-          setCustomerId(cid);
+          setCustomerId(customer.id);
+          fetchAddresses(user.id);
         } else {
           // Se o perfil do cliente não existe na tabela de clientes, criamos um automaticamente
           const { data: newCustomer, error: createError } = await supabase
@@ -72,13 +71,9 @@ export default function Addresses() {
 
           if (createError) throw createError;
           if (newCustomer) {
-            cid = newCustomer.id;
-            setCustomerId(cid);
+            setCustomerId(newCustomer.id);
+            fetchAddresses(user.id);
           }
-        }
-
-        if (cid) {
-          await fetchAddresses(cid);
         }
       } catch (err: any) {
         console.error("[Addresses] Erro de inicialização:", err);
@@ -117,8 +112,8 @@ export default function Addresses() {
   };
 
   const handleSave = async () => {
-    if (!user || !customerId) {
-      toast.error('Cliente não identificado. Faça login novamente.'); return;
+    if (!user) {
+      toast.error('Usuário não identificado. Faça login novamente.'); return;
     }
     if (!form.street || !form.number || !form.neighborhood || !form.city) {
       toast.error('Preencha os campos obrigatórios'); return;
@@ -143,7 +138,8 @@ export default function Addresses() {
     }
 
     const payload = {
-      customer_id: customerId, street: form.street, number: form.number,
+      user_id: user.id,
+      street: form.street, number: form.number,
       neighborhood: form.neighborhood, city: form.city,
       complement: form.complement || null, reference: form.reference || null,
       latitude: lat,
@@ -160,14 +156,14 @@ export default function Addresses() {
       toast.success('Endereço adicionado');
     }
     setShowForm(false);
-    fetchAddresses(customerId);
+    fetchAddresses(user.id);
   };
 
   const handleDelete = async (id: string) => {
     await supabase.from('addresses').delete().eq('id', id);
     toast.success('Endereço removido');
-    if (customerId) {
-      fetchAddresses(customerId);
+    if (user) {
+      fetchAddresses(user.id);
     }
   };
 
