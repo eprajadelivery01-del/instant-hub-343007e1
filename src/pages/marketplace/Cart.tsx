@@ -111,7 +111,7 @@ function CartItemRow({ item, companyId, updateQuantity, updateNote, navigate }: 
 }
 
 export default function Cart() {
-  const { items, company, updateQuantity, updateNote, clearCart, subtotal, appliedCoupon, applicableProductIds, setCouponData, removeCoupon, discountAmount, total } = useCart();
+  const { items, company, updateQuantity, updateNote, clearCart, subtotal, appliedCoupon, applicableProductIds, setCouponData, removeCoupon, discountAmount, total, deliveryFee } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [isStoreOpen, setIsStoreOpen] = useState<boolean | null>(null);
@@ -375,7 +375,11 @@ export default function Cart() {
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">Taxa de entrega</span>
-            <span className="text-[#00A868] font-medium">Grátis</span>
+            {deliveryFee > 0 ? (
+              <span className="text-foreground">R$ {deliveryFee.toFixed(2).replace('.', ',')}</span>
+            ) : (
+              <span className="text-[#00A868] font-medium">Grátis</span>
+            )}
           </div>
           {appliedCoupon && (
             <div className="flex justify-between text-sm text-[#7B46E5] font-semibold">

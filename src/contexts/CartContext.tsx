@@ -19,6 +19,7 @@ interface CartContextType {
   removeCoupon: () => void;
   discountAmount: number;
   total: number;
+  deliveryFee: number;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -161,12 +162,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
     return Math.min(eligibleSubtotal, appliedCoupon.discount_value);
   })();
 
-  const total = Math.max(0, subtotal - discountAmount);
+  const deliveryFee = Number(company?.delivery_fee || 0);
+  const total = Math.max(0, subtotal + deliveryFee - discountAmount);
 
   return (
     <CartContext.Provider value={{ 
       items, company, addItem, removeItem, updateQuantity, updateNote, clearCart, 
-      subtotal, itemCount, appliedCoupon, applicableProductIds, setCouponData, removeCoupon, discountAmount, total 
+      subtotal, itemCount, appliedCoupon, applicableProductIds, setCouponData, removeCoupon, discountAmount, total, deliveryFee 
     }}>
       {children}
     </CartContext.Provider>
