@@ -20,7 +20,7 @@ interface Msg {
 
 /**
  * Chat between the customer and the store, scoped to a specific order.
- * Uses chat_sessions (topic = `order_<orderId>`) + chat_message_logs.
+ * Uses conversations + messages.
  * Becomes available as soon as the order is accepted by the merchant.
  */
 export function OrderStoreChat({ orderId, companyId, companyName }: OrderStoreChatProps) {
@@ -47,16 +47,19 @@ export function OrderStoreChat({ orderId, companyId, companyName }: OrderStoreCh
 
     (async () => {
       let { data: session } = await supabase
-        .from('chat_sessions')
+        .from('conversations')
         .select('*')
-        .eq('customer_id', user.id)
-        .eq('topic', topic)
+        .eq('order_id', orderId)
         .maybeSingle();
 
       if (!session) {
         const { data: created } = await supabase
-          .from('chat_sessions')
-          .insert({ customer_id: user.id, topic, company_id: companyId, status: 'open' })
+          .from('conversations')
+          .insert({ 
+            order_id: orderId, 
+            participants: [user.id, companyId],
+            topic: 'Suporte do Pedido' 
+          })
           .select()
           .single();
         session = created;
@@ -65,9 +68,9 @@ export function OrderStoreChat({ orderId, companyId, companyName }: OrderStoreCh
       setSessionId(session.id);
 
       const { data: history } = await supabase
-        .from('chat_message_logs')
+        .from('messages')
         .select('*')
-        .eq('session_id', session.id)
+        .eq('conversation_id', session.id)
         .order('created_at', { ascending: true });
       if (active) setMessages(history || []);
       setLoading(false);
@@ -76,9 +79,9 @@ export function OrderStoreChat({ orderId, companyId, companyName }: OrderStoreCh
         .channel(`order_chat_${session.id}`)
         .on(
           'postgres_changes',
-          { event: 'INSERT', schema: 'public', table: 'chat_message_logs', filter: `session_id=eq.${session.id}` },
+          { event: 'INSERT', schema: 'public', table: 'messages', filter: `conversation_id=eq.${session.id}` },
           (payload) => {
-            const m = payload.new as Msg;
+            const m = payload.new as any; // Usando any momentaneamente ou ajustando Msg interface abaixo
             setMessages((prev) => (prev.find((x) => x.id === m.id) ? prev : [...prev, m]));
           },
         )
@@ -101,10 +104,10 @@ export function OrderStoreChat({ orderId, companyId, companyName }: OrderStoreCh
     if (!msg || !sessionId || !user || sending) return;
     setText('');
     setSending(true);
-    await supabase.from('chat_message_logs').insert({
-      session_id: sessionId,
+    await supabase.from('messages').insert({
+      conversation_id: sessionId,
       sender_id: user.id,
-      message: msg,
+      content: msg,
     });
     setSending(false);
   };
@@ -136,7 +139,7 @@ export function OrderStoreChat({ orderId, companyId, companyName }: OrderStoreCh
                       : 'bg-card text-foreground rounded-bl-md border border-border'
                   }`}
                 >
-                  {m.message}
+                  {(m as any).content || m.message}
                 </div>
               </div>
             );
