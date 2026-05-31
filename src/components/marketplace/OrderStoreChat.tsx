@@ -150,7 +150,12 @@ export function OrderStoreChat({ orderId, companyId, companyName }: OrderStoreCh
         {QUICK_MESSAGES.map((msg, i) => (
           <button
             key={i}
-            onClick={() => send(undefined, msg)}
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              send(undefined, msg);
+            }}
             className="shrink-0 px-3 py-1.5 rounded-full bg-primary/5 border border-primary/10 text-[10px] font-bold text-primary active:scale-95 transition-all"
           >
             {msg}
