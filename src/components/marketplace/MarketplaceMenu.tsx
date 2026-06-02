@@ -96,7 +96,7 @@ export function MarketplaceMenu({ children, onSelectCategory, onOpenPartnership 
       <SheetTrigger asChild>
         {children}
       </SheetTrigger>
-      <SheetContent side="left" className="w-full sm:w-[400px] p-0 border-r-0 rounded-r-[40px] overflow-hidden">
+      <SheetContent side="left" hideClose className="w-full sm:w-[400px] p-0 border-r-0 rounded-r-[40px] overflow-hidden">
         <div className="h-full flex flex-col bg-[#fdfdfd]">
             <div className="px-8 pt-10 pb-6 flex items-center justify-between">
               <SheetHeader>

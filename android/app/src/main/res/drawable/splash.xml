@@ -19,13 +19,4 @@
                 android:endColor="#000D0D0D" />
         </shape>
     </item>
-    <!-- Centered logo -->
-    <item
-        android:gravity="center"
-        android:width="200dp"
-        android:height="200dp">
-        <bitmap
-            android:src="@drawable/logo_eprajat"
-            android:gravity="center" />
-    </item>
 </layer-list>

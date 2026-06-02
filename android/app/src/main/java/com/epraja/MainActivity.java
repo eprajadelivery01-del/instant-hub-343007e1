@@ -1,4 +1,4 @@
-package com.epraja.cliente;
+package com.epraja;
 
 import com.getcapacitor.BridgeActivity;
 
