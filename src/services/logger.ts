@@ -48,8 +48,13 @@ export function initializeGlobalErrorHandlers(appName: string) {
 
   // Intercept standard window exception errors
   window.onerror = (message, source, lineno, colno, error) => {
+    const errorMsg = String(message);
+    if (errorMsg.includes("Failed to fetch") || errorMsg.includes("refreshAccessToken") || errorMsg.includes("AuthSessionMissingError")) {
+      return false;
+    }
+
     reportErrorToTelegram({
-      error_message: String(message),
+      error_message: errorMsg,
       stack_trace: error?.stack || `At ${source}:${lineno}:${colno}`,
       url: window.location.href,
       additional_info: {
@@ -64,6 +69,12 @@ export function initializeGlobalErrorHandlers(appName: string) {
   // Intercept unhandled promise rejections
   window.onunhandledrejection = (event) => {
     const reason = event.reason;
+    const reasonMsg = reason?.message || String(reason);
+    
+    if (reasonMsg.includes("Failed to fetch") || reasonMsg.includes("refreshAccessToken") || reasonMsg.includes("AuthSessionMissingError")) {
+      return;
+    }
+
     reportErrorToTelegram({
       error_message: `Unhandled Rejection: ${reason?.message || reason}`,
       stack_trace: reason?.stack || "No stack trace available",
@@ -86,8 +97,13 @@ export function initializeGlobalErrorHandlers(appName: string) {
       return typeof a === "object" ? JSON.stringify(a) : String(a);
     }).join(" ");
 
-    // Skip warning noise that might spam if needed, but since user wants ALL errors/warnings:
+    // Skip nested reporting to prevent loops
     if (isReporting) return;
+
+    // Ignore expected Supabase token refresh network errors
+    if (msg.includes("Failed to fetch") || msg.includes("refreshAccessToken") || msg.includes("AuthSessionMissingError")) {
+      return;
+    }
 
     reportErrorToTelegram({
       error_message: `[Console Error] ${msg.slice(0, 1000)}`,
