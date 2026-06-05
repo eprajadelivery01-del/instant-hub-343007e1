@@ -49,7 +49,7 @@ export function initializeGlobalErrorHandlers(appName: string) {
   // Intercept standard window exception errors
   window.onerror = (message, source, lineno, colno, error) => {
     const errorMsg = String(message);
-    if (errorMsg.includes("Failed to fetch") || errorMsg.includes("refreshAccessToken") || errorMsg.includes("AuthSessionMissingError")) {
+    if (errorMsg.includes("Failed to fetch") || errorMsg.includes("refreshAccessToken") || errorMsg.includes("AuthSessionMissingError") || errorMsg.includes("Lock broken") || errorMsg.includes("steal") || errorMsg.includes("offline") || errorMsg.includes("NetworkError")) {
       return false;
     }
 
@@ -71,7 +71,7 @@ export function initializeGlobalErrorHandlers(appName: string) {
     const reason = event.reason;
     const reasonMsg = reason?.message || String(reason);
     
-    if (reasonMsg.includes("Failed to fetch") || reasonMsg.includes("refreshAccessToken") || reasonMsg.includes("AuthSessionMissingError")) {
+    if (reasonMsg.includes("Failed to fetch") || reasonMsg.includes("refreshAccessToken") || reasonMsg.includes("AuthSessionMissingError") || reasonMsg.includes("Lock broken") || reasonMsg.includes("steal") || reasonMsg.includes("offline") || reasonMsg.includes("NetworkError")) {
       event.preventDefault();
       return;
     }
@@ -99,7 +99,7 @@ export function initializeGlobalErrorHandlers(appName: string) {
     if (isReporting) return;
 
     // Ignore expected Supabase token refresh network errors
-    if (msg.includes("Failed to fetch") || msg.includes("refreshAccessToken") || msg.includes("AuthSessionMissingError")) {
+    if (msg.includes("Failed to fetch") || msg.includes("refreshAccessToken") || msg.includes("AuthSessionMissingError") || msg.includes("Lock broken") || msg.includes("steal") || msg.includes("offline") || msg.includes("NetworkError")) {
       return;
     }
 
