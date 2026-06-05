@@ -207,8 +207,8 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
         <header className="hidden md:block sticky top-0 z-[100] w-full border-b border-border/50 bg-white/80 backdrop-blur-xl">
           <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6">
             <Link to="/marketplace" className="flex items-center gap-2 outline-none">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-white shadow-lg shadow-primary/20">
-                <Store className="h-6 w-6" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-white shadow-lg shadow-primary/20 overflow-hidden">
+                <img src="/icon.png" alt="App Icon" className="w-full h-full object-cover" />
               </div>
               <span className="text-xl font-black tracking-tighter text-foreground">É Pra Já</span>
             </Link>
