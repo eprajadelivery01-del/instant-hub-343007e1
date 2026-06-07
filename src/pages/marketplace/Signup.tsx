@@ -48,8 +48,8 @@ export default function Signup() {
 
       <div className="flex-1 flex flex-col px-6 max-w-md mx-auto w-full">
         <div className="text-center py-6">
-          <div className="h-16 w-16 bg-primary rounded-2xl mx-auto mb-5 flex items-center justify-center shadow-lg">
-            <ShoppingBag className="h-8 w-8 text-primary-foreground" />
+          <div className="h-16 w-16 bg-primary rounded-2xl mx-auto mb-5 flex items-center justify-center shadow-lg overflow-hidden">
+            <img src="/icon.png" alt="Logo" className="w-full h-full object-cover" />
           </div>
           <h1 className="text-2xl font-bold text-foreground">Criar conta</h1>
           <p className="text-sm text-muted-foreground mt-1">Preencha seus dados para começar</p>
