@@ -162,8 +162,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
     return Math.min(eligibleSubtotal, appliedCoupon.discount_value);
   })();
 
-  const deliveryFee = Number(company?.delivery_fee || 0);
-  const total = Math.max(0, subtotal + deliveryFee - discountAmount);
+  const deliveryFee = 0; // Not calculated here anymore
+  const total = Math.max(0, subtotal - discountAmount);
 
   return (
     <CartContext.Provider value={{ 

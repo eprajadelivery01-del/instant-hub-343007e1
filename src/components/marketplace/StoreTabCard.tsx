@@ -84,7 +84,32 @@ export function StoreTabCard({ company }: StoreTabCardProps) {
             <span>25-40 min</span>
           </div>
           <div className="premium-chip flex items-center justify-center rounded-full px-3 py-2">
-            {company.delivery_fee ? `Entrega R$ ${company.delivery_fee.toFixed(2).replace('.', ',')}` : 'Entrega grátis'}
+            {(() => {
+              const companyAny = company as any;
+              let pricing: any[] = [];
+              try {
+                if (typeof companyAny.delivery_regions_pricing === 'string') {
+                  pricing = JSON.parse(companyAny.delivery_regions_pricing);
+                } else if (Array.isArray(companyAny.delivery_regions_pricing)) {
+                  pricing = companyAny.delivery_regions_pricing;
+                }
+              } catch (e) {}
+
+              const prices = pricing
+                .map((p: any) => Number(p.customer_price))
+                .filter((p: number) => !isNaN(p) && p > 0);
+
+              if (prices.length >= 2) {
+                const min = Math.min(...prices);
+                const max = Math.max(...prices);
+                return `R$ ${min.toFixed(2).replace('.', ',')} a ${max.toFixed(2).replace('.', ',')}`;
+              } else if (prices.length === 1) {
+                return `Entrega R$ ${prices[0].toFixed(2).replace('.', ',')}`;
+              } else if (company.delivery_fee) {
+                return `Entrega R$ ${company.delivery_fee.toFixed(2).replace('.', ',')}`;
+              }
+              return 'Entrega grátis';
+            })()}
           </div>
         </div>
 

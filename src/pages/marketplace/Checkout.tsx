@@ -65,7 +65,7 @@ export default function Checkout() {
   useEffect(() => {
     if (!selectedAddress) return;
     const addr = addresses.find(a => a.id === selectedAddress);
-    if (!addr || !addr.latitude || !addr.longitude) {
+    if (!addr) {
       setDeliveryFee(null);
       setUnavailable(false);
       return;
@@ -76,24 +76,54 @@ export default function Checkout() {
       setLoadingFee(true);
       setUnavailable(false);
       try {
-        // CORREÇÃO: Buscar taxa de entrega sempre do banco, pois o carrinho pode ter cache obsoleto (0.00 / grátis)
-        const { data: dbCompany } = await supabase.from('companies').select('delivery_fee').eq('id', company.id).single();
+        const { data: dbCompany } = await supabase.from('companies').select('delivery_fee, delivery_regions_pricing').eq('id', company.id).single();
         
+        // Usar o preço por região se o endereço tiver region_id
+        const addrAny = addr as any;
+        if (addrAny.region_id && dbCompany?.delivery_regions_pricing) {
+           let pricingArray = [];
+           if (typeof dbCompany.delivery_regions_pricing === 'string') {
+             try { pricingArray = JSON.parse(dbCompany.delivery_regions_pricing); } catch(e) {}
+           } else if (Array.isArray(dbCompany.delivery_regions_pricing)) {
+             pricingArray = dbCompany.delivery_regions_pricing;
+           }
+
+           const regionPricing = pricingArray.find((p: any) => p.region_id === addrAny.region_id);
+           if (regionPricing && regionPricing.customer_price !== undefined && regionPricing.customer_price !== "") {
+             setDeliveryFee(Number(regionPricing.customer_price));
+             return;
+           } else {
+             // Se não encontrou o preço para a região, talvez o lojista não entregue nela
+             setDeliveryFee(null);
+             setUnavailable(true);
+             toast.warning('O lojista não configurou taxa para sua região.');
+             return;
+           }
+        }
+
+        // Fallback antigo
         if (dbCompany?.delivery_fee !== null && dbCompany?.delivery_fee !== undefined) {
           setDeliveryFee(dbCompany.delivery_fee);
           return;
         }
 
-        const result = await calculateDeliveryFee(addr.latitude!, addr.longitude!, supabase);
+        if (addr.latitude && addr.longitude) {
+          const result = await calculateDeliveryFee(addr.latitude, addr.longitude, supabase);
 
-        if (result.isOutOfRange) {
+          if (result.isOutOfRange) {
+            setDeliveryFee(null);
+            setUnavailable(true);
+            toast.warning('Este endereço está fora da área de entrega.');
+          } else if (result.fee !== null) {
+            setDeliveryFee(result.fee);
+          } else {
+            setDeliveryFee(0);
+          }
+        } else {
+          // Sem lat/lng e sem region_id
           setDeliveryFee(null);
           setUnavailable(true);
-          toast.warning('Este endereço está fora da área de entrega.');
-        } else if (result.fee !== null) {
-          setDeliveryFee(result.fee);
-        } else {
-          setDeliveryFee(0);
+          toast.warning('Endereço inválido. Edite e selecione sua região.');
         }
       } finally {
         setLoadingFee(false);

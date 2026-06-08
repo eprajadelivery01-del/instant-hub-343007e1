@@ -21,14 +21,13 @@ export default function Addresses() {
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [editing, setEditing] = useState<Address | null>(null);
-  const [geocoding, setGeocoding] = useState(false);
+  const [editing, setEditing] = useState<any>(null);
   const [customerId, setCustomerId] = useState<string | null>(null);
+  const [regions, setRegions] = useState<any[]>([]);
   const [form, setForm] = useState({
-    street: '', number: '', neighborhood: '', city: '',
-    complement: '', reference: '', latitude: '', longitude: '', label: '',
+    street: '', number: '', neighborhood: '', region_id: '', city: 'Diamantino',
+    complement: '', reference: '', label: '',
   });
-  const [showMap, setShowMap] = useState(false);
   const [selectedLabel, setSelectedLabel] = useState<string>('Casa');
 
   const fetchAddresses = async (userId: string) => {
@@ -43,6 +42,12 @@ export default function Addresses() {
     } else {
       setAddresses(data || []);
     }
+
+    const { data: regionsData } = await supabase.from('regions').select('*').eq('active', true).order('name');
+    if (regionsData) {
+      setRegions(regionsData);
+    }
+
     setLoading(false);
   };
 
@@ -87,17 +92,16 @@ export default function Addresses() {
 
   const openNew = () => {
     setEditing(null);
-    setForm({ street: '', number: '', neighborhood: '', city: '', complement: '', reference: '', latitude: '', longitude: '', label: 'Casa' });
+    setForm({ street: '', number: '', neighborhood: '', region_id: '', city: 'Diamantino', complement: '', reference: '', label: 'Casa' });
     setSelectedLabel('Casa');
     setShowForm(true);
   };
 
-  const openEdit = (addr: Address) => {
+  const openEdit = (addr: any) => {
     setEditing(addr);
     setForm({
-      street: addr.street, number: addr.number, neighborhood: addr.neighborhood,
+      street: addr.street, number: addr.number, neighborhood: addr.neighborhood, region_id: addr.region_id || '',
       city: addr.city, complement: addr.complement || '', reference: addr.reference || '',
-      latitude: addr.latitude?.toString() || '', longitude: addr.longitude?.toString() || '',
       label: addr.label || '',
     });
     const standardLabels = ['Casa', 'Trabalho', 'Família'];
@@ -115,35 +119,17 @@ export default function Addresses() {
     if (!user) {
       toast.error('Usuário não identificado. Faça login novamente.'); return;
     }
-    if (!form.street || !form.number || !form.neighborhood || !form.city) {
-      toast.error('Preencha os campos obrigatórios'); return;
-    }
-
-    let lat = form.latitude ? parseFloat(form.latitude) : null;
-    let lng = form.longitude ? parseFloat(form.longitude) : null;
-
-    // Geocoding automático se coordenadas não foram informadas
-    if (!lat || !lng) {
-      setGeocoding(true);
-      const fullAddress = `${form.street}, ${form.number}, ${form.neighborhood}, ${form.city}`;
-      const coords = await geocodeAddress(fullAddress);
-      if (coords) {
-        lat = coords.lat;
-        lng = coords.lng;
-        toast.success('Localização detectada automaticamente 📍');
-      } else {
-        toast.warning('Não foi possível detectar a localização. Frete será calculado ao selecionar o endereço.');
-      }
-      setGeocoding(false);
+    if (!form.street || !form.number || !form.region_id || !form.city) {
+      toast.error('Preencha os campos obrigatórios (Rua, Nº, Região, Cidade)'); return;
     }
 
     const payload = {
       user_id: user.id,
       street: form.street, number: form.number,
-      neighborhood: form.neighborhood, city: form.city,
+      neighborhood: form.neighborhood, 
+      region_id: form.region_id,
+      city: form.city,
       complement: form.complement || null, reference: form.reference || null,
-      latitude: lat,
-      longitude: lng,
       label: form.label || null,
     };
     if (editing) {
@@ -270,9 +256,6 @@ export default function Addresses() {
                     </div>
                   )}
                 </div>
-                <Button type="button" variant="outline" className="w-full h-10 rounded-xl border-primary/20 text-primary" onClick={() => setShowMap(true)}>
-                  <MapIcon className="h-4 w-4 mr-2" /> Selecionar no Mapa
-                </Button>
                 <div className="grid grid-cols-3 gap-2">
                   <div className="col-span-2 space-y-1">
                     <Label className="text-xs">Rua *</Label>
@@ -283,15 +266,25 @@ export default function Addresses() {
                     <Input value={form.number} onChange={e => setForm(f => ({ ...f, number: e.target.value }))} className="h-10 rounded-lg" />
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="space-y-1">
-                    <Label className="text-xs">Bairro *</Label>
-                    <Input value={form.neighborhood} onChange={e => setForm(f => ({ ...f, neighborhood: e.target.value }))} className="h-10 rounded-lg" />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs">Cidade *</Label>
-                    <Input value={form.city} onChange={e => setForm(f => ({ ...f, city: e.target.value }))} className="h-10 rounded-lg" />
-                  </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Região/Bairro *</Label>
+                  <select
+                    value={form.region_id}
+                    onChange={e => {
+                      const selectedRegion = regions.find(r => r.id === e.target.value);
+                      setForm(f => ({ ...f, region_id: e.target.value, neighborhood: selectedRegion ? selectedRegion.name : '' }));
+                    }}
+                    className="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <option value="">Selecione sua Região</option>
+                    {regions.map(r => (
+                      <option key={r.id} value={r.id}>{r.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Cidade *</Label>
+                  <Input value={form.city} onChange={e => setForm(f => ({ ...f, city: e.target.value }))} className="h-10 rounded-lg" />
                 </div>
                 <div className="space-y-1">
                   <Label className="text-xs">Complemento</Label>
@@ -301,55 +294,17 @@ export default function Addresses() {
                   <Label className="text-xs">Referência</Label>
                   <Input placeholder="Próximo ao..." value={form.reference} onChange={e => setForm(f => ({ ...f, reference: e.target.value }))} className="h-10 rounded-lg" />
                 </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="space-y-1">
-                    <Label className="text-xs">Latitude</Label>
-                    <Input type="number" step="any" value={form.latitude} onChange={e => setForm(f => ({ ...f, latitude: e.target.value }))} className="h-10 rounded-lg" />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs">Longitude</Label>
-                    <Input type="number" step="any" value={form.longitude} onChange={e => setForm(f => ({ ...f, longitude: e.target.value }))} className="h-10 rounded-lg" />
-                  </div>
-                </div>
               </div>
               <DialogFooter className="gap-2">
                 <Button variant="outline" onClick={() => setShowForm(false)} className="rounded-lg">Cancelar</Button>
-                <Button onClick={handleSave} disabled={geocoding} className="rounded-lg">
-                  {geocoding ? (
-                    <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Localizando...</>
-                  ) : (
-                    editing ? 'Salvar' : 'Adicionar'
-                  )}
+                <Button onClick={handleSave} className="rounded-lg">
+                  {editing ? 'Salvar' : 'Adicionar'}
                 </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
         </div>
       </MarketplaceLayout>
-      <Dialog open={showMap} onOpenChange={setShowMap}>
-        <DialogContent className="max-w-2xl p-0 overflow-hidden rounded-2xl border-none">
-          <DialogHeader className="sr-only">
-            <DialogTitle>Escolher no mapa</DialogTitle>
-            <DialogDescription>Arraste o pin no mapa para escolher as coordenadas do endereço de entrega.</DialogDescription>
-          </DialogHeader>
-          <LocationPicker
-            initialCoords={form.latitude && form.longitude ? { lat: parseFloat(form.latitude), lng: parseFloat(form.longitude) } : undefined}
-            onConfirm={(data) => {
-              setForm(f => ({
-                ...f,
-                street: data.address.street || f.street,
-                neighborhood: data.address.neighborhood || f.neighborhood,
-                city: data.address.city || f.city,
-                latitude: data.lat.toString(),
-                longitude: data.lng.toString(),
-              }));
-              setShowMap(false);
-              toast.success('Localização atualizada');
-            }}
-            onCancel={() => setShowMap(false)}
-          />
-        </DialogContent>
-      </Dialog>
     </>
   );
 }
