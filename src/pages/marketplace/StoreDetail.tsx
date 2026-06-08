@@ -66,7 +66,7 @@ export default function StoreDetail() {
 
     const fetchStore = async () => {
       const [companyResponse, productResponse] = await Promise.all([
-        supabase.from('companies').select('*').eq('id', id).single(),
+        supabase.from('companies').select('id, name, description, category, rating, is_open, active, is_active, delivery_fee, show_in_marketplace, city, state, banner_url, logo_url, business_hours, created_at, user_id').eq('id', id).single(),
         supabase.from('products').select('*').eq('company_id', id).eq('active', true).order('category'),
       ]);
 
