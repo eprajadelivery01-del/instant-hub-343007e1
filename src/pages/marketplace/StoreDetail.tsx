@@ -31,6 +31,30 @@ export default function StoreDetail() {
   const [isOutOfRange, setIsOutOfRange] = useState(false);
   const [calculatingFee, setCalculatingFee] = useState(false);
 
+  const categoryDisplayNames: Record<string, string> = {
+    'sorvetes': 'Sorvetes e Picolés',
+    'alcoolicas': 'Bebidas Alcoólicas',
+    'porcoes': 'Porções',
+    'perfumaria': 'Perfumaria',
+    'padaria': 'Padaria',
+    'Hamburguer': 'Hambúrguer Artesanal',
+    'hamburguer_artesanal': 'Hambúrguer Artesanal',
+    'Assados': 'Assados',
+    'Acompanhamentos': 'Acompanhamentos',
+    'Marmita': 'Marmita',
+    'Mercado': 'Mercado',
+    'Farmácia': 'Farmácia',
+    'Bebidas': 'Bebidas',
+    'Doces': 'Doces',
+    'Pet Shop': 'Pet Shop',
+    'Shopping': 'Shopping',
+    'Outros': 'Outros',
+    'Pizza': 'Pizza',
+    'Lanches': 'Lanches'
+  };
+
+  const formatCategoryName = (cat: string) => categoryDisplayNames[cat] || cat;
+
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 150);
     window.addEventListener('scroll', handleScroll);
@@ -352,7 +376,7 @@ export default function StoreDetail() {
                       : 'text-muted-foreground hover:text-foreground'
                   )}
                 >
-                  {category}
+                  {formatCategoryName(category)}
                   {activeCategory === category && (
                     <span className="absolute bottom-0 left-0 w-full h-[3px] rounded-t-full bg-primary" />
                   )}
@@ -393,7 +417,7 @@ export default function StoreDetail() {
             return (
               <div key={category} id={category} className="animate-in fade-in slide-in-from-bottom-4 duration-700 first:pt-6 pt-10">
                 <div className="mb-4 px-2">
-                  <h3 className="text-lg font-bold tracking-tight text-foreground">{category}</h3>
+                  <h3 className="text-lg font-bold tracking-tight text-foreground">{formatCategoryName(category)}</h3>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
