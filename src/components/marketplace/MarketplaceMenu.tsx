@@ -1,6 +1,6 @@
 import React from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Utensils, ShoppingBag, Pill, Beer, Dog, Store, Tag, ChefHat, Star, Ticket, X, ChevronRight, Pizza, Sandwich, Cake } from "lucide-react";
+import { Utensils, ShoppingBag, Pill, Beer, Dog, Store, Tag, ChefHat, Star, Ticket, X, ChevronRight, Pizza, Sandwich, Cake, Croissant } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
@@ -81,6 +81,7 @@ export function MarketplaceMenu({ children, onSelectCategory, onOpenPartnership 
     { icon: ShoppingBag, label: "Mercados", color: "bg-sunset", value: "mercado" },
     { icon: Pill, label: "Farmácias", color: "bg-sunset", value: "farmacia" },
     { icon: Beer, label: "Bebidas", color: "bg-sunset", value: "bebidas" },
+    { icon: Croissant, label: "Padarias", color: "bg-sunset", value: "padaria" },
     { icon: Cake, label: "Doces", color: "bg-sunset", value: "doces" },
     { icon: Dog, label: "Pet Shops", color: "bg-sunset", value: "pet" },
     { icon: Store, label: "Shopping", color: "bg-sunset", value: "shopping" },
