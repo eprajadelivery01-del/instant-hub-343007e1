@@ -82,7 +82,7 @@ export function MarketplaceMenu({ children, onSelectCategory, onOpenPartnership 
     { icon: Pill, label: "Farmácias", color: "bg-sunset", value: "farmacia" },
     { icon: Beer, label: "Bebidas", color: "bg-sunset", value: "bebidas" },
     { icon: Croissant, label: "Padarias", color: "bg-sunset", value: "padaria" },
-    { icon: Flame, label: "Hambúrguer Artesanal", color: "bg-sunset", value: "hamburguer_artesanal" },
+    { icon: Flame, label: "Hambúrguer Artesanal", color: "bg-sunset", value: "hamburguer" },
     { icon: Beef, label: "Assados", color: "bg-sunset", value: "assados" },
     { icon: Leaf, label: "Acompanhamentos", color: "bg-sunset", value: "acompanhamentos" },
     { icon: Package, label: "Marmita", color: "bg-sunset", value: "marmita" },

@@ -29,7 +29,7 @@ const categories = [
   { icon: Pill, label: 'Farmácia', value: 'farmacia' },
   { icon: Beer, label: 'Bebidas', value: 'bebidas' },
   { icon: Croissant, label: 'Padaria', value: 'padaria' },
-  { icon: Flame, label: 'Hambúrguer Artesanal', value: 'hamburguer_artesanal' },
+  { icon: Flame, label: 'Hambúrguer Artesanal', value: 'hamburguer' },
   { icon: Beef, label: 'Assados', value: 'assados' },
   { icon: Leaf, label: 'Acompanhamentos', value: 'acompanhamentos' },
   { icon: Package, label: 'Marmita', value: 'marmita' },
