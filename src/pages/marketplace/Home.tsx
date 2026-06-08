@@ -13,7 +13,7 @@ import { StoreTabCard } from '@/components/marketplace/StoreTabCard';
 import { MarketplaceMenu } from '@/components/marketplace/MarketplaceMenu';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MediaImage } from '@/components/shared/MediaImage';
-import { Search, Star, ChevronDown, Store, Utensils, Coffee, Pizza, Cake, Sandwich, Pill, ShoppingCart, User, PanelLeft, X, Dog, Beer, Plus, Croissant } from 'lucide-react';
+import { Search, Star, ChevronDown, Store, Utensils, Coffee, Pizza, Cake, Sandwich, Pill, ShoppingCart, User, PanelLeft, X, Dog, Beer, Plus, Croissant, Sparkles, Flame } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { getAvatarImage, getCompanyBannerImage, getCompanyLogoImage, getPrimaryProductImage } from '@/lib/media';
@@ -29,6 +29,8 @@ const categories = [
   { icon: Pill, label: 'Farmácia', value: 'farmacia' },
   { icon: Beer, label: 'Bebidas', value: 'bebidas' },
   { icon: Croissant, label: 'Padaria', value: 'padaria' },
+  { icon: Flame, label: 'Hambúrguer Artesanal', value: 'hamburguer_artesanal' },
+  { icon: Sparkles, label: 'Perfumaria', value: 'perfumaria' },
   { icon: Cake, label: 'Doces', value: 'doces' },
   { icon: Dog, label: 'Pet Shop', value: 'pet' },
   { icon: Store, label: 'Shopping', value: 'shopping' },
