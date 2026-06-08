@@ -43,7 +43,7 @@ export default function Addresses() {
       setAddresses(data || []);
     }
 
-    const { data: regionsData } = await supabase.from('regions').select('*').eq('active', true).order('name');
+    const { data: regionsData } = await supabase.from('regions').select('*').order('name');
     if (regionsData) {
       setRegions(regionsData);
     }
