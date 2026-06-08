@@ -13,7 +13,7 @@ import { StoreTabCard } from '@/components/marketplace/StoreTabCard';
 import { MarketplaceMenu } from '@/components/marketplace/MarketplaceMenu';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MediaImage } from '@/components/shared/MediaImage';
-import { Search, Star, ChevronDown, Store, Utensils, Coffee, Pizza, Cake, Sandwich, Pill, ShoppingCart, User, PanelLeft, X, Dog, Beer, Plus, Croissant, Sparkles, Flame, Beef, Leaf, Package } from 'lucide-react';
+import { Search, Star, ChevronDown, Store, Utensils, Coffee, Pizza, Cake, Sandwich, Pill, ShoppingCart, User, PanelLeft, X, Dog, Beer, Plus, Croissant, Sparkles, Flame, Beef, Leaf, Package, IceCream, Wine } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { getAvatarImage, getCompanyBannerImage, getCompanyLogoImage, getPrimaryProductImage } from '@/lib/media';
@@ -33,6 +33,8 @@ const categories = [
   { icon: Beef, label: 'Assados', value: 'assados' },
   { icon: Leaf, label: 'Acompanhamentos', value: 'acompanhamentos' },
   { icon: Package, label: 'Marmita', value: 'marmita' },
+  { icon: IceCream, label: 'Sorvetes e Picolés', value: 'sorvetes' },
+  { icon: Wine, label: 'Bebidas Alcoólicas', value: 'alcoolicas' },
   { icon: Sparkles, label: 'Perfumaria', value: 'perfumaria' },
   { icon: Cake, label: 'Doces', value: 'doces' },
   { icon: Dog, label: 'Pet Shop', value: 'pet' },

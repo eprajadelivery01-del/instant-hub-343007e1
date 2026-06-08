@@ -1,6 +1,6 @@
 import React from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Utensils, ShoppingBag, Pill, Beer, Dog, Store, Tag, ChefHat, Star, Ticket, X, ChevronRight, Pizza, Sandwich, Cake, Croissant, Sparkles, Flame, Beef, Leaf, Package } from "lucide-react";
+import { Utensils, ShoppingBag, Pill, Beer, Dog, Store, Tag, ChefHat, Star, Ticket, X, ChevronRight, Pizza, Sandwich, Cake, Croissant, Sparkles, Flame, Beef, Leaf, Package, IceCream, Wine } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
@@ -86,6 +86,8 @@ export function MarketplaceMenu({ children, onSelectCategory, onOpenPartnership 
     { icon: Beef, label: "Assados", color: "bg-sunset", value: "assados" },
     { icon: Leaf, label: "Acompanhamentos", color: "bg-sunset", value: "acompanhamentos" },
     { icon: Package, label: "Marmita", color: "bg-sunset", value: "marmita" },
+    { icon: IceCream, label: "Sorvetes e Picolés", color: "bg-sunset", value: "sorvetes" },
+    { icon: Wine, label: "Bebidas Alcoólicas", color: "bg-sunset", value: "alcoolicas" },
     { icon: Sparkles, label: "Perfumaria", color: "bg-sunset", value: "perfumaria" },
     { icon: Cake, label: "Doces", color: "bg-sunset", value: "doces" },
     { icon: Dog, label: "Pet Shops", color: "bg-sunset", value: "pet" },
