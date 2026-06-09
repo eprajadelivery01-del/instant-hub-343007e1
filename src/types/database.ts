@@ -37,6 +37,11 @@ export interface Company {
   delivery_fee: number | null;
   is_open?: boolean;
   business_hours?: string | null;
+  show_in_marketplace?: boolean | null;
+  prep_time_min?: number | null;
+  prep_time_max?: number | null;
+  /** JSON array of { region_id, customer_price } set by the merchant */
+  delivery_regions_pricing?: Array<{ region_id: string; customer_price: string | number }> | string | null;
 }
 
 export interface Product {
@@ -51,6 +56,7 @@ export interface Product {
   active: boolean;
   created_at: string;
   updated_at: string;
+  sort_order?: number;
 }
 
 export interface Order {
