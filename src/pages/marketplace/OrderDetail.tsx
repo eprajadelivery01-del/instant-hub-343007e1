@@ -50,7 +50,7 @@ export default function OrderDetail() {
           const prev = order;
           setOrder(prev => prev ? { ...prev, ...p.new } : null);
           // Dispara notificação nativa se permitido
-          if (notifEnabled && Notification.permission === 'granted') {
+          if (notifEnabled && ('Notification' in window) && Notification.permission === 'granted') {
             const statusLabels: Record<string, string> = {
               confirmed: '✅ Pedido confirmado pela loja!',
               preparing: '👨‍🍳 Seu pedido está sendo preparado',
@@ -204,14 +204,16 @@ export default function OrderDetail() {
               <div className="pr-4">
                 <h3 className="font-bold text-base mb-1">Ative as notificações e acompanhe seu pedido</h3>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  {Notification.permission === 'denied'
+                  {('Notification' in window) && Notification.permission === 'denied'
                     ? 'Notificações bloqueadas. Habilite nas configurações do navegador.'
+                    : !('Notification' in window)
+                    ? 'Seu dispositivo não suporta notificações web.'
                     : 'Fique sabendo na hora se houver algum problema com seu pedido.'}
                 </p>
               </div>
               <button
                 onClick={handleToggleNotif}
-                disabled={notifLoading || Notification.permission === 'denied'}
+                disabled={notifLoading || !('Notification' in window) || Notification.permission === 'denied'}
                 aria-label={notifEnabled ? 'Desativar notificações' : 'Ativar notificações'}
                 className={`relative w-12 h-6 rounded-full shrink-0 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-40 disabled:cursor-not-allowed ${
                   notifEnabled ? 'bg-[#00A868]' : 'bg-muted'
