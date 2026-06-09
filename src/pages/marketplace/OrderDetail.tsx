@@ -300,25 +300,8 @@ export default function OrderDetail() {
               </button>
             </div>
           </div>
-          
         </div>
 
-        {/* Ad Banner Overlay (Fake) */}
-        <div className="fixed bottom-[64px] left-0 right-0 z-30 p-4 pb-0 pointer-events-none">
-          <div className="mx-auto max-w-lg bg-black text-white rounded-t-3xl p-4 flex items-center justify-between shadow-2xl pointer-events-auto cursor-pointer">
-            <div className="flex gap-3 items-center">
-               <div className="h-8 w-8 rounded bg-white text-black flex items-center justify-center font-bold text-lg">%</div>
-               <div>
-                  <p className="font-bold text-sm">Até R$30 off + entrega grátis</p>
-                  <p className="text-xs text-zinc-400">Para pedir em Farmácia</p>
-               </div>
-            </div>
-            <div className="bg-[#EA1D2C] rounded-full px-3 py-1 flex items-center gap-1">
-              <span className="text-xs font-bold">⏱ 29:39</span>
-            </div>
-          </div>
-        </div>
-      </div>
       
       {/* Store Chat Drawer */}
       {showStoreChat && (
