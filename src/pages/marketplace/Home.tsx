@@ -87,13 +87,13 @@ export default function Home() {
         return {
           ...company,
           name,
-          active: company.active ?? company.is_active ?? false,
+          active: company.active === true || company.is_active === true,
           products: (company.products || []).filter((p: any) => p.is_active !== false).slice(0, 4),
           rating: company.rating && company.rating > 0 ? company.rating : 4.5 + Math.random() * 0.5,
         };
       }).sort((a, b) => {
-        const aOpen = a.is_open === true && (a.active === true || a.is_active === true);
-        const bOpen = b.is_open === true && (b.active === true || b.is_active === true);
+        const aOpen = a.is_open === true && a.active === true;
+        const bOpen = b.is_open === true && b.active === true;
         
         if (aOpen && !bOpen) return -1;
         if (!aOpen && bOpen) return 1;
