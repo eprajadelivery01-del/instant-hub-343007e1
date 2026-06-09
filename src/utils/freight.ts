@@ -62,17 +62,21 @@ export interface FreightResult {
 
 /**
  * Calcula o frete para um par de coordenadas consultando as regiões ativas no banco.
- * Se o ponto estiver dentro de uma região, retorna o preço configurado.
- * Se estiver fora de todas as regiões, retorna isOutOfRange: true.
+ * Prioridade:
+ *   1. Se a empresa tem `delivery_regions_pricing` configurado para a região encontrada,
+ *      usa o `customer_price` definido pelo lojista.
+ *   2. Caso contrário, usa o preço base da região (definido pelo admin).
  *
  * @param lat Latitude do endereço de entrega
  * @param lng Longitude do endereço de entrega
  * @param supabase Instância do cliente Supabase
+ * @param companyDeliveryRegionsPricing Array de { region_id, customer_price } do lojista (opcional)
  */
 export async function calculateDeliveryFee(
   lat: number,
   lng: number,
-  supabase: any
+  supabase: any,
+  companyDeliveryRegionsPricing?: Array<{ region_id: string; customer_price: string | number }> | null
 ): Promise<FreightResult> {
   if (!lat || !lng) {
     return { fee: null, regionId: null, regionName: null, isOutOfRange: false };
@@ -89,20 +93,30 @@ export async function calculateDeliveryFee(
       return { fee: null, regionId: null, regionName: null, isOutOfRange: false };
     }
 
+    // Normaliza o pricing do lojista para lookup rápido
+    const merchantPricing: Record<string, number> = {};
+    if (Array.isArray(companyDeliveryRegionsPricing)) {
+      for (const entry of companyDeliveryRegionsPricing) {
+        const price = Number(String(entry.customer_price).replace(',', '.'));
+        if (entry.region_id && !isNaN(price) && price > 0) {
+          merchantPricing[entry.region_id] = price;
+        }
+      }
+    }
+
     for (const region of regions) {
       const coords = extractCoordinates(region.geometry);
       if (!coords) continue;
 
       if (pointInPolygon(lat, lng, coords)) {
-        // Tolerância: tenta 'price' (hub) ou 'delivery_fee' (cliente)
+        // 1. Preço configurado pelo lojista para essa região (customer_price)
+        if (merchantPricing[region.id] !== undefined) {
+          const fee = merchantPricing[region.id];
+          return { fee, regionId: region.id, regionName: region.name, isOutOfRange: false };
+        }
+        // 2. Fallback: preço base da região definido pelo admin
         const fee = Number(region.price ?? region.delivery_fee ?? 0);
-        // console.log(`[freight] ✅ Região encontrada: ${region.name} — R$ ${fee.toFixed(2)}`);
-        return {
-          fee,
-          regionId: region.id,
-          regionName: region.name,
-          isOutOfRange: false,
-        };
+        return { fee, regionId: region.id, regionName: region.name, isOutOfRange: false };
       }
     }
 

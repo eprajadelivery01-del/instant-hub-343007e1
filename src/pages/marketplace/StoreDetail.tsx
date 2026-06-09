@@ -34,6 +34,8 @@ export default function StoreDetail() {
   const categoryDisplayNames: Record<string, string> = {
     'sorvetes': 'Sorvetes e Picolés',
     'alcoolicas': 'Bebidas Alcoólicas',
+    'destilados': 'Destilados',
+    'Destilados': 'Destilados',
     'porcoes': 'Porções',
     'perfumaria': 'Perfumaria',
     'padaria': 'Padaria',
@@ -66,8 +68,8 @@ export default function StoreDetail() {
 
     const fetchStore = async () => {
       const [companyResponse, productResponse] = await Promise.all([
-        supabase.from('companies').select('id, name, description, category, rating, is_open, active, is_active, delivery_fee, show_in_marketplace, city, state, banner_url, logo_url, business_hours, created_at, user_id').eq('id', id).single(),
-        supabase.from('products').select('*').eq('company_id', id).eq('active', true).order('category'),
+        supabase.from('companies').select('id, name, description, category, rating, is_open, active, is_active, delivery_fee, delivery_regions_pricing, show_in_marketplace, city, state, banner_url, logo_url, business_hours, prep_time_min, prep_time_max, created_at, user_id').eq('id', id).single(),
+        supabase.from('products').select('*').eq('company_id', id).eq('active', true).order('category').order('sort_order', { ascending: true }).order('created_at', { ascending: true }),
       ]);
 
       setCompany(companyResponse.data);
@@ -95,7 +97,7 @@ export default function StoreDetail() {
           const addr = addresses[0]; // Pega o mais recente
           if (addr.latitude && addr.longitude) {
             // CALCULO OBRIGATÓRIO PELA REGIÃO (ADMIN PANEL MAP)
-            const result = await calculateDeliveryFee(addr.latitude, addr.longitude, supabase);
+            const result = await calculateDeliveryFee(addr.latitude, addr.longitude, supabase, (company as any).delivery_regions_pricing);
             
             if (result.fee !== null) {
               // Se achou uma região no mapa, ESSE VALOR É A LEI
@@ -305,7 +307,7 @@ export default function StoreDetail() {
             </div>
             <div className="flex items-center gap-1.5 rounded-xl bg-secondary/60 px-3 py-1.5">
               <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-              <span className="text-xs font-bold text-foreground">30-45 min</span>
+              <span className="text-xs font-bold text-foreground">{(company as any).prep_time_min ?? 30}-{(company as any).prep_time_max ?? 45} min</span>
             </div>
             <div className="flex items-center gap-1.5 rounded-xl bg-secondary/60 px-3 py-1.5">
               <Info className="h-3.5 w-3.5 text-muted-foreground" />
