@@ -13,7 +13,7 @@ import { StoreTabCard } from '@/components/marketplace/StoreTabCard';
 import { MarketplaceMenu } from '@/components/marketplace/MarketplaceMenu';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MediaImage } from '@/components/shared/MediaImage';
-import { Search, Star, ChevronDown, Store, Utensils, Coffee, Pizza, Cake, Sandwich, Pill, ShoppingCart, User, PanelLeft, X, Dog, Beer, Plus, Croissant, Sparkles, Flame, Beef, Leaf, Package, IceCream, Wine, UtensilsCrossed } from 'lucide-react';
+import { Search, Star, ChevronDown, Store, Utensils, Coffee, Pizza, Cake, Sandwich, Pill, ShoppingCart, User, PanelLeft, X, Dog, Beer, Plus, Croissant, Sparkles, Flame, Beef, Leaf, Package, IceCream, Wine, UtensilsCrossed, GlassWater, Scissors, Ruler } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { getAvatarImage, getCompanyBannerImage, getCompanyLogoImage, getPrimaryProductImage } from '@/lib/media';
@@ -35,11 +35,14 @@ const categories = [
   { icon: Package, label: 'Marmita', value: 'marmita' },
   { icon: IceCream, label: 'Sorvetes e Picolés', value: 'sorvetes' },
   { icon: Wine, label: 'Bebidas Alcoólicas', value: 'alcoolicas' },
+  { icon: GlassWater, label: 'Destilados', value: 'destilados' },
   { icon: UtensilsCrossed, label: 'Porções', value: 'porcoes' },
   { icon: Sparkles, label: 'Perfumaria', value: 'perfumaria' },
   { icon: Cake, label: 'Doces', value: 'doces' },
   { icon: Dog, label: 'Pet Shop', value: 'pet' },
   { icon: Store, label: 'Shopping', value: 'shopping' },
+  { icon: Scissors, label: 'Tecidos e Costura', value: 'tecidos' },
+  { icon: Ruler, label: 'Barbantes e Aviamentos', value: 'barbantes' },
 ];
 
 const PROFESSIONAL_NAMES: Record<string, string> = {
@@ -73,7 +76,7 @@ export default function Home() {
 
   const fetchCompanies = async () => {
     try {
-      const { data } = await supabase.from('companies').select('id, name, description, category, rating, is_open, active, is_active, delivery_fee, delivery_regions_pricing, show_in_marketplace, city, state, banner_url, logo_url, business_hours, created_at, products(*)');
+      const { data } = await supabase.from('companies').select('id, name, description, category, rating, is_open, active, is_active, delivery_fee, delivery_regions_pricing, show_in_marketplace, city, state, banner_url, logo_url, business_hours, prep_time_min, prep_time_max, created_at, products(*)');
       const processed = (data || []).filter(c => c.show_in_marketplace !== false).map((company, index) => {
         let name = company.name || "Loja Parceira";
         if (PROFESSIONAL_NAMES[name]) {
