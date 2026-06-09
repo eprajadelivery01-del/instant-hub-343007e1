@@ -301,7 +301,7 @@ export default function OrderDetail() {
             </div>
           </div>
         </div>
-
+      </div>
       
       {/* Store Chat Drawer */}
       {showStoreChat && (
