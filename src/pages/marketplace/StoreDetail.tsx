@@ -6,7 +6,7 @@ import { useCart } from '@/contexts/CartContext';
 import MarketplaceLayout from '@/components/marketplace/MarketplaceLayout';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Minus, Plus, Star, Clock, Store as StoreIcon, Share2, Utensils, Search, Info, Ticket, AlertCircle } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, isStoreOpenBySchedule } from '@/lib/utils';
 import { ProductDetailDialog } from '@/components/marketplace/ProductDetailDialog';
 import { MediaImage } from '@/components/shared/MediaImage';
 import { getCompanyBannerImage, getCompanyLogoImage, getPrimaryProductImage } from '@/lib/media';
@@ -72,7 +72,13 @@ export default function StoreDetail() {
         supabase.from('products').select('*').eq('company_id', id).eq('active', true).order('category').order('sort_order', { ascending: true }).order('created_at', { ascending: true }),
       ]);
 
-      setCompany(companyResponse.data);
+      if (companyResponse.data) {
+        const companyData = companyResponse.data;
+        setCompany({
+          ...companyData,
+          is_open: companyData.is_open === true && isStoreOpenBySchedule(companyData.business_hours)
+        } as Company);
+      }
       setProducts(productResponse.data || []);
       setLoading(false);
     };

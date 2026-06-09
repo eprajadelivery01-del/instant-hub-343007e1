@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import { Company, Product } from '@/types/database';
 import { useAddress } from '@/contexts/AddressContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { cn } from '@/lib/utils';
+import { cn, isStoreOpenBySchedule } from '@/lib/utils';
 import MarketplaceLayout from '@/components/marketplace/MarketplaceLayout';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -87,6 +87,7 @@ export default function Home() {
         return {
           ...company,
           name,
+          is_open: company.is_open === true && isStoreOpenBySchedule(company.business_hours),
           active: company.active === true || company.is_active === true,
           products: (company.products || []).filter((p: any) => p.is_active !== false).slice(0, 4),
           rating: company.rating && company.rating > 0 ? company.rating : 4.5 + Math.random() * 0.5,
