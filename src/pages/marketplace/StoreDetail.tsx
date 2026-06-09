@@ -76,7 +76,9 @@ export default function StoreDetail() {
         const companyData = companyResponse.data;
         setCompany({
           ...companyData,
-          is_open: companyData.is_open === true && isStoreOpenBySchedule(companyData.business_hours)
+          // is_open do banco é a fonte da verdade — o lojista abriu/fechou manualmente.
+          // O horário de funcionamento é apenas informativo.
+          is_open: companyData.is_open === true
         } as Company);
       }
       setProducts(productResponse.data || []);

@@ -87,7 +87,7 @@ export default function Home() {
         return {
           ...company,
           name,
-          is_open: company.is_open === true && isStoreOpenBySchedule(company.business_hours),
+          is_open: company.is_open === true, // is_open do banco é a fonte da verdade — schedule é só informativo
           active: company.active === true || company.is_active === true,
           products: (company.products || []).filter((p: any) => p.is_active !== false).slice(0, 4),
           rating: company.rating && company.rating > 0 ? company.rating : 4.5 + Math.random() * 0.5,
