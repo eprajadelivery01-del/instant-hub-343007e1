@@ -75,7 +75,7 @@ export default function Home() {
 
   const fetchCompanies = async () => {
     try {
-      const { data } = await supabase.from('companies').select('id, name, description, category, rating, is_open, active, is_active, delivery_fee, delivery_regions_pricing, show_in_marketplace, city, state, banner_url, logo_url, business_hours, prep_time_min, prep_time_max, created_at, products(*)');
+      const { data } = await supabase.from('companies').select('id, name, description, category, rating, is_open, active, is_active, delivery_fee, delivery_regions_pricing, show_in_marketplace, city, state, banner_url, cover_url, logo_url, business_hours, prep_time_min, prep_time_max, created_at, products(*)');
       const processed = (data || []).filter(c => c.show_in_marketplace !== false).map((company, index) => {
         let name = company.name || "Loja Parceira";
         if (PROFESSIONAL_NAMES[name]) {
