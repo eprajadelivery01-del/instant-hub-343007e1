@@ -373,13 +373,9 @@ export default function Cart() {
             <span className="text-muted-foreground">Subtotal</span>
             <span className="text-foreground">R$ {subtotal.toFixed(2).replace('.', ',')}</span>
           </div>
-          <div className="flex justify-between text-sm">
+          <div className="flex justify-between text-sm items-center">
             <span className="text-muted-foreground">Taxa de entrega</span>
-            {deliveryFee > 0 ? (
-              <span className="text-foreground">R$ {deliveryFee.toFixed(2).replace('.', ',')}</span>
-            ) : (
-              <span className="text-[#00A868] font-medium">Grátis</span>
-            )}
+            <span className="text-muted-foreground text-xs italic">A calcular</span>
           </div>
           {appliedCoupon && (
             <div className="flex justify-between text-sm text-[#7B46E5] font-semibold">

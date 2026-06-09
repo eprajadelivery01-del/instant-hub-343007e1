@@ -203,7 +203,7 @@ export default function Addresses() {
           )}
 
           <Dialog open={showForm} onOpenChange={setShowForm}>
-            <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto rounded-2xl p-6 scrollbar-thin">
+            <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto rounded-2xl p-6 pb-10 scrollbar-thin">
               <DialogHeader>
                 <DialogTitle className="text-lg">{editing ? 'Editar endereço' : 'Novo endereço'}</DialogTitle>
                 <DialogDescription className="sr-only">Preencha os campos abaixo para salvar o apelido, rua, número e coordenadas do endereço.</DialogDescription>
@@ -295,7 +295,7 @@ export default function Addresses() {
                   <Input placeholder="Próximo ao..." value={form.reference} onChange={e => setForm(f => ({ ...f, reference: e.target.value }))} className="h-10 rounded-lg" />
                 </div>
               </div>
-              <DialogFooter className="gap-2">
+              <DialogFooter className="gap-2 mt-6">
                 <Button variant="outline" onClick={() => setShowForm(false)} className="rounded-lg">Cancelar</Button>
                 <Button onClick={handleSave} className="rounded-lg">
                   {editing ? 'Salvar' : 'Adicionar'}

@@ -37,7 +37,7 @@ export function getPrimaryProductImage(product?: { image_url?: unknown; image_ur
 
 export function getCompanyBannerImage(company?: { banner_url?: unknown; cover_url?: unknown } | null) {
   if (!company) return null;
-  return [...normalizeMediaUrls(company.banner_url), ...normalizeMediaUrls(company.cover_url)][0] ?? null;
+  return [...normalizeMediaUrls(company.cover_url), ...normalizeMediaUrls(company.banner_url)][0] ?? null;
 }
 
 export function getCompanyLogoImage(company?: { logo_url?: unknown } | null) {
