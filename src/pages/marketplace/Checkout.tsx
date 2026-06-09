@@ -208,27 +208,7 @@ export default function Checkout() {
       const orderId = data?.order_id || data;
       if (!orderId) throw new Error('Falha ao obter ID do pedido.');
 
-      // CORREÇÃO: create_order_v3 cria uma entrega prematura (às vezes sem order_id) que vaza para o painel de Motoboys.
-      // Vamos cancelar essa entrega para ocultá-la. O Lojista criará a entrega correta ao clicar em 'Chamar Entregador'.
-      try {
-        const { data: buggyDelivery } = await supabase
-          .from('deliveries')
-          .select('id')
-          .eq('company_id', requestBody.company_id)
-          .or(`order_id.eq.${orderId},order_id.is.null`)
-          .eq('status', 'pending')
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
 
-        if (buggyDelivery) {
-           await supabase.from('deliveries')
-             .update({ order_id: orderId, status: 'cancelled', notes: 'Cancelamento automático de entrega prematura' }) 
-             .eq('id', buggyDelivery.id);
-        }
-      } catch (e) {
-        console.warn('Falha ao cancelar entrega prematura:', e);
-      }
 
       clearCart();
       resetIdempotencyKey();
