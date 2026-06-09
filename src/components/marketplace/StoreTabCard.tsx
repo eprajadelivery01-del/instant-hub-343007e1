@@ -6,7 +6,7 @@ import { MediaImage } from '@/components/shared/MediaImage';
 import { getCompanyBannerImage, getCompanyLogoImage, getPrimaryProductImage } from '@/lib/media';
 
 interface StoreTabCardProps {
-  company: Company & { products: Product[]; rating?: number | null; cover_url?: string | null; category?: string | null };
+  company: Company & { products: Product[]; rating?: number | null; cover_url?: string | null; category?: string | null; prep_time_min?: number | null; prep_time_max?: number | null };
 }
 
 export function StoreTabCard({ company }: StoreTabCardProps) {
@@ -16,6 +16,8 @@ export function StoreTabCard({ company }: StoreTabCardProps) {
   const featuredProducts = (company.products || []).slice(0, 3);
   const rating = Number(company.rating || 4.8);
   const subtitle = company.category || company.description || 'Gastronomia de alto nível';
+  const prepMin = company.prep_time_min ?? 25;
+  const prepMax = company.prep_time_max ?? 45;
 
   return (
     <button
@@ -81,7 +83,7 @@ export function StoreTabCard({ company }: StoreTabCardProps) {
         <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
           <div className="premium-chip flex items-center justify-center gap-2 rounded-full px-3 py-2">
             <Clock3 className="h-3.5 w-3.5 text-primary" />
-            <span>25-40 min</span>
+            <span>{prepMin}-{prepMax} min</span>
           </div>
           <div className="premium-chip flex items-center justify-center rounded-full px-3 py-2">
             {(() => {
@@ -95,20 +97,22 @@ export function StoreTabCard({ company }: StoreTabCardProps) {
                 }
               } catch (e) {}
 
+              // Normaliza vírgula → ponto antes de converter para número
               const prices = pricing
-                .map((p: any) => Number(p.customer_price))
-                .filter((p: number) => !isNaN(p) && p > 0);
+                .map((p: any) => Number(String(p.customer_price ?? '').replace(',', '.')))
+                .filter((p: number) => !isNaN(p) && p >= 0);
 
               if (prices.length >= 2) {
                 const min = Math.min(...prices);
                 const max = Math.max(...prices);
+                if (min === max) {
+                  return min === 0 ? 'Entrega grátis' : `Entrega R$ ${min.toFixed(2).replace('.', ',')}`;
+                }
                 return `R$ ${min.toFixed(2).replace('.', ',')} a ${max.toFixed(2).replace('.', ',')}`;
               } else if (prices.length === 1) {
-                return `Entrega R$ ${prices[0].toFixed(2).replace('.', ',')}`;
-              } else if (company.delivery_fee) {
-                return `Entrega R$ ${company.delivery_fee.toFixed(2).replace('.', ',')}`;
+                return prices[0] === 0 ? 'Entrega grátis' : `Entrega R$ ${prices[0].toFixed(2).replace('.', ',')}`;
               }
-              return 'Entrega grátis';
+              return 'Consultar frete';
             })()}
           </div>
         </div>
