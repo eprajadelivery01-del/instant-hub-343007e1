@@ -41,8 +41,7 @@ const categories = [
   { icon: Cake, label: 'Doces', value: 'doces' },
   { icon: Dog, label: 'Pet Shop', value: 'pet' },
   { icon: Store, label: 'Shopping', value: 'shopping' },
-  { icon: Scissors, label: 'Tecidos e Costura', value: 'tecidos' },
-  { icon: Ruler, label: 'Barbantes e Aviamentos', value: 'barbantes' },
+  { icon: Scissors, label: 'Barbantes e Tecidos', value: 'barbantes_tecidos' },
 ];
 
 const PROFESSIONAL_NAMES: Record<string, string> = {

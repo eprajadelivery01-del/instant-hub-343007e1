@@ -93,8 +93,7 @@ export function MarketplaceMenu({ children, onSelectCategory, onOpenPartnership 
     { icon: Cake, label: "Doces", color: "bg-sunset", value: "doces" },
     { icon: Dog, label: "Pet Shops", color: "bg-sunset", value: "pet" },
     { icon: Store, label: "Shopping", color: "bg-sunset", value: "shopping" },
-    { icon: Scissors, label: "Tecidos e Costura", color: "bg-sunset", value: "tecidos" },
-    { icon: Ruler, label: "Barbantes e Aviamentos", color: "bg-sunset", value: "barbantes" },
+    { icon: Scissors, label: "Barbantes e Tecidos", color: "bg-sunset", value: "barbantes_tecidos" },
   ];
 
   const highlights = [
