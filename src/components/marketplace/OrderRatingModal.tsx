@@ -32,6 +32,23 @@ export function OrderRatingModal() {
   useEffect(() => {
     if (!user) return;
     checkForPendingReview();
+
+    const channel = supabase.channel('order_ratings_listener')
+      .on('postgres_changes', { 
+        event: 'UPDATE', 
+        schema: 'public', 
+        table: 'orders', 
+        filter: `customer_id=eq.${user.id}` 
+      }, (payload) => {
+        if (payload.new.status === 'delivered' || payload.new.status === 'completed') {
+          checkForPendingReview();
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user]);
 
   const checkForPendingReview = async () => {

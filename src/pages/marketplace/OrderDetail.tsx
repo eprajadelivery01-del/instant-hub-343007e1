@@ -69,6 +69,10 @@ export default function OrderDetail() {
             }
           }
         })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'deliveries', filter: `order_id=eq.${id}` },
+        (p) => {
+          setDelivery(prev => prev ? { ...prev, ...p.new } as any : p.new as any);
+        })
       .subscribe();
 
     return () => { supabase.removeChannel(orderChannel); };
