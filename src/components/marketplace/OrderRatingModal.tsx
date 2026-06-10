@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEvaluation } from '@/hooks/useEvaluation';
@@ -158,22 +159,22 @@ export function OrderRatingModal() {
 
   if (loading) return null;
 
-  return (
+  const modalContent = (
     <AnimatePresence>
       {pendingReview && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-0">
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 sm:p-0 pointer-events-auto">
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/80 backdrop-blur-md"
             onClick={() => setPendingReview(null)}
           />
           <motion.div 
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="relative w-full max-w-md overflow-hidden rounded-[32px] bg-background p-8 shadow-2xl border border-border/50"
+            className="relative w-full max-w-md overflow-hidden rounded-[32px] bg-background p-8 shadow-2xl border border-border/50 z-10"
           >
           {/* Fancy Background Gradient */}
           <div className="absolute inset-x-0 -top-24 -z-10 h-48 bg-primary/10 blur-[80px]" />
@@ -261,4 +262,7 @@ export function OrderRatingModal() {
       )}
     </AnimatePresence>
   );
+
+  if (typeof document === 'undefined') return modalContent;
+  return createPortal(modalContent, document.body);
 }
