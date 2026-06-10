@@ -33,13 +33,15 @@ export function OrderRatingModal() {
     if (!user) return;
     checkForPendingReview();
 
-    const channel = supabase.channel('order_ratings_listener')
+    const channel = supabase.channel(`order_ratings_listener_${user.id}`)
       .on('postgres_changes', { 
         event: 'UPDATE', 
         schema: 'public', 
         table: 'orders', 
-        filter: `customer_id=eq.${user.id}` 
       }, (payload) => {
+        const order = payload.new as any;
+        if (order.customer_id !== user.id && order.user_id !== user.id) return;
+        
         if (payload.new.status === 'delivered' || payload.new.status === 'completed') {
           checkForPendingReview();
         }

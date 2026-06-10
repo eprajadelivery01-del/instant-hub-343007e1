@@ -1,0 +1,225 @@
+
+> vite_react_shadcn_ts@0.0.0 lint
+> eslint .
+
+
+C:\Users\antho\.gemini\antigravity-ide\scratch\eprajadelivery01-del\instant-hub-343007e1\android\app\build\intermediates\assets\release\mergeReleaseAssets\native-bridge.js
+    36:5   warning  Unused eslint-disable directive (no problems were reported)
+   208:29  warning  Unused eslint-disable directive (no problems were reported from 'no-prototype-builtins')
+  1013:13  error    Definition for rule '@typescript-eslint/no-unused-vars' was not found                     @typescript-eslint/no-unused-vars
+
+C:\Users\antho\.gemini\antigravity-ide\scratch\eprajadelivery01-del\instant-hub-343007e1\src\components\marketplace\LocationPicker.tsx
+  74:6  warning  React Hook useEffect has a missing dependency: 'initialCoords'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\antho\.gemini\antigravity-ide\scratch\eprajadelivery01-del\instant-hub-343007e1\src\components\marketplace\MarketplaceLayout.tsx
+  68:6   warning  React Hook useEffect has a missing dependency: 'company'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  82:38  error    Unexpected any. Specify a different type                                                                    @typescript-eslint/no-explicit-any
+
+C:\Users\antho\.gemini\antigravity-ide\scratch\eprajadelivery01-del\instant-hub-343007e1\src\components\marketplace\MarketplaceMenu.tsx
+  9:9  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\antho\.gemini\antigravity-ide\scratch\eprajadelivery01-del\instant-hub-343007e1\src\components\marketplace\OrderRatingModal.tsx
+  52:6   warning  React Hook useEffect has a missing dependency: 'checkForPendingReview'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  83:46  error    Unexpected any. Specify a different type                                                                                  @typescript-eslint/no-explicit-any
+  84:53  error    Unexpected any. Specify a different type                                                                                  @typescript-eslint/no-explicit-any
+
+C:\Users\antho\.gemini\antigravity-ide\scratch\eprajadelivery01-del\instant-hub-343007e1\src\components\marketplace\OrderStoreChat.tsx
+   84:38  error    Unexpected any. Specify a different type                                                                    @typescript-eslint/no-explicit-any
+   95:6   warning  React Hook useEffect has a missing dependency: 'orderId'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  142:26  error    Unexpected any. Specify a different type                                                                    @typescript-eslint/no-explicit-any
+
+C:\Users\antho\.gemini\antigravity-ide\scratch\eprajadelivery01-del\instant-hub-343007e1\src\components\marketplace\ProductDetailDialog.tsx
+  16:63  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\antho\.gemini\antigravity-ide\scratch\eprajadelivery01-del\instant-hub-343007e1\src\components\marketplace\StoreTabCard.tsx
+   90:45  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   91:28  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   98:27  error  Empty block statement                     no-empty
+  102:26  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\antho\.gemini\antigravity-ide\scratch\eprajadelivery01-del\instant-hub-343007e1\src\components\shared\UnifiedMap.tsx
+  44:6  warning  React Hook useEffect has missing dependencies: 'centerCity' and 'darkTheme'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  52:6  warning  React Hook useEffect has a missing dependency: 'centerCity'. Either include it or remove the dependency array                    react-hooks/exhaustive-deps
+
+C:\Users\antho\.gemini\antigravity-ide\scratch\eprajadelivery01-del\instant-hub-343007e1\src\components\ui\badge.tsx
+  29:17  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Users\antho\.gemini\antigravity-ide\scratch\eprajadelivery01-del\instant-hub-343007e1\src\components\ui\button.tsx
+  47:18  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Users\antho\.gemini\antigravity-ide\scratch\eprajadelivery01-del\instant-hub-343007e1\src\components\ui\command.tsx
+  24:11  error  An interface declaring no members is equivalent to its supertype  @typescript-eslint/no-empty-object-type
+
+C:\Users\antho\.gemini\antigravity-ide\scratch\eprajadelivery01-del\instant-hub-343007e1\src\components\ui\form.tsx
+  129:10  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Users\antho\.gemini\antigravity-ide\scratch\eprajadelivery01-del\instant-hub-343007e1\src\components\ui\navigation-menu.tsx
+  111:3  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Users\antho\.gemini\antigravity-ide\scratch\eprajadelivery01-del\instant-hub-343007e1\src\components\ui\sidebar.tsx
+  636:3  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Users\antho\.gemini\antigravity-ide\scratch\eprajadelivery01-del\instant-hub-343007e1\src\components\ui\sonner.tsx
+  27:19  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Users\antho\.gemini\antigravity-ide\scratch\eprajadelivery01-del\instant-hub-343007e1\src\components\ui\textarea.tsx
+  5:18  error  An interface declaring no members is equivalent to its supertype  @typescript-eslint/no-empty-object-type
+
+C:\Users\antho\.gemini\antigravity-ide\scratch\eprajadelivery01-del\instant-hub-343007e1\src\components\ui\toggle.tsx
+  37:18  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Users\antho\.gemini\antigravity-ide\scratch\eprajadelivery01-del\instant-hub-343007e1\src\contexts\AddressContext.tsx
+  37:42  warning  React Hook useEffect has a missing dependency: 'fetchAddresses'. Either include it or remove the dependency array               react-hooks/exhaustive-deps
+  54:14  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Users\antho\.gemini\antigravity-ide\scratch\eprajadelivery01-del\instant-hub-343007e1\src\contexts\AuthContext.tsx
+   45:71  error    Unexpected any. Specify a different type                                                                                        @typescript-eslint/no-explicit-any
+   50:21  error    Unexpected any. Specify a different type                                                                                        @typescript-eslint/no-explicit-any
+  171:14  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Users\antho\.gemini\antigravity-ide\scratch\eprajadelivery01-del\instant-hub-343007e1\src\contexts\CartContext.tsx
+    7:59  error    Unexpected any. Specify a different type                                                                                        @typescript-eslint/no-explicit-any
+   16:18  error    Unexpected any. Specify a different type                                                                                        @typescript-eslint/no-explicit-any
+   18:27  error    Unexpected any. Specify a different type                                                                                        @typescript-eslint/no-explicit-any
+   37:54  error    Unexpected any. Specify a different type                                                                                        @typescript-eslint/no-explicit-any
+   63:62  error    Unexpected any. Specify a different type                                                                                        @typescript-eslint/no-explicit-any
+  115:34  error    Unexpected any. Specify a different type                                                                                        @typescript-eslint/no-explicit-any
+  178:14  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Users\antho\.gemini\antigravity-ide\scratch\eprajadelivery01-del\instant-hub-343007e1\src\contexts\CityContext.tsx
+  59:17  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Users\antho\.gemini\antigravity-ide\scratch\eprajadelivery01-del\instant-hub-343007e1\src\contexts\ThemeContext.tsx
+  36:14  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Users\antho\.gemini\antigravity-ide\scratch\eprajadelivery01-del\instant-hub-343007e1\src\hooks\useEvaluation.ts
+  72:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\antho\.gemini\antigravity-ide\scratch\eprajadelivery01-del\instant-hub-343007e1\src\lib\utils.ts
+  18:38  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\antho\.gemini\antigravity-ide\scratch\eprajadelivery01-del\instant-hub-343007e1\src\main.tsx
+  11:40  error  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  11:54  error  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  15:38  error  Use the rest parameters instead of 'arguments'  prefer-rest-params
+  15:51  error  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  28:36  error  Use the rest parameters instead of 'arguments'  prefer-rest-params
+  28:49  error  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+
+C:\Users\antho\.gemini\antigravity-ide\scratch\eprajadelivery01-del\instant-hub-343007e1\src\pages\marketplace\Addresses.tsx
+   24:42  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   26:42  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   83:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  100:27  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\antho\.gemini\antigravity-ide\scratch\eprajadelivery01-del\instant-hub-343007e1\src\pages\marketplace\Cart.tsx
+   15:9   error    Unexpected any. Specify a different type                                                                                  @typescript-eslint/no-explicit-any
+   19:13  error    Unexpected any. Specify a different type                                                                                  @typescript-eslint/no-explicit-any
+   60:41  error    Unexpected any. Specify a different type                                                                                  @typescript-eslint/no-explicit-any
+  144:11  error    'query' is never reassigned. Use 'const' instead                                                                          prefer-const
+  160:6   warning  React Hook useEffect has missing dependencies: 'company' and 'items'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  192:42  error    Unexpected any. Specify a different type                                                                                  @typescript-eslint/no-explicit-any
+
+C:\Users\antho\.gemini\antigravity-ide\scratch\eprajadelivery01-del\instant-hub-343007e1\src\pages\marketplace\Checkout.tsx
+   82:33  error    Unexpected any. Specify a different type                                                                       @typescript-eslint/no-explicit-any
+   86:94  error    Empty block statement                                                                                          no-empty
+   91:56  error    Unexpected any. Specify a different type                                                                       @typescript-eslint/no-explicit-any
+  134:6   warning  React Hook useEffect has a missing dependency: 'company.id'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  218:19  error    Unexpected any. Specify a different type                                                                       @typescript-eslint/no-explicit-any
+
+C:\Users\antho\.gemini\antigravity-ide\scratch\eprajadelivery01-del\instant-hub-343007e1\src\pages\marketplace\Coupons.tsx
+   28:44  error    Unexpected any. Specify a different type                                                                            @typescript-eslint/no-explicit-any
+   30:34  error    Unexpected any. Specify a different type                                                                            @typescript-eslint/no-explicit-any
+   41:6   warning  React Hook useEffect has a missing dependency: 'selectedAddress'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  120:37  error    Unexpected any. Specify a different type                                                                            @typescript-eslint/no-explicit-any
+
+C:\Users\antho\.gemini\antigravity-ide\scratch\eprajadelivery01-del\instant-hub-343007e1\src\pages\marketplace\Home.tsx
+   92:57  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  111:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\antho\.gemini\antigravity-ide\scratch\eprajadelivery01-del\instant-hub-343007e1\src\pages\marketplace\Login.tsx
+  25:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\antho\.gemini\antigravity-ide\scratch\eprajadelivery01-del\instant-hub-343007e1\src\pages\marketplace\OrderDetail.tsx
+   74:63  error    Unexpected any. Specify a different type                                                                  @typescript-eslint/no-explicit-any
+   74:78  error    Unexpected any. Specify a different type                                                                  @typescript-eslint/no-explicit-any
+   79:6   warning  React Hook useEffect has a missing dependency: 'order'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  249:31  error    Unexpected any. Specify a different type                                                                  @typescript-eslint/no-explicit-any
+  249:81  error    Unexpected any. Specify a different type                                                                  @typescript-eslint/no-explicit-any
+  252:31  error    Unexpected any. Specify a different type                                                                  @typescript-eslint/no-explicit-any
+  252:74  error    Unexpected any. Specify a different type                                                                  @typescript-eslint/no-explicit-any
+  288:67  error    Unexpected any. Specify a different type                                                                  @typescript-eslint/no-explicit-any
+  288:98  error    Unexpected any. Specify a different type                                                                  @typescript-eslint/no-explicit-any
+  289:57  error    Unexpected any. Specify a different type                                                                  @typescript-eslint/no-explicit-any
+
+C:\Users\antho\.gemini\antigravity-ide\scratch\eprajadelivery01-del\instant-hub-343007e1\src\pages\marketplace\Orders.tsx
+  109:36  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  207:60  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\antho\.gemini\antigravity-ide\scratch\eprajadelivery01-del\instant-hub-343007e1\src\pages\marketplace\Profile.tsx
+    1:1   error    Do not use "@ts-nocheck" because it alters compilation errors                                                                        @typescript-eslint/ban-ts-comment
+   52:40  error    Unexpected any. Specify a different type                                                                                             @typescript-eslint/no-explicit-any
+   55:42  error    Unexpected any. Specify a different type                                                                                             @typescript-eslint/no-explicit-any
+   67:6   warning  React Hook useEffect has missing dependencies: 'fetchCoupons' and 'fetchOrders'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  163:19  error    Unexpected any. Specify a different type                                                                                             @typescript-eslint/no-explicit-any
+  402:28  error    Unexpected any. Specify a different type                                                                                             @typescript-eslint/no-explicit-any
+
+C:\Users\antho\.gemini\antigravity-ide\scratch\eprajadelivery01-del\instant-hub-343007e1\src\pages\marketplace\Search.tsx
+  16:42  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\antho\.gemini\antigravity-ide\scratch\eprajadelivery01-del\instant-hub-343007e1\src\pages\marketplace\Signup.tsx
+  33:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\antho\.gemini\antigravity-ide\scratch\eprajadelivery01-del\instant-hub-343007e1\src\pages\marketplace\StoreDetail.tsx
+  108:108  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  192:37   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  200:42   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  318:80   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  318:119  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\antho\.gemini\antigravity-ide\scratch\eprajadelivery01-del\instant-hub-343007e1\src\services\drivers.ts
+  12:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\antho\.gemini\antigravity-ide\scratch\eprajadelivery01-del\instant-hub-343007e1\src\services\logger.ts
+  7:36  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\antho\.gemini\antigravity-ide\scratch\eprajadelivery01-del\instant-hub-343007e1\src\types\database.ts
+   34:18  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   91:13  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  161:13  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\antho\.gemini\antigravity-ide\scratch\eprajadelivery01-del\instant-hub-343007e1\src\utils\freight.ts
+   40:39  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   78:13  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  130:17  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\antho\.gemini\antigravity-ide\scratch\eprajadelivery01-del\instant-hub-343007e1\supabase\functions\create-order\index.ts
+   19:13  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   47:23  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  100:31  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  101:34  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  102:28  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  103:82  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  111:72  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  191:22  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  215:47  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  275:38  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  276:39  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  325:22  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  337:32  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  416:30  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  423:30  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  430:25  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\antho\.gemini\antigravity-ide\scratch\eprajadelivery01-del\instant-hub-343007e1\tailwind.config.ts
+  108:13  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+C:\Users\antho\.gemini\antigravity-ide\scratch\eprajadelivery01-del\instant-hub-343007e1\test.js
+  2:1  error  Parsing error: Unexpected token
+
+C:\Users\antho\.gemini\antigravity-ide\scratch\eprajadelivery01-del\instant-hub-343007e1\test_buckets.cjs
+  1:1  error  Parsing error: Unexpected character '🚨'
+
+✖ 125 problems (99 errors, 26 warnings)
+  1 error and 2 warnings potentially fixable with the `--fix` option.
+

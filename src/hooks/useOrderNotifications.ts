@@ -45,16 +45,18 @@ export function useOrderNotifications() {
     subscribedRef.current = true;
 
     const channel = supabase
-      .channel('order-notifications')
+      .channel(`order-notifications-${user.id}`)
       .on(
         'postgres_changes',
         {
           event: 'UPDATE',
           schema: 'public',
           table: 'orders',
-          filter: `customer_id=eq.${user.id}`,
         },
         (payload) => {
+          const order = payload.new as any;
+          if (order.customer_id !== user.id && order.user_id !== user.id) return;
+          
           const newStatus = payload.new.status as string;
           const oldStatus = payload.old?.status as string | undefined;
 
