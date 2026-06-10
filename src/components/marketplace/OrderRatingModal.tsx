@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { MediaImage } from '@/components/shared/MediaImage';
 
 interface PendingReview {
   id: string;
@@ -155,53 +156,71 @@ export function OrderRatingModal() {
     }
   };
 
-  if (loading || !pendingReview) return null;
+  if (loading) return null;
 
   return (
     <AnimatePresence>
-      <motion.div 
-        initial={{ opacity: 0, y: -50 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -50 }}
-        className="fixed inset-x-4 top-4 z-[100] sm:max-w-md sm:mx-auto"
-      >
-        <div className="relative overflow-hidden rounded-[32px] bg-white p-6 shadow-2xl border border-black/5">
+      {pendingReview && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-0">
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => setPendingReview(null)}
+          />
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            className="relative w-full max-w-md overflow-hidden rounded-[32px] bg-background p-8 shadow-2xl border border-border/50"
+          >
+          {/* Fancy Background Gradient */}
+          <div className="absolute inset-x-0 -top-24 -z-10 h-48 bg-primary/10 blur-[80px]" />
+
           <button 
             onClick={() => setPendingReview(null)}
-            className="absolute right-4 top-4 h-8 w-8 flex items-center justify-center rounded-full bg-secondary/50 text-muted-foreground hover:text-foreground transition-colors"
+            className="absolute right-4 top-4 h-8 w-8 flex items-center justify-center rounded-full bg-secondary/80 text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors z-20"
           >
             <X className="h-4 w-4" />
           </button>
 
-          <div className="flex flex-col items-center text-center space-y-6 py-2">
+          <div className="flex flex-col items-center text-center space-y-6 py-2 relative z-10">
             {/* Store Logo */}
-            <div className="relative">
-              <div className="h-20 w-20 rounded-full border-4 border-white shadow-lg overflow-hidden bg-muted">
-                <img src={pendingReview.company_logo} alt={pendingReview.company_name} className="h-full w-full object-cover" />
+            <div className="relative mt-2">
+              <div className="h-24 w-24 rounded-[28px] border-4 border-background shadow-xl overflow-hidden bg-secondary">
+                <MediaImage 
+                  src={pendingReview.company_logo} 
+                  alt={pendingReview.company_name} 
+                  className="h-full w-full object-cover" 
+                  fallback={<div className="flex h-full w-full items-center justify-center text-2xl">🍔</div>}
+                />
               </div>
-              <div className="absolute -bottom-1 -right-1 h-7 w-7 rounded-full bg-primary flex items-center justify-center border-2 border-white shadow-sm">
-                <Check className="h-3.5 w-3.5 text-white" />
+              <div className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full bg-primary flex items-center justify-center border-4 border-background shadow-sm">
+                <Star className="h-3.5 w-3.5 text-primary-foreground fill-current" />
               </div>
             </div>
 
             {/* Info */}
-            <div className="space-y-1">
-              <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">
+            <div className="space-y-2">
+              <p className="text-[11px] font-bold text-primary uppercase tracking-widest">
                 {format(new Date(pendingReview.created_at), "eeee, 'às' HH:mm", { locale: ptBR })}
               </p>
-              <h3 className="text-xl font-black leading-tight text-foreground px-4">
+              <h3 className="text-2xl font-black leading-tight text-foreground px-2">
                 {step === 'store' 
-                  ? `O serviço da ${pendingReview.company_name} merece quantas estrelas?`
-                  : `Como foi a entrega do(a) ${pendingReview.driver_name || 'Entregador'}?`
+                  ? `Como foi a sua experiência com a ${pendingReview.company_name}?`
+                  : `Como foi a entrega feita por ${pendingReview.driver_name || 'Entregador'}?`
                 }
               </h3>
-              <p className="text-xs text-muted-foreground font-medium">
-                Avalie como foi pedir na loja e depois a entrega
+              <p className="text-sm text-muted-foreground font-medium">
+                {step === 'store' 
+                  ? 'Avalie a qualidade do pedido e o estabelecimento' 
+                  : 'Avalie o tempo e a cordialidade do entregador'}
               </p>
             </div>
 
             {/* Stars */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center justify-center gap-1 sm:gap-2 w-full pt-4 pb-2">
               {[1, 2, 3, 4, 5].map((val) => {
                 const active = step === 'store' ? val <= storeRating : val <= driverRating;
                 return (
@@ -209,14 +228,14 @@ export function OrderRatingModal() {
                     key={val} 
                     disabled={submitting}
                     onClick={() => handleRating(val)}
-                    className="group relative transition-transform active:scale-90"
+                    className="group relative transition-transform active:scale-90 p-1 sm:p-2"
                   >
                     <Star 
                       className={cn(
-                        "h-10 w-10 transition-all duration-300",
+                        "h-12 w-12 transition-all duration-300",
                         active 
-                          ? "fill-warning text-warning scale-110" 
-                          : "text-muted-foreground/20 group-hover:text-muted-foreground/40"
+                          ? "fill-warning text-warning scale-110 drop-shadow-md" 
+                          : "text-muted-foreground/20 fill-muted-foreground/10 group-hover:text-muted-foreground/40 group-hover:fill-muted-foreground/20"
                       )} 
                     />
                   </button>
@@ -225,19 +244,21 @@ export function OrderRatingModal() {
             </div>
 
             {/* Labels */}
-            <div className="flex w-full justify-between px-6">
-              <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Não curti</span>
-              <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Excelente</span>
+            <div className="flex w-full justify-between px-4">
+              <span className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground/60">Péssimo</span>
+              <span className="text-[11px] font-bold uppercase tracking-widest text-warning">Perfeito</span>
             </div>
           </div>
 
           {submitting && (
-            <div className="absolute inset-0 bg-white/60 backdrop-blur-sm flex items-center justify-center">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex flex-col gap-3 items-center justify-center z-50">
+              <Loader2 className="h-10 w-10 animate-spin text-primary" />
+              <p className="text-sm font-bold text-foreground">Enviando avaliação...</p>
             </div>
           )}
-        </div>
-      </motion.div>
+        </motion.div>
+      </div>
+      )}
     </AnimatePresence>
   );
 }
