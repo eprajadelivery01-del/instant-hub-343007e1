@@ -86,18 +86,20 @@ export function OrderRatingModal() {
       const delivery = lastOrder.deliveries?.[0] as any;
       
       let logoUrl = '';
-      try {
-        const parsed = JSON.parse(company.logo_url);
-        logoUrl = parsed.logo || company.logo_url;
-      } catch {
-        logoUrl = company.logo_url;
+      if (company?.logo_url) {
+        try {
+          const parsed = JSON.parse(company.logo_url);
+          logoUrl = parsed.logo || company.logo_url;
+        } catch {
+          logoUrl = company.logo_url;
+        }
       }
 
       setPendingReview({
         id: lastOrder.id,
         created_at: lastOrder.created_at,
         company_id: lastOrder.company_id,
-        company_name: company.name,
+        company_name: company?.name || 'Restaurante',
         company_logo: logoUrl,
         driver_id: delivery?.driver_id,
         driver_name: delivery?.delivery_drivers?.full_name,
