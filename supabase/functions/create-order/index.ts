@@ -117,6 +117,19 @@ Deno.serve(async (req) => {
     return fail(400, 'create_order.bad_json', 'Invalid JSON body.');
   }
 
+  // --- ANTI-SPAM / RATE LIMITING ---
+  // Bloqueia a criação de mais de 2 pedidos por minuto pelo mesmo usuário
+  const { count: recentOrdersCount } = await adminClient
+    .from('orders')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', user.id)
+    .gt('created_at', new Date(Date.now() - 60000).toISOString());
+
+  if (recentOrdersCount !== null && recentOrdersCount >= 2) {
+    return fail(429, 'create_order.rate_limit', 'Você está fazendo pedidos muito rápido. Por favor, aguarde alguns instantes.');
+  }
+  // ---------------------------------
+
   if (!body || !Array.isArray(body.items) || body.items.length === 0) {
     return fail(400, 'create_order.validation', 'items is required and must be non-empty.');
   }

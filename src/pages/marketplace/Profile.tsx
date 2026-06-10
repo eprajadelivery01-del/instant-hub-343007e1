@@ -503,7 +503,15 @@ export default function Profile() {
                 </AlertDialogHeader>
                 <AlertDialogFooter className="flex-col gap-3 mt-6">
                   <AlertDialogAction
-                    onClick={async () => { await supabase.from('profiles').delete().eq('id', user.id); await signOut(); navigate('/marketplace/login'); }}
+                    onClick={async () => {
+                      const { error } = await supabase.rpc('delete_my_account');
+                      if (error) {
+                        toast.error('Erro ao excluir conta: ' + error.message);
+                      } else {
+                        await signOut();
+                        navigate('/marketplace/login');
+                      }
+                    }}
                     className="bg-destructive hover:bg-destructive/90 h-14 rounded-2xl text-white font-bold"
                   >
                     Sim, excluir definitivamente
