@@ -82,17 +82,23 @@ export function OrderRatingModal() {
       }
 
       // 3. Prepare review data
-      const company = lastOrder.companies as any;
-      const delivery = lastOrder.deliveries?.[0] as any;
+      // Handle array or object returns safely
+      const companyRaw = Array.isArray(lastOrder.companies) ? lastOrder.companies[0] : lastOrder.companies;
+      const company = companyRaw as any;
+      
+      const deliveryRaw = Array.isArray(lastOrder.deliveries) ? lastOrder.deliveries[0] : lastOrder.deliveries;
+      const delivery = deliveryRaw as any;
       
       let logoUrl = '';
-      if (company?.logo_url) {
+      if (company && typeof company.logo_url === 'string' && company.logo_url !== 'null') {
         try {
           const parsed = JSON.parse(company.logo_url);
-          logoUrl = parsed.logo || company.logo_url;
+          logoUrl = parsed?.logo || parsed?.logo_url || company.logo_url;
         } catch {
           logoUrl = company.logo_url;
         }
+      } else if (company?.logo_url && company.logo_url !== 'null') {
+        logoUrl = company.logo_url;
       }
 
       setPendingReview({
