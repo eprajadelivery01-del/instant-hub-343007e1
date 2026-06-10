@@ -44,20 +44,6 @@ const categories = [
   { icon: Scissors, label: 'Barbantes e Tecidos', value: 'barbantes_tecidos' },
 ];
 
-const PROFESSIONAL_NAMES: Record<string, string> = {
-  'Sushi Master': 'Harumi Sushi',
-  'Ice Cream Heaven': 'Gelateria Central',
-  'Sweet Dreams': 'Doceria Sonho Meu',
-  'Pizza Hut Fake': 'Pizzaria Bella Massa',
-  'Burger King Fake': 'Burguer do Chef',
-  'Taco Bell Fake': 'Cantina Mexicana',
-  'Steak House': 'Grelhados & Cia',
-  'Veggie Delight': 'Horta & Sabor',
-  'Fruit Fresh': 'Frutaria Tropical',
-  'Pasta Palace': 'Cantina Di Roma',
-  'Lanchonete Teste': 'Lanchonete da Praça',
-};
-
 type MarketplaceCompany = Company & { products: Product[]; rating: number; isPremium?: boolean };
 
 export default function Home() {
@@ -78,11 +64,6 @@ export default function Home() {
       const { data } = await supabase.from('companies').select('id, name, description, category, rating, is_open, active, is_active, delivery_fee, delivery_regions_pricing, show_in_marketplace, city, state, banner_url, cover_url, logo_url, business_hours, prep_time_min, prep_time_max, created_at, products(*)');
       const processed = (data || []).filter(c => c.show_in_marketplace !== false).map((company, index) => {
         let name = company.name || "Loja Parceira";
-        if (PROFESSIONAL_NAMES[name]) {
-          name = PROFESSIONAL_NAMES[name];
-        } else if (name.includes && name.includes('Fake')) {
-          name = name.replace('Fake', '').trim();
-        }
 
         return {
           ...company,
