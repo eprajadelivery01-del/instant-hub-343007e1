@@ -1,0 +1,1 @@
+const { createClient } = require('@supabase/supabase-js'); const supabase = createClient(process.env.VITE_SUPABASE_URL, process.env.VITE_SUPABASE_ANON_KEY); supabase.from('orders').select('id, created_at, company_id, companies ( name, logo_url ), deliveries ( driver_id, delivery_drivers ( id, full_name ) )').limit(1).then(res = 

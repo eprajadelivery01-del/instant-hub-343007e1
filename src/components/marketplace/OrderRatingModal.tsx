@@ -61,7 +61,7 @@ export function OrderRatingModal() {
           companies ( name, logo_url ),
           deliveries ( driver_id, delivery_drivers ( id, full_name ) )
         `)
-        .eq('customer_id', user.id)
+        .or(`customer_id.eq.${user.id},user_id.eq.${user.id}`)
         .in('status', ['delivered', 'completed'])
         .order('created_at', { ascending: false })
         .limit(1)
