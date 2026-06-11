@@ -78,16 +78,18 @@ export default function Checkout() {
       try {
         const { data: dbCompany } = await supabase.from('companies').select('delivery_fee, delivery_regions_pricing').eq('id', company.id).single();
         
-        // Usar o preço por região se o endereço tiver region_id
-        const addrAny = addr as any;
-        if (addrAny.region_id && dbCompany?.delivery_regions_pricing) {
-           let pricingArray = [];
+        let pricingArray: any[] = [];
+        if (dbCompany?.delivery_regions_pricing) {
            if (typeof dbCompany.delivery_regions_pricing === 'string') {
              try { pricingArray = JSON.parse(dbCompany.delivery_regions_pricing); } catch(e) {}
            } else if (Array.isArray(dbCompany.delivery_regions_pricing)) {
              pricingArray = dbCompany.delivery_regions_pricing;
            }
+        }
 
+        // Usar o preço por região se o endereço tiver region_id
+        const addrAny = addr as any;
+        if (addrAny.region_id && pricingArray.length > 0) {
            const regionPricing = pricingArray.find((p: any) => p.region_id === addrAny.region_id);
            if (regionPricing && regionPricing.customer_price !== undefined && regionPricing.customer_price !== "") {
              setDeliveryFee(Number(regionPricing.customer_price));
@@ -101,24 +103,39 @@ export default function Checkout() {
            }
         }
 
-        // Fallback antigo
-        if (dbCompany?.delivery_fee !== null && dbCompany?.delivery_fee !== undefined) {
-          setDeliveryFee(dbCompany.delivery_fee);
-          return;
-        }
-
-        if (addr.latitude && addr.longitude) {
-          const result = await calculateDeliveryFee(addr.latitude, addr.longitude, supabase);
+        // Se o endereço NÃO tiver region_id, mas tiver lat/long E a loja tiver preços por região, calcula via polígono
+        if (addr.latitude && addr.longitude && pricingArray.length > 0) {
+          const result = await calculateDeliveryFee(addr.latitude, addr.longitude, supabase, pricingArray);
 
           if (result.isOutOfRange) {
             setDeliveryFee(null);
             setUnavailable(true);
-            toast.warning('Este endereço está fora da área de entrega.');
+            toast.warning('Este endereço está fora da área de entrega do lojista.');
+            return;
           } else if (result.fee !== null) {
             setDeliveryFee(result.fee);
-          } else {
-            setDeliveryFee(0);
+            return;
           }
+        }
+
+        // Fallback antigo: Se não usar regiões, usa a taxa fixa
+        if (dbCompany?.delivery_fee !== null && dbCompany?.delivery_fee !== undefined && pricingArray.length === 0) {
+          setDeliveryFee(dbCompany.delivery_fee);
+          return;
+        }
+
+        // Último caso: Tem lat/long mas não tem pricingArray nem taxa fixa (ou fallback da lógica antiga sem pricing)
+        if (addr.latitude && addr.longitude) {
+           const result = await calculateDeliveryFee(addr.latitude, addr.longitude, supabase, pricingArray);
+           if (result.isOutOfRange) {
+             setDeliveryFee(null);
+             setUnavailable(true);
+             toast.warning('Este endereço está fora da área de entrega.');
+           } else if (result.fee !== null) {
+             setDeliveryFee(result.fee);
+           } else {
+             setDeliveryFee(0);
+           }
         } else {
           // Sem lat/lng e sem region_id
           setDeliveryFee(null);
