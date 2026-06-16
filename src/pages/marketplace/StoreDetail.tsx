@@ -52,7 +52,8 @@ export default function StoreDetail() {
     'Shopping': 'Shopping',
     'Outros': 'Outros',
     'Pizza': 'Pizza',
-    'Lanches': 'Lanches'
+    'Lanches': 'Lanches',
+    'Destaques': '🌟 Destaques'
   };
 
   const formatCategoryName = (cat: string) => categoryDisplayNames[cat] || cat;
@@ -132,7 +133,11 @@ export default function StoreDetail() {
     checkDeliveryFee();
   }, [user, company]);
 
-  const categories = useMemo(() => [...new Set(products.map((product) => product.category))], [products]);
+  const categories = useMemo(() => {
+    const cats = [...new Set(products.map((product) => product.category))];
+    const hasFeatured = products.some(p => p.is_featured);
+    return hasFeatured ? ['Destaques', ...cats] : cats;
+  }, [products]);
   const filteredProducts = useMemo(
     () => products.filter((product) =>
       (product.name ?? '').toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -421,7 +426,9 @@ export default function StoreDetail() {
               </div>
             )}
             {categories.map((category) => {
-            const categoryProducts = filteredProducts.filter((product) => product.category === category);
+            const categoryProducts = category === 'Destaques' 
+              ? filteredProducts.filter(p => p.is_featured)
+              : filteredProducts.filter((product) => product.category === category);
             if (categoryProducts.length === 0 && searchQuery) return null;
 
             return (
