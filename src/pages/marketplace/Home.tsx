@@ -26,8 +26,8 @@ const categories = [
   { icon: ShoppingCart, label: 'Mercado', value: 'mercado' },
   { icon: Pill, label: 'Farmácia', value: 'farmacia' },
   { icon: UtensilsCrossed, label: 'Restaurante', value: 'restaurante' },
-  { icon: Beer, label: 'Petiscaria', value: 'petiscaria' },
-  { icon: Wine, label: 'Bebidas', value: 'bebidas' },
+  { icon: Beef, label: 'Petiscaria', value: 'petiscaria' },
+  { icon: Beer, label: 'Bebidas', value: 'bebidas' },
   { icon: Store, label: 'Shopping', value: 'shopping' },
 ];
 

@@ -79,8 +79,8 @@ export function MarketplaceMenu({ children, onSelectCategory, onOpenPartnership 
     { icon: ShoppingBag, label: "Mercado", color: "bg-sunset", value: "mercado" },
     { icon: Pill, label: "Farmácia", color: "bg-sunset", value: "farmacia" },
     { icon: UtensilsCrossed, label: "Restaurante", color: "bg-sunset", value: "restaurante" },
-    { icon: Beer, label: "Petiscaria", color: "bg-sunset", value: "petiscaria" },
-    { icon: Wine, label: "Bebidas", color: "bg-sunset", value: "bebidas" },
+    { icon: Beef, label: "Petiscaria", color: "bg-sunset", value: "petiscaria" },
+    { icon: Beer, label: "Bebidas", color: "bg-sunset", value: "bebidas" },
     { icon: Store, label: "Shopping", color: "bg-sunset", value: "shopping" },
   ];
 
