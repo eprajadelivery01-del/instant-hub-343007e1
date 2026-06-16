@@ -14,7 +14,7 @@ export function StoreTabCard({ company }: StoreTabCardProps) {
   const bannerImage = getCompanyBannerImage(company);
   const logoImage = getCompanyLogoImage(company);
   const featuredProducts = (company.products || []).slice(0, 3);
-  const rating = Number(company.rating || 4.8);
+  const rating = Number(company.rating || 5.0);
   const subtitle = company.category || company.description || 'Gastronomia de alto nível';
   const prepMin = company.prep_time_min ?? 25;
   const prepMax = company.prep_time_max ?? 45;

@@ -310,8 +310,8 @@ export default function StoreDetail() {
           <div className="flex flex-wrap items-center gap-3 mt-6">
             <div className="flex items-center gap-1.5 rounded-xl bg-orange-500/10 dark:bg-orange-500/20 px-3 py-1.5">
               <Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />
-              <span className="text-xs font-bold text-amber-600 dark:text-amber-500">4.8</span>
-              <span className="text-[10px] text-amber-600/70 dark:text-amber-500/70 font-medium">(2.4k)</span>
+              <span className="text-xs font-bold text-amber-600 dark:text-amber-500">{Number(company.rating || 5.0).toFixed(1)}</span>
+              <span className="text-[10px] text-amber-600/70 dark:text-amber-500/70 font-medium">({(company as any).rating_count || 0})</span>
             </div>
             <div className="flex items-center gap-1.5 rounded-xl bg-secondary/60 px-3 py-1.5">
               <Clock className="h-3.5 w-3.5 text-muted-foreground" />
