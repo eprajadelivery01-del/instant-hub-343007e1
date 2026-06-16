@@ -53,7 +53,7 @@ export default function StoreDetail() {
     'Outros': 'Outros',
     'Pizza': 'Pizza',
     'Lanches': 'Lanches',
-    'Destaques': '🌟 Destaques'
+    'Destaques': 'Destaques'
   };
 
   const formatCategoryName = (cat: string) => categoryDisplayNames[cat] || cat;
