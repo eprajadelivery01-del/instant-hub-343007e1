@@ -76,27 +76,12 @@ export function MarketplaceMenu({ children, onSelectCategory, onOpenPartnership 
 
   const categories = [
     { icon: Utensils, label: "Todos", color: "bg-sunset", value: "" },
-    { icon: Pizza, label: "Pizza", color: "bg-sunset", value: "pizza" },
-    { icon: Sandwich, label: "Lanches", color: "bg-sunset", value: "lanches" },
-    { icon: UtensilsCrossed, label: "Batata recheada", color: "bg-sunset", value: "batata recheada" },
-    { icon: Package, label: "Combo", color: "bg-sunset", value: "combo" },
-    { icon: Beer, label: "Caldos", color: "bg-sunset", value: "caldos" },
-    { icon: ShoppingBag, label: "Mercados", color: "bg-sunset", value: "mercado" },
-    { icon: Pill, label: "Farmácias", color: "bg-sunset", value: "farmacia" },
-    { icon: Beer, label: "Bebidas", color: "bg-sunset", value: "bebidas" },
-    { icon: Croissant, label: "Padarias", color: "bg-sunset", value: "padaria" },
-    { icon: Flame, label: "Hambúrguer Artesanal", color: "bg-sunset", value: "hamburguer" },
-    { icon: Beef, label: "Assados", color: "bg-sunset", value: "assados" },
-    { icon: Leaf, label: "Acompanhamentos", color: "bg-sunset", value: "acompanhamentos" },
-    { icon: Package, label: "Marmita", color: "bg-sunset", value: "marmita" },
-    { icon: IceCream, label: "Sorvetes e Picolés", color: "bg-sunset", value: "sorvetes" },
-    { icon: Wine, label: "Bebidas Alcoólicas", color: "bg-sunset", value: "alcoolicas" },
-    { icon: UtensilsCrossed, label: "Porções", color: "bg-sunset", value: "porcoes" },
-    { icon: Sparkles, label: "Perfumaria", color: "bg-sunset", value: "perfumaria" },
-    { icon: Cake, label: "Doces", color: "bg-sunset", value: "doces" },
-    { icon: Dog, label: "Pet Shops", color: "bg-sunset", value: "pet" },
+    { icon: ShoppingBag, label: "Mercado", color: "bg-sunset", value: "mercado" },
+    { icon: Pill, label: "Farmácia", color: "bg-sunset", value: "farmacia" },
+    { icon: UtensilsCrossed, label: "Restaurante", color: "bg-sunset", value: "restaurante" },
+    { icon: Beer, label: "Petiscaria", color: "bg-sunset", value: "petiscaria" },
+    { icon: Wine, label: "Bebidas", color: "bg-sunset", value: "bebidas" },
     { icon: Store, label: "Shopping", color: "bg-sunset", value: "shopping" },
-    { icon: Scissors, label: "Barbantes e Tecidos", color: "bg-sunset", value: "barbantes_tecidos" },
   ];
 
   const highlights = [

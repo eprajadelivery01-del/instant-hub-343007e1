@@ -23,28 +23,12 @@ import { ThemeToggle } from '@/components/shared/ThemeToggle';
 
 const categories = [
   { icon: Utensils, label: 'Todos', value: '' },
-  { icon: Pizza, label: 'Pizza', value: 'pizza' },
-  { icon: Sandwich, label: 'Lanches', value: 'lanches' },
-  { icon: UtensilsCrossed, label: 'Batata recheada', value: 'batata recheada' },
-  { icon: Package, label: 'Combo', value: 'combo' },
-  { icon: Coffee, label: 'Caldos', value: 'caldos' },
   { icon: ShoppingCart, label: 'Mercado', value: 'mercado' },
   { icon: Pill, label: 'Farmácia', value: 'farmacia' },
-  { icon: Beer, label: 'Bebidas', value: 'bebidas' },
-  { icon: Croissant, label: 'Padaria', value: 'padaria' },
-  { icon: Flame, label: 'Hambúrguer Artesanal', value: 'hamburguer' },
-  { icon: Beef, label: 'Assados', value: 'assados' },
-  { icon: Leaf, label: 'Acompanhamentos', value: 'acompanhamentos' },
-  { icon: Package, label: 'Marmita', value: 'marmita' },
-  { icon: IceCream, label: 'Sorvetes e Picolés', value: 'sorvetes' },
-  { icon: Wine, label: 'Bebidas Alcoólicas', value: 'alcoolicas' },
-  { icon: GlassWater, label: 'Destilados', value: 'destilados' },
-  { icon: UtensilsCrossed, label: 'Porções', value: 'porcoes' },
-  { icon: Sparkles, label: 'Perfumaria', value: 'perfumaria' },
-  { icon: Cake, label: 'Doces', value: 'doces' },
-  { icon: Dog, label: 'Pet Shop', value: 'pet' },
+  { icon: UtensilsCrossed, label: 'Restaurante', value: 'restaurante' },
+  { icon: Beer, label: 'Petiscaria', value: 'petiscaria' },
+  { icon: Wine, label: 'Bebidas', value: 'bebidas' },
   { icon: Store, label: 'Shopping', value: 'shopping' },
-  { icon: Scissors, label: 'Barbantes e Tecidos', value: 'barbantes_tecidos' },
 ];
 
 type MarketplaceCompany = Company & { products: Product[]; rating: number; isPremium?: boolean };

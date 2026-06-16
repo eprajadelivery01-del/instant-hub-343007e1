@@ -137,7 +137,7 @@ export default function Search() {
             <div>
               <p className="text-xs font-medium text-muted-foreground mb-3 px-1">Sugestões</p>
               <div className="flex flex-wrap gap-2">
-                {['Hambúrguer', 'Pizza', 'Saudável', 'Batata recheada', 'Combo', 'Caldos', 'Japonesa', 'Bebidas', 'Doces'].map(tag => (
+                {['Mercado', 'Farmácia', 'Restaurante', 'Petiscaria', 'Bebidas', 'Shopping'].map(tag => (
                   <button
                     key={tag}
                     onClick={() => setSearch(tag)}
