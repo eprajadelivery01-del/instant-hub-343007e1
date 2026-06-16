@@ -434,14 +434,14 @@ export default function StoreDetail() {
             return (
               <div key={category} id={category} className={cn(
                 "animate-in fade-in slide-in-from-bottom-4 duration-700",
-                category === 'Destaques' ? "bg-primary/5 -mx-2 px-2 sm:-mx-4 sm:px-4 py-6 rounded-3xl mt-4 mb-6 border border-primary/10" : "first:pt-6 pt-10 mb-6"
+                category === 'Destaques' ? "bg-orange-50 px-4 sm:px-6 py-6 rounded-[2rem] mt-6 mb-8 border border-orange-200 shadow-inner" : "first:pt-6 pt-10 mb-6"
               )}>
-                <div className="mb-4 px-2">
+                <div className="mb-6 px-2">
                   <h3 className={cn(
-                    "text-lg font-bold tracking-tight",
-                    category === 'Destaques' ? "text-primary flex items-center gap-2" : "text-foreground"
+                    "text-xl font-black tracking-tight",
+                    category === 'Destaques' ? "text-orange-600 flex items-center gap-2" : "text-foreground"
                   )}>
-                    {category === 'Destaques' && <Flame className="h-5 w-5 fill-primary text-primary" />}
+                    {category === 'Destaques' && <Flame className="h-6 w-6 fill-orange-500 text-orange-500" />}
                     {formatCategoryName(category)}
                   </h3>
                 </div>
@@ -455,7 +455,7 @@ export default function StoreDetail() {
                         className={cn(
                           "group flex cursor-pointer gap-4 p-4 transition-all active:scale-[0.99]",
                           category === 'Destaques' 
-                            ? "bg-background border border-primary/20 shadow-sm shadow-primary/10 hover:border-primary/40 rounded-2xl"
+                            ? "bg-white border-2 border-orange-100/50 shadow-md hover:shadow-xl hover:border-orange-300 rounded-2xl relative"
                             : "bg-background hover:bg-secondary/20 rounded-xl"
                         )}
                         onClick={() => setSelectedProduct(product)}
