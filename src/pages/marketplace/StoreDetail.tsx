@@ -434,7 +434,7 @@ export default function StoreDetail() {
             return (
               <div key={category} id={category} className={cn(
                 "animate-in fade-in slide-in-from-bottom-4 duration-700",
-                category === 'Destaques' ? "bg-orange-50 px-4 sm:px-6 py-6 rounded-[2rem] mt-6 mb-8 border border-orange-200 shadow-inner" : "first:pt-6 pt-10 mb-6"
+                category === 'Destaques' ? "bg-orange-100 px-4 sm:px-6 py-6 rounded-[2rem] mt-6 mb-8 border-2 border-orange-200 shadow-inner" : "first:pt-6 pt-10 mb-6"
               )}>
                 <div className="mb-6 px-2">
                   <h3 className={cn(
