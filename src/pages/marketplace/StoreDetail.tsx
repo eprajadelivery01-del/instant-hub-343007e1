@@ -5,7 +5,7 @@ import { Company, Product } from '@/types/database';
 import { useCart } from '@/contexts/CartContext';
 import MarketplaceLayout from '@/components/marketplace/MarketplaceLayout';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Minus, Plus, Star, Clock, Store as StoreIcon, Share2, Utensils, Search, Info, Ticket, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Minus, Plus, Star, Clock, Store as StoreIcon, Share2, Utensils, Search, Info, Ticket, AlertCircle, Flame } from 'lucide-react';
 import { cn, isStoreOpenBySchedule } from '@/lib/utils';
 import { ProductDetailDialog } from '@/components/marketplace/ProductDetailDialog';
 import { MediaImage } from '@/components/shared/MediaImage';
