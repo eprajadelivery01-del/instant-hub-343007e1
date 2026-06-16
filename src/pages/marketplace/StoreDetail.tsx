@@ -432,9 +432,18 @@ export default function StoreDetail() {
             if (categoryProducts.length === 0 && searchQuery) return null;
 
             return (
-              <div key={category} id={category} className="animate-in fade-in slide-in-from-bottom-4 duration-700 first:pt-6 pt-10">
+              <div key={category} id={category} className={cn(
+                "animate-in fade-in slide-in-from-bottom-4 duration-700",
+                category === 'Destaques' ? "bg-primary/5 -mx-2 px-2 sm:-mx-4 sm:px-4 py-6 rounded-3xl mt-4 mb-6 border border-primary/10" : "first:pt-6 pt-10 mb-6"
+              )}>
                 <div className="mb-4 px-2">
-                  <h3 className="text-lg font-bold tracking-tight text-foreground">{formatCategoryName(category)}</h3>
+                  <h3 className={cn(
+                    "text-lg font-bold tracking-tight",
+                    category === 'Destaques' ? "text-primary flex items-center gap-2" : "text-foreground"
+                  )}>
+                    {category === 'Destaques' && <Flame className="h-5 w-5 fill-primary text-primary" />}
+                    {formatCategoryName(category)}
+                  </h3>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
@@ -443,7 +452,12 @@ export default function StoreDetail() {
                     return (
                         <div
                         key={product.id}
-                        className="group flex cursor-pointer gap-4 bg-background p-4 hover:bg-secondary/20 transition-all active:scale-[0.99]"
+                        className={cn(
+                          "group flex cursor-pointer gap-4 p-4 transition-all active:scale-[0.99]",
+                          category === 'Destaques' 
+                            ? "bg-background border border-primary/20 shadow-sm shadow-primary/10 hover:border-primary/40 rounded-2xl"
+                            : "bg-background hover:bg-secondary/20 rounded-xl"
+                        )}
                         onClick={() => setSelectedProduct(product)}
                       >
                         <div className="flex min-w-0 flex-1 flex-col justify-between py-0.5">
