@@ -241,7 +241,7 @@ export default function Home() {
                 )}
               >
                 <div className="flex items-center gap-3">
-                  <div className="premium-chip flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-2xl p-2">
+                  <div className="premium-chip flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-2xl p-0">
                     <MediaImage
                       src={getCompanyLogoImage(company)}
                       alt={`Logo da loja ${company.name}`}

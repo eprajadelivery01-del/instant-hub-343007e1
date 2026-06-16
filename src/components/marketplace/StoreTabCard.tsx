@@ -62,11 +62,11 @@ export function StoreTabCard({ company }: StoreTabCardProps) {
         {/* Store Info Over Banner - Standardized */}
         <div className="absolute inset-x-0 bottom-0 z-20 p-5">
           <div className="flex items-end gap-4">
-            <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white p-1.5 shadow-xl ring-2 ring-white/10">
+            <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white p-0 shadow-xl ring-2 ring-white/10">
               <MediaImage
                 src={logoImage}
                 alt={`Logo da loja ${company.name}`}
-                className="h-full w-full rounded-xl object-contain bg-white"
+                className="h-full w-full object-cover bg-white"
                 fallback={<StoreIcon className="h-7 w-7 text-muted-foreground" />}
               />
             </div>

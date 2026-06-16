@@ -286,11 +286,11 @@ export default function StoreDetail() {
             </div>
             
             <div className="relative shrink-0">
-              <div className="rounded-[24px] bg-background p-1.5 shadow-xl border border-border/50">
+              <div className="rounded-[24px] bg-background p-0 shadow-xl border border-border/50 overflow-hidden">
                 <MediaImage
                   src={companyLogo}
                   alt={`Logo da loja ${company.name}`}
-                  className="h-16 w-16 rounded-[18px] object-cover"
+                  className="h-16 w-16 object-cover"
                   fallback={
                     <div className="flex h-16 w-16 items-center justify-center rounded-[18px] bg-secondary">
                       <StoreIcon className="h-8 w-8 text-muted-foreground/40" />
