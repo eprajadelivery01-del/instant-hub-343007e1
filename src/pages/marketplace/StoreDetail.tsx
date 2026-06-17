@@ -14,6 +14,8 @@ import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { calculateDeliveryFee } from '@/utils/freight';
 import { Address } from '@/types/database';
+import { StoreCouponsSheet } from '@/components/marketplace/StoreCouponsSheet';
+import { useActiveCoupons } from '@/services/coupons';
 
 export default function StoreDetail() {
   const { id } = useParams<{ id: string }>();
@@ -30,6 +32,9 @@ export default function StoreDetail() {
   const [dynamicDeliveryFee, setDynamicDeliveryFee] = useState<number | null>(null);
   const [isOutOfRange, setIsOutOfRange] = useState(false);
   const [calculatingFee, setCalculatingFee] = useState(false);
+  const [isCouponsSheetOpen, setIsCouponsSheetOpen] = useState(false);
+  const { data: storeCoupons } = useActiveCoupons(id);
+  const hasCoupons = storeCoupons && storeCoupons.length > 0;
 
   const categoryDisplayNames: Record<string, string> = {
     'sorvetes': 'Sorvetes e Picolés',
@@ -329,10 +334,15 @@ export default function StoreDetail() {
           </div>
 
           <div className="mt-4 flex flex-wrap items-center gap-2">
-            <div className="flex items-center gap-1.5 rounded-lg bg-primary/10 px-2.5 py-1.5 text-[10px] font-bold text-primary border border-primary/20">
-              <Ticket className="h-3.5 w-3.5" />
-              Cupons disponíveis
-            </div>
+            {hasCoupons && (
+              <button 
+                onClick={() => setIsCouponsSheetOpen(true)}
+                className="flex items-center gap-1.5 rounded-lg bg-primary/10 px-2.5 py-1.5 text-[10px] font-bold text-primary border border-primary/20 hover:bg-primary/20 transition-colors active:scale-95"
+              >
+                <Ticket className="h-3.5 w-3.5" />
+                Cupons disponíveis
+              </button>
+            )}
             {isOutOfRange ? (
               <div className="flex items-center gap-1.5 rounded-lg bg-destructive/10 px-2.5 py-1.5 text-[10px] font-bold text-destructive border border-destructive/20">
                 <AlertCircle className="h-3 w-3" />
@@ -531,6 +541,14 @@ export default function StoreDetail() {
         }}
         initialQuantity={selectedProduct ? getItemQty(selectedProduct.id) : 1}
       />
+
+      {id && (
+        <StoreCouponsSheet
+          isOpen={isCouponsSheetOpen}
+          onOpenChange={setIsCouponsSheetOpen}
+          companyId={id}
+        />
+      )}
     </MarketplaceLayout>
   );
 }
