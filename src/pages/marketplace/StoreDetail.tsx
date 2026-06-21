@@ -444,7 +444,7 @@ export default function StoreDetail() {
             return (
               <div key={category} id={category} className={cn(
                 "animate-in fade-in slide-in-from-bottom-4 duration-700",
-                category === 'Destaques' ? "bg-orange-100 px-4 sm:px-6 py-6 rounded-[2rem] mt-6 mb-8 border-2 border-orange-200 shadow-inner" : "first:pt-6 pt-10 mb-6"
+                category === 'Destaques' ? "bg-orange-50 dark:bg-orange-950/20 px-4 sm:px-6 py-6 rounded-[2rem] mt-6 mb-8 border-2 border-orange-200 dark:border-orange-900/30 shadow-inner" : "first:pt-6 pt-10 mb-6"
               )}>
                 <div className="mb-6 px-2">
                   <h3 className={cn(
@@ -465,7 +465,7 @@ export default function StoreDetail() {
                         className={cn(
                           "group flex cursor-pointer gap-4 p-4 transition-all active:scale-[0.99]",
                           category === 'Destaques' 
-                            ? "bg-white border-2 border-orange-100/50 shadow-md hover:shadow-xl hover:border-orange-300 rounded-2xl relative"
+                            ? "bg-white dark:bg-card border-2 border-orange-100/50 dark:border-orange-900/50 shadow-md hover:shadow-xl hover:border-orange-300 dark:hover:border-orange-700 rounded-2xl relative"
                             : "bg-background hover:bg-secondary/20 rounded-xl"
                         )}
                         onClick={() => setSelectedProduct(product)}
