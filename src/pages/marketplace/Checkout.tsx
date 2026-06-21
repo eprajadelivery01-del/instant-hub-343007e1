@@ -215,7 +215,8 @@ export default function Checkout() {
         p_notes: requestBody.notes,
         p_needs_change: requestBody.needs_change,
         p_change_for: requestBody.change_for,
-        p_idempotency_key: requestBody.idempotency_key
+        p_idempotency_key: requestBody.idempotency_key,
+        p_delivery_fee: deliveryFee || 0
       });
 
       if (functionError) {
