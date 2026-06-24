@@ -11,6 +11,20 @@ let isReporting = false;
 
 export async function reportErrorToTelegram(payload: ErrorPayload, appName = "Marketplace Cliente") {
   if (isReporting) return;
+  
+  // Ignore specific harmless user-facing errors
+  const msg = payload.error_message?.toLowerCase() || "";
+  if (
+    msg.includes("corrida já foi aceita") || 
+    msg.includes("senha") || 
+    msg.includes("inválida") ||
+    msg.includes("credenciais") ||
+    msg.includes("offline") ||
+    msg.includes("não encontrada")
+  ) {
+    return;
+  }
+  
   isReporting = true;
 
   try {
