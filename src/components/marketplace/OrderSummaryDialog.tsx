@@ -112,9 +112,9 @@ export default function OrderSummaryDialog({ orderId, open, onOpenChange }: Prop
                           .replace('.', ',')}
                       </span>
                     </div>
-                    {item.notes && (
+                    {(item as any).notes && (
                       <span className="text-[10px] text-amber-600 bg-amber-50 dark:bg-amber-950/20 dark:text-amber-400 px-2 py-0.5 rounded border border-amber-200/50 dark:border-amber-900/30 self-start ml-5 font-medium">
-                        Obs: {item.notes}
+                        Obs: {(item as any).notes}
                       </span>
                     )}
                   </div>
