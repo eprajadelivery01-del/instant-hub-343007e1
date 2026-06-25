@@ -4,6 +4,8 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import { useOrderNotifications } from '@/hooks/useOrderNotifications';
+import { useMarketingNotifications } from '@/hooks/useMarketingNotifications';
+import { MarketingNotificationPopup } from './MarketingNotificationPopup';
 import { Home, Search, ShoppingBag, ClipboardList, User, Store } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
@@ -23,7 +25,9 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
   const { user } = useAuth();
   const { itemCount, company } = useCart();
 
+  // Hooks de notificação global
   useOrderNotifications();
+  const { activeNotification, clearNotification } = useMarketingNotifications();
 
   const [orderCount, setOrderCount] = useState(0);
 
@@ -201,6 +205,12 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
   return (
     <div className="app-shell min-h-screen flex flex-col font-sans text-foreground bg-slate-50/30">
       <OrderRatingModal />
+      
+      {/* Marketing Notification Popup */}
+      <MarketingNotificationPopup 
+        notification={activeNotification} 
+        onClose={clearNotification} 
+      />
       
       {/* Desktop Header */}
       {!hideNav && (
