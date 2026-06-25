@@ -50,6 +50,7 @@ export default function Checkout() {
   const [loadingAddresses, setLoadingAddresses] = useState(true);
   
   const [showReviewModal, setShowReviewModal] = useState(false);
+  const [fulfillmentMode, setFulfillmentMode] = useState<'delivery' | 'pickup'>('delivery');
 
   useEffect(() => {
     if (!user) return;
@@ -151,12 +152,14 @@ export default function Checkout() {
   }, [selectedAddress, addresses, company?.delivery_fee]);
 
   // Recalculate total manually because cartTotal might not update instantly when we are at Checkout
-  const finalTotal = Math.max(0, subtotal - discountAmount) + (deliveryFee || 0);
+  const finalTotal = Math.max(0, subtotal - discountAmount) + (fulfillmentMode === 'pickup' ? 0 : (deliveryFee || 0));
 
   const handleOpenReview = () => {
-    if (!selectedAddress) { toast.error('Selecione um endereço'); return; }
-    if (unavailable) { toast.error('Entrega não disponível'); return; }
-    if (loadingFee) { toast.error('Calculando frete, aguarde'); return; }
+    if (fulfillmentMode === 'delivery') {
+      if (!selectedAddress) { toast.error('Selecione um endereço'); return; }
+      if (unavailable) { toast.error('Entrega não disponível'); return; }
+      if (loadingFee) { toast.error('Calculando frete, aguarde'); return; }
+    }
     setShowReviewModal(true);
   };
 
@@ -197,10 +200,10 @@ export default function Checkout() {
           options: it.options || [],
         })),
         company_id: company.id,
-        address_id: selectedAddress,
+        address_id: fulfillmentMode === 'pickup' ? null : selectedAddress,
         payment_method: paymentMethod,
         coupon_code: appliedCoupon?.code ?? null,
-        notes: orderNotes,
+        notes: fulfillmentMode === 'pickup' ? `[RETIRADA NO LOCAL] ${orderNotes || ''}`.trim() : orderNotes,
         needs_change: paymentMethod === 'money' && needsChange,
         change_for: changeFor ? Number(changeFor) : null,
         idempotency_key: ik,
@@ -216,7 +219,7 @@ export default function Checkout() {
         p_needs_change: requestBody.needs_change,
         p_change_for: requestBody.change_for,
         p_idempotency_key: requestBody.idempotency_key,
-        p_delivery_fee: deliveryFee || 0
+        p_delivery_fee: fulfillmentMode === 'pickup' ? 0 : (deliveryFee || 0)
       });
 
       if (functionError) {
@@ -255,58 +258,85 @@ export default function Checkout() {
       </div>
 
       <div className="mx-auto max-w-lg px-0 py-4 pb-40">
-        {/* Endereço estilo iFood */}
+        {/* Fulfillment Mode Toggle */}
         <div className="px-4 mb-6">
-          <h3 className="text-base font-bold text-foreground mb-3">Entregar no endereço</h3>
-          {loadingAddresses ? (
-            <p className="text-sm text-muted-foreground">Carregando...</p>
-          ) : addresses.length === 0 ? (
-            <div className="text-center py-4 border border-border rounded-xl">
-              <p className="text-sm text-muted-foreground">Nenhum endereço cadastrado</p>
-              <Button size="sm" className="mt-2 rounded-lg" onClick={() => navigate('/marketplace/addresses')}>Adicionar</Button>
-            </div>
-          ) : (
+          <div className="bg-muted p-1 rounded-xl flex items-center">
+            <button
+              className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${fulfillmentMode === 'delivery' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+              onClick={() => setFulfillmentMode('delivery')}
+            >
+              Entrega
+            </button>
+            <button
+              className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${fulfillmentMode === 'pickup' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+              onClick={() => setFulfillmentMode('pickup')}
+            >
+              Retirada
+            </button>
+          </div>
+        </div>
+
+        {fulfillmentMode === 'delivery' && (
+          <>
+            {/* Endereço estilo iFood */}
+            <div className="px-4 mb-6">
+              <h3 className="text-base font-bold text-foreground mb-3">Entregar no endereço</h3>
+              {loadingAddresses ? (
+                <p className="text-sm text-muted-foreground">Carregando...</p>
+              ) : addresses.length === 0 ? (
+                <div className="text-center py-4 border border-border rounded-xl">
+                  <p className="text-sm text-muted-foreground">Nenhum endereço cadastrado</p>
+                  <Button size="sm" className="mt-2 rounded-lg" onClick={() => navigate('/marketplace/addresses')}>Adicionar</Button>
+                </div>
+              ) : (
             <div className="flex items-start justify-between gap-3 bg-background">
               <div className="flex gap-3 min-w-0">
                 <MapPin className="h-5 w-5 text-foreground shrink-0 mt-0.5" />
                 <div className="min-w-0">
                   <p className="font-medium text-foreground truncate">{selAddrObj?.street}, {selAddrObj?.number}</p>
-                  <p className="text-sm text-muted-foreground truncate">{selAddrObj?.neighborhood} - {selAddrObj?.complement || 'Casa'}</p>
+                <div className="flex items-start justify-between gap-3 bg-background">
+                  <div className="flex gap-3 min-w-0">
+                    <MapPin className="h-5 w-5 text-foreground shrink-0 mt-0.5" />
+                    <div className="min-w-0">
+                      <p className="font-medium text-foreground truncate">{selAddrObj?.street}, {selAddrObj?.number}</p>
+                      <p className="text-sm text-muted-foreground truncate">{selAddrObj?.neighborhood} - {selAddrObj?.complement || 'Casa'}</p>
+                    </div>
+                  </div>
+                  <button className="text-sm font-semibold text-primary shrink-0" onClick={() => navigate('/marketplace/addresses')}>
+                    Trocar
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Opções de entrega */}
+            <div className="px-4 mb-8">
+              <h3 className="text-base font-bold text-foreground mb-3 flex items-center gap-1">
+                Opções de entrega <AlertCircle className="h-4 w-4 text-muted-foreground" />
+              </h3>
+              <div className="border border-[#111111] rounded-xl p-4 flex items-center justify-between">
+                <div>
+                  <p className="font-semibold text-foreground text-sm">Padrão</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Hoje, 30 - 45min</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  {loadingFee ? (
+                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                  ) : deliveryFee === 0 ? (
+                    <span className="text-[#00A868] font-bold text-sm">Grátis</span>
+                  ) : deliveryFee !== null ? (
+                    <span className="font-bold text-sm">R$ {deliveryFee.toFixed(2).replace('.', ',')}</span>
+                  ) : unavailable ? (
+                    <span className="text-destructive font-bold text-xs">Indisponível</span>
+                  ) : null}
+                  <div className="h-5 w-5 rounded-full border-4 border-primary/20 flex items-center justify-center">
+                    <div className="h-2.5 w-2.5 rounded-full bg-primary" />
+                  </div>
                 </div>
               </div>
-              <button className="text-sm font-semibold text-primary shrink-0" onClick={() => navigate('/marketplace/addresses')}>
-                Trocar
-              </button>
             </div>
-          )}
-        </div>
-
-        {/* Opções de entrega */}
-        <div className="px-4 mb-8">
-          <h3 className="text-base font-bold text-foreground mb-3 flex items-center gap-1">
-            Opções de entrega <AlertCircle className="h-4 w-4 text-muted-foreground" />
-          </h3>
-          <div className="border border-[#111111] rounded-xl p-4 flex items-center justify-between">
-            <div>
-              <p className="font-semibold text-foreground text-sm">Padrão</p>
-              <p className="text-xs text-muted-foreground mt-0.5">Hoje, 30 - 45min</p>
-            </div>
-            <div className="flex items-center gap-3">
-              {loadingFee ? (
-                 <Loader2 className="h-4 w-4 animate-spin text-primary" />
-              ) : deliveryFee === 0 ? (
-                 <span className="text-[#00A868] font-bold text-sm">Grátis</span>
-              ) : deliveryFee !== null ? (
-                 <span className="font-bold text-sm">R$ {deliveryFee.toFixed(2).replace('.', ',')}</span>
-              ) : unavailable ? (
-                 <span className="text-destructive font-bold text-xs">Indisponível</span>
-              ) : null}
-              <div className="h-5 w-5 rounded-full border-4 border-primary/20 flex items-center justify-center">
-                 <div className="h-2.5 w-2.5 rounded-full bg-primary" />
-              </div>
-            </div>
-          </div>
-        </div>
+          </>
+        )}
 
         <div className="h-2 w-full bg-secondary mb-6" />
 
@@ -452,8 +482,17 @@ export default function Checkout() {
             <div className="flex items-start gap-4">
               <MapPin className="h-6 w-6 text-foreground mt-0.5" />
               <div>
-                <p className="font-bold text-[15px]">{selAddrObj?.street}, {selAddrObj?.number}</p>
-                <p className="text-sm text-muted-foreground">{selAddrObj?.complement || 'Casa'}</p>
+                {fulfillmentMode === 'pickup' ? (
+                  <>
+                    <p className="font-bold text-[15px]">Retirada na Loja</p>
+                    <p className="text-sm text-muted-foreground">{company?.address || 'Endereço da loja'}</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="font-bold text-[15px]">{selAddrObj?.street}, {selAddrObj?.number}</p>
+                    <p className="text-sm text-muted-foreground">{selAddrObj?.complement || 'Casa'}</p>
+                  </>
+                )}
               </div>
             </div>
 
