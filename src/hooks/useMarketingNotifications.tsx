@@ -80,7 +80,7 @@ export function useMarketingNotifications() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user, toast]);
+  }, [user?.id]);
 
   const clearNotification = useCallback(() => {
     setActiveNotification(null);
