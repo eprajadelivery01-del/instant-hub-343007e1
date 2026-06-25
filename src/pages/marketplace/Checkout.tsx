@@ -289,11 +289,6 @@ export default function Checkout() {
                   <Button size="sm" className="mt-2 rounded-lg" onClick={() => navigate('/marketplace/addresses')}>Adicionar</Button>
                 </div>
               ) : (
-            <div className="flex items-start justify-between gap-3 bg-background">
-              <div className="flex gap-3 min-w-0">
-                <MapPin className="h-5 w-5 text-foreground shrink-0 mt-0.5" />
-                <div className="min-w-0">
-                  <p className="font-medium text-foreground truncate">{selAddrObj?.street}, {selAddrObj?.number}</p>
                 <div className="flex items-start justify-between gap-3 bg-background">
                   <div className="flex gap-3 min-w-0">
                     <MapPin className="h-5 w-5 text-foreground shrink-0 mt-0.5" />
