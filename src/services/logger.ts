@@ -102,17 +102,21 @@ export function initializeGlobalErrorHandlers(appName: string) {
   // Intercept programmatic console.error calls (including accessibility / radix-ui warnings)
   const originalConsoleError = console.error;
   console.error = function (...args) {
-    // Format error message cleanly
-    const msg = args.map(a => {
-      if (a instanceof Error) return a.message + "\n" + a.stack;
-      return typeof a === "object" ? JSON.stringify(a) : String(a);
-    }).join(" ");
+    // Invoke original console logger ALWAYS
+    originalConsoleError.apply(console, args);
 
     // Skip nested reporting to prevent loops
     if (isReporting) return;
 
-    // Invoke original console logger
-    originalConsoleError.apply(console, args);
+    // Format error message cleanly
+    const msg = args.map(a => {
+      if (a instanceof Error) return a.message + "\n" + a.stack;
+      try {
+        return typeof a === "object" ? JSON.stringify(a) : String(a);
+      } catch (e) {
+        return "[Circular or unstringifiable object]";
+      }
+    }).join(" ");
 
     reportErrorToTelegram({
       error_message: `[Console Error] ${msg.slice(0, 1000)}`,
