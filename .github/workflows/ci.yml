@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Lint URLs & run navigation tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Run no-lovable-urls guard
+        run: bunx vitest run src/test/no-lovable-urls.test.ts --reporter=verbose
+
+      - name: Run navigation/redirect tests
+        run: |
+          # Roda todos os testes cujo nome contém navigation, redirect ou route.
+          # Não falha se não houver nenhum match (placeholder até existirem).
+          bunx vitest run --reporter=verbose \
+            "src/**/*{navigation,redirect,route,routes,routing}*.test.{ts,tsx}" \
+          || echo "Nenhum teste de navegação/redirect encontrado ainda."
+
+      - name: Run full test suite
+        run: bunx vitest run --reporter=verbose
+
+  block-deploy-on-failure:
+    name: Gate deploy
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Todos os testes passaram — deploy liberado."
