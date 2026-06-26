@@ -162,15 +162,58 @@ export default function StoreDetail() {
   if (loading) {
     return (
       <MarketplaceLayout>
-        <div className="min-h-screen animate-pulse bg-background">
-          <div className="h-64 w-full bg-secondary" />
-          <div className="-mt-16 space-y-6 p-8">
-            <div className="mx-auto h-28 w-28 rounded-[32px] bg-card shadow-xl" />
-            <div className="mx-auto h-8 w-48 rounded-xl bg-secondary" />
-            <div className="mx-auto h-4 w-32 rounded-lg bg-secondary" />
+        <div className="min-h-screen bg-background">
+          {/* Banner */}
+          <div className="h-56 md:h-64 w-full bg-secondary animate-pulse" />
+          
+          <div className="relative z-10 -mt-14 px-6">
+            {/* Logo and Title */}
+            <div className="flex flex-col md:flex-row md:items-end gap-5">
+              <div className="h-28 w-28 shrink-0 rounded-[28px] border-4 border-background bg-secondary shadow-xl animate-pulse" />
+              <div className="mb-2 flex flex-col gap-3">
+                <div className="h-8 w-48 rounded-xl bg-secondary animate-pulse" />
+                <div className="h-4 w-32 rounded-lg bg-secondary animate-pulse" />
+              </div>
+            </div>
+
+            {/* Stats/Pills */}
+            <div className="mt-6 flex flex-wrap gap-3">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-8 w-24 rounded-xl bg-secondary animate-pulse" />
+              ))}
+            </div>
           </div>
-          <div className="space-y-4 px-6">
-            {[1, 2, 3].map((item) => <div key={item} className="h-32 w-full rounded-[28px] bg-card" />)}
+
+          {/* Search bar */}
+          <div className="mt-6 px-6">
+            <div className="h-11 w-full rounded-2xl bg-secondary animate-pulse" />
+          </div>
+
+          {/* Categories */}
+          <div className="mt-6 border-b border-border/60 px-6 pb-4 flex overflow-hidden gap-6">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="h-5 w-24 rounded-lg bg-secondary animate-pulse shrink-0" />
+            ))}
+          </div>
+
+          {/* Product Cards Grid */}
+          <div className="mx-auto max-w-7xl px-4 py-8">
+            <div className="mb-6 px-2">
+              <div className="h-7 w-40 rounded-xl bg-secondary animate-pulse" />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 px-2">
+              {[1, 2, 3, 4, 5, 6].map((item) => (
+                <div key={item} className="flex h-[140px] w-full items-center gap-4 rounded-[24px] border border-border/50 bg-card p-3 shadow-sm animate-pulse">
+                  <div className="flex flex-1 flex-col justify-center gap-3 py-2 pl-2 pr-1">
+                    <div className="h-5 w-3/4 rounded-lg bg-secondary" />
+                    <div className="h-3 w-full rounded-md bg-secondary" />
+                    <div className="h-3 w-5/6 rounded-md bg-secondary" />
+                    <div className="h-5 w-1/3 rounded-lg bg-secondary mt-1" />
+                  </div>
+                  <div className="h-full w-[110px] shrink-0 rounded-2xl bg-secondary" />
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </MarketplaceLayout>
