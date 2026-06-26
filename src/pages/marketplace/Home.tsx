@@ -53,11 +53,10 @@ export default function Home() {
   const fetchCompanies = async () => {
     try {
       setErrorMsg(null);
-      // Apenas dados das lojas — produtos do cardápio são carregados sob demanda
-      // ao abrir a página de cada loja (StoreDetail), o que torna a Home muito mais leve.
+      // Busca dados das lojas e também seus produtos ativos (campos enxutos) para exibir no preview da Home
       const { data, error } = await supabase
         .from('companies')
-        .select(COMPANY_LIST_COLUMNS)
+        .select(`${COMPANY_LIST_COLUMNS}, products(id, name, description, price, promotional_price, image_url, category, active, featured, sort_order)`)
         .eq('show_in_marketplace', true);
 
       if (error) throw error;
@@ -76,7 +75,10 @@ export default function Home() {
             name: company.name || 'Loja Parceira',
             is_open: company.is_open === true,
             active: company.active === true || (company as any).is_active === true,
-            products: [],
+            products: (company.products || [])
+              .filter((p: any) => p.active !== false)
+              .sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0))
+              .slice(0, 4), // Preview de 4 produtos na Home
             rating: ratingValue,
           };
         })
