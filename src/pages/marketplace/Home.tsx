@@ -56,7 +56,7 @@ export default function Home() {
       // Busca dados das lojas e também seus produtos ativos (campos enxutos) para exibir no preview da Home
       const { data, error } = await supabase
         .from('companies')
-        .select(`${COMPANY_LIST_COLUMNS}, products(id, name, description, price, promotional_price, image_url, category, active, featured, sort_order)`)
+        .select(`${COMPANY_LIST_COLUMNS}, products(id, name, description, price, image_url, category, active, featured, sort_order)`)
         .eq('show_in_marketplace', true);
 
       if (error) throw error;
