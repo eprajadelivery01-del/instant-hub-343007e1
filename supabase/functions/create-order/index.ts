@@ -164,7 +164,7 @@ Deno.serve(async (req) => {
   // 2) Company existe
   const { data: company, error: compErr } = await adminClient
     .from('companies')
-    .select('id, name, address, latitude, longitude, delivery_fee')
+    .select('id, name, address, latitude, longitude, delivery_fee, delivery_mode, pricing_table_id, region_id')
     .eq('id', body.company_id)
     .maybeSingle();
   if (compErr || !company) return fail(400, 'create_order.company_missing', 'Company not found.');
@@ -243,21 +243,21 @@ Deno.serve(async (req) => {
     appliedCoupon = coupon;
   }
 
-  // 6) Frete: usa company.delivery_fee se existir; senão tenta região por lat/lng.
+  // 6) Frete: nova lógica (pricing rules)
   let deliveryFee = 0;
   let regionId: string | null = null;
   let regionName: string | null = null;
   let outOfRegion = false;
-  if (company.delivery_fee !== null && company.delivery_fee !== undefined) {
-    deliveryFee = Number(company.delivery_fee) || 0;
-  } else if (address.latitude && address.longitude) {
+  let regionPrice = 0;
+
+  if (address.latitude && address.longitude) {
     const { data: regions } = await adminClient
       .from('regions')
       .select('id, name, price, delivery_fee, geometry');
     if (regions && regions.length > 0) {
       const inside = pickRegion(regions, Number(address.latitude), Number(address.longitude));
       if (inside) {
-        deliveryFee = Number(inside.price ?? inside.delivery_fee ?? 0);
+        regionPrice = Number(inside.delivery_fee ?? inside.price ?? 0);
         regionId = inside.id;
         regionName = inside.name;
       } else {
@@ -265,8 +265,40 @@ Deno.serve(async (req) => {
       }
     }
   }
+
   if (outOfRegion) {
     return fail(400, 'create_order.out_of_region', 'Delivery unavailable for this address (out of region).');
+  }
+
+  let feeCalculated = false;
+
+  // Tabela de preços dinamica
+  if (regionId && company.pricing_table_id && company.region_id) {
+    const { data: rule } = await adminClient
+      .from('pricing_rules')
+      .select('base_value')
+      .eq('pricing_table_id', company.pricing_table_id)
+      .eq('origin_region_id', company.region_id)
+      .eq('destination_region_id', regionId)
+      .maybeSingle();
+
+    if (rule && rule.base_value != null) {
+      deliveryFee = Number(rule.base_value);
+      feeCalculated = true;
+    }
+  }
+
+  if (!feeCalculated && regionId && regionPrice > 0) {
+    deliveryFee = regionPrice;
+    feeCalculated = true;
+  }
+
+  if (!feeCalculated) {
+    if (company.delivery_mode === 'fixed_fee' && company.delivery_fee != null) {
+      deliveryFee = Number(company.delivery_fee);
+    } else {
+      deliveryFee = Number(company.delivery_fee || 0);
+    }
   }
 
   const total = Math.max(0, subtotal - discount) + deliveryFee;
@@ -379,21 +411,9 @@ Deno.serve(async (req) => {
     });
   }
 
-  // 13) Delivery
-  await adminClient.from('deliveries').insert({
-    order_id: order.id,
-    company_id: company.id,
-    pickup_address: company.address || company.name,
-    delivery_address: deliveryAddress,
-    pickup_latitude: company.latitude,
-    pickup_longitude: company.longitude,
-    delivery_latitude: address.latitude,
-    delivery_longitude: address.longitude,
-    status: 'pending',
-    value: total,
-    price: deliveryFee,
-    region_id: regionId,
-  });
+  // 13) Delivery creation omitted.
+  // Delivery will be created automatically by the database trigger
+  // 'handle_order_ready_automation' once the store accepts the order.
 
   await audit(
     'create_order.success',
