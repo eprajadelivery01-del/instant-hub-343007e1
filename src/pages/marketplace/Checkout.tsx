@@ -85,72 +85,66 @@ export default function Checkout() {
       setLoadingFee(true);
       setUnavailable(false);
       try {
-        const { data: dbCompany } = await supabase.from('companies').select('delivery_fee, delivery_regions_pricing').eq('id', company.id).single();
+        const { data: dbCompany } = await supabase.from('companies').select('delivery_fee, delivery_mode, pricing_table_id, region_id').eq('id', company.id).single();
         
-        let pricingArray: any[] = [];
-        if (dbCompany?.delivery_regions_pricing) {
-           if (typeof dbCompany.delivery_regions_pricing === 'string') {
-             try { pricingArray = JSON.parse(dbCompany.delivery_regions_pricing); } catch(e) {}
-           } else if (Array.isArray(dbCompany.delivery_regions_pricing)) {
-             pricingArray = dbCompany.delivery_regions_pricing;
-           }
-        }
+        let destRegionId = (addr as any).region_id;
 
-        // Usar o preço por região se o endereço tiver region_id
-        const addrAny = addr as any;
-        if (addrAny.region_id && pricingArray.length > 0) {
-           const regionPricing = pricingArray.find((p: any) => p.region_id === addrAny.region_id);
-           if (regionPricing && regionPricing.customer_price !== undefined && regionPricing.customer_price !== "") {
-             setDeliveryFee(Number(regionPricing.customer_price));
-             return;
-           } else {
-             // Se não encontrou o preço para a região, talvez o lojista não entregue nela
+        // Se o endereço NÃO tiver region_id (ex: GPS), descobrir via polígonos
+        if (!destRegionId && addr.latitude && addr.longitude) {
+           const result = await calculateDeliveryFee(addr.latitude, addr.longitude, supabase, []);
+           if (result.regionId) destRegionId = result.regionId;
+           if (result.isOutOfRange && !result.regionId) {
              setDeliveryFee(null);
              setUnavailable(true);
-             toast.warning('O lojista não configurou taxa para sua região.');
+             toast.warning('Este endereço está fora da área de atendimento.');
+             setLoadingFee(false);
              return;
            }
         }
 
-        // Se o endereço NÃO tiver region_id, mas tiver lat/long E a loja tiver preços por região, calcula via polígono
-        if (addr.latitude && addr.longitude && pricingArray.length > 0) {
-          const result = await calculateDeliveryFee(addr.latitude, addr.longitude, supabase, pricingArray);
-
-          if (result.isOutOfRange) {
-            setDeliveryFee(null);
-            setUnavailable(true);
-            toast.warning('Este endereço está fora da área de entrega do lojista.');
-            return;
-          } else if (result.fee !== null) {
-            setDeliveryFee(result.fee);
-            return;
-          }
+        if (destRegionId) {
+           // Verifica se a loja tem uma tabela de preços vinculada (NOVO SISTEMA)
+           if (dbCompany?.pricing_table_id && dbCompany?.region_id) {
+              const { data: rule } = await supabase
+                 .from('pricing_rules')
+                 .select('base_value')
+                 .eq('pricing_table_id', dbCompany.pricing_table_id)
+                 .eq('origin_region_id', dbCompany.region_id)
+                 .eq('destination_region_id', destRegionId)
+                 .maybeSingle();
+                 
+              if (rule && rule.base_value != null) {
+                 setDeliveryFee(Number(rule.base_value));
+                 setLoadingFee(false);
+                 return;
+              }
+           }
+           
+           // Se não tem tabela (ou regra não encontrada), puxa o preço da região (FALLBACK SISTEMA NOVO)
+           const { data: destRegion } = await supabase.from('regions').select('delivery_fee, price').eq('id', destRegionId).single();
+           if (destRegion) {
+              const rPrice = Number(destRegion.delivery_fee || destRegion.price || 0);
+              if (rPrice > 0) {
+                 setDeliveryFee(rPrice);
+                 setLoadingFee(false);
+                 return;
+              }
+           }
         }
 
-        // Fallback antigo: Se não usar regiões, usa a taxa fixa
-        if (dbCompany?.delivery_fee !== null && dbCompany?.delivery_fee !== undefined && pricingArray.length === 0) {
-          setDeliveryFee(dbCompany.delivery_fee);
+        // Lógica de fallback para taxa padrão da loja (se configurou entrega fixa)
+        if (dbCompany?.delivery_mode === 'fixed_fee' && dbCompany?.delivery_fee != null) {
+          setDeliveryFee(Number(dbCompany.delivery_fee));
+          setLoadingFee(false);
           return;
         }
 
-        // Último caso: Tem lat/long mas não tem pricingArray nem taxa fixa (ou fallback da lógica antiga sem pricing)
-        if (addr.latitude && addr.longitude) {
-           const result = await calculateDeliveryFee(addr.latitude, addr.longitude, supabase, pricingArray);
-           if (result.isOutOfRange) {
-             setDeliveryFee(null);
-             setUnavailable(true);
-             toast.warning('Este endereço está fora da área de entrega.');
-           } else if (result.fee !== null) {
-             setDeliveryFee(result.fee);
-           } else {
-             setDeliveryFee(0);
-           }
-        } else {
-          // Sem lat/lng e sem region_id
-          setDeliveryFee(null);
-          setUnavailable(true);
-          toast.warning('Endereço inválido. Edite e selecione sua região.');
-        }
+        // Último caso: Se chegou aqui, usa o delivery_fee base ou zero
+        setDeliveryFee(Number(dbCompany?.delivery_fee || 0));
+        
+      } catch (error) {
+        console.error("Erro ao calcular frete:", error);
+        setDeliveryFee(0);
       } finally {
         setLoadingFee(false);
       }
