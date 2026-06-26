@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { Company, Product } from '@/types/database';
 import { useCart } from '@/contexts/CartContext';
@@ -21,9 +22,6 @@ export default function StoreDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { items, addItem, updateQuantity } = useCart();
-  const [company, setCompany] = useState<Company | null>(null);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -69,30 +67,25 @@ export default function StoreDetail() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  useEffect(() => {
-    if (!id) return;
-
-    const fetchStore = async () => {
+  // Same queryKey used by the route data prefetcher (see routeDataPrefetchers.ts)
+  // so a successful hover/pointer-down prefetch makes the page render instantly.
+  const { data: storeData, isLoading: loading } = useQuery({
+    queryKey: ['store', id],
+    enabled: !!id,
+    staleTime: 30_000,
+    queryFn: async () => {
       const [companyResponse, productResponse] = await Promise.all([
-        supabase.from('companies').select('id, name, description, category, rating, is_open, active, is_active, delivery_fee, delivery_regions_pricing, show_in_marketplace, city, state, banner_url, cover_url, logo_url, business_hours, prep_time_min, prep_time_max, created_at, user_id').eq('id', id).single(),
-        supabase.from('products').select('*').eq('company_id', id).eq('active', true).order('category').order('sort_order', { ascending: true }).order('created_at', { ascending: true }),
+        supabase.from('companies').select('id, name, description, category, rating, is_open, active, is_active, delivery_fee, delivery_regions_pricing, show_in_marketplace, city, state, banner_url, cover_url, logo_url, business_hours, prep_time_min, prep_time_max, created_at, user_id').eq('id', id!).single(),
+        supabase.from('products').select('*').eq('company_id', id!).eq('active', true).order('category').order('sort_order', { ascending: true }).order('created_at', { ascending: true }),
       ]);
+      return { company: companyResponse.data, products: productResponse.data ?? [] };
+    },
+  });
 
-      if (companyResponse.data) {
-        const companyData = companyResponse.data;
-        setCompany({
-          ...companyData,
-          // is_open do banco é a fonte da verdade — o lojista abriu/fechou manualmente.
-          // O horário de funcionamento é apenas informativo.
-          is_open: companyData.is_open === true
-        } as Company);
-      }
-      setProducts(productResponse.data || []);
-      setLoading(false);
-    };
-
-    fetchStore();
-  }, [id]);
+  const company: Company | null = storeData?.company
+    ? ({ ...storeData.company, is_open: storeData.company.is_open === true } as Company)
+    : null;
+  const products: Product[] = (storeData?.products as Product[]) ?? [];
 
   useEffect(() => {
     if (!user || !company) return;

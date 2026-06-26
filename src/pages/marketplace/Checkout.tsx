@@ -1,5 +1,6 @@
 // VERSION: 2026-05-21-CHECKOUT-MODAL
 import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
@@ -34,7 +35,6 @@ export default function Checkout() {
   const { items, company, clearCart, appliedCoupon, discountAmount, subtotal } = useCart();
   const { isLocked, acquireLock, releaseLock, generateIdempotencyKey, resetIdempotencyKey } = useOrderLock();
   
-  const [addresses, setAddresses] = useState<Address[]>([]);
   const [selectedAddress, setSelectedAddress] = useState<string>('');
   
   const [paymentMethod, setPaymentMethod] = useState('money');
@@ -47,21 +47,29 @@ export default function Checkout() {
   const [unavailable, setUnavailable] = useState(false);
   const [loadingFee, setLoadingFee] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [loadingAddresses, setLoadingAddresses] = useState(true);
+  // shared queryKey with the route data prefetcher
+  const { data: addresses = [], isLoading: loadingAddresses } = useQuery({
+    queryKey: ['addresses', user?.id],
+    enabled: !!user?.id,
+    staleTime: 60_000,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('addresses')
+        .select('*')
+        .eq('user_id', user!.id)
+        .order('created_at', { ascending: false });
+      return (data ?? []) as Address[];
+    },
+  });
   
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [fulfillmentMode, setFulfillmentMode] = useState<'delivery' | 'pickup'>('delivery');
 
   useEffect(() => {
-    if (!user) return;
-    const fetchAddresses = async () => {
-      const { data } = await supabase.from('addresses').select('*').eq('user_id', user.id).order('created_at', { ascending: false });
-      setAddresses(data || []);
-      if (data && data.length > 0) setSelectedAddress(data[0].id);
-      setLoadingAddresses(false);
-    };
-    fetchAddresses();
-  }, [user]);
+    if (!selectedAddress && addresses.length > 0) {
+      setSelectedAddress(addresses[0].id);
+    }
+  }, [addresses, selectedAddress]);
 
   useEffect(() => {
     if (!selectedAddress) return;
