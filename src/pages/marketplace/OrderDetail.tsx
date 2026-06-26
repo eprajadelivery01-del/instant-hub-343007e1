@@ -1,6 +1,7 @@
 // VERSION: 2026-05-21-ORDER-TRACKER
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { Order, OrderItem, Delivery, Product } from '@/types/database';
@@ -15,11 +16,8 @@ export default function OrderDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   
-  const [order, setOrder] = useState<Order | null>(null);
-  const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
-  const [delivery, setDelivery] = useState<Delivery | null>(null);
-  const [loading, setLoading] = useState(true);
   const [showStoreChat, setShowStoreChat] = useState(false);
   const [notifEnabled, setNotifEnabled] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
@@ -28,27 +26,37 @@ export default function OrderDetail() {
   });
   const [notifLoading, setNotifLoading] = useState(false);
 
+  // Shared queryKey with the route data prefetcher (routeDataPrefetchers.ts).
+  const { data: orderData, isLoading: loading } = useQuery({
+    queryKey: ['order', id],
+    enabled: !!id,
+    staleTime: 10_000,
+    queryFn: async () => {
+      const [orderRes, itemsRes, deliveryRes] = await Promise.all([
+        supabase.from('orders').select('*, company:companies(*), address:addresses(*)').eq('id', id!).single(),
+        supabase.from('order_items').select('*, products(*)').eq('order_id', id!),
+        supabase.from('deliveries').select('*').eq('order_id', id!).maybeSingle(),
+      ]);
+      return {
+        order: orderRes.data as Order | null,
+        items: (itemsRes.data ?? []) as OrderItem[],
+        delivery: (deliveryRes.data ?? null) as Delivery | null,
+      };
+    },
+  });
+
+  const order = orderData?.order ?? null;
+  const orderItems = orderData?.items ?? [];
+  const delivery = orderData?.delivery ?? null;
+
   useEffect(() => {
     if (!id) return;
-    const fetchAll = async () => {
-      setLoading(true);
-      const [orderRes, itemsRes, deliveryRes] = await Promise.all([
-        supabase.from('orders').select('*, company:companies(*), address:addresses(*)').eq('id', id).single(),
-        supabase.from('order_items').select('*, products(*)').eq('order_id', id),
-        supabase.from('deliveries').select('*').eq('order_id', id).maybeSingle(),
-      ]);
-      setOrder(orderRes.data);
-      setOrderItems(itemsRes.data || []);
-      setDelivery(deliveryRes.data);
-      setLoading(false);
-    };
-    fetchAll();
-
     const orderChannel = supabase.channel(`order-${id}`)
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders', filter: `id=eq.${id}` },
         (p) => {
-          const prev = order;
-          setOrder(prev => prev ? { ...prev, ...p.new } : null);
+          queryClient.setQueryData(['order', id], (old: any) =>
+            old ? { ...old, order: { ...old.order, ...p.new } } : old
+          );
           // Dispara notificação nativa se permitido
           if (notifEnabled && ('Notification' in window) && Notification.permission === 'granted') {
             const statusLabels: Record<string, string> = {
@@ -71,12 +79,14 @@ export default function OrderDetail() {
         })
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'deliveries', filter: `order_id=eq.${id}` },
         (p) => {
-          setDelivery(prev => prev ? { ...prev, ...p.new } as any : p.new as any);
+          queryClient.setQueryData(['order', id], (old: any) =>
+            old ? { ...old, delivery: { ...(old.delivery ?? {}), ...p.new } } : old
+          );
         })
       .subscribe();
 
     return () => { supabase.removeChannel(orderChannel); };
-  }, [id, notifEnabled]);
+  }, [id, notifEnabled, queryClient]);
 
   const handleToggleNotif = useCallback(async () => {
     if (!('Notification' in window)) {
