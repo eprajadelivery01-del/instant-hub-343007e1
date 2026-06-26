@@ -56,7 +56,7 @@ export default function Home() {
       // Busca dados das lojas e também seus produtos ativos (campos enxutos) para exibir no preview da Home
       const { data, error } = await supabase
         .from('companies')
-        .select(`${COMPANY_LIST_COLUMNS}, products(id, name, description, price, image_url, category, active, is_featured, sort_order)`)
+        .select(`${COMPANY_LIST_COLUMNS}, products(id, name, description, price, image_url, category, active)`)
         .eq('show_in_marketplace', true);
 
       if (error) throw error;
@@ -77,7 +77,6 @@ export default function Home() {
             active: company.active === true || (company as any).is_active === true,
             products: (company.products || [])
               .filter((p: any) => p.active !== false)
-              .sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0))
               .slice(0, 4), // Preview de 4 produtos na Home
             rating: ratingValue,
           };
