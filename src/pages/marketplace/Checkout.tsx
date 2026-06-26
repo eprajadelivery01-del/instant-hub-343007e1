@@ -217,24 +217,24 @@ export default function Checkout() {
         idempotency_key: ik,
       };
 
-      const { data, error: functionError } = await supabase.rpc('create_order_v3', {
-        p_items: requestBody.items,
-        p_company_id: requestBody.company_id,
-        p_address_id: requestBody.address_id,
-        p_payment_method: requestBody.payment_method,
-        p_coupon_code: requestBody.coupon_code,
-        p_notes: requestBody.notes,
-        p_needs_change: requestBody.needs_change,
-        p_change_for: requestBody.change_for,
-        p_idempotency_key: requestBody.idempotency_key,
-        p_delivery_fee: fulfillmentMode === 'pickup' ? 0 : (deliveryFee || 0)
+      // Route through the create-order edge function so subtotal, discount and
+      // delivery fee are recalculated server-side from canonical DB data. Client
+      // never supplies prices — prevents fee/total manipulation.
+      const { data, error: functionError } = await supabase.functions.invoke('create-order', {
+        body: {
+          ...requestBody,
+          fulfillment_mode: fulfillmentMode,
+        },
       });
 
       if (functionError) {
         throw new Error(mapServerError(functionError.message || 'Erro ao processar pedido'));
       }
+      if (data?.error) {
+        throw new Error(mapServerError(data.error));
+      }
 
-      const orderId = data?.order_id || data;
+      const orderId = data?.order_id || data?.id;
       if (!orderId) throw new Error('Falha ao obter ID do pedido.');
 
 
