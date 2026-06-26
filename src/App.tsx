@@ -14,6 +14,8 @@ import RequireAuth from "@/components/marketplace/RequireAuth";
 import ScrollToTop from "@/components/shared/ScrollToTop";
 import { PageTransition } from "@/components/shared/PageTransition";
 import { installRoutePrefetcher, routeLoaders } from "@/lib/routePrefetch";
+import "@/lib/routeDataPrefetchers"; // side-effect: registers data prefetchers
+import { PrefetchDebugPanel, shouldShowPrefetchPanel } from "@/components/dev/PrefetchDebugPanel";
 
 import Home from "./pages/marketplace/Home";
 
@@ -58,6 +60,8 @@ const App = () => {
     installRoutePrefetcher(queryClient);
   }, []);
 
+  const showDebugPanel = useMemo(() => shouldShowPrefetchPanel(), []);
+
   return (
     <ThemeProvider>
     <QueryClientProvider client={queryClient}>
@@ -68,6 +72,7 @@ const App = () => {
               <TooltipProvider>
                 <Toaster />
                 <Sonner />
+                {showDebugPanel && <PrefetchDebugPanel />}
                 <BrowserRouter>
                   <ScrollToTop />
                   <Suspense fallback={<RouteFallback />}>
