@@ -69,6 +69,7 @@ export function initializeGlobalErrorHandlers(appName: string) {
   // Intercept standard window exception errors
   window.onerror = (message, source, lineno, colno, error) => {
     const errorMsg = String(message);
+    if (errorMsg === 'Script error.') return false;
 
     reportErrorToTelegram({
       error_message: errorMsg,
