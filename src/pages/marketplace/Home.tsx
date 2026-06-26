@@ -75,7 +75,7 @@ export default function Home() {
             name: company.name || 'Loja Parceira',
             is_open: company.is_open === true,
             active: company.active === true || (company as any).is_active === true,
-            products: (company.products || [])
+            products: (((company as any).products) || [])
               .filter((p: any) => p.active !== false)
               .slice(0, 4), // Preview de 4 produtos na Home
             rating: ratingValue,
