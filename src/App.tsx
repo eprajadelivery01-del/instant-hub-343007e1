@@ -13,22 +13,25 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import RequireAuth from "@/components/marketplace/RequireAuth";
 import ScrollToTop from "@/components/shared/ScrollToTop";
 import { PageTransition } from "@/components/shared/PageTransition";
+import { installRoutePrefetcher, routeLoaders } from "@/lib/routePrefetch";
 
 import Home from "./pages/marketplace/Home";
 
-const Login = lazy(() => import("./pages/marketplace/Login"));
-const Signup = lazy(() => import("./pages/marketplace/Signup"));
-const StoreDetail = lazy(() => import("./pages/marketplace/StoreDetail"));
-const Cart = lazy(() => import("./pages/marketplace/Cart"));
-const Checkout = lazy(() => import("./pages/marketplace/Checkout"));
-const Orders = lazy(() => import("./pages/marketplace/Orders"));
+const lazyRoute = (path: string) => lazy(routeLoaders[path] as any);
+
+const Login = lazyRoute("/marketplace/login");
+const Signup = lazyRoute("/marketplace/signup");
+const StoreDetail = lazyRoute("/marketplace/store");
+const Cart = lazyRoute("/marketplace/cart");
+const Checkout = lazyRoute("/marketplace/checkout");
+const Orders = lazyRoute("/marketplace/orders");
 const OrderDetail = lazy(() => import("./pages/marketplace/OrderDetail"));
-const Addresses = lazy(() => import("./pages/marketplace/Addresses"));
-const Profile = lazy(() => import("./pages/marketplace/Profile"));
-const Coupons = lazy(() => import("./pages/marketplace/Coupons"));
-const PrivacyPolicy = lazy(() => import("./pages/marketplace/PrivacyPolicy"));
-const TermsOfService = lazy(() => import("./pages/marketplace/TermsOfService"));
-const Search = lazy(() => import("./pages/marketplace/Search"));
+const Addresses = lazyRoute("/marketplace/addresses");
+const Profile = lazyRoute("/marketplace/profile");
+const Coupons = lazyRoute("/marketplace/coupons");
+const PrivacyPolicy = lazyRoute("/marketplace/privacy");
+const TermsOfService = lazyRoute("/marketplace/terms");
+const Search = lazyRoute("/marketplace/search");
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const RouteFallback = () => (
@@ -43,6 +46,7 @@ const App = () => {
     setTimeout(() => {
        SplashScreen.hide().catch(() => {});
     }, 500);
+    installRoutePrefetcher();
   }, []);
 
   const queryClient = useMemo(() => new QueryClient({
