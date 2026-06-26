@@ -80,7 +80,7 @@ export default function Home() {
         isPremium: index < 5,
       }));
 
-      setCompanies(processed as MarketplaceCompany[]);
+      setCompanies(processed as unknown as MarketplaceCompany[]);
       setLoading(false);
     } catch (err: any) {
       console.error("Error fetching companies:", err);
