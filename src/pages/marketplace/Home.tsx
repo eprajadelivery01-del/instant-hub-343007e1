@@ -48,7 +48,13 @@ export default function Home() {
 
   const fetchCompanies = async () => {
     try {
-      const { data } = await supabase.from('companies').select('id, name, description, category, rating, is_open, active, is_active, delivery_fee, delivery_regions_pricing, show_in_marketplace, city, state, banner_url, cover_url, logo_url, business_hours, prep_time_min, prep_time_max, created_at, products(*)');
+      const { data } = await supabase
+        .from('companies')
+        .select(
+          'id, name, description, category, rating, is_open, active, is_active, delivery_fee, delivery_regions_pricing, show_in_marketplace, city, state, banner_url, cover_url, logo_url, business_hours, prep_time_min, prep_time_max, created_at, products(id, name, price, image_url, image_urls, is_active, is_featured, sort_order)'
+        )
+        .eq('show_in_marketplace', true)
+        .limit(4, { foreignTable: 'products' });
       const processed = (data || []).filter(c => c.show_in_marketplace !== false).map((company, index) => {
         let name = company.name || "Loja Parceira";
 
@@ -74,7 +80,7 @@ export default function Home() {
         isPremium: index < 5,
       }));
 
-      setCompanies(processed as MarketplaceCompany[]);
+      setCompanies(processed as unknown as MarketplaceCompany[]);
       setLoading(false);
     } catch (err: any) {
       console.error("Error fetching companies:", err);
@@ -86,15 +92,22 @@ export default function Home() {
   useEffect(() => {
     fetchCompanies();
 
+    // Debounce realtime refetch para evitar avalanches de re-query
+    let refetchTimer: ReturnType<typeof setTimeout> | null = null;
+    const scheduleRefetch = () => {
+      if (refetchTimer) clearTimeout(refetchTimer);
+      refetchTimer = setTimeout(() => {
+        fetchCompanies();
+      }, 1500);
+    };
+
     const channel = supabase
       .channel("companies-realtime-v3")
-      .on("postgres_changes", { event: "*", schema: "public", table: "companies" }, (payload) => {
-        console.log("Realtime update received (V3):", payload);
-        fetchCompanies();
-      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "companies" }, scheduleRefetch)
       .subscribe();
 
     return () => {
+      if (refetchTimer) clearTimeout(refetchTimer);
       supabase.removeChannel(channel);
     };
   }, []);
