@@ -71,15 +71,24 @@ export function UnifiedMap({ centerCity: propCenterCity, interactive = false, da
         navigate(`/marketplace/store/${company.id}`);
       };
 
+      // Build popup via DOM APIs (textContent) to avoid stored XSS from DB-controlled
+      // company.name (a malicious lojista could otherwise inject script payloads).
+      const popupRoot = document.createElement("div");
+      popupRoot.style.cssText = "padding: 10px; font-family: sans-serif;";
+      const nameEl = document.createElement("strong");
+      nameEl.style.cssText = "display:block; font-size: 14px; color: #1a1a1a;";
+      nameEl.textContent = company.name ?? "";
+      const statusEl = document.createElement("span");
+      statusEl.style.cssText = "display:block; font-size: 11px; color: #22c55e; font-weight: bold; margin-top: 2px;";
+      statusEl.textContent = "Loja Aberta • Entrega Rápida";
+      const btnEl = document.createElement("button");
+      btnEl.style.cssText = "margin-top: 8px; width: 100%; background: #f97316; color: white; border: none; border-radius: 6px; padding: 5px; font-size: 11px; font-weight: bold; cursor: pointer;";
+      btnEl.textContent = "Ver Cardápio";
+      popupRoot.append(nameEl, statusEl, btnEl);
+
       const marker = new maplibregl.Marker({ element: el })
         .setLngLat([company.longitude, company.latitude])
-        .setPopup(new maplibregl.Popup({ offset: 15, closeButton: false }).setHTML(`
-          <div style="padding: 10px; font-family: sans-serif;">
-            <strong style="display:block; font-size: 14px; color: #1a1a1a;">${company.name}</strong>
-            <span style="display:block; font-size: 11px; color: #22c55e; font-weight: bold; margin-top: 2px;">Loja Aberta • Entrega Rápida</span>
-            <button style="margin-top: 8px; width: 100%; background: #f97316; color: white; border: none; border-radius: 6px; padding: 5px; font-size: 11px; font-weight: bold; cursor: pointer;">Ver Cardápio</button>
-          </div>
-        `))
+        .setPopup(new maplibregl.Popup({ offset: 15, closeButton: false }).setDOMContent(popupRoot))
         .addTo(m);
       markersRef.current.push(marker);
     });
