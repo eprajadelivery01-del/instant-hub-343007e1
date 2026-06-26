@@ -6,7 +6,7 @@ import { Company, Product } from '@/types/database';
 import { useCart } from '@/contexts/CartContext';
 import MarketplaceLayout from '@/components/marketplace/MarketplaceLayout';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Minus, Plus, Star, Clock, Store as StoreIcon, Share2, Utensils, Search, Info, Ticket, AlertCircle, Flame } from 'lucide-react';
+import { ArrowLeft, Minus, Plus, Star, Clock, Store as StoreIcon, Share2, Utensils, Search, Info, Ticket, AlertCircle, Flame, RefreshCw } from 'lucide-react';
 import { cn, isStoreOpenBySchedule } from '@/lib/utils';
 import { ProductDetailDialog } from '@/components/marketplace/ProductDetailDialog';
 import { MediaImage } from '@/components/shared/MediaImage';
@@ -69,7 +69,7 @@ export default function StoreDetail() {
 
   // Same queryKey used by the route data prefetcher (see routeDataPrefetchers.ts)
   // so a successful hover/pointer-down prefetch makes the page render instantly.
-  const { data: storeData, isLoading: loading } = useQuery({
+  const { data: storeData, isLoading: loading, isError: productsError, refetch: refetchStore, isFetching: refetchingStore } = useQuery({
     queryKey: ['store', id],
     enabled: !!id,
     staleTime: 30_000,
@@ -78,6 +78,9 @@ export default function StoreDetail() {
         supabase.from('companies').select('id, name, description, category, rating, is_open, active, is_active, delivery_fee, delivery_regions_pricing, show_in_marketplace, city, state, banner_url, cover_url, logo_url, business_hours, prep_time_min, prep_time_max, created_at, user_id').eq('id', id!).single(),
         supabase.from('products').select('*').eq('company_id', id!).eq('active', true).order('category').order('sort_order', { ascending: true }).order('created_at', { ascending: true }),
       ]);
+      if (productResponse.error) {
+        throw productResponse.error;
+      }
       return { company: companyResponse.data, products: productResponse.data ?? [] };
     },
   });
@@ -406,12 +409,30 @@ export default function StoreDetail() {
       )}
 
       <div className="mx-auto max-w-7xl px-4 pb-40">
-        {categories.length === 0 ? (
+        {productsError ? (
+          <div className="flex flex-col items-center gap-4 py-24 text-center">
+            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-destructive/10">
+              <AlertCircle className="h-8 w-8 text-destructive" />
+            </div>
+            <div className="space-y-1">
+              <p className="text-base font-bold tracking-tight text-foreground">Não foi possível carregar o cardápio</p>
+              <p className="text-sm text-muted-foreground">Verifique sua conexão e tente novamente.</p>
+            </div>
+            <Button onClick={() => refetchStore()} disabled={refetchingStore} className="mt-2">
+              <RefreshCw className={cn("h-4 w-4", refetchingStore && "animate-spin")} />
+              Tentar novamente
+            </Button>
+          </div>
+        ) : categories.length === 0 ? (
           <div className="flex flex-col items-center gap-4 py-24 text-muted-foreground">
             <div className="flex h-20 w-20 items-center justify-center rounded-full bg-secondary/50">
               <Utensils className="h-8 w-8 text-muted-foreground/50" />
             </div>
             <p className="text-base font-bold tracking-tight">Nenhum prato por enquanto</p>
+            <Button variant="outline" onClick={() => refetchStore()} disabled={refetchingStore}>
+              <RefreshCw className={cn("h-4 w-4", refetchingStore && "animate-spin")} />
+              Tentar novamente
+            </Button>
           </div>
         ) : (
           <>
