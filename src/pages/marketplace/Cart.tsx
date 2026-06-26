@@ -10,6 +10,7 @@ import { MediaImage } from '@/components/shared/MediaImage';
 import { getPrimaryProductImage, getCompanyLogoImage } from '@/lib/media';
 import { Product } from '@/types/database';
 import { toast } from 'sonner';
+import { isStoreOpenBySchedule } from '@/lib/utils';
 
 interface CartItemRowProps {
   item: any;
@@ -130,10 +131,10 @@ export default function Cart() {
       setLoadingStatus(true);
       const { data } = await supabase
         .from('companies')
-        .select('is_open')
+        .select('is_open, business_hours')
         .eq('id', company.id)
         .single();
-      if (data) setIsStoreOpen(data.is_open);
+      if (data) setIsStoreOpen(data.is_open === true && isStoreOpenBySchedule(data.business_hours));
       setLoadingStatus(false);
     };
     fetchStatus();

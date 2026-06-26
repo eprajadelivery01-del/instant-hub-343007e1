@@ -86,7 +86,7 @@ export default function StoreDetail() {
   });
 
   const company: Company | null = storeData?.company
-    ? ({ ...storeData.company, is_open: storeData.company.is_open === true } as Company)
+    ? ({ ...storeData.company, is_open: storeData.company.is_open === true && isStoreOpenBySchedule(storeData.company.business_hours) } as Company)
     : null;
   const products: Product[] = (storeData?.products as Product[]) ?? [];
 

@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 import { MapPin, Banknote, AlertCircle, ArrowLeft, Loader2, FileText, Smartphone, Bike, Ticket } from 'lucide-react';
 import { useOrderLock } from '@/hooks/useOrderLock';
 import { calculateDeliveryFee } from '@/utils/freight';
+import { isStoreOpenBySchedule } from '@/lib/utils';
 
 function mapServerError(msg: string): string {
   const m = msg.toLowerCase();
@@ -171,8 +172,8 @@ export default function Checkout() {
     
     setLoading(true);
     try {
-      const { data: storeStatus } = await supabase.from('companies').select('is_open').eq('id', company.id).single();
-      if (!storeStatus?.is_open) {
+      const { data: storeStatus } = await supabase.from('companies').select('is_open, business_hours').eq('id', company.id).single();
+      if (!storeStatus || !(storeStatus.is_open === true && isStoreOpenBySchedule(storeStatus.business_hours))) {
         toast.error('Este restaurante ainda não abriu ou já fechou.', {
           description: 'Verifique o horário de funcionamento na página da loja.'
         });

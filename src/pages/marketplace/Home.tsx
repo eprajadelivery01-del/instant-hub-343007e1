@@ -73,7 +73,7 @@ export default function Home() {
           return {
             ...company,
             name: company.name || 'Loja Parceira',
-            is_open: company.is_open === true,
+            is_open: company.is_open === true && isStoreOpenBySchedule(company.business_hours),
             active: company.active === true || (company as any).is_active === true,
             products: (((company as any).products) || [])
               .filter((p: any) => p.active !== false)

@@ -50,8 +50,8 @@ export default function Search() {
           rating: c.rating || 4.5 + Math.random() * 0.5,
           isPremium: false
         })).sort((a, b) => {
-          const aOpen = a.is_open === true;
-          const bOpen = b.is_open === true;
+          const aOpen = a.is_open === true && isStoreOpenBySchedule(a.business_hours);
+          const bOpen = b.is_open === true && isStoreOpenBySchedule(b.business_hours);
           if (aOpen && !bOpen) return -1;
           if (!aOpen && bOpen) return 1;
           return (b.rating || 0) - (a.rating || 0);
