@@ -467,15 +467,26 @@ export default function StoreDetail() {
             </Button>
           </div>
         ) : categories.length === 0 ? (
-          <div className="flex flex-col items-center gap-4 py-24 text-muted-foreground">
+          <div className="flex flex-col items-center gap-4 py-24 text-center">
             <div className="flex h-20 w-20 items-center justify-center rounded-full bg-secondary/50">
               <Utensils className="h-8 w-8 text-muted-foreground/50" />
             </div>
-            <p className="text-base font-bold tracking-tight">Nenhum prato por enquanto</p>
-            <Button variant="outline" onClick={() => refetchStore()} disabled={refetchingStore}>
-              <RefreshCw className={cn("h-4 w-4", refetchingStore && "animate-spin")} />
-              Tentar novamente
-            </Button>
+            <div className="space-y-1 max-w-sm">
+              <p className="text-base font-bold tracking-tight text-foreground">Cardápio indisponível</p>
+              <p className="text-sm text-muted-foreground">
+                Esta loja ainda não cadastrou produtos. Explore outras lojas enquanto isso.
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center justify-center gap-2 mt-2">
+              <Button onClick={() => navigate('/marketplace')}>
+                <ArrowLeft className="h-4 w-4" />
+                Voltar para lojas
+              </Button>
+              <Button variant="outline" onClick={() => refetchStore()} disabled={refetchingStore}>
+                <RefreshCw className={cn("h-4 w-4", refetchingStore && "animate-spin")} />
+                Atualizar
+              </Button>
+            </div>
           </div>
         ) : (
           <>
