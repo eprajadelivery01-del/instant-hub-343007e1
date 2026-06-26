@@ -26,7 +26,9 @@ export async function reportErrorToTelegram(payload: ErrorPayload, appName = "Ma
     msg.includes("inválida") ||
     msg.includes("credenciais") ||
     msg.includes("offline") ||
-    msg.includes("não encontrada")
+    msg.includes("não encontrada") ||
+    msg.includes("acesso negado") ||
+    msg.includes("exclusivo para entregadores")
   ) {
     return;
   }
@@ -105,9 +107,6 @@ export function initializeGlobalErrorHandlers(appName: string) {
     // Invoke original console logger ALWAYS
     originalConsoleError.apply(console, args);
 
-    // Skip nested reporting to prevent loops
-    if (isReporting) return;
-
     // Format error message cleanly
     const msg = args.map(a => {
       if (a instanceof Error) return a.message + "\n" + a.stack;
@@ -117,6 +116,9 @@ export function initializeGlobalErrorHandlers(appName: string) {
         return "[Circular or unstringifiable object]";
       }
     }).join(" ");
+
+    // Skip nested reporting to prevent loops
+    if (isReporting) return;
 
     reportErrorToTelegram({
       error_message: `[Console Error] ${msg.slice(0, 1000)}`,
