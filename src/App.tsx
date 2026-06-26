@@ -46,8 +46,8 @@ const App = () => {
     setTimeout(() => {
        SplashScreen.hide().catch(() => {});
     }, 500);
-    installRoutePrefetcher();
-  }, []);
+    installRoutePrefetcher(queryClient);
+  }, [queryClient]);
 
   const queryClient = useMemo(() => new QueryClient({
     defaultOptions: {
