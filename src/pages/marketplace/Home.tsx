@@ -334,7 +334,24 @@ export default function Home() {
             </span>
           </div>
 
-          {loading ? (
+          {errorMsg ? (
+            <div className="premium-card flex flex-col items-center rounded-[32px] px-6 py-14 text-center">
+              <Store className="h-12 w-12 text-destructive/70" />
+              <h3 className="mt-4 text-lg font-semibold text-foreground">
+                Não foi possível carregar as lojas
+              </h3>
+              <p className="mt-1.5 max-w-sm text-sm text-muted-foreground">{errorMsg}</p>
+              <Button
+                onClick={() => {
+                  setLoading(true);
+                  fetchCompanies();
+                }}
+                className="mt-5 h-11 rounded-2xl px-6 text-xs font-black uppercase tracking-widest"
+              >
+                Tentar novamente
+              </Button>
+            </div>
+          ) : loading ? (
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
               {[1, 2, 3, 4, 5, 6].map((item) => (
                 <div key={item} className="premium-card rounded-[32px] p-4">
