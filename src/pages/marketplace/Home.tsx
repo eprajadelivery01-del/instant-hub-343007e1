@@ -33,9 +33,13 @@ const categories = [
 
 type MarketplaceCompany = Company & { products: Product[]; rating: number; isPremium?: boolean };
 
+const COMPANY_LIST_COLUMNS =
+  'id, name, description, category, rating, is_open, active, is_active, delivery_fee, delivery_regions_pricing, show_in_marketplace, city, state, banner_url, cover_url, logo_url, business_hours, prep_time_min, prep_time_max, created_at';
+
 export default function Home() {
   const [companies, setCompanies] = useState<MarketplaceCompany[]>([]);
   const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('');
   const [partnershipType, setPartnershipType] = useState<'merchant' | 'driver' | null>(null);
@@ -48,43 +52,49 @@ export default function Home() {
 
   const fetchCompanies = async () => {
     try {
-      const { data } = await supabase
+      setErrorMsg(null);
+      // Apenas dados das lojas — produtos do cardápio são carregados sob demanda
+      // ao abrir a página de cada loja (StoreDetail), o que torna a Home muito mais leve.
+      const { data, error } = await supabase
         .from('companies')
-        .select(
-          'id, name, description, category, rating, is_open, active, is_active, delivery_fee, delivery_regions_pricing, show_in_marketplace, city, state, banner_url, cover_url, logo_url, business_hours, prep_time_min, prep_time_max, created_at, products(id, name, price, image_url, image_urls, is_active, is_featured, sort_order)'
-        )
-        .eq('show_in_marketplace', true)
-        .limit(4, { foreignTable: 'products' });
-      const processed = (data || []).filter(c => c.show_in_marketplace !== false).map((company, index) => {
-        let name = company.name || "Loja Parceira";
+        .select(COMPANY_LIST_COLUMNS)
+        .eq('show_in_marketplace', true);
 
-        return {
-          ...company,
-          name,
-          is_open: company.is_open === true, // is_open do banco é a fonte da verdade — schedule é só informativo
-          active: company.active === true || company.is_active === true,
-          products: (company.products || []).filter((p: any) => p.is_active !== false).slice(0, 4),
-          rating: company.rating && company.rating > 0 ? company.rating : 4.5 + Math.random() * 0.5,
-        };
-      }).sort((a, b) => {
-        const aOpen = a.is_open === true && a.active === true;
-        const bOpen = b.is_open === true && b.active === true;
-        
-        if (aOpen && !bOpen) return -1;
-        if (!aOpen && bOpen) return 1;
-        
-        // If both have same open status, sort by rating
-        return (b.rating || 0) - (a.rating || 0);
-      }).map((company, index) => ({
-        ...company,
-        isPremium: index < 5,
-      }));
+      if (error) throw error;
 
-      setCompanies(processed as unknown as MarketplaceCompany[]);
+      const rows = (data ?? []) as unknown as Company[];
+
+      const processed: MarketplaceCompany[] = rows
+        .filter((c) => (c as any).show_in_marketplace !== false)
+        .map((company): MarketplaceCompany => {
+          const ratingValue =
+            company.rating && Number(company.rating) > 0
+              ? Number(company.rating)
+              : 4.5 + Math.random() * 0.5;
+          return {
+            ...company,
+            name: company.name || 'Loja Parceira',
+            is_open: company.is_open === true,
+            active: company.active === true || (company as any).is_active === true,
+            products: [],
+            rating: ratingValue,
+          };
+        })
+        .sort((a, b) => {
+          const aOpen = a.is_open === true && a.active === true;
+          const bOpen = b.is_open === true && b.active === true;
+          if (aOpen && !bOpen) return -1;
+          if (!aOpen && bOpen) return 1;
+          return (b.rating || 0) - (a.rating || 0);
+        })
+        .map((company, index) => ({ ...company, isPremium: index < 5 }));
+
+      setCompanies(processed);
       setLoading(false);
     } catch (err: any) {
-      console.error("Error fetching companies:", err);
-      toast.error("Erro ao carregar lojas");
+      console.error('Error fetching companies:', err);
+      setErrorMsg(err?.message || 'Não foi possível carregar as lojas.');
+      toast.error('Erro ao carregar lojas');
       setLoading(false);
     }
   };
@@ -228,6 +238,24 @@ export default function Home() {
           </div>
 
           <div className="-mx-4 flex gap-4 overflow-x-auto px-4 pb-4 scrollbar-hide md:mx-0 md:px-0 md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 md:overflow-visible">
+            {loading && featuredCompanies.length === 0
+              ? [1, 2, 3, 4, 5].map((i) => (
+                  <div
+                    key={`feat-skel-${i}`}
+                    className="premium-card flex min-w-[252px] flex-col gap-3 rounded-[30px] p-4 md:min-w-0"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Skeleton className="h-11 w-11 rounded-2xl" />
+                      <Skeleton className="h-4 w-28 rounded" />
+                    </div>
+                    <Skeleton className="h-28 w-full rounded-[24px]" />
+                    <div className="flex items-center justify-between">
+                      <Skeleton className="h-3 w-10 rounded" />
+                      <Skeleton className="h-3 w-16 rounded" />
+                    </div>
+                  </div>
+                ))
+              : null}
             {featuredCompanies.map((company) => (
               <button
                 key={company.id}
@@ -306,7 +334,24 @@ export default function Home() {
             </span>
           </div>
 
-          {loading ? (
+          {errorMsg ? (
+            <div className="premium-card flex flex-col items-center rounded-[32px] px-6 py-14 text-center">
+              <Store className="h-12 w-12 text-destructive/70" />
+              <h3 className="mt-4 text-lg font-semibold text-foreground">
+                Não foi possível carregar as lojas
+              </h3>
+              <p className="mt-1.5 max-w-sm text-sm text-muted-foreground">{errorMsg}</p>
+              <Button
+                onClick={() => {
+                  setLoading(true);
+                  fetchCompanies();
+                }}
+                className="mt-5 h-11 rounded-2xl px-6 text-xs font-black uppercase tracking-widest"
+              >
+                Tentar novamente
+              </Button>
+            </div>
+          ) : loading ? (
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
               {[1, 2, 3, 4, 5, 6].map((item) => (
                 <div key={item} className="premium-card rounded-[32px] p-4">
