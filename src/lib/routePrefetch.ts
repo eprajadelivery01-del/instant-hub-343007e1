@@ -126,16 +126,29 @@ interface MetricEvent {
 const metrics: MetricEvent[] = [];
 const pendingHover = new Map<string, number>(); // path → first hover timestamp
 
+const listeners = new Set<() => void>();
+function emit() {
+  listeners.forEach((l) => {
+    try { l(); } catch { /* noop */ }
+  });
+}
+
+export function subscribePrefetchEvents(cb: () => void): () => void {
+  listeners.add(cb);
+  return () => listeners.delete(cb);
+}
+
 function recordMetric(ev: MetricEvent) {
   metrics.push(ev);
   if (metrics.length > 500) metrics.shift();
+  emit();
 }
 
 function getQueryClient(): QueryClient | null {
   return (window as any).__queryClient ?? null;
 }
 
-function startPrefetch(path: string, opts: { dataToo: boolean }) {
+export function startPrefetch(path: string, opts: { dataToo: boolean } = { dataToo: true }) {
   const existing = states.get(path);
   if (existing && existing.chunkDone && (!opts.dataToo || existing.dataDone)) return;
   if (existing && !existing.abort.signal.aborted) return; // already running
@@ -184,12 +197,82 @@ function startPrefetch(path: string, opts: { dataToo: boolean }) {
   });
 }
 
-function cancelPrefetch(path: string) {
+export function cancelPrefetch(path: string) {
   const state = states.get(path);
   if (!state || (state.chunkDone && state.dataDone)) return;
   // Only cancel if not yet committed — chunks already imported stay cached.
   state.abort.abort();
   recordMetric({ path, type: "cancel", ts: Date.now() });
+}
+
+// ---------- Report / debug API ----------
+
+export interface PrefetchReport {
+  byPath: Record<
+    string,
+    { chunk: number | null; data: number | null; navigateMs: number | null; cancels: number }
+  >;
+  events: MetricEvent[];
+  lcp: number[];
+  inFlight: number;
+  queued: number;
+  generatedAt: string;
+}
+
+export function getPrefetchReport(): PrefetchReport {
+  const byPath: PrefetchReport["byPath"] = {};
+  metrics.forEach((m) => {
+    const slot =
+      (byPath[m.path] ||= { chunk: null, data: null, navigateMs: null, cancels: 0 });
+    if (m.type === "chunk") slot.chunk = m.ms ?? null;
+    if (m.type === "data") slot.data = m.ms ?? null;
+    if (m.type === "navigate") slot.navigateMs = m.ms ?? null;
+    if (m.type === "cancel") slot.cancels += 1;
+  });
+  const lcp = (performance.getEntriesByType("largest-contentful-paint") as PerformanceEntry[])
+    .map((e) => Math.round(e.startTime));
+  return {
+    byPath,
+    events: metrics.slice(),
+    lcp,
+    inFlight,
+    queued: queue.length,
+    generatedAt: new Date().toISOString(),
+  };
+}
+
+export function downloadPrefetchReport(): void {
+  if (typeof window === "undefined") return;
+  const report = getPrefetchReport();
+  const blob = new Blob([JSON.stringify(report, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `prefetch-report-${Date.now()}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+// ---------- Test-only helpers ----------
+
+export function __resetPrefetchForTests(): void {
+  inFlight = 0;
+  queue.length = 0;
+  states.clear();
+  metrics.length = 0;
+  pendingHover.clear();
+  installed = false;
+}
+
+export function __getPrefetchInternals() {
+  return {
+    get inFlight() { return inFlight; },
+    get queueLength() { return queue.length; },
+    states,
+    metrics,
+  };
 }
 
 // ---------- DOM wiring ----------
@@ -290,18 +373,10 @@ export function installRoutePrefetcher(queryClient?: QueryClient): void {
 
   // Public debug API.
   (window as any).__prefetchReport = () => {
-    const byPath: Record<string, any> = {};
-    metrics.forEach((m) => {
-      const slot = (byPath[m.path] ||= { chunk: null, data: null, navigateMs: null, cancels: 0 });
-      if (m.type === "chunk") slot.chunk = m.ms;
-      if (m.type === "data") slot.data = m.ms;
-      if (m.type === "navigate") slot.navigateMs = m.ms ?? null;
-      if (m.type === "cancel") slot.cancels += 1;
-    });
-    const lcp = (performance.getEntriesByType("largest-contentful-paint") as PerformanceEntry[])
-      .map((e) => Math.round(e.startTime));
+    const r = getPrefetchReport();
     // eslint-disable-next-line no-console
-    console.table(byPath);
-    return { byPath, events: metrics.slice(-50), lcp, inFlight, queued: queue.length };
+    console.table(r.byPath);
+    return r;
   };
+  (window as any).__prefetchReportDownload = downloadPrefetchReport;
 }
