@@ -238,6 +238,24 @@ export default function Home() {
           </div>
 
           <div className="-mx-4 flex gap-4 overflow-x-auto px-4 pb-4 scrollbar-hide md:mx-0 md:px-0 md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 md:overflow-visible">
+            {loading && featuredCompanies.length === 0
+              ? [1, 2, 3, 4, 5].map((i) => (
+                  <div
+                    key={`feat-skel-${i}`}
+                    className="premium-card flex min-w-[252px] flex-col gap-3 rounded-[30px] p-4 md:min-w-0"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Skeleton className="h-11 w-11 rounded-2xl" />
+                      <Skeleton className="h-4 w-28 rounded" />
+                    </div>
+                    <Skeleton className="h-28 w-full rounded-[24px]" />
+                    <div className="flex items-center justify-between">
+                      <Skeleton className="h-3 w-10 rounded" />
+                      <Skeleton className="h-3 w-16 rounded" />
+                    </div>
+                  </div>
+                ))
+              : null}
             {featuredCompanies.map((company) => (
               <button
                 key={company.id}
