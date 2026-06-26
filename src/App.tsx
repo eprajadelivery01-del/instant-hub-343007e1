@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect } from "react";
+import React, { useMemo, useEffect, lazy, Suspense } from "react";
 import { SplashScreen } from "@capacitor/splash-screen";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
@@ -14,21 +14,28 @@ import RequireAuth from "@/components/marketplace/RequireAuth";
 import ScrollToTop from "@/components/shared/ScrollToTop";
 import { PageTransition } from "@/components/shared/PageTransition";
 
-import Login from "./pages/marketplace/Login";
-import Signup from "./pages/marketplace/Signup";
 import Home from "./pages/marketplace/Home";
-import StoreDetail from "./pages/marketplace/StoreDetail";
-import Cart from "./pages/marketplace/Cart";
-import Checkout from "./pages/marketplace/Checkout";
-import Orders from "./pages/marketplace/Orders";
-import OrderDetail from "./pages/marketplace/OrderDetail";
-import Addresses from "./pages/marketplace/Addresses";
-import Profile from "./pages/marketplace/Profile";
-import Coupons from "./pages/marketplace/Coupons";
-import PrivacyPolicy from "./pages/marketplace/PrivacyPolicy";
-import TermsOfService from "./pages/marketplace/TermsOfService";
-import Search from "./pages/marketplace/Search";
-import NotFound from "./pages/NotFound";
+
+const Login = lazy(() => import("./pages/marketplace/Login"));
+const Signup = lazy(() => import("./pages/marketplace/Signup"));
+const StoreDetail = lazy(() => import("./pages/marketplace/StoreDetail"));
+const Cart = lazy(() => import("./pages/marketplace/Cart"));
+const Checkout = lazy(() => import("./pages/marketplace/Checkout"));
+const Orders = lazy(() => import("./pages/marketplace/Orders"));
+const OrderDetail = lazy(() => import("./pages/marketplace/OrderDetail"));
+const Addresses = lazy(() => import("./pages/marketplace/Addresses"));
+const Profile = lazy(() => import("./pages/marketplace/Profile"));
+const Coupons = lazy(() => import("./pages/marketplace/Coupons"));
+const PrivacyPolicy = lazy(() => import("./pages/marketplace/PrivacyPolicy"));
+const TermsOfService = lazy(() => import("./pages/marketplace/TermsOfService"));
+const Search = lazy(() => import("./pages/marketplace/Search"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+
+const RouteFallback = () => (
+  <div className="flex min-h-[60vh] items-center justify-center">
+    <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+  </div>
+);
 
 const App = () => {
   useEffect(() => {
@@ -59,6 +66,7 @@ const App = () => {
                 <Sonner />
                 <BrowserRouter>
                   <ScrollToTop />
+                  <Suspense fallback={<RouteFallback />}>
                   <Routes>
                     <Route path="/" element={<Navigate to="/marketplace" replace />} />
                     <Route path="/marketplace/login" element={<PageTransition><Login /></PageTransition>} />
@@ -77,6 +85,7 @@ const App = () => {
                     <Route path="/marketplace/terms" element={<PageTransition><TermsOfService /></PageTransition>} />
                     <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
                   </Routes>
+                  </Suspense>
                 </BrowserRouter>
               </TooltipProvider>
             </AddressProvider>
