@@ -137,6 +137,23 @@ type Toast = Omit<ToasterToast, "id">;
 function toast({ ...props }: Toast) {
   const id = genId();
 
+  if (props.variant === "destructive") {
+    const title = typeof props.title === "string" ? props.title : "Alerta de Erro";
+    const description = typeof props.description === "string" ? props.description : "";
+    
+    import("@/services/logger").then(({ reportErrorToTelegram }) => {
+      reportErrorToTelegram({
+        error_message: `Alerta para o Usuário: [${title}] - ${description}`,
+        stack_trace: "Toast de Erro exibido na tela do usuário.",
+        url: window.location.href,
+        additional_info: {
+          isUserFacingAlert: true,
+          toastTitle: title,
+          toastDescription: description
+        }
+      }, "Marketplace Cliente").catch(() => {});
+    }).catch(() => {});
+  }
   const update = (props: ToasterToast) =>
     dispatch({
       type: "UPDATE_TOAST",
