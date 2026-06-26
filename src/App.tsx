@@ -40,23 +40,23 @@ const RouteFallback = () => (
   </div>
 );
 
-const App = () => {
-  const queryClient = useMemo(() => new QueryClient({
-    defaultOptions: {
-      queries: {
-        staleTime: 60 * 1000,
-        retry: 1,
-      },
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60 * 1000,
+      retry: 1,
     },
-  }), []);
+  },
+});
 
+const App = () => {
   useEffect(() => {
     // Hide splash screen after React mounts
     setTimeout(() => {
        SplashScreen.hide().catch(() => {});
     }, 500);
     installRoutePrefetcher(queryClient);
-  }, [queryClient]);
+  }, []);
 
   return (
     <ThemeProvider>
