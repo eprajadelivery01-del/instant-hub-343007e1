@@ -102,7 +102,7 @@ export default function Search() {
 
   return (
     <MarketplaceLayout hideNav={false}>
-      <div className="sticky top-0 z-50 bg-background/95 backdrop-blur-lg px-4 py-3 border-b border-border">
+      <div className="sticky top-0 z-50 bg-background/95 backdrop-blur-lg px-4 pt-[calc(env(safe-area-inset-top,0px)+0.75rem)] pb-3 border-b border-border">
         <div className="relative w-full mx-auto">
           <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
