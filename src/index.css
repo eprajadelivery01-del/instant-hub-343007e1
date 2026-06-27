@@ -235,6 +235,14 @@
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 
+  .safe-area-bottom {
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 1rem);
+  }
+
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
   .marketplace-cart-fab {
     bottom: calc(80px + env(safe-area-inset-bottom, 0px));
   }
