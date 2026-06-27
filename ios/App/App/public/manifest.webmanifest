@@ -1,0 +1,28 @@
+{
+  "name": "É Pra Já Cliente",
+  "short_name": "É Pra Já",
+  "id": "/",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FF7A00",
+  "theme_color": "#FF7A00",
+  "description": "Peça o que você deseja e receba em minutos.",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}
