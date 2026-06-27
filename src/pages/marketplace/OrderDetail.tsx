@@ -327,7 +327,7 @@ export default function OrderDetail() {
               <h2 className="font-bold text-lg">Chat com {order.company?.name}</h2>
               <Button variant="ghost" size="sm" onClick={() => setShowStoreChat(false)}>Fechar</Button>
             </div>
-            <div className="flex-1 overflow-y-auto p-4">
+            <div className="flex-1 overflow-y-auto p-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
               <OrderStoreChat orderId={order.id} companyId={order.company_id} companyName={order.company?.name} />
             </div>
           </div>

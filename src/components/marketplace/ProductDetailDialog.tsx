@@ -252,7 +252,7 @@ export function ProductDetailDialog({ product, isOpen, onClose, onAddToCart, ini
         </div>
 
         {/* Sticky Footer */}
-        <div className="sticky bottom-0 z-50 mt-auto flex items-center gap-4 bg-background px-6 py-6 border-t border-border/40">
+        <div className="sticky bottom-0 z-50 mt-auto flex items-center gap-4 bg-background px-6 pt-6 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] border-t border-border/40">
           <div className="flex items-center gap-4 text-foreground">
             <button
               onClick={() => setQuantity(Math.max(1, quantity - 1))}
