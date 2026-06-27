@@ -52,10 +52,12 @@ const queryClient = new QueryClient({
 
 const App = () => {
   useEffect(() => {
-    // Hide native splash screen if running inside Capacitor (no-op on web)
+    // Hide native splash screen if running inside Capacitor (no-op on web).
+    // Use a dynamic, variable specifier so the web build doesn't try to bundle it.
     setTimeout(() => {
-      import("@capacitor/splash-screen")
-        .then(({ SplashScreen }) => SplashScreen.hide().catch(() => {}))
+      const mod = "@capacitor/splash-screen";
+      (new Function("m", "return import(m)") as (m: string) => Promise<any>)(mod)
+        .then((m: any) => m?.SplashScreen?.hide?.().catch(() => {}))
         .catch(() => {});
     }, 500);
     installRoutePrefetcher(queryClient);
