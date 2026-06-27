@@ -1,5 +1,4 @@
 import React, { useMemo, useEffect, lazy, Suspense } from "react";
-import { SplashScreen } from "@capacitor/splash-screen";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -53,9 +52,11 @@ const queryClient = new QueryClient({
 
 const App = () => {
   useEffect(() => {
-    // Hide splash screen after React mounts
+    // Hide native splash screen if running inside Capacitor (no-op on web)
     setTimeout(() => {
-       SplashScreen.hide().catch(() => {});
+      import("@capacitor/splash-screen")
+        .then(({ SplashScreen }) => SplashScreen.hide().catch(() => {}))
+        .catch(() => {});
     }, 500);
     installRoutePrefetcher(queryClient);
   }, []);
