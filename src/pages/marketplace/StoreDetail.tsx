@@ -18,6 +18,7 @@ import { calculateDeliveryFee } from '@/utils/freight';
 import { Address } from '@/types/database';
 import { StoreCouponsSheet } from '@/components/marketplace/StoreCouponsSheet';
 import { useActiveCoupons } from '@/services/coupons';
+import { SafeAreaHeader, safeAreaTopValue } from '@/components/shared/SafeAreaHeader';
 
 export default function StoreDetail() {
   const { id } = useParams<{ id: string }>();
@@ -261,10 +262,15 @@ export default function StoreDetail() {
 
   return (
     <MarketplaceLayout hideNav={false}>
-      <div className={cn(
-        'fixed left-0 right-0 top-0 z-[100] flex min-h-16 items-center border-b border-border/60 bg-background/90 px-6 pt-[env(safe-area-inset-top,0px)] pb-2 backdrop-blur-xl transition-all duration-300 md:hidden',
-        isScrolled ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'
-      )}>
+      <SafeAreaHeader
+        as="div"
+        variant="fixed"
+        extraTopRem={0}
+        className={cn(
+          'z-[100] flex min-h-16 items-center border-b border-border/60 bg-background/90 px-6 pb-2 backdrop-blur-xl transition-all duration-300 md:hidden',
+          isScrolled ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'
+        )}
+      >
         <button onClick={() => navigate('/marketplace')} className="mr-4">
           <ArrowLeft className="h-6 w-6 text-foreground" />
         </button>
@@ -280,7 +286,7 @@ export default function StoreDetail() {
         <button className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-secondary">
           <Share2 className="h-5 w-5 text-foreground" />
         </button>
-      </div>
+      </SafeAreaHeader>
 
       <div className="relative group">
         <div className="relative h-56 overflow-hidden transition-all duration-700 group-hover:h-64">
@@ -296,7 +302,10 @@ export default function StoreDetail() {
           />
           <div className="hero-image-overlay absolute inset-0" />
 
-          <div className="absolute left-6 right-6 top-[max(env(safe-area-inset-top),1.5rem)] z-20 flex justify-between">
+          <div
+            className="absolute left-6 right-6 z-20 flex justify-between"
+            style={{ top: safeAreaTopValue(1) }}
+          >
             <button
               onClick={() => navigate('/marketplace')}
               className="flex h-11 w-11 items-center justify-center rounded-full bg-white/20 backdrop-blur-md transition-transform hover:scale-110 active:scale-95 text-white"
