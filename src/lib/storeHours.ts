@@ -45,6 +45,54 @@ function toMinutes(value: string | undefined, fallback: number): number {
 }
 
 /**
+ * Returns the IANA timezone the schedule should be evaluated in.
+ * Order: explicit override → browser/user timezone → São Paulo fallback.
+ */
+export function resolveTimezone(explicit?: string | null): string {
+  if (explicit && typeof explicit === "string") return explicit;
+  try {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    if (tz) return tz;
+  } catch {
+    /* ignore */
+  }
+  return "America/Sao_Paulo";
+}
+
+/**
+ * Extracts weekday/hour/minute in the given timezone using Intl, so the
+ * comparison never relies on the browser's local offset. This keeps Home and
+ * StoreDetail in sync regardless of where the user (or server) is located.
+ */
+function getZonedParts(date: Date, timeZone: string) {
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    weekday: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+  const parts = formatter.formatToParts(date);
+  const get = (type: string) =>
+    parts.find((p) => p.type === type)?.value ?? "";
+  const weekdayMap: Record<string, WeekDay> = {
+    Sun: "Dom",
+    Mon: "Seg",
+    Tue: "Ter",
+    Wed: "Qua",
+    Thu: "Qui",
+    Fri: "Sex",
+    Sat: "Sab",
+  };
+  const hour = Number(get("hour")) || 0;
+  const minute = Number(get("minute")) || 0;
+  return {
+    day: weekdayMap[get("weekday")] ?? "Dom",
+    minutes: hour * 60 + minute,
+  };
+}
+
+/**
  * Parses and validates a business-hours payload. Accepts either a JSON string
  * or an already-parsed array. Returns `null` when the payload is absent or
  * cannot be safely interpreted.
@@ -75,16 +123,15 @@ export function parseBusinessHours(
  */
 export function isStoreOpenBySchedule(
   input: BusinessHoursInput,
-  now: Date = new Date()
+  now: Date = new Date(),
+  timeZone?: string | null
 ): boolean {
   const schedule = parseBusinessHours(input);
   if (!schedule) return true;
-
-  const today = WEEK_DAYS[now.getDay()];
-  const entry = schedule.find((d) => d.day === today);
+  const tz = resolveTimezone(timeZone);
+  const { day, minutes: currentMinutes } = getZonedParts(now, tz);
+  const entry = schedule.find((d) => d.day === day);
   if (!entry || entry.active === false) return false;
-
-  const currentMinutes = now.getHours() * 60 + now.getMinutes();
   const startMinutes = toMinutes(entry.start, 0);
   const endMinutes = toMinutes(entry.end, 23 * 60 + 59);
 
@@ -98,13 +145,14 @@ export type StoreStatusInput = {
   is_open?: boolean | null;
   active?: boolean | null;
   business_hours?: BusinessHoursInput;
+  timezone?: string | null;
 };
 
 export function isStoreOpenNow(company: StoreStatusInput): boolean {
   return (
     company.active !== false &&
     company.is_open === true &&
-    isStoreOpenBySchedule(company.business_hours)
+    isStoreOpenBySchedule(company.business_hours, new Date(), company.timezone)
   );
 }
 
