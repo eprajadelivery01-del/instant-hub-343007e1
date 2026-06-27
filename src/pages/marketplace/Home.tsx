@@ -167,7 +167,7 @@ export default function Home() {
   return (
     <MarketplaceLayout>
       <div className="border-b border-border bg-background">
-        <div className="mx-auto flex max-w-7xl flex-col gap-5 px-4 pb-4 pt-[max(env(safe-area-inset-top),1.25rem)] sm:px-6">
+        <div className="mx-auto flex max-w-7xl flex-col gap-5 px-4 pb-4 pt-[calc(env(safe-area-inset-top,0px)+1.25rem)] sm:px-6">
           <div className="flex items-center justify-between gap-4 md:hidden">
             <div className="flex min-w-0 items-center gap-4">
               <MarketplaceMenu onSelectCategory={setActiveCategory} onOpenPartnership={setPartnershipType}>
