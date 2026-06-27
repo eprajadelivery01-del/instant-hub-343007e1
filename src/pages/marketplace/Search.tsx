@@ -11,6 +11,7 @@ import { useCart } from "@/contexts/CartContext";
 import { ProductDetailDialog } from "@/components/marketplace/ProductDetailDialog";
 import { Product, Company } from "@/types/database";
 import { isStoreOpenBySchedule } from "@/lib/storeHours";
+import { SafeAreaHeader } from "@/components/shared/SafeAreaHeader";
 
 export default function Search() {
   const [search, setSearch] = useState("");
@@ -102,7 +103,7 @@ export default function Search() {
 
   return (
     <MarketplaceLayout hideNav={false}>
-      <div className="sticky top-0 z-50 bg-background/95 backdrop-blur-lg px-4 pt-[calc(env(safe-area-inset-top,0px)+0.75rem)] pb-3 border-b border-border">
+      <SafeAreaHeader variant="sticky" extraTopRem={0.75} className="z-50 bg-background/95 backdrop-blur-lg px-4 pb-3 border-b border-border">
         <div className="relative w-full mx-auto">
           <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
@@ -118,7 +119,7 @@ export default function Search() {
             </button>
           )}
         </div>
-      </div>
+      </SafeAreaHeader>
 
       <div className="w-full mx-auto px-4 pt-4 pb-24">
         {loading ? (
