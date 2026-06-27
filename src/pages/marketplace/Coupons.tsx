@@ -48,7 +48,7 @@ export default function Coupons() {
   return (
     <div className="min-h-screen bg-background pb-20">
       {/* Header */}
-      <div className="sticky top-0 z-50 bg-background/90 backdrop-blur-xl border-b border-border transition-all">
+      <div className="sticky top-0 z-50 bg-background/90 backdrop-blur-xl border-b border-border transition-all pt-[env(safe-area-inset-top,0px)]">
         <div className="flex h-16 items-center px-6">
           <button onClick={() => navigate('/marketplace/profile')} className="mr-4">
             <ArrowLeft className="h-6 w-6 text-foreground" />

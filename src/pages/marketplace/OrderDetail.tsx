@@ -168,7 +168,7 @@ export default function OrderDetail() {
         </div>
 
         {/* Top Bar Nav */}
-        <div className="sticky top-0 z-20 px-4 py-3 flex justify-between items-center bg-transparent backdrop-blur-sm">
+        <div className="sticky top-0 z-20 px-4 pb-3 pt-[calc(env(safe-area-inset-top,0px)+0.75rem)] flex justify-between items-center bg-transparent backdrop-blur-sm">
           <button onClick={() => navigate('/marketplace/orders')} className="flex h-10 w-10 items-center justify-center rounded-full bg-background shadow-md border border-border/50">
             <ArrowLeft className="h-5 w-5 text-primary" />
           </button>
