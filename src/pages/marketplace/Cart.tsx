@@ -10,7 +10,7 @@ import { MediaImage } from '@/components/shared/MediaImage';
 import { getPrimaryProductImage, getCompanyLogoImage } from '@/lib/media';
 import { Product } from '@/types/database';
 import { toast } from 'sonner';
-import { isStoreOpenBySchedule } from '@/lib/utils';
+import { isStoreOpenBySchedule } from '@/lib/storeHours';
 
 interface CartItemRowProps {
   item: any;

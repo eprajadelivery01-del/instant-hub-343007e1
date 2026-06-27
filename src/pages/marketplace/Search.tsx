@@ -10,7 +10,7 @@ import { MediaImage } from "@/components/shared/MediaImage";
 import { useCart } from "@/contexts/CartContext";
 import { ProductDetailDialog } from "@/components/marketplace/ProductDetailDialog";
 import { Product, Company } from "@/types/database";
-import { isStoreOpenBySchedule } from "@/lib/utils";
+import { isStoreOpenBySchedule } from "@/lib/storeHours";
 
 export default function Search() {
   const [search, setSearch] = useState("");

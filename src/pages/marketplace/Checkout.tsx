@@ -14,7 +14,7 @@ import { toast } from 'sonner';
 import { MapPin, Banknote, AlertCircle, ArrowLeft, Loader2, FileText, Smartphone, Bike, Ticket } from 'lucide-react';
 import { useOrderLock } from '@/hooks/useOrderLock';
 import { calculateDeliveryFee } from '@/utils/freight';
-import { isStoreOpenBySchedule } from '@/lib/utils';
+import { isStoreOpenBySchedule } from '@/lib/storeHours';
 
 function mapServerError(msg: string): string {
   const m = msg.toLowerCase();
