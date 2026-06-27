@@ -223,7 +223,29 @@ export default function Checkout() {
       });
 
       if (functionError) {
-        throw new Error(mapServerError(functionError.message || 'Erro ao processar pedido'));
+        let errMessage = functionError.message;
+        
+        // Se for um erro HTTP da Edge Function, tentamos ler a resposta real
+        if (functionError.name === 'FunctionsHttpError' || errMessage === 'Edge Function returned a non-2xx status code') {
+          try {
+            const ctx = (functionError as any).context;
+            if (ctx && typeof ctx.json === 'function') {
+              const body = await ctx.json();
+              if (body?.error) errMessage = body.error;
+            } else if (ctx && ctx.error) {
+              errMessage = ctx.error;
+            }
+          } catch (e) {
+            // falhou ao extrair, continua com fallback
+          }
+        }
+        
+        // Oculta a mensagem feia do banco de dados/sistema se não conseguimos ler o erro real
+        if (errMessage === 'Edge Function returned a non-2xx status code') {
+          errMessage = 'Erro de comunicação com o servidor. Por favor, tente novamente.';
+        }
+
+        throw new Error(mapServerError(errMessage || 'Erro ao processar pedido'));
       }
       if (data?.error) {
         throw new Error(mapServerError(data.error));
