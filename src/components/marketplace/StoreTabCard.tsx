@@ -4,6 +4,7 @@ import { ArrowRight, Clock3, ShoppingBag, Star, Store as StoreIcon } from 'lucid
 import { cn } from '@/lib/utils';
 import { MediaImage } from '@/components/shared/MediaImage';
 import { getCompanyBannerImage, getCompanyLogoImage, getPrimaryProductImage } from '@/lib/media';
+import { getPrepTimeLabel, getStoreStatusLabel, isStoreOpenNow } from '@/lib/storeHours';
 
 interface StoreTabCardProps {
   company: Company & { products: Product[]; rating?: number | null; cover_url?: string | null; category?: string | null; prep_time_min?: number | null; prep_time_max?: number | null };
@@ -16,8 +17,9 @@ export function StoreTabCard({ company }: StoreTabCardProps) {
   const featuredProducts = (company.products || []).slice(0, 3);
   const rating = Number(company.rating || 5.0);
   const subtitle = company.category || company.description || 'Gastronomia de alto nível';
-  const prepMin = company.prep_time_min ?? 25;
-  const prepMax = company.prep_time_max ?? 45;
+  const isOpen = isStoreOpenNow(company);
+  const statusLabel = getStoreStatusLabel(company);
+  const prepLabel = getPrepTimeLabel(company);
 
   return (
     <button
@@ -25,7 +27,7 @@ export function StoreTabCard({ company }: StoreTabCardProps) {
       onClick={() => navigate(`/marketplace/store/${company.id}`)}
       className={cn(
         'group relative flex h-full w-full flex-col overflow-hidden rounded-[32px] bg-card border border-border text-left transition-all hover:shadow-xl active:scale-[0.98]',
-        (!company.active || !company.is_open) && 'opacity-70 grayscale'
+        !isOpen && 'opacity-70 grayscale'
       )}
     >
       {/* Banner - Full Width and Fixed Height, Starting at the very top */}
@@ -46,11 +48,11 @@ export function StoreTabCard({ company }: StoreTabCardProps) {
         <div className="absolute inset-x-0 top-0 z-20 flex items-start justify-between p-4">
           <div className={cn(
             'rounded-full px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider backdrop-blur-md border shadow-sm',
-            (company.is_open && company.active)
+            isOpen
               ? 'bg-primary text-primary-foreground border-primary/20' 
               : 'bg-black/60 text-white/70 border-white/10'
           )}>
-            {(company.is_open && company.active) ? 'Aberta agora' : 'Fechada'}
+            {statusLabel}
           </div>
 
           <div className="flex items-center gap-1 rounded-full bg-black/40 px-3 py-1.5 text-xs font-bold text-white border border-white/10 backdrop-blur-md">
@@ -83,7 +85,7 @@ export function StoreTabCard({ company }: StoreTabCardProps) {
         <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
           <div className="premium-chip flex items-center justify-center gap-2 rounded-full px-3 py-2">
             <Clock3 className="h-3.5 w-3.5 text-primary" />
-            <span>{prepMin}-{prepMax} min</span>
+            <span>{prepLabel}</span>
           </div>
           <div className="premium-chip flex items-center justify-center rounded-full px-3 py-2">
             {(() => {

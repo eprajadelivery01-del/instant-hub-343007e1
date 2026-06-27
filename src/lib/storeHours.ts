@@ -90,3 +90,33 @@ export function isStoreOpenBySchedule(
 
   return currentMinutes >= startMinutes && currentMinutes <= endMinutes;
 }
+
+/**
+ * Shared helpers so every screen renders the same status/prep-time copy.
+ */
+export type StoreStatusInput = {
+  is_open?: boolean | null;
+  active?: boolean | null;
+  business_hours?: BusinessHoursInput;
+};
+
+export function isStoreOpenNow(company: StoreStatusInput): boolean {
+  return (
+    company.active !== false &&
+    company.is_open === true &&
+    isStoreOpenBySchedule(company.business_hours)
+  );
+}
+
+export function getStoreStatusLabel(company: StoreStatusInput): string {
+  return isStoreOpenNow(company) ? "Aberta agora" : "Fechada";
+}
+
+export function getPrepTimeLabel(company: {
+  prep_time_min?: number | null;
+  prep_time_max?: number | null;
+}): string {
+  const min = company.prep_time_min ?? 25;
+  const max = company.prep_time_max ?? 45;
+  return `${min}-${max} min`;
+}

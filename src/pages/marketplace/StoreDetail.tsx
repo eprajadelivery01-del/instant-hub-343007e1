@@ -8,7 +8,7 @@ import MarketplaceLayout from '@/components/marketplace/MarketplaceLayout';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Minus, Plus, Star, Clock, Store as StoreIcon, Share2, Utensils, Search, Info, Ticket, AlertCircle, Flame, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { isStoreOpenBySchedule } from '@/lib/storeHours';
+import { getPrepTimeLabel, getStoreStatusLabel, isStoreOpenBySchedule } from '@/lib/storeHours';
 import { ProductDetailDialog } from '@/components/marketplace/ProductDetailDialog';
 import { MediaImage } from '@/components/shared/MediaImage';
 import { getCompanyBannerImage, getCompanyLogoImage, getPrimaryProductImage } from '@/lib/media';
@@ -273,7 +273,7 @@ export default function StoreDetail() {
           <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
             <div className={cn("h-2 w-2 rounded-full shadow-sm", company.is_open ? "bg-success animate-pulse" : "bg-destructive")} />
             <span className={company.is_open ? "text-success" : "text-destructive"}>
-              {company.is_open ? 'Aberto' : 'Fechado no momento'}
+              {getStoreStatusLabel(company as any)}
             </span>
           </div>
         </div>
@@ -365,7 +365,7 @@ export default function StoreDetail() {
             </div>
             <div className="flex items-center gap-1.5 rounded-xl bg-secondary/60 px-3 py-1.5">
               <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-              <span className="text-xs font-bold text-foreground">{(company as any).prep_time_min ?? 30}-{(company as any).prep_time_max ?? 45} min</span>
+              <span className="text-xs font-bold text-foreground">{getPrepTimeLabel(company as any)}</span>
             </div>
             <div className="flex items-center gap-1.5 rounded-xl bg-secondary/60 px-3 py-1.5">
               <Info className="h-3.5 w-3.5 text-muted-foreground" />
