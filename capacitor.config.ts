@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.epraja',
+  appId: 'br.com.epraja.appFma',
   appName: 'É Pra Já - Cliente',
   webDir: 'dist',
   backgroundColor: '#0D0D0D',
