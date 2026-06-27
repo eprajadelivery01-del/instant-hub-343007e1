@@ -229,7 +229,7 @@ export default function Home() {
              </div>
           </div>
         </div>
-      </div>
+      </SafeAreaHeader>
 
       <div className="mx-auto max-w-7xl space-y-10 px-4 pb-32 pt-6 sm:px-6">
         <section className="space-y-4">
