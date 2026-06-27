@@ -428,7 +428,7 @@ export default function StoreDetail() {
       </div>
 
       {categories.length > 0 && (
-        <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-xl border-b border-border/60 transition-all duration-500">
+        <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-xl border-b border-border/60 transition-all duration-500 pt-[env(safe-area-inset-top,0px)]">
           <div className="flex overflow-x-auto px-6 scrollbar-hide">
             <div className="flex min-w-full gap-6">
               {categories.map((category) => (
