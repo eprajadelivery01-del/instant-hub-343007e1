@@ -295,20 +295,20 @@ export default function StoreDetail() {
           />
           <div className="hero-image-overlay absolute inset-0" />
 
-          <div className="absolute left-6 right-6 top-6 z-20 flex justify-between">
+          <div className="absolute left-6 right-6 top-[max(env(safe-area-inset-top),1.5rem)] z-20 flex justify-between">
             <button
               onClick={() => navigate('/marketplace')}
-              className="flex h-11 w-11 items-center justify-center rounded-2xl bg-background/15 text-primary-foreground backdrop-blur-xl transition-all hover:bg-background/25 md:hidden"
+              className="flex h-11 w-11 items-center justify-center rounded-full bg-white/20 backdrop-blur-md transition-transform hover:scale-110 active:scale-95 text-white"
             >
-              <ArrowLeft className="h-5 w-5" />
+              <ArrowLeft className="h-6 w-6 shadow-sm" />
             </button>
-
+            
             <div className="flex gap-3 ml-auto">
-              <button className="flex h-11 w-11 items-center justify-center rounded-2xl bg-background/15 text-primary-foreground backdrop-blur-xl transition-all hover:bg-background/25">
-                <Search className="h-5 w-5" />
+              <button className="flex h-11 w-11 items-center justify-center rounded-full bg-white/20 backdrop-blur-md transition-transform hover:scale-110 active:scale-95 text-white">
+                <Search className="h-5 w-5 shadow-sm" />
               </button>
-              <button className="flex h-11 w-11 items-center justify-center rounded-2xl bg-background/15 text-primary-foreground backdrop-blur-xl transition-all hover:bg-background/25">
-                <Share2 className="h-5 w-5" />
+              <button className="flex h-11 w-11 items-center justify-center rounded-full bg-white/20 backdrop-blur-md transition-transform hover:scale-110 active:scale-95 text-white">
+                <Share2 className="h-5 w-5 shadow-sm" />
               </button>
             </div>
           </div>

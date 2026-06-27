@@ -156,7 +156,7 @@ export default function Addresses() {
   return (
     <>
       <MarketplaceLayout>
-        <div className="mx-auto max-w-lg px-4 py-4 space-y-4">
+        <div className="mx-auto max-w-lg px-4 pb-4 pt-[max(env(safe-area-inset-top),1rem)] space-y-4">
           <div className="flex items-center gap-3">
             <button onClick={() => navigate('/marketplace/profile')} className="h-9 w-9 rounded-full bg-secondary flex items-center justify-center">
               <ArrowLeft className="h-4 w-4" />

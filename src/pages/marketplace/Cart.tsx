@@ -225,7 +225,7 @@ export default function Cart() {
 
   return (
     <MarketplaceLayout hideNav>
-      <div className="sticky top-0 z-30 flex items-center gap-3 border-b border-border bg-background px-4 py-3">
+      <div className="sticky top-0 z-30 flex items-center gap-3 border-b border-border bg-background px-4 pb-3 pt-[max(env(safe-area-inset-top),0.75rem)]">
         <button onClick={() => navigate(-1)} className="flex h-9 w-9 items-center justify-center rounded-full">
           <ArrowLeft className="h-5 w-5 text-primary" />
         </button>
