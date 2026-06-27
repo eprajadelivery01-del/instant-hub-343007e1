@@ -262,7 +262,7 @@ export default function StoreDetail() {
   return (
     <MarketplaceLayout hideNav={false}>
       <div className={cn(
-        'fixed left-0 right-0 top-0 z-[100] flex h-16 items-center border-b border-border/60 bg-background/90 px-6 pt-[env(safe-area-inset-top,0px)] backdrop-blur-xl transition-all duration-300 md:hidden',
+        'fixed left-0 right-0 top-0 z-[100] flex min-h-16 items-center border-b border-border/60 bg-background/90 px-6 pt-[env(safe-area-inset-top,0px)] pb-2 backdrop-blur-xl transition-all duration-300 md:hidden',
         isScrolled ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'
       )}>
         <button onClick={() => navigate('/marketplace')} className="mr-4">
