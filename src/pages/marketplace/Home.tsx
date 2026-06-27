@@ -6,7 +6,7 @@ import { Company, Product } from '@/types/database';
 import { useAddress } from '@/contexts/AddressContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
-import { isStoreOpenBySchedule } from '@/lib/storeHours';
+import { getPrepTimeLabel, isStoreOpenBySchedule, isStoreOpenNow } from '@/lib/storeHours';
 import MarketplaceLayout from '@/components/marketplace/MarketplaceLayout';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -294,7 +294,7 @@ export default function Home() {
                     <Star className="h-3 w-3 fill-current" />
                     <span>{company.rating.toFixed(1)}</span>
                   </div>
-                  <span className="text-xs text-muted-foreground">30-45 min</span>
+                  <span className="text-xs text-muted-foreground">{getPrepTimeLabel(company as any)}</span>
                 </div>
               </button>
             ))}
