@@ -7,7 +7,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-        <string>É Pra Já - Cliente</string>
+	<string>É Pra Já - Cliente</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -22,6 +22,19 @@
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
+	
+	<!-- Apple Compliance: Encryption -->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+	
+	<!-- Privacy Permissions for Capacitor/Web -->
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>O É Pra Já precisa da sua localização para encontrar lojas próximas a você e calcular taxas de entrega.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>O É Pra Já precisa acessar a câmera para você tirar e enviar fotos de perfil ou comprovantes.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>O É Pra Já precisa acessar sua galeria para você selecionar fotos de perfil ou comprovantes.</string>
+	
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
