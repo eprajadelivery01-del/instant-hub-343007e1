@@ -49,10 +49,11 @@ export default function Search() {
           ...c,
           products: (c.products || []),
           rating: c.rating || 4.5 + Math.random() * 0.5,
-          isPremium: false
+          isPremium: false,
+          is_open: c.is_open === true && isStoreOpenBySchedule(c.business_hours),
         })).sort((a, b) => {
-          const aOpen = a.is_open === true && isStoreOpenBySchedule(a.business_hours);
-          const bOpen = b.is_open === true && isStoreOpenBySchedule(b.business_hours);
+          const aOpen = a.is_open === true;
+          const bOpen = b.is_open === true;
           if (aOpen && !bOpen) return -1;
           if (!aOpen && bOpen) return 1;
           return (b.rating || 0) - (a.rating || 0);
