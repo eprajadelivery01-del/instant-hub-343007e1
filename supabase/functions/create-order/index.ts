@@ -219,7 +219,7 @@ Deno.serve(async (req) => {
   // 2) Company existe
   const { data: company, error: compErr } = await adminClient
     .from('companies')
-    .select('id, name, address, latitude, longitude, delivery_fee, delivery_mode, pricing_table_id, region_id')
+    .select('id, name, address, latitude, longitude, delivery_fee, delivery_mode, pricing_table_id, region_id, delivery_regions_pricing')
     .eq('id', body.company_id)
     .maybeSingle();
   if (compErr || !company) return fail(400, 'create_order.company_missing', 'Company not found.');
@@ -358,8 +358,32 @@ Deno.serve(async (req) => {
 
   let feeCalculated = false;
 
-  // Tabela de preços dinamica
-  if (regionId && company.pricing_table_id && company.region_id) {
+  // 1ª prioridade: preço configurado pelo lojista para a região do cliente
+  // (companies.delivery_regions_pricing = JSON [{region_id, customer_price}])
+  if (regionId && company.delivery_regions_pricing) {
+    let pricing: any = company.delivery_regions_pricing;
+    if (typeof pricing === 'string') {
+      try { pricing = JSON.parse(pricing); } catch { pricing = null; }
+    }
+    if (Array.isArray(pricing)) {
+      const match = pricing.find((p: any) => p?.region_id === regionId);
+      if (match) {
+        const price = Number(String(match.customer_price ?? '').replace(',', '.'));
+        if (!isNaN(price) && price >= 0) {
+          deliveryFee = price;
+          feeCalculated = true;
+        }
+      } else {
+        // Lojista não configurou preço para a região do cliente → não entrega aqui
+        return fail(400, 'create_order.out_of_region', 'A loja não entrega nessa região.', {
+          public: { failure_kind: 'out_of_region', retryable: false },
+        });
+      }
+    }
+  }
+
+  // 2ª prioridade: tabela de preços dinâmica (pricing_rules)
+  if (!feeCalculated && regionId && company.pricing_table_id && company.region_id) {
     const { data: rule } = await adminClient
       .from('pricing_rules')
       .select('base_value')
