@@ -384,8 +384,8 @@ Deno.serve(async (req) => {
       notes: finalNotes,
       idempotency_key: body.idempotency_key,
       region_id: regionId,
-      delivery_latitude: address.latitude,
-      delivery_longitude: address.longitude,
+      delivery_latitude: address?.latitude ?? null,
+      delivery_longitude: address?.longitude ?? null,
     })
     .select('id')
     .single();
