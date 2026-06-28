@@ -99,6 +99,22 @@ function classifyProductLoadError(error: any) {
   };
 }
 
+function isMissingColumnError(error: any) {
+  const code = String(error?.code ?? '').toLowerCase();
+  const message = String(error?.message ?? '').toLowerCase();
+  const details = String(error?.details ?? '').toLowerCase();
+  const hint = String(error?.hint ?? '').toLowerCase();
+  const full = `${message} ${details} ${hint}`;
+
+  return (
+    code === '42703' ||
+    code === 'pgrst204' ||
+    full.includes('does not exist') ||
+    full.includes('schema cache') ||
+    full.includes('could not find')
+  );
+}
+
 async function loadProductAvailability(adminClient: any, productIds: string[]) {
   const readAvailabilityColumn = async (column: 'active' | 'is_active') => {
     const { data, error } = await adminClient
@@ -121,9 +137,7 @@ async function loadProductAvailability(adminClient: any, productIds: string[]) {
     return { availabilityById: activeResult.data, checkedColumn: 'active', ignoredErrors: [] as any[] };
   }
 
-  const activeCode = String(activeResult.error?.code ?? '').toLowerCase();
-  const activeMissing = activeCode === '42703' || String(activeResult.error?.message ?? '').toLowerCase().includes('does not exist');
-  if (!activeMissing) throw activeResult.error;
+  if (!isMissingColumnError(activeResult.error)) throw activeResult.error;
 
   const isActiveResult = await readAvailabilityColumn('is_active');
   if (!isActiveResult.error && isActiveResult.data) {
@@ -134,9 +148,7 @@ async function loadProductAvailability(adminClient: any, productIds: string[]) {
     };
   }
 
-  const isActiveCode = String(isActiveResult.error?.code ?? '').toLowerCase();
-  const isActiveMissing = isActiveCode === '42703' || String(isActiveResult.error?.message ?? '').toLowerCase().includes('does not exist');
-  if (!isActiveMissing) throw isActiveResult.error;
+  if (!isMissingColumnError(isActiveResult.error)) throw isActiveResult.error;
 
   // Bancos antigos podem não ter coluna active/is_active. Nesse caso, não
   // bloqueia a compra por uma coluna opcional: assume disponível e audita.
