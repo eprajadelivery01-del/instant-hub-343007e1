@@ -150,7 +150,6 @@ export type StoreStatusInput = {
 
 export function isStoreOpenNow(company: StoreStatusInput): boolean {
   return (
-    company.active !== false &&
     company.is_open === true &&
     isStoreOpenBySchedule(company.business_hours, new Date(), company.timezone)
   );
