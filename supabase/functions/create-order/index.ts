@@ -383,7 +383,7 @@ Deno.serve(async (req) => {
   }
 
   // 2ª prioridade: tabela de preços dinâmica (pricing_rules)
-  if (regionId && company.pricing_table_id && company.region_id) {
+  if (!feeCalculated && regionId && company.pricing_table_id && company.region_id) {
     const { data: rule } = await adminClient
       .from('pricing_rules')
       .select('base_value')
