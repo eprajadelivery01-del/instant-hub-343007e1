@@ -14,14 +14,18 @@ GRANT SELECT ON public.pricing_rules TO authenticated, service_role;
 
 -- Dados autenticados usados na criação do pedido.
 GRANT SELECT ON public.addresses TO authenticated, service_role;
-GRANT SELECT, INSERT ON public.customers TO authenticated, service_role;
-GRANT SELECT, INSERT ON public.orders TO authenticated, service_role;
-GRANT SELECT, INSERT ON public.order_items TO authenticated, service_role;
+GRANT SELECT ON public.customers TO authenticated;
+GRANT SELECT, INSERT ON public.customers TO service_role;
+GRANT SELECT ON public.orders TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.orders TO service_role;
+GRANT SELECT ON public.order_items TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.order_items TO service_role;
 
 -- Cupom é validado no servidor e pode gerar registro de uso.
 GRANT SELECT ON public.coupons TO authenticated, service_role;
 GRANT SELECT ON public.coupon_products TO authenticated, service_role;
-GRANT SELECT, INSERT ON public.user_coupons TO authenticated, service_role;
+GRANT SELECT ON public.user_coupons TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.user_coupons TO service_role;
 
 -- Logs técnicos do checkout. Leitura continua restrita pela policy de admin.
 GRANT INSERT, SELECT ON public.audit_logs TO authenticated, service_role;
