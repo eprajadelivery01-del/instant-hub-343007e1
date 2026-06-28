@@ -109,7 +109,15 @@ Deno.serve(async (req) => {
   };
   const fail = async (status: number, event: string, message: string, extra: Record<string, unknown> = {}) => {
     await audit(event, { error_message: message, ...extra }, status);
-    return json({ error: message, request_id: requestId, ...((extra as any).public ?? {}) }, status);
+    return json(
+      {
+        error: message,
+        error_code: (extra as any).error_code ?? event,
+        request_id: requestId,
+        ...((extra as any).public ?? {}),
+      },
+      status,
+    );
   };
 
   try {
