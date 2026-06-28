@@ -22,7 +22,8 @@ interface CartItemInput {
 interface CreateOrderBody {
   items: CartItemInput[];
   company_id: string;
-  address_id: string;
+  address_id: string | null;
+  fulfillment_mode?: 'delivery' | 'pickup';
   payment_method: 'money' | 'pix' | 'card';
   coupon_code?: string | null;
   notes?: string | null;
@@ -134,7 +135,8 @@ Deno.serve(async (req) => {
     return fail(400, 'create_order.validation', 'items is required and must be non-empty.');
   }
   if (!body.company_id) return fail(400, 'create_order.validation', 'company_id is required.');
-  if (!body.address_id) return fail(400, 'create_order.validation', 'address_id is required.');
+  const isPickup = body.fulfillment_mode === 'pickup';
+  if (!isPickup && !body.address_id) return fail(400, 'create_order.validation', 'address_id is required.');
   if (!['money', 'pix', 'card'].includes(body.payment_method)) {
     return fail(400, 'create_order.validation', 'payment_method must be money|pix|card.');
   }
@@ -151,14 +153,18 @@ Deno.serve(async (req) => {
     payload: { company_id: body.company_id, address_id: body.address_id, items: body.items, coupon: body.coupon_code ?? null, payment_method: body.payment_method },
   });
 
-  // 1) Address pertence ao usuário
-  const { data: address, error: addrErr } = await adminClient
-    .from('addresses')
-    .select('id, user_id, street, number, neighborhood, city, latitude, longitude')
-    .eq('id', body.address_id)
-    .maybeSingle();
-  if (addrErr || !address || address.user_id !== user.id) {
-    return fail(403, 'create_order.address_forbidden', 'Address not found for this user.');
+  // 1) Address pertence ao usuário (não obrigatório para retirada)
+  let address: any = null;
+  if (!isPickup) {
+    const { data: addressData, error: addrErr } = await adminClient
+      .from('addresses')
+      .select('id, user_id, street, number, neighborhood, city, latitude, longitude')
+      .eq('id', body.address_id)
+      .maybeSingle();
+    if (addrErr || !addressData || addressData.user_id !== user.id) {
+      return fail(403, 'create_order.address_forbidden', 'Address not found for this user.');
+    }
+    address = addressData;
   }
 
   // 2) Company existe
@@ -173,7 +179,9 @@ Deno.serve(async (req) => {
   const productIds = Array.from(new Set(body.items.map((i) => i.product_id)));
   const { data: products, error: prodErr } = await adminClient
     .from('products')
-    .select('id, name, price, company_id, active')
+    // Use * here because older customer databases vary between active/is_active
+    // and PostgREST fails the entire request when a selected column is missing.
+    .select('*')
     .in('id', productIds);
   if (prodErr || !products) {
     return fail(500, 'create_order.products_load_failed', 'Não foi possível validar os itens do carrinho. Atualize a sacola e tente novamente.', {
@@ -192,7 +200,8 @@ Deno.serve(async (req) => {
     const p = byId.get(it.product_id);
     if (!p) return fail(400, 'create_order.product_missing', `Product ${it.product_id} not found.`);
     if (p.company_id !== company.id) return fail(400, 'create_order.product_wrong_company', 'Item does not belong to the company.');
-    if (p.active === false) return fail(400, 'create_order.product_unavailable', `Product ${p.name} is unavailable.`);
+    const isAvailable = (p as any).active ?? (p as any).is_active ?? true;
+    if (isAvailable === false) return fail(400, 'create_order.product_unavailable', `Product ${p.name} is unavailable.`);
   }
 
   // 4) Subtotal canônico
@@ -260,7 +269,7 @@ Deno.serve(async (req) => {
   let outOfRegion = false;
   let regionPrice = 0;
 
-  if (address.latitude && address.longitude) {
+  if (!isPickup && address?.latitude && address?.longitude) {
     const { data: regions } = await adminClient
       .from('regions')
       .select('id, name, price, delivery_fee, geometry');
@@ -276,7 +285,7 @@ Deno.serve(async (req) => {
     }
   }
 
-  if (outOfRegion) {
+  if (!isPickup && outOfRegion) {
     return fail(400, 'create_order.out_of_region', 'Delivery unavailable for this address (out of region).');
   }
 
@@ -310,6 +319,8 @@ Deno.serve(async (req) => {
       deliveryFee = Number(company.delivery_fee || 0);
     }
   }
+
+  if (isPickup) deliveryFee = 0;
 
   const total = Math.max(0, subtotal - discount) + deliveryFee;
 
@@ -354,7 +365,9 @@ Deno.serve(async (req) => {
     finalNotes = finalNotes ? `${finalNotes} • ${note}` : note;
   }
 
-  const deliveryAddress = `${address.street}, ${address.number} - ${address.neighborhood}, ${address.city}`;
+  const deliveryAddress = isPickup
+    ? 'Retirada no local'
+    : `${address.street}, ${address.number} - ${address.neighborhood}, ${address.city}`;
 
   // 10) Insert order
   const { data: order, error: orderErr } = await adminClient
