@@ -23,6 +23,9 @@ function mapServerError(msg: string): string {
     return 'Entrega indisponível para este endereço.';
   if (m.includes('product') && m.includes('unavailable')) return 'Um dos itens não está mais disponível.';
   if (m.includes('product') && m.includes('not found')) return 'Um produto do carrinho não existe mais.';
+  if (m.includes('failed to load products') || m.includes('validar os itens do carrinho')) {
+    return 'Não foi possível validar os itens do carrinho. Atualize a sacola e tente novamente.';
+  }
   if (m.includes('does not belong to the company')) return 'Há itens de outra loja no carrinho.';
   if (m.includes('company not found')) return 'Loja indisponível no momento.';
   if (m.includes('failed to provision customer')) return 'Não foi possível vincular seu cadastro. Tente novamente.';

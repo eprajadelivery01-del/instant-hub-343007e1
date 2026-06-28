@@ -173,16 +173,26 @@ Deno.serve(async (req) => {
   const productIds = Array.from(new Set(body.items.map((i) => i.product_id)));
   const { data: products, error: prodErr } = await adminClient
     .from('products')
-    .select('id, name, price, company_id, available')
+    .select('id, name, price, company_id, active')
     .in('id', productIds);
-  if (prodErr || !products) return fail(500, 'create_order.products_load_failed', 'Failed to load products.');
+  if (prodErr || !products) {
+    return fail(500, 'create_order.products_load_failed', 'Não foi possível validar os itens do carrinho. Atualize a sacola e tente novamente.', {
+      error_code: (prodErr as any)?.code ?? null,
+      context: {
+        message: prodErr?.message ?? null,
+        details: (prodErr as any)?.details ?? null,
+        hint: (prodErr as any)?.hint ?? null,
+        product_ids: productIds,
+      },
+    });
+  }
 
   const byId = new Map(products.map((p) => [p.id, p]));
   for (const it of body.items) {
     const p = byId.get(it.product_id);
     if (!p) return fail(400, 'create_order.product_missing', `Product ${it.product_id} not found.`);
     if (p.company_id !== company.id) return fail(400, 'create_order.product_wrong_company', 'Item does not belong to the company.');
-    if (p.available === false) return fail(400, 'create_order.product_unavailable', `Product ${p.name} is unavailable.`);
+    if (p.active === false) return fail(400, 'create_order.product_unavailable', `Product ${p.name} is unavailable.`);
   }
 
   // 4) Subtotal canônico
