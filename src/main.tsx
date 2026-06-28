@@ -6,15 +6,22 @@ import { toast as sonnerToast } from "sonner";
 
 initializeGlobalErrorHandlers("Marketplace Cliente");
 
-// Patch sonner toast.error globally to automatically capture all user-facing errors
+// Patch sonner toast.error globally to automatically capture all user-facing errors.
+// Mensagens específicas devem ser definidas pelos componentes (ex.: Checkout/mapServerError);
+// aqui só normalizamos legados em inglês e reportamos para telemetria.
 const originalError = sonnerToast.error;
 sonnerToast.error = function (message: any, options: any) {
   const rawText = typeof message === "string" ? message : JSON.stringify(message);
-  const text = rawText?.toLowerCase().includes("failed to load products")
-    ? "Não foi possível validar os itens do carrinho. Atualize a sacola e tente novamente."
-    : rawText;
-  
-  if (text.includes("offline")) {
+  const lower = rawText?.toLowerCase() ?? "";
+
+  let text = rawText;
+  if (lower.includes("failed to load products")) {
+    text = "Não conseguimos carregar os produtos agora. Tente novamente em instantes.";
+  } else if (lower.includes("failed to fetch") || lower.includes("network error")) {
+    text = "Falha de conexão. Verifique sua internet e tente novamente.";
+  }
+
+  if (lower.includes("offline")) {
     return originalError.apply(this, arguments as any);
   }
 
