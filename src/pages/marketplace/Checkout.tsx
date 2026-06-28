@@ -97,7 +97,7 @@ export default function Checkout() {
   const { data: addresses = [], isLoading: loadingAddresses } = useQuery({
     queryKey: ['addresses', user?.id],
     enabled: !!user?.id,
-    staleTime: 60_000,
+    staleTime: 0,
     queryFn: async () => {
       const { data } = await supabase
         .from('addresses')
