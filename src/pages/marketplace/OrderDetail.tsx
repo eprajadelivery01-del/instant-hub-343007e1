@@ -180,6 +180,7 @@ export default function OrderDetail() {
   if (currentStepIndex >= 2) title = "Seu pedido está sendo preparado";
   if (currentStepIndex >= 4) title = "O entregador está a caminho";
   if (isCompleted) title = "Seu pedido foi entregue";
+  if (currentOrderStatus === 'cancelled') title = "Pedido Cancelado";
 
   // Gera código aleatório (mock) com base no ID
   const deliveryCode = id ? parseInt(id.replace(/[^0-9]/g, '').substring(0, 4)) || 6656 : 6656;
