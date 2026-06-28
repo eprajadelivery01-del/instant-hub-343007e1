@@ -16,21 +16,49 @@ import { useOrderLock } from '@/hooks/useOrderLock';
 import { calculateDeliveryFee } from '@/utils/freight';
 import { isStoreOpenBySchedule } from '@/lib/storeHours';
 
-function mapServerError(msg: string): string {
-  const m = msg.toLowerCase();
-  if (m.includes('address not found')) return 'Endereço inválido para este usuário.';
-  if (m.includes('out of range') || m.includes('out of region') || m.includes('delivery unavailable'))
-    return 'Entrega indisponível para este endereço.';
-  if (m.includes('product') && m.includes('unavailable')) return 'Um dos itens não está mais disponível.';
-  if (m.includes('product') && m.includes('not found')) return 'Um produto do carrinho não existe mais.';
-  if (m.includes('failed to load products') || m.includes('validar os itens do carrinho')) {
-    return 'Não foi possível validar os itens do carrinho. Atualize a sacola e tente novamente.';
+type MappedError = { message: string; retriable: boolean };
+
+function mapServerError(msg: string, code?: string | null): MappedError {
+  const m = (msg || '').toLowerCase();
+  const c = (code || '').toLowerCase();
+
+  // ---- Falhas de carregamento de produtos (específicas) ----
+  if (c.includes('products_load_failed') || m.includes('failed to load products') || m.includes('validar os itens do carrinho')) {
+    // Sub-categoria: permissão (RLS)
+    if (m.includes('permission') || m.includes('rls') || m.includes('not authorized') || m.includes('denied')) {
+      return { message: 'Sem permissão para carregar os produtos da loja. Faça login novamente.', retriable: false };
+    }
+    // Sub-categoria: rede
+    if (m.includes('network') || m.includes('fetch') || m.includes('timeout') || m.includes('socket')) {
+      return { message: 'Falha de conexão ao carregar os produtos. Verifique sua internet.', retriable: true };
+    }
+    // Sub-categoria: vazio / não encontrado
+    if (m.includes('empty') || m.includes('no rows') || m.includes('not found')) {
+      return { message: 'Os produtos do seu carrinho não estão mais disponíveis. Atualize a sacola.', retriable: false };
+    }
+    return { message: 'Não conseguimos carregar os produtos agora. Tente novamente em instantes.', retriable: true };
   }
-  if (m.includes('does not belong to the company')) return 'Há itens de outra loja no carrinho.';
-  if (m.includes('company not found')) return 'Loja indisponível no momento.';
-  if (m.includes('failed to provision customer')) return 'Não foi possível vincular seu cadastro. Tente novamente.';
-  if (m.includes('invalid session') || m.includes('missing authorization')) return 'Sessão expirada. Faça login novamente.';
-  return msg || 'Erro ao criar pedido.';
+
+  if (c.includes('product_unavailable') || (m.includes('product') && m.includes('unavailable')))
+    return { message: 'Um dos itens não está mais disponível.', retriable: false };
+  if (c.includes('product_missing') || (m.includes('product') && m.includes('not found')))
+    return { message: 'Um produto do carrinho não existe mais.', retriable: false };
+  if (c.includes('product_wrong_company') || m.includes('does not belong to the company'))
+    return { message: 'Há itens de outra loja no carrinho.', retriable: false };
+
+  if (m.includes('address not found')) return { message: 'Endereço inválido para este usuário.', retriable: false };
+  if (m.includes('out of range') || m.includes('out of region') || m.includes('delivery unavailable'))
+    return { message: 'Entrega indisponível para este endereço.', retriable: false };
+  if (m.includes('company not found')) return { message: 'Loja indisponível no momento.', retriable: false };
+  if (m.includes('failed to provision customer')) return { message: 'Não foi possível vincular seu cadastro. Tente novamente.', retriable: true };
+  if (m.includes('invalid session') || m.includes('missing authorization')) return { message: 'Sessão expirada. Faça login novamente.', retriable: false };
+
+  // Rede genérica
+  if (m.includes('failed to fetch') || m.includes('network') || m.includes('timeout')) {
+    return { message: 'Falha de conexão. Verifique sua internet e tente novamente.', retriable: true };
+  }
+
+  return { message: msg || 'Erro ao criar pedido.', retriable: true };
 }
 
 export default function Checkout() {
@@ -227,6 +255,7 @@ export default function Checkout() {
 
       if (functionError) {
         let errMessage = functionError.message;
+        let errCode: string | null = null;
         
         // Se for um erro HTTP da Edge Function, tentamos ler a resposta real
         if (functionError.name === 'FunctionsHttpError' || errMessage === 'Edge Function returned a non-2xx status code') {
@@ -235,8 +264,10 @@ export default function Checkout() {
             if (ctx && typeof ctx.json === 'function') {
               const body = await ctx.json();
               if (body?.error) errMessage = body.error;
+              if (body?.error_code) errCode = body.error_code;
             } else if (ctx && ctx.error) {
               errMessage = ctx.error;
+              errCode = ctx.error_code ?? null;
             }
           } catch (e) {
             // falhou ao extrair, continua com fallback
@@ -248,10 +279,16 @@ export default function Checkout() {
           errMessage = 'Erro de comunicação com o servidor. Por favor, tente novamente.';
         }
 
-        throw new Error(mapServerError(errMessage || 'Erro ao processar pedido'));
+        const mapped = mapServerError(errMessage || 'Erro ao processar pedido', errCode);
+        const err: any = new Error(mapped.message);
+        err.retriable = mapped.retriable;
+        throw err;
       }
       if (data?.error) {
-        throw new Error(mapServerError(data.error));
+        const mapped = mapServerError(data.error, data.error_code ?? null);
+        const err: any = new Error(mapped.message);
+        err.retriable = mapped.retriable;
+        throw err;
       }
 
       const orderId = data?.order_id || data?.id;
@@ -265,7 +302,19 @@ export default function Checkout() {
       setShowReviewModal(false);
       navigate(`/marketplace/orders/${orderId}`);
     } catch (err: any) {
-      toast.error(err.message || 'Erro ao criar pedido');
+      const message = err?.message || 'Erro ao criar pedido';
+      const retriable = err?.retriable !== false;
+      toast.error(message, {
+        duration: 8000,
+        action: retriable
+          ? {
+              label: 'Tentar novamente',
+              onClick: () => {
+                handleSubmit();
+              },
+            }
+          : undefined,
+      });
     } finally { setLoading(false); releaseLock(); }
   };
 
