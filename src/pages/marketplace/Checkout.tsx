@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { toast } from 'sonner';
+import { reportErrorToTelegram } from '@/services/logger';
 import { MapPin, Banknote, AlertCircle, ArrowLeft, Loader2, FileText, Smartphone, Bike, Ticket } from 'lucide-react';
 import { useOrderLock } from '@/hooks/useOrderLock';
 import { calculateDeliveryFee } from '@/utils/freight';
@@ -316,7 +317,18 @@ export default function Checkout() {
           errMessage = 'Erro de comunicação com o servidor. Por favor, tente novamente.';
         }
 
-        const mapped = mapServerError(errMessage || 'Erro ao processar pedido', errCode, responseBody);
+        const mapped = mapServerError(errMessage, errCode, responseBody);
+        
+        reportErrorToTelegram({
+          error_message: `[Checkout] Erro na Edge Function: ${mapped.message}`,
+          stack_trace: JSON.stringify(responseBody || {}),
+          url: window.location.href,
+          additional_info: {
+            errorCode: errCode,
+            isUserFacingAlert: true
+          }
+        });
+        
         const err: any = new Error(mapped.message);
         err.retriable = responseBody?.retryable ?? mapped.retriable;
         err.errorCode = errCode ?? responseBody?.error_code ?? null;

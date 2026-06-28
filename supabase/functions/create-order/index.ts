@@ -96,6 +96,7 @@ function classifyProductLoadError(error: any) {
     status: 500,
     retryable: true,
     message: 'Não foi possível validar sua sacola. Atualize a sacola ou tente novamente.',
+    debugCode: String(error?.message || error?.code || 'unknown_error'),
   };
 }
 
@@ -304,7 +305,7 @@ Deno.serve(async (req) => {
       public: {
         failure_kind: classified.kind,
         retryable: classified.retryable,
-        debug_code: (prodErr as any)?.code ?? null,
+        debug_code: (classified as any).debugCode ?? prodErr?.message ?? null,
       },
       context: {
         supabase_code: (prodErr as any)?.code ?? null,
@@ -356,7 +357,7 @@ Deno.serve(async (req) => {
       public: {
         failure_kind: classified.kind,
         retryable: classified.retryable,
-        debug_code: availabilityErr?.code ?? null,
+        debug_code: (classified as any).debugCode ?? availabilityErr?.code ?? availabilityErr?.message ?? null,
       },
       context: {
         phase: 'availability_check',
