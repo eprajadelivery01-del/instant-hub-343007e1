@@ -1,0 +1,1 @@
+import { supabase } from './src/lib/supabaseClient.ts'; async function test() { const {data} = await supabase.from('companies').select('*').ilike('name', '%Loja De Teste%'); console.log(JSON.stringify(data, null, 2)); } test();  

@@ -50,7 +50,10 @@ function mapServerError(msg: string, code?: string | null, details?: any): Mappe
     if (m.includes('empty') || m.includes('no rows') || m.includes('not found')) {
       return { message: 'Os produtos do seu carrinho não estão mais disponíveis. Atualize a sacola.', retriable: false };
     }
-    return { message: 'Não foi possível validar sua sacola. Atualize a sacola ou tente novamente.', retriable: true };
+    
+    // Se for 'unknown', mostramos o código de erro no toast para debug
+    const debugInfo = debugCode ? ` (Debug: ${debugCode})` : '';
+    return { message: `Não foi possível validar sua sacola${debugInfo}. Atualize a sacola ou tente novamente.`, retriable: true };
   }
 
   if (c.includes('product_unavailable') || (m.includes('product') && m.includes('unavailable')))
@@ -240,8 +243,17 @@ export default function Checkout() {
         `${company.id}|${selectedAddress}|${appliedCoupon?.code ?? ''}|${paymentMethod}`,
       );
 
+      // Filtra itens inválidos para não quebrar a Edge Function
+      const validItems = items.filter(it => it && it.product && typeof it.product.id === 'string' && it.product.id.length > 10);
+      
+      if (validItems.length === 0) {
+        toast.error('Carrinho vazio ou itens inválidos.');
+        setLoading(false);
+        return;
+      }
+
       const requestBody = {
-        items: items.map((it) => ({
+        items: validItems.map((it) => ({
           product_id: it.product.id,
           quantity: it.quantity,
           notes: it.note || null,

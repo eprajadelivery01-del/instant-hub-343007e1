@@ -14,8 +14,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { LocationPicker } from '@/components/marketplace/LocationPicker';
 import { geocodeAddress } from '@/utils/freight';
 import { cn } from '@/lib/utils';
+import { useQueryClient } from '@tanstack/react-query';
 
 export default function Addresses() {
+  const queryClient = useQueryClient();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [addresses, setAddresses] = useState<Address[]>([]);
@@ -142,12 +144,16 @@ export default function Addresses() {
       toast.success('Endereço adicionado');
     }
     setShowForm(false);
+    
+    // Invalidate the query so Checkout.tsx gets the new address immediately
+    queryClient.invalidateQueries({ queryKey: ['addresses'] });
     fetchAddresses(user.id);
   };
 
   const handleDelete = async (id: string) => {
     await supabase.from('addresses').delete().eq('id', id);
     toast.success('Endereço removido');
+    queryClient.invalidateQueries({ queryKey: ['addresses'] });
     if (user) {
       fetchAddresses(user.id);
     }
