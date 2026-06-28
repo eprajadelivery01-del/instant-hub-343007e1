@@ -18,13 +18,20 @@ sonnerToast.error = function (message: any, options: any) {
 
   let text = rawText;
   if (lower.includes("failed to load products")) {
-    text = "Não conseguimos carregar os produtos agora. Tente novamente em instantes.";
+    text = "Não foi possível validar sua sacola. Atualize a sacola ou tente novamente.";
   } else if (lower.includes("failed to fetch") || lower.includes("network error")) {
     text = "Falha de conexão. Verifique sua internet e tente novamente.";
   }
 
   if (lower.includes("offline")) {
     return originalError.apply(this, arguments as any);
+  }
+
+  // Erros do checkout com request_id já ficam registrados no audit_logs da
+  // Edge Function; não reenviar o mesmo alerta ao Telegram evita spam sem
+  // perder o diagnóstico técnico.
+  if (options?.id === "checkout-create-order-error" && options?.diagnosticLogged) {
+    return originalError.call(this, text, options as any);
   }
 
   // Evita spam no monitoramento quando o usuário toca repetidamente em
