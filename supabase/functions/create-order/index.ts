@@ -32,6 +32,13 @@ interface CreateOrderBody {
   idempotency_key: string;
 }
 
+type ProductRow = {
+  id: string;
+  company_id: string;
+  name: string | null;
+  price: number | string | null;
+};
+
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
@@ -88,7 +95,67 @@ function classifyProductLoadError(error: any) {
     kind: 'unknown',
     status: 500,
     retryable: true,
-    message: 'Não conseguimos carregar os produtos agora. Tente novamente em instantes.',
+    message: 'Não foi possível validar sua sacola. Atualize a sacola ou tente novamente.',
+  };
+}
+
+function isMissingColumnError(error: any) {
+  const code = String(error?.code ?? '').toLowerCase();
+  const message = String(error?.message ?? '').toLowerCase();
+  const details = String(error?.details ?? '').toLowerCase();
+  const hint = String(error?.hint ?? '').toLowerCase();
+  const full = `${message} ${details} ${hint}`;
+
+  return (
+    code === '42703' ||
+    code === 'pgrst204' ||
+    full.includes('does not exist') ||
+    full.includes('schema cache') ||
+    full.includes('could not find')
+  );
+}
+
+async function loadProductAvailability(adminClient: any, productIds: string[]) {
+  const readAvailabilityColumn = async (column: 'active' | 'is_active') => {
+    const { data, error } = await adminClient
+      .from('products')
+      .select(`id, ${column}`)
+      .in('id', productIds);
+
+    if (error) return { data: null, error };
+
+    return {
+      data: new Map(
+        (data ?? []).map((row: any) => [row.id, row[column] !== false] as [string, boolean]),
+      ),
+      error: null,
+    };
+  };
+
+  const activeResult = await readAvailabilityColumn('active');
+  if (!activeResult.error && activeResult.data) {
+    return { availabilityById: activeResult.data, checkedColumn: 'active', ignoredErrors: [] as any[] };
+  }
+
+  if (!isMissingColumnError(activeResult.error)) throw activeResult.error;
+
+  const isActiveResult = await readAvailabilityColumn('is_active');
+  if (!isActiveResult.error && isActiveResult.data) {
+    return {
+      availabilityById: isActiveResult.data,
+      checkedColumn: 'is_active',
+      ignoredErrors: [activeResult.error],
+    };
+  }
+
+  if (!isMissingColumnError(isActiveResult.error)) throw isActiveResult.error;
+
+  // Bancos antigos podem não ter coluna active/is_active. Nesse caso, não
+  // bloqueia a compra por uma coluna opcional: assume disponível e audita.
+  return {
+    availabilityById: new Map<string, boolean>(),
+    checkedColumn: null,
+    ignoredErrors: [activeResult.error, isActiveResult.error],
   };
 }
 
@@ -228,9 +295,7 @@ Deno.serve(async (req) => {
   const productIds = Array.from(new Set(body.items.map((i) => i.product_id)));
   const { data: products, error: prodErr } = await adminClient
     .from('products')
-    // Use * here because older customer databases vary between active/is_active
-    // and PostgREST fails the entire request when a selected column is missing.
-    .select('*')
+    .select('id, company_id, name, price')
     .in('id', productIds);
   if (prodErr || !products) {
     const classified = classifyProductLoadError(prodErr);
@@ -251,7 +316,9 @@ Deno.serve(async (req) => {
     });
   }
 
-  if (products.length === 0) {
+  const productRows = products as ProductRow[];
+
+  if (productRows.length === 0) {
     return fail(400, 'create_order.products_load_failed', 'Os produtos do seu carrinho não estão mais disponíveis. Atualize a sacola.', {
       error_code: 'create_order.products_load_failed',
       public: {
@@ -262,12 +329,52 @@ Deno.serve(async (req) => {
     });
   }
 
-  const byId = new Map(products.map((p) => [p.id, p]));
+  let availabilityById = new Map<string, boolean>();
+  let availabilityColumn: string | null = null;
+  try {
+    const availability = await loadProductAvailability(adminClient, productIds);
+    availabilityById = availability.availabilityById;
+    availabilityColumn = availability.checkedColumn;
+
+    if (!availabilityColumn) {
+      await audit('create_order.products_availability_columns_missing', {
+        context: {
+          product_ids: productIds,
+          ignored_errors: availability.ignoredErrors.map((e: any) => ({
+            code: e?.code ?? null,
+            message: e?.message ?? null,
+            details: e?.details ?? null,
+            hint: e?.hint ?? null,
+          })),
+        },
+      });
+    }
+  } catch (availabilityErr: any) {
+    const classified = classifyProductLoadError(availabilityErr);
+    return fail(classified.status, 'create_order.products_load_failed', classified.message, {
+      error_code: 'create_order.products_load_failed',
+      public: {
+        failure_kind: classified.kind,
+        retryable: classified.retryable,
+        debug_code: availabilityErr?.code ?? null,
+      },
+      context: {
+        phase: 'availability_check',
+        supabase_code: availabilityErr?.code ?? null,
+        message: availabilityErr?.message ?? null,
+        details: availabilityErr?.details ?? null,
+        hint: availabilityErr?.hint ?? null,
+        product_ids: productIds,
+      },
+    });
+  }
+
+  const byId = new Map(productRows.map((p) => [p.id, p]));
   for (const it of body.items) {
     const p = byId.get(it.product_id);
     if (!p) return fail(400, 'create_order.product_missing', `Product ${it.product_id} not found.`);
     if (p.company_id !== company.id) return fail(400, 'create_order.product_wrong_company', 'Item does not belong to the company.');
-    const isAvailable = (p as any).active ?? (p as any).is_active ?? true;
+    const isAvailable = availabilityById.get(p.id) ?? true;
     if (isAvailable === false) return fail(400, 'create_order.product_unavailable', `Product ${p.name} is unavailable.`);
   }
 

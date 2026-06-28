@@ -50,7 +50,7 @@ function mapServerError(msg: string, code?: string | null, details?: any): Mappe
     if (m.includes('empty') || m.includes('no rows') || m.includes('not found')) {
       return { message: 'Os produtos do seu carrinho não estão mais disponíveis. Atualize a sacola.', retriable: false };
     }
-    return { message: 'Não conseguimos carregar os produtos agora. Tente novamente em instantes.', retriable: true };
+    return { message: 'Não foi possível validar sua sacola. Atualize a sacola ou tente novamente.', retriable: true };
   }
 
   if (c.includes('product_unavailable') || (m.includes('product') && m.includes('unavailable')))
@@ -310,6 +310,7 @@ export default function Checkout() {
         err.errorCode = errCode ?? responseBody?.error_code ?? null;
         err.requestId = responseBody?.request_id ?? null;
         err.failureKind = responseBody?.failure_kind ?? null;
+        err.debugCode = responseBody?.debug_code ?? null;
         throw err;
       }
       if (data?.error) {
@@ -319,6 +320,7 @@ export default function Checkout() {
         err.errorCode = data?.error_code ?? null;
         err.requestId = data?.request_id ?? null;
         err.failureKind = data?.failure_kind ?? null;
+        err.debugCode = data?.debug_code ?? null;
         throw err;
       }
 
@@ -341,10 +343,13 @@ export default function Checkout() {
         error_code: err?.errorCode ?? null,
         request_id: err?.requestId ?? null,
         failure_kind: err?.failureKind ?? null,
+        debug_code: err?.debugCode ?? null,
       });
       toast.error(message, {
         id: 'checkout-create-order-error',
+        description: err?.requestId ? `Código do erro: ${err.requestId}` : undefined,
         duration: 8000,
+        diagnosticLogged: Boolean(err?.requestId),
         action: retriable
           ? {
               label: 'Tentar novamente',
@@ -353,7 +358,7 @@ export default function Checkout() {
               },
             }
           : undefined,
-      });
+      } as any);
     } finally { setLoading(false); releaseLock(); }
   };
 
