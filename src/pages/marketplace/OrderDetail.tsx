@@ -314,7 +314,7 @@ export default function OrderDetail() {
             <div className="flex items-center justify-between mb-5 cursor-pointer">
               <div className="flex gap-3 items-center">
                 <div className="h-10 w-10 rounded-full bg-secondary border border-border shrink-0 flex items-center justify-center overflow-hidden">
-                   <img src="https://ui-avatars.com/api/?name=L&background=random" className="w-full h-full object-cover" />
+                   <img src={order.company?.logo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(order.company?.name?.charAt(0) || 'L')}&background=random`} className="w-full h-full object-cover" />
                 </div>
                 <div>
                   <p className="font-bold text-[15px]">{order.company?.name}</p>
