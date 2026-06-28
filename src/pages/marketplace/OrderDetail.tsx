@@ -7,7 +7,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Order, OrderItem, Delivery, Product } from '@/types/database';
 import MarketplaceLayout from '@/components/marketplace/MarketplaceLayout';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, MessageCircle, MapPin, Banknote, Smartphone } from 'lucide-react';
+import { ArrowLeft, MessageCircle, MapPin, Banknote, Smartphone, AlertCircle } from 'lucide-react';
+import { toast } from 'sonner';
 import { OrderStoreChat } from '@/components/marketplace/OrderStoreChat';
 
 const statusSteps = ['pending', 'confirmed', 'preparing', 'ready', 'delivering', 'delivered'];
@@ -117,6 +118,42 @@ export default function OrderDetail() {
       setNotifLoading(false);
     }
   }, [notifEnabled]);
+
+  const handleCancelOrder = async () => {
+    if (!order) return;
+    if (!window.confirm("Tem certeza que deseja cancelar este pedido?")) return;
+    
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({ status: 'cancelled' })
+        .eq('id', order.id);
+
+      if (error) throw error;
+
+      // Notify the store
+      const { data: companyUsers } = await supabase
+        .from('company_users')
+        .select('user_id')
+        .eq('company_id', order.company_id);
+        
+      if (companyUsers && companyUsers.length > 0) {
+        const notifications = companyUsers.map(cu => ({
+          user_id: cu.user_id,
+          title: "Pedido Cancelado pelo Cliente",
+          message: `O cliente cancelou o pedido #${order.id.split('-')[0].toUpperCase()}.`,
+          type: "order_cancelled"
+        }));
+        await supabase.from('notifications').insert(notifications);
+      }
+
+      toast.success("Pedido cancelado com sucesso.");
+      navigate("/marketplace/orders");
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro ao cancelar pedido.");
+    }
+  };
 
   if (loading || !order) {
     return (
@@ -307,13 +344,22 @@ export default function OrderDetail() {
               <span>R$ {(order.total || 0).toFixed(2).replace('.', ',')}</span>
             </div>
 
-            <div className="border-t border-border/50 pt-5 text-center">
+            <div className="border-t border-border/50 pt-5 text-center flex flex-col gap-3">
               <button 
                 className="text-[#EA1D2C] font-bold text-[15px] flex items-center justify-center gap-2 mx-auto"
                 onClick={() => setShowStoreChat(true)}
               >
                 <MessageCircle className="h-4 w-4" /> Chat com a loja
               </button>
+              
+              {(currentOrderStatus === 'pending' || currentOrderStatus === 'preparing' || currentOrderStatus === 'ready') && (
+                <button 
+                  className="text-muted-foreground font-medium text-[14px] flex items-center justify-center gap-2 mx-auto hover:text-destructive transition-colors"
+                  onClick={handleCancelOrder}
+                >
+                  <AlertCircle className="h-4 w-4" /> Cancelar Pedido
+                </button>
+              )}
             </div>
           </div>
         </div>
