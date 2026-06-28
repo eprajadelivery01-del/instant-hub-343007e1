@@ -18,12 +18,26 @@ import { isStoreOpenBySchedule } from '@/lib/storeHours';
 
 type MappedError = { message: string; retriable: boolean };
 
-function mapServerError(msg: string, code?: string | null): MappedError {
+function mapServerError(msg: string, code?: string | null, details?: any): MappedError {
   const m = (msg || '').toLowerCase();
   const c = (code || '').toLowerCase();
+  const kind = String(details?.failure_kind || '').toLowerCase();
+  const debugCode = String(details?.debug_code || '').toLowerCase();
 
   // ---- Falhas de carregamento de produtos (específicas) ----
   if (c.includes('products_load_failed') || m.includes('failed to load products') || m.includes('validar os itens do carrinho')) {
+    if (kind === 'permission' || debugCode === '42501') {
+      return { message: 'Sem permissão para validar os produtos da loja. Faça login novamente.', retriable: false };
+    }
+    if (kind === 'network' || kind === 'timeout') {
+      return { message: 'Falha de conexão ao carregar os produtos. Verifique sua internet.', retriable: true };
+    }
+    if (kind === 'empty' || kind === 'missing') {
+      return { message: 'Os produtos do seu carrinho não estão mais disponíveis. Atualize a sacola.', retriable: false };
+    }
+    if (kind === 'schema' || debugCode === '42p01' || debugCode === '42703') {
+      return { message: 'A loja está temporariamente indisponível para pedidos.', retriable: false };
+    }
     // Sub-categoria: permissão (RLS)
     if (m.includes('permission') || m.includes('rls') || m.includes('not authorized') || m.includes('denied')) {
       return { message: 'Sem permissão para carregar os produtos da loja. Faça login novamente.', retriable: false };
@@ -256,16 +270,27 @@ export default function Checkout() {
       if (functionError) {
         let errMessage = functionError.message;
         let errCode: string | null = null;
+        let responseBody: any = null;
         
         // Se for um erro HTTP da Edge Function, tentamos ler a resposta real
         if (functionError.name === 'FunctionsHttpError' || errMessage === 'Edge Function returned a non-2xx status code') {
           try {
             const ctx = (functionError as any).context;
-            if (ctx && typeof ctx.json === 'function') {
-              const body = await ctx.json();
-              if (body?.error) errMessage = body.error;
-              if (body?.error_code) errCode = body.error_code;
+            if (ctx && typeof ctx.clone === 'function') {
+              const text = await ctx.clone().text();
+              try {
+                responseBody = JSON.parse(text);
+              } catch {
+                responseBody = { error: text };
+              }
+              if (responseBody?.error) errMessage = responseBody.error;
+              if (responseBody?.error_code) errCode = responseBody.error_code;
+            } else if (ctx && typeof ctx.json === 'function') {
+              responseBody = await ctx.json();
+              if (responseBody?.error) errMessage = responseBody.error;
+              if (responseBody?.error_code) errCode = responseBody.error_code;
             } else if (ctx && ctx.error) {
+              responseBody = ctx;
               errMessage = ctx.error;
               errCode = ctx.error_code ?? null;
             }
@@ -279,15 +304,21 @@ export default function Checkout() {
           errMessage = 'Erro de comunicação com o servidor. Por favor, tente novamente.';
         }
 
-        const mapped = mapServerError(errMessage || 'Erro ao processar pedido', errCode);
+        const mapped = mapServerError(errMessage || 'Erro ao processar pedido', errCode, responseBody);
         const err: any = new Error(mapped.message);
-        err.retriable = mapped.retriable;
+        err.retriable = responseBody?.retryable ?? mapped.retriable;
+        err.errorCode = errCode ?? responseBody?.error_code ?? null;
+        err.requestId = responseBody?.request_id ?? null;
+        err.failureKind = responseBody?.failure_kind ?? null;
         throw err;
       }
       if (data?.error) {
-        const mapped = mapServerError(data.error, data.error_code ?? null);
+        const mapped = mapServerError(data.error, data.error_code ?? null, data);
         const err: any = new Error(mapped.message);
-        err.retriable = mapped.retriable;
+        err.retriable = data?.retryable ?? mapped.retriable;
+        err.errorCode = data?.error_code ?? null;
+        err.requestId = data?.request_id ?? null;
+        err.failureKind = data?.failure_kind ?? null;
         throw err;
       }
 
@@ -304,7 +335,15 @@ export default function Checkout() {
     } catch (err: any) {
       const message = err?.message || 'Erro ao criar pedido';
       const retriable = err?.retriable !== false;
+      console.warn('[Checkout][create-order] Falha ao finalizar pedido', {
+        message,
+        retriable,
+        error_code: err?.errorCode ?? null,
+        request_id: err?.requestId ?? null,
+        failure_kind: err?.failureKind ?? null,
+      });
       toast.error(message, {
+        id: 'checkout-create-order-error',
         duration: 8000,
         action: retriable
           ? {

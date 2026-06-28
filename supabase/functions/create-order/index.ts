@@ -51,6 +51,47 @@ function newRequestId() {
   }
 }
 
+function classifyProductLoadError(error: any) {
+  const code = String(error?.code ?? '').toLowerCase();
+  const message = String(error?.message ?? '').toLowerCase();
+  const details = String(error?.details ?? '').toLowerCase();
+  const full = `${code} ${message} ${details}`;
+
+  if (code === '42501' || full.includes('permission denied') || full.includes('row-level security') || full.includes('not authorized')) {
+    return {
+      kind: 'permission',
+      status: 403,
+      retryable: false,
+      message: 'Sem permissão para validar os produtos da loja. Faça login novamente.',
+    };
+  }
+
+  if (code === '42p01' || code === '42703' || full.includes('does not exist') || full.includes('schema cache')) {
+    return {
+      kind: 'schema',
+      status: 500,
+      retryable: false,
+      message: 'A loja está temporariamente indisponível para pedidos.',
+    };
+  }
+
+  if (code === '57014' || full.includes('timeout') || full.includes('fetch failed') || full.includes('network') || full.includes('socket')) {
+    return {
+      kind: 'network',
+      status: 503,
+      retryable: true,
+      message: 'Falha de conexão ao carregar os produtos. Verifique sua internet.',
+    };
+  }
+
+  return {
+    kind: 'unknown',
+    status: 500,
+    retryable: true,
+    message: 'Não conseguimos carregar os produtos agora. Tente novamente em instantes.',
+  };
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { status: 200, headers: corsHeaders });
@@ -192,14 +233,32 @@ Deno.serve(async (req) => {
     .select('*')
     .in('id', productIds);
   if (prodErr || !products) {
-    return fail(500, 'create_order.products_load_failed', 'Não foi possível validar os itens do carrinho. Atualize a sacola e tente novamente.', {
-      error_code: (prodErr as any)?.code ?? null,
+    const classified = classifyProductLoadError(prodErr);
+    return fail(classified.status, 'create_order.products_load_failed', classified.message, {
+      error_code: 'create_order.products_load_failed',
+      public: {
+        failure_kind: classified.kind,
+        retryable: classified.retryable,
+        debug_code: (prodErr as any)?.code ?? null,
+      },
       context: {
+        supabase_code: (prodErr as any)?.code ?? null,
         message: prodErr?.message ?? null,
         details: (prodErr as any)?.details ?? null,
         hint: (prodErr as any)?.hint ?? null,
         product_ids: productIds,
       },
+    });
+  }
+
+  if (products.length === 0) {
+    return fail(400, 'create_order.products_load_failed', 'Os produtos do seu carrinho não estão mais disponíveis. Atualize a sacola.', {
+      error_code: 'create_order.products_load_failed',
+      public: {
+        failure_kind: 'empty',
+        retryable: false,
+      },
+      context: { product_ids: productIds },
     });
   }
 
