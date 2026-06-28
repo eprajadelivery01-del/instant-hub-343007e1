@@ -255,6 +255,7 @@ export default function Checkout() {
 
       if (functionError) {
         let errMessage = functionError.message;
+        let errCode: string | null = null;
         
         // Se for um erro HTTP da Edge Function, tentamos ler a resposta real
         if (functionError.name === 'FunctionsHttpError' || errMessage === 'Edge Function returned a non-2xx status code') {
@@ -263,8 +264,10 @@ export default function Checkout() {
             if (ctx && typeof ctx.json === 'function') {
               const body = await ctx.json();
               if (body?.error) errMessage = body.error;
+              if (body?.error_code) errCode = body.error_code;
             } else if (ctx && ctx.error) {
               errMessage = ctx.error;
+              errCode = ctx.error_code ?? null;
             }
           } catch (e) {
             // falhou ao extrair, continua com fallback
@@ -276,10 +279,16 @@ export default function Checkout() {
           errMessage = 'Erro de comunicação com o servidor. Por favor, tente novamente.';
         }
 
-        throw new Error(mapServerError(errMessage || 'Erro ao processar pedido'));
+        const mapped = mapServerError(errMessage || 'Erro ao processar pedido', errCode);
+        const err: any = new Error(mapped.message);
+        err.retriable = mapped.retriable;
+        throw err;
       }
       if (data?.error) {
-        throw new Error(mapServerError(data.error));
+        const mapped = mapServerError(data.error, data.error_code ?? null);
+        const err: any = new Error(mapped.message);
+        err.retriable = mapped.retriable;
+        throw err;
       }
 
       const orderId = data?.order_id || data?.id;
@@ -293,7 +302,19 @@ export default function Checkout() {
       setShowReviewModal(false);
       navigate(`/marketplace/orders/${orderId}`);
     } catch (err: any) {
-      toast.error(err.message || 'Erro ao criar pedido');
+      const message = err?.message || 'Erro ao criar pedido';
+      const retriable = err?.retriable !== false;
+      toast.error(message, {
+        duration: 8000,
+        action: retriable
+          ? {
+              label: 'Tentar novamente',
+              onClick: () => {
+                handleSubmit();
+              },
+            }
+          : undefined,
+      });
     } finally { setLoading(false); releaseLock(); }
   };
 
