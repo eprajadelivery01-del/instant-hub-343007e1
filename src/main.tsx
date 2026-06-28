@@ -15,6 +15,7 @@ const lastReportedToast = new Map<string, number>();
 sonnerToast.error = function (message: any, options: any) {
   const rawText = typeof message === "string" ? message : JSON.stringify(message);
   const lower = rawText?.toLowerCase() ?? "";
+  const { diagnosticLogged, ...toastOptions } = options ?? {};
 
   let text = rawText;
   if (lower.includes("failed to load products")) {
@@ -30,8 +31,8 @@ sonnerToast.error = function (message: any, options: any) {
   // Erros do checkout com request_id já ficam registrados no audit_logs da
   // Edge Function; não reenviar o mesmo alerta ao Telegram evita spam sem
   // perder o diagnóstico técnico.
-  if (options?.id === "checkout-create-order-error" && options?.diagnosticLogged) {
-    return originalError.call(this, text, options as any);
+  if (options?.id === "checkout-create-order-error" && diagnosticLogged) {
+    return originalError.call(this, text, toastOptions as any);
   }
 
   // Evita spam no monitoramento quando o usuário toca repetidamente em
@@ -49,12 +50,12 @@ sonnerToast.error = function (message: any, options: any) {
       additional_info: {
         isUserFacingAlert: true,
         originalMessage: rawText,
-        options: options ? JSON.stringify(options) : ""
+        options: options ? JSON.stringify(toastOptions) : ""
       }
     }, "Marketplace Cliente").catch(() => {});
   }
   
-  return originalError.call(this, text, options as any);
+  return originalError.call(this, text, toastOptions as any);
 };
 
 createRoot(document.getElementById("root")!).render(<App />);
