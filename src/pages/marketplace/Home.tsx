@@ -84,8 +84,8 @@ export default function Home() {
           };
         })
         .sort((a, b) => {
-          const aOpen = a.is_open === true && a.active === true;
-          const bOpen = b.is_open === true && b.active === true;
+          const aOpen = a.is_open === true;
+          const bOpen = b.is_open === true;
           if (aOpen && !bOpen) return -1;
           if (!aOpen && bOpen) return 1;
           return (b.rating || 0) - (a.rating || 0);
@@ -265,7 +265,7 @@ export default function Home() {
                 onClick={() => navigate(`/marketplace/store/${company.id}`)}
                 className={cn(
                   "premium-card premium-card-interactive group flex min-w-[252px] h-full flex-col gap-3 overflow-hidden rounded-[30px] p-4 text-left md:min-w-0",
-                  (!company.active || !company.is_open) && "opacity-50 grayscale"
+                  !company.is_open && "opacity-50 grayscale"
                 )}
               >
                 <div className="flex items-center gap-3">

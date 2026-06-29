@@ -460,6 +460,23 @@ Deno.serve(async (req) => {
     }
   }
 
+  // Fallback: Se não tem GPS ou se a intersecção falhou (por exemplo, cliente só selecionou a região no dropdown)
+  // Utilizamos o region_id que já veio salvo na tabela addresses.
+  if (!isPickup && !regionId && address?.region_id) {
+    outOfRegion = false;
+    const { data: regionFallback } = await adminClient
+      .from('regions')
+      .select('id, name, price, delivery_fee')
+      .eq('id', address.region_id)
+      .maybeSingle();
+
+    if (regionFallback) {
+      regionPrice = Number(regionFallback.delivery_fee ?? regionFallback.price ?? 0);
+      regionId = regionFallback.id;
+      regionName = regionFallback.name;
+    }
+  }
+
   if (!isPickup && outOfRegion) {
     return fail(400, 'create_order.out_of_region', 'Delivery unavailable for this address (out of region).');
   }
