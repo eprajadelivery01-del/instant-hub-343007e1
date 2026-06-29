@@ -566,10 +566,10 @@ export default function StoreDetail() {
                         <div
                         key={product.id}
                         className={cn(
-                          "group flex cursor-pointer gap-4 p-4 transition-all active:scale-[0.99]",
+                          "group flex cursor-pointer gap-4 p-4 transition-all active:scale-[0.99] rounded-xl",
                           category === 'Destaques' 
-                            ? "bg-card border-2 border-orange-100/50 dark:border-orange-900/50 shadow-md hover:shadow-xl hover:border-orange-300 dark:hover:border-orange-700 rounded-2xl relative"
-                            : "bg-background hover:bg-secondary/20 rounded-xl"
+                            ? "bg-background border-2 border-orange-500/30 shadow-md hover:shadow-xl hover:border-orange-500/60 relative"
+                            : "bg-background hover:bg-secondary/20"
                         )}
                         onClick={() => setSelectedProduct(product)}
                       >
