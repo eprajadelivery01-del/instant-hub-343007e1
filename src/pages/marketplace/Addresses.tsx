@@ -15,6 +15,7 @@ import { LocationPicker } from '@/components/marketplace/LocationPicker';
 import { geocodeAddress } from '@/utils/freight';
 import { cn } from '@/lib/utils';
 import { useQueryClient } from '@tanstack/react-query';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 export default function Addresses() {
   const queryClient = useQueryClient();
@@ -22,6 +23,7 @@ export default function Addresses() {
   const navigate = useNavigate();
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedAddressId, setSelectedAddressId] = useState<string>(() => localStorage.getItem('@epraja_selected_address') || '');
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<any>(null);
   const [customerId, setCustomerId] = useState<string | null>(null);
@@ -185,26 +187,37 @@ export default function Addresses() {
             </div>
           ) : (
             <div className="space-y-2">
-              {addresses.map(addr => (
-                <div key={addr.id} className="bg-card border border-border rounded-2xl p-4">
-                  <div className="flex items-start justify-between">
-                    <div className="min-w-0">
-                      {addr.label && <Badge variant="secondary" className="mb-1.5 text-xs">{addr.label}</Badge>}
-                      <p className="font-medium text-sm text-foreground">{addr.street}, {addr.number}</p>
-                      <p className="text-xs text-muted-foreground">{addr.neighborhood} - {addr.city}</p>
-                      {addr.complement && <p className="text-xs text-muted-foreground mt-0.5">{addr.complement}</p>}
-                    </div>
-                    <div className="flex gap-1 shrink-0">
-                      <button onClick={() => openEdit(addr)} className="h-8 w-8 rounded-lg bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors">
-                        <Pencil className="h-3.5 w-3.5" />
-                      </button>
-                      <button onClick={() => handleDelete(addr.id)} className="h-8 w-8 rounded-lg bg-secondary flex items-center justify-center text-destructive/60 hover:text-destructive transition-colors">
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
+              <RadioGroup 
+                value={selectedAddressId} 
+                onValueChange={(val) => {
+                  setSelectedAddressId(val);
+                  localStorage.setItem('@epraja_selected_address', val);
+                  toast.success('Endereço padrão atualizado!');
+                }}
+                className="space-y-3"
+              >
+                {addresses.map(addr => (
+                  <div key={addr.id} className={cn("bg-card border rounded-2xl p-4 transition-colors", selectedAddressId === addr.id ? "border-primary bg-primary/5" : "border-border")}>
+                    <div className="flex items-start gap-3">
+                      <RadioGroupItem value={addr.id} id={`addr-${addr.id}`} className="mt-1" />
+                      <label htmlFor={`addr-${addr.id}`} className="flex-1 cursor-pointer min-w-0">
+                        {addr.label && <Badge variant="secondary" className="mb-1.5 text-xs">{addr.label}</Badge>}
+                        <p className="font-medium text-sm text-foreground">{addr.street}, {addr.number}</p>
+                        <p className="text-xs text-muted-foreground">{addr.neighborhood} - {addr.city}</p>
+                        {addr.complement && <p className="text-xs text-muted-foreground mt-0.5">{addr.complement}</p>}
+                      </label>
+                      <div className="flex gap-1 shrink-0 relative z-10">
+                        <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); openEdit(addr); }} className="h-8 w-8 rounded-lg bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors">
+                          <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                        <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleDelete(addr.id); }} className="h-8 w-8 rounded-lg bg-secondary flex items-center justify-center text-destructive/60 hover:text-destructive transition-colors">
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </RadioGroup>
             </div>
           )}
 

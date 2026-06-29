@@ -87,7 +87,7 @@ export default function Checkout() {
   const { items, company, clearCart, appliedCoupon, discountAmount, subtotal } = useCart();
   const { isLocked, acquireLock, releaseLock, generateIdempotencyKey, resetIdempotencyKey } = useOrderLock();
   
-  const [selectedAddress, setSelectedAddress] = useState<string>('');
+  const [selectedAddress, setSelectedAddress] = useState<string>(() => localStorage.getItem('@epraja_selected_address') || '');
   
   const [paymentMethod, setPaymentMethod] = useState('money');
   const [needsChange, setNeedsChange] = useState(false);
@@ -124,6 +124,14 @@ export default function Checkout() {
     }
   }, [addresses, selectedAddress]);
 
+  // Sync back to localStorage when it changes via modal
+  useEffect(() => {
+    if (selectedAddress) {
+      localStorage.setItem('@epraja_selected_address', selectedAddress);
+    }
+  }, [selectedAddress]);
+
+  // Recalcular frete sempre que o endereço ou modo mudar
   useEffect(() => {
     if (!selectedAddress) return;
     const addr = addresses.find(a => a.id === selectedAddress);
