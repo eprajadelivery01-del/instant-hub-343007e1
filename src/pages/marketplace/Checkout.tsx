@@ -135,7 +135,7 @@ export default function Checkout() {
       setLoadingFee(true);
       setUnavailable(false);
       try {
-        const { data: dbCompany } = await supabase.from('companies').select('delivery_fee, delivery_mode, pricing_table_id, region_id').eq('id', company.id).single();
+        const { data: dbCompany } = await supabase.from('companies').select('delivery_fee, delivery_mode, pricing_table_id, region_id, delivery_regions_pricing').eq('id', company.id).single();
         
         let destRegionId = (addr as any).region_id;
 
@@ -153,7 +153,26 @@ export default function Checkout() {
         }
 
         if (destRegionId) {
-           // Verifica se a loja tem uma tabela de preços vinculada (NOVO SISTEMA)
+           // 1. Verifica se a loja configurou o preço personalizado na tela de PERFIL (JSON array)
+           if (dbCompany?.delivery_regions_pricing) {
+             let pricing: any = dbCompany.delivery_regions_pricing;
+             if (typeof pricing === 'string') {
+               try { pricing = JSON.parse(pricing); } catch { pricing = []; }
+             }
+             if (Array.isArray(pricing)) {
+               const match = pricing.find((p: any) => p?.region_id === destRegionId);
+               if (match) {
+                 const price = Number(String(match.customer_price ?? '').replace(',', '.'));
+                 if (!isNaN(price) && price >= 0) {
+                   setDeliveryFee(price);
+                   setLoadingFee(false);
+                   return;
+                 }
+               }
+             }
+           }
+
+           // 2. Verifica se a loja tem uma tabela de preços vinculada (Matriz Origem x Destino)
            if (dbCompany?.pricing_table_id && dbCompany?.region_id) {
               const { data: rule } = await supabase
                  .from('pricing_rules')
@@ -170,7 +189,7 @@ export default function Checkout() {
               }
            }
            
-           // Se não tem tabela (ou regra não encontrada), puxa o preço da região (FALLBACK SISTEMA NOVO)
+           // 3. Se não tem tabela e nem preço personalizado, puxa o preço genérico da região
            const { data: destRegion } = await supabase.from('regions').select('delivery_fee, price').eq('id', destRegionId).single();
            if (destRegion) {
               const rPrice = Number(destRegion.delivery_fee || destRegion.price || 0);
