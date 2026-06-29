@@ -46,6 +46,9 @@ export function OrderStoreChat({ orderId, companyId, companyName }: OrderStoreCh
     let channel: ReturnType<typeof supabase.channel> | null = null;
 
     (async () => {
+      const { data: companyData } = await supabase.from('companies').select('user_id').eq('id', companyId).maybeSingle();
+      const companyUserId = companyData?.user_id;
+
       let { data: session } = await supabase
         .from('conversations')
         .select('*')
@@ -57,7 +60,7 @@ export function OrderStoreChat({ orderId, companyId, companyName }: OrderStoreCh
           .from('conversations')
           .insert({ 
             order_id: orderId, 
-            participants: [user.id, companyId],
+            participants: companyUserId ? [user.id, companyUserId] : [user.id, companyId],
             topic: 'Suporte do Pedido' 
           })
           .select()
