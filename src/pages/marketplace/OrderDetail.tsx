@@ -293,11 +293,8 @@ export default function OrderDetail() {
                 <MapPin className="h-5 w-5 text-foreground" />
               </div>
               <div>
-                <p className="font-bold text-[15px]">
-                  {((order as any).address)?.street || 'Endereço'}, {((order as any).address)?.number || 'S/N'}
-                </p>
-                <p className="text-sm text-muted-foreground mt-0.5">
-                  {((order as any).address)?.neighborhood} - {((order as any).address)?.complement || 'Casa'}
+                <p className="font-bold text-[15px] leading-tight text-foreground">
+                  {order.delivery_address || 'Endereço não informado'}
                 </p>
               </div>
             </div>
@@ -311,7 +308,7 @@ export default function OrderDetail() {
           <div className="bg-background rounded-3xl p-5 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] border border-border">
             <h3 className="font-bold text-base mb-4">Detalhes do pedido</h3>
             
-            <div className="flex items-center justify-between mb-5 cursor-pointer">
+            <div className="flex items-center justify-between mb-5 cursor-pointer" onClick={() => navigate('/marketplace/store/' + order.company_id)}>
               <div className="flex gap-3 items-center">
                 <div className="h-10 w-10 rounded-full bg-secondary border border-border shrink-0 flex items-center justify-center overflow-hidden">
                    <img src={order.company?.logo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(order.company?.name?.charAt(0) || 'L')}&background=random`} className="w-full h-full object-cover" />
@@ -322,6 +319,34 @@ export default function OrderDetail() {
                 </div>
               </div>
               <ArrowLeft className="h-4 w-4 text-muted-foreground rotate-180" />
+            </div>
+
+            {/* Lista de Itens */}
+            <div className="mb-5 space-y-3">
+              {orderItems.map((item, i) => (
+                <div key={i} className="flex justify-between text-sm">
+                  <div className="flex gap-2">
+                    <span className="font-medium text-muted-foreground">{item.quantity}x</span>
+                    <div>
+                      <p className="font-medium text-foreground">{item.product_name || (item as any).products?.name}</p>
+                      {item.notes && <p className="text-xs text-muted-foreground mt-0.5">{item.notes}</p>}
+                    </div>
+                  </div>
+                  <span className="font-medium text-foreground shrink-0 pl-4">R$ {((item.unit_price || 0) * item.quantity).toFixed(2).replace('.', ',')}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Subtotais */}
+            <div className="space-y-2 mb-5 text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Subtotal</span>
+                <span className="font-medium text-foreground">R$ {orderItems.reduce((acc, curr) => acc + ((curr.unit_price || 0) * curr.quantity), 0).toFixed(2).replace('.', ',')}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Taxa de entrega</span>
+                <span className="font-medium text-foreground">R$ {(order.delivery_fee || 0).toFixed(2).replace('.', ',')}</span>
+              </div>
             </div>
 
             <div className="flex gap-3 mb-5">
