@@ -101,18 +101,27 @@ export function OrderStoreChat({ orderId, companyId, companyName }: OrderStoreCh
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  const isSendingRef = useRef(false);
+
   const send = async (e?: React.FormEvent, customText?: string) => {
     if (e) e.preventDefault();
     const msg = (customText || text).trim();
-    if (!msg || !sessionId || !user || sending) return;
+    if (!msg || !sessionId || !user || isSendingRef.current) return;
+    
+    isSendingRef.current = true;
     setText('');
     setSending(true);
-    await supabase.from('messages').insert({
-      conversation_id: sessionId,
-      sender_id: user.id,
-      content: msg,
-    });
-    setSending(false);
+    
+    try {
+      await supabase.from('messages').insert({
+        conversation_id: sessionId,
+        sender_id: user.id,
+        content: msg,
+      });
+    } finally {
+      setSending(false);
+      isSendingRef.current = false;
+    }
   };
 
   return (
@@ -157,12 +166,13 @@ export function OrderStoreChat({ orderId, companyId, companyName }: OrderStoreCh
           <button
             key={i}
             type="button"
+            disabled={sending}
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
               send(undefined, msg);
             }}
-            className="shrink-0 px-3 py-1.5 rounded-full bg-primary/5 border border-primary/10 text-[10px] font-bold text-primary active:scale-95 transition-all"
+            className="shrink-0 px-3 py-1.5 rounded-full bg-primary/5 border border-primary/10 text-[10px] font-bold text-primary active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {msg}
           </button>
