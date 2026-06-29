@@ -140,7 +140,7 @@ export function LocationPicker({ initialCoords, onConfirm, onCancel }: LocationP
       
       <button 
         onClick={handleMyLocation}
-        className="absolute top-4 right-4 h-11 w-11 rounded-2xl bg-white shadow-xl flex items-center justify-center text-primary group active:scale-95 transition-all border border-slate-100"
+        className="absolute top-4 right-4 h-11 w-11 rounded-2xl bg-card shadow-xl flex items-center justify-center text-primary group active:scale-95 transition-all border border-border"
         title="Minha localização"
       >
         <Navigation className="h-5 w-5 group-hover:rotate-12 transition-transform" />

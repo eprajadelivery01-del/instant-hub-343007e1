@@ -19,8 +19,8 @@ function MenuTile({ icon: Icon, label, badge, color, onClick, variant = 'square'
     <button 
       onClick={onClick} 
       className={cn(
-        "relative flex flex-col items-center justify-center gap-3 p-4 rounded-[32px] overflow-hidden group transition-all duration-300",
-        "bg-white border border-slate-100 shadow-sm hover:shadow-xl hover:border-primary/20 hover:-translate-y-1 active:scale-95",
+        "relative flex flex-col items-center justify-center gap-3 p-4 rounded-[32px] overflow-hidden transition-all duration-300 relative group overflow-hidden",
+        "bg-card border border-border shadow-sm hover:shadow-xl hover:border-primary/20 hover:-translate-y-1 active:scale-95",
         variant === 'wide' ? "h-24 flex-row justify-start px-6 gap-6 col-span-2" : "aspect-square"
       )}
     >
@@ -142,7 +142,7 @@ export function MarketplaceMenu({ children, onSelectCategory, onOpenPartnership 
                       <button 
                         key={item.label}
                         onClick={() => { setIsOpen(false); navigate('/marketplace'); }}
-                        className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-100 hover:bg-white hover:shadow-md transition-all group overflow-hidden"
+                        className="flex items-center gap-4 p-4 rounded-2xl bg-muted/50 border border-border hover:bg-card hover:shadow-md transition-all group overflow-hidden"
                       >
                          <div className="h-10 w-10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
                             <item.icon className="h-5 w-5" />
@@ -173,8 +173,8 @@ export function MarketplaceMenu({ children, onSelectCategory, onOpenPartnership 
               </div>
            </div>
 
-           <div className="p-8 border-t border-slate-50 mt-auto bg-white">
-            <div className="py-8 px-6 text-center border-t border-slate-50 mt-auto">
+           <div className="p-8 border-t border-border mt-auto bg-background">
+            <div className="py-8 px-6 text-center border-t border-border mt-auto">
             </div>
            </div>
         </div>

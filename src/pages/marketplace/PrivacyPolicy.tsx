@@ -8,7 +8,7 @@ export default function PrivacyPolicy() {
 
   return (
     <MarketplaceLayout>
-      <div className="bg-white min-h-screen">
+      <div className="bg-background min-h-screen">
         <header className="px-6 pb-6 flex items-center gap-4 sticky top-0 bg-white/80 backdrop-blur-md z-10 pt-[calc(env(safe-area-inset-top,0px)+3rem)]">
           <button onClick={() => navigate(-1)} className="h-10 w-10 rounded-full flex items-center justify-center bg-slate-50 text-slate-900 shadow-sm border border-slate-100">
             <ChevronLeft className="h-6 w-6" />
