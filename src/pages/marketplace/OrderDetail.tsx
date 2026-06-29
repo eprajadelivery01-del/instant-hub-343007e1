@@ -358,9 +358,11 @@ export default function OrderDetail() {
               <div>
                 <p className="font-bold text-[15px] flex items-center gap-1">Pagamento na entrega <span className="text-[#00A868]">●</span> {order.payment_method === 'money' ? 'Dinheiro' : 'Máquina'}</p>
                 <p className="text-sm text-muted-foreground">
-                   {order.payment_method === 'money' && (order as any).needs_change && (order as any).change_for 
-                    ? `Troco para R$ ${Number((order as any).change_for).toFixed(2).replace('.', ',')}` 
-                    : 'Sem troco necessário'}
+                   {order.payment_method === 'money'
+                    ? (order.notes?.includes('Troco para R$') 
+                        ? order.notes.split('Troco para R$')[1].split(' •')[0].trim() ? `Troco para R$ ${order.notes.split('Troco para R$')[1].split(' •')[0].trim()}` : 'Sem troco necessário'
+                        : 'Sem troco necessário')
+                    : ''}
                 </p>
               </div>
             </div>
