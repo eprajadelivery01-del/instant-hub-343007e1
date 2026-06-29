@@ -114,7 +114,7 @@ export function OrderStoreChat({ orderId, companyId, companyName }: OrderStoreCh
 
     const messageId = crypto.randomUUID();
     
-    // Optimistic Update: Mostra a mensagem na tela instantaneamente antes do banco responder
+    // Optimistic Update: Mostra a mensagem na tela instantaneamente
     const optimisticMsg = {
       id: messageId,
       sender_id: user.id,
@@ -128,17 +128,22 @@ export function OrderStoreChat({ orderId, companyId, companyName }: OrderStoreCh
         endRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, 50);
     
-    try {
-      await supabase.from('messages').insert({
-        id: messageId,
-        conversation_id: sessionId,
-        sender_id: user.id,
-        content: msg,
-      });
-    } finally {
-      setSending(false);
-      isSendingRef.current = false;
-    }
+    // Libera a UI imediatamente (Fire-and-forget)
+    setSending(false);
+    isSendingRef.current = false;
+    
+    supabase.from('messages').insert({
+      id: messageId,
+      conversation_id: sessionId,
+      sender_id: user.id,
+      content: msg,
+    }).then(({ error }) => {
+      if (error) {
+        console.error('Erro ao enviar mensagem:', error);
+        // Rollback da mensagem em caso de falha
+        setMessages((prev) => prev.filter((m) => m.id !== messageId));
+      }
+    });
   };
 
   return (

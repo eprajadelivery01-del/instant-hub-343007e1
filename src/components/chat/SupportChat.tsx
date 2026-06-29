@@ -133,38 +133,30 @@ export function SupportChat({ topic, title, companyId = null, onClose }: Support
     if (!msgText || !user || !conversationId || sending) return;
 
     const optimisticMsg: Message = {
-      id: Math.random().toString(36).substr(2, 9),
+      id: crypto.randomUUID(),
       sender_id: user.id,
       content: msgText,
       created_at: new Date().toISOString()
     };
 
+    setMessages(prev => [...prev, optimisticMsg]);
     setNewMessage('');
-    setSending(true);
+    
+    // Libera a UI imediatamente
+    setSending(false);
 
-    try {
-      setMessages(prev => [...prev, optimisticMsg]);
-
-      const { data, error } = await supabase.from('messages').insert({
-        conversation_id: conversationId,
-        sender_id: user.id,
-        content: msgText
-      }).select().single();
-
+    supabase.from('messages').insert({
+      id: optimisticMsg.id,
+      conversation_id: conversationId,
+      sender_id: user.id,
+      content: msgText
+    }).then(({ error }) => {
       if (error) {
+        console.error("[SupportChat] Erro ao enviar:", error);
+        toast.error("Falha ao enviar mensagem");
         setMessages(prev => prev.filter(m => m.id !== optimisticMsg.id));
-        throw error;
       }
-
-      if (data) {
-        setMessages(prev => prev.map(m => m.id === optimisticMsg.id ? data : m));
-      }
-    } catch (err) {
-      console.error("[SupportChat] Erro ao enviar:", err);
-      toast.error("Falha ao enviar mensagem");
-    } finally {
-      setSending(false);
-    }
+    });
   };
 
   const handleEndChat = () => {

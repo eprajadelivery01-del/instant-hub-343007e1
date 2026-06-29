@@ -367,7 +367,7 @@ export default function OrderDetail() {
 
             <div className="flex justify-between items-center font-bold text-base mb-6">
               <span className="text-foreground">Total com entrega</span>
-              <span>R$ {(order.total || 0).toFixed(2).replace('.', ',')}</span>
+              <span>R$ {(orderItems.reduce((acc, curr) => acc + ((curr.unit_price || 0) * curr.quantity), 0) + (order.delivery_fee || 0)).toFixed(2).replace('.', ',')}</span>
             </div>
 
             <div className="border-t border-border/50 pt-5 text-center flex flex-col gap-3">

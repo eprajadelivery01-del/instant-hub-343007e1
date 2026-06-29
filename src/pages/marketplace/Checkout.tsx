@@ -653,19 +653,28 @@ export default function Checkout() {
                 </div>
               ))}
             </RadioGroup>
-            <Button 
-              type="button"
-              variant="outline" 
-              className="w-full mt-4 rounded-xl border-dashed" 
-              onClick={(e) => {
-                e.preventDefault();
-                setShowAddressModal(false);
-                setTimeout(() => navigate('/marketplace/addresses', { state: { returnTo: '/marketplace/checkout' } }), 150);
-              }}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Adicionar novo endereço
-            </Button>
+            <div className="flex flex-col gap-2 mt-4">
+              <Button 
+                type="button"
+                variant="outline" 
+                className="w-full rounded-xl border-dashed" 
+                onClick={() => {
+                  setShowAddressModal(false);
+                  setTimeout(() => navigate('/marketplace/addresses', { state: { returnTo: '/marketplace/checkout' } }), 100);
+                }}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Adicionar novo endereço
+              </Button>
+              <Button 
+                type="button"
+                variant="ghost" 
+                className="w-full rounded-xl text-muted-foreground" 
+                onClick={() => setShowAddressModal(false)}
+              >
+                Fechar
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
