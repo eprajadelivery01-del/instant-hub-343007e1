@@ -93,7 +93,7 @@ export default function StoreDetail() {
   const products: Product[] = (storeData?.products as Product[]) ?? [];
 
   useEffect(() => {
-    if (!user || !company) return;
+    if (!user?.id || !company?.id) return;
 
     const checkDeliveryFee = async () => {
       setCalculatingFee(true);
@@ -107,6 +107,7 @@ export default function StoreDetail() {
 
         if (addresses && addresses.length > 0) {
           const addr = addresses[0]; // Pega o mais recente
+          
           if (addr.latitude && addr.longitude) {
             // CALCULO OBRIGATÓRIO PELA REGIÃO (ADMIN PANEL MAP)
             const result = await calculateDeliveryFee(addr.latitude, addr.longitude, supabase, (company as any).delivery_regions_pricing);
@@ -124,6 +125,30 @@ export default function StoreDetail() {
               setDynamicDeliveryFee(company.delivery_fee);
               setIsOutOfRange(false);
             }
+          } else if (addr.region_id && company.delivery_regions_pricing) {
+            // Fallback: se não tem GPS mas tem region_id configurada (igual no Checkout)
+            let pricing: any = company.delivery_regions_pricing;
+            if (typeof pricing === 'string') {
+              try { pricing = JSON.parse(pricing); } catch { pricing = []; }
+            }
+            if (Array.isArray(pricing)) {
+              const match = pricing.find((p: any) => p?.region_id === addr.region_id);
+              if (match) {
+                const price = Number(String(match.customer_price ?? '').replace(',', '.'));
+                if (!isNaN(price) && price >= 0) {
+                  setDynamicDeliveryFee(price);
+                  setIsOutOfRange(false);
+                  return;
+                }
+              }
+            }
+            // Se chegou aqui, fallback para default
+            setDynamicDeliveryFee(company.delivery_fee);
+            setIsOutOfRange(false);
+          } else {
+            // Sem GPS e sem region_id
+            setDynamicDeliveryFee(company.delivery_fee);
+            setIsOutOfRange(false);
           }
         }
       } catch (err) {
@@ -134,7 +159,7 @@ export default function StoreDetail() {
     };
 
     checkDeliveryFee();
-  }, [user, company]);
+  }, [user?.id, company?.id, company?.delivery_fee, company?.delivery_regions_pricing]);
 
   const categories = useMemo(() => {
     const cats = [...new Set(products.map((product) => product.category))];
