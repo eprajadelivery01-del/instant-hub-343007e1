@@ -653,7 +653,16 @@ export default function Checkout() {
                 </div>
               ))}
             </RadioGroup>
-            <Button variant="outline" className="w-full mt-4 rounded-xl border-dashed" onClick={() => navigate('/marketplace/addresses', { state: { returnTo: '/marketplace/checkout' } })}>
+            <Button 
+              type="button"
+              variant="outline" 
+              className="w-full mt-4 rounded-xl border-dashed" 
+              onClick={(e) => {
+                e.preventDefault();
+                setShowAddressModal(false);
+                setTimeout(() => navigate('/marketplace/addresses', { state: { returnTo: '/marketplace/checkout' } }), 150);
+              }}
+            >
               <Plus className="h-4 w-4 mr-2" />
               Adicionar novo endereço
             </Button>
