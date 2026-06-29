@@ -484,17 +484,27 @@ Deno.serve(async (req) => {
   let feeCalculated = false;
 
   // 1ª prioridade: preço configurado pelo lojista para a região do cliente
-  // (companies.delivery_regions_pricing = JSON [{region_id, customer_price}])
+  // (companies.delivery_regions_pricing = JSON { matrix: [{to, from, price, return_price}] })
   if (regionId && company.delivery_regions_pricing) {
     let pricing: any = company.delivery_regions_pricing;
     if (typeof pricing === 'string') {
       try { pricing = JSON.parse(pricing); } catch { pricing = null; }
     }
+    
+    // Suporta tanto o formato antigo em array direto, quanto o novo encapsulado em "matrix"
+    let pricingArray = [];
     if (Array.isArray(pricing)) {
-      const match = pricing.find((p: any) => p?.region_id === regionId);
+      pricingArray = pricing;
+    } else if (pricing && Array.isArray(pricing.matrix)) {
+      pricingArray = pricing.matrix;
+    }
+
+    if (pricingArray.length > 0) {
+      const match = pricingArray.find((p: any) => (p?.region_id === regionId) || (p?.to === regionId));
       if (match) {
-        const price = Number(String(match.customer_price ?? '').replace(',', '.'));
-        if (!isNaN(price) && price >= 0) {
+        const rawPrice = match.customer_price ?? match.price ?? '';
+        const price = Number(String(rawPrice).replace(',', '.'));
+        if (!isNaN(price) && price > 0) {
           deliveryFee = price;
           feeCalculated = true;
         }
