@@ -275,7 +275,7 @@ Deno.serve(async (req) => {
   if (!isPickup) {
     const { data: addressData, error: addrErr } = await adminClient
       .from('addresses')
-      .select('id, user_id, street, number, neighborhood, city, latitude, longitude')
+      .select('id, user_id, street, number, neighborhood, city, latitude, longitude, region_id')
       .eq('id', body.address_id)
       .maybeSingle();
     if (addrErr || !addressData || addressData.user_id !== user.id) {
