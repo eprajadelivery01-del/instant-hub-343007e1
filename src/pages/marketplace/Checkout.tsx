@@ -10,9 +10,11 @@ import MarketplaceLayout from '@/components/marketplace/MarketplaceLayout';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { reportErrorToTelegram } from '@/services/logger';
-import { MapPin, Banknote, AlertCircle, ArrowLeft, Loader2, FileText, Smartphone, Bike, Ticket } from 'lucide-react';
+import { MapPin, Banknote, AlertCircle, ArrowLeft, Loader2, FileText, Smartphone, Bike, Ticket, Plus } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { useOrderLock } from '@/hooks/useOrderLock';
 import { calculateDeliveryFee } from '@/utils/freight';
 import { isStoreOpenBySchedule } from '@/lib/storeHours';
@@ -113,6 +115,7 @@ export default function Checkout() {
   });
   
   const [showReviewModal, setShowReviewModal] = useState(false);
+  const [showAddressModal, setShowAddressModal] = useState(false);
   const [fulfillmentMode, setFulfillmentMode] = useState<'delivery' | 'pickup'>('delivery');
 
   useEffect(() => {
@@ -461,7 +464,7 @@ export default function Checkout() {
                       <p className="text-sm text-muted-foreground truncate">{selAddrObj?.neighborhood} - {selAddrObj?.complement || 'Casa'}</p>
                     </div>
                   </div>
-                  <button className="text-sm font-semibold text-primary shrink-0" onClick={() => navigate('/marketplace/addresses')}>
+                  <button className="text-sm font-semibold text-primary shrink-0" onClick={() => setShowAddressModal(true)}>
                     Trocar
                   </button>
                 </div>
@@ -621,7 +624,36 @@ export default function Checkout() {
         </div>
       </div>
 
-      {/* Sheet Modal - Revise o seu pedido */}
+      {/* MODAL DE TROCA DE ENDEREÇO */}
+      <Dialog open={showAddressModal} onOpenChange={setShowAddressModal}>
+        <DialogContent className="max-w-md rounded-2xl p-0 overflow-hidden bg-background">
+          <DialogHeader className="p-4 pb-2 border-b border-border text-left">
+            <DialogTitle className="text-lg font-bold">Escolha o Endereço</DialogTitle>
+          </DialogHeader>
+          <div className="p-4 max-h-[60vh] overflow-y-auto">
+            <RadioGroup value={selectedAddress ?? ''} onValueChange={(val) => { setSelectedAddress(val); setShowAddressModal(false); }} className="space-y-3">
+              {addresses.map(addr => (
+                <div key={addr.id} className={cn("flex items-start gap-3 border rounded-xl p-3 transition-colors", selectedAddress === addr.id ? "border-primary bg-primary/5" : "border-border")}>
+                  <RadioGroupItem value={addr.id} id={`addr-${addr.id}`} className="mt-1" />
+                  <label htmlFor={`addr-${addr.id}`} className="flex-1 cursor-pointer">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="font-semibold text-sm">{addr.label || 'Endereço'}</span>
+                    </div>
+                    <p className="text-sm text-foreground">{addr.street}, {addr.number}</p>
+                    <p className="text-xs text-muted-foreground">{addr.neighborhood} - {addr.city}</p>
+                  </label>
+                </div>
+              ))}
+            </RadioGroup>
+            <Button variant="outline" className="w-full mt-4 rounded-xl border-dashed" onClick={() => navigate('/marketplace/addresses')}>
+              <Plus className="h-4 w-4 mr-2" />
+              Adicionar novo endereço
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Review Modal */}
       <Sheet open={showReviewModal} onOpenChange={setShowReviewModal}>
         <SheetContent side="bottom" className="h-auto max-h-[90vh] overflow-y-auto rounded-t-[32px] px-0 pb-0 pt-6">
           <div className="mx-auto w-12 h-1.5 rounded-full bg-muted mb-6" />
