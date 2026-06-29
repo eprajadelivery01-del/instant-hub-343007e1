@@ -111,9 +111,26 @@ export function OrderStoreChat({ orderId, companyId, companyName }: OrderStoreCh
     isSendingRef.current = true;
     setText('');
     setSending(true);
+
+    const messageId = crypto.randomUUID();
+    
+    // Optimistic Update: Mostra a mensagem na tela instantaneamente antes do banco responder
+    const optimisticMsg = {
+      id: messageId,
+      sender_id: user.id,
+      message: msg,
+      content: msg,
+      created_at: new Date().toISOString(),
+    };
+    
+    setMessages((prev) => [...prev, optimisticMsg as any]);
+    setTimeout(() => {
+        endRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, 50);
     
     try {
       await supabase.from('messages').insert({
+        id: messageId,
         conversation_id: sessionId,
         sender_id: user.id,
         content: msg,
