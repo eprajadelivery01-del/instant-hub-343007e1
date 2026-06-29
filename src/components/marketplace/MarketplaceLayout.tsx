@@ -183,7 +183,7 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
       {showCartFab && (
         <div className="fixed inset-x-0 z-[40] w-full px-4 pointer-events-none flex justify-center marketplace-cart-fab">
           <Link
-            to="/marketplace/cart"
+            to={location.state?.returnTo === '/marketplace/checkout' ? '/marketplace/checkout' : '/marketplace/cart'}
             className="pointer-events-auto flex h-16 w-full max-w-sm items-center justify-between rounded-full bg-primary pl-2 pr-6 text-primary-foreground shadow-[0_12px_30px_-5px_rgba(234,88,12,0.5)] active:scale-[0.97] transition-all hover:shadow-[0_15px_35px_-5px_rgba(234,88,12,0.6)]"
           >
             <div className="flex items-center gap-3">

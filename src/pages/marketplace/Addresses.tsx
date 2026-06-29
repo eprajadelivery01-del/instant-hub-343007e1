@@ -19,6 +19,8 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 export default function Addresses() {
   const queryClient = useQueryClient();
+  const location = useLocation();
+  const returnTo = location.state?.returnTo;
   const { user } = useAuth();
   const navigate = useNavigate();
   const [addresses, setAddresses] = useState<Address[]>([]);
@@ -193,6 +195,9 @@ export default function Addresses() {
                   setSelectedAddressId(val);
                   localStorage.setItem('@epraja_selected_address', val);
                   toast.success('Endereço padrão atualizado!');
+                  if (returnTo) {
+                    setTimeout(() => navigate(returnTo), 400);
+                  }
                 }}
                 className="space-y-3"
               >
