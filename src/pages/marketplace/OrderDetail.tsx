@@ -332,7 +332,7 @@ export default function OrderDetail() {
                       {item.notes && <p className="text-xs text-muted-foreground mt-0.5">{item.notes}</p>}
                     </div>
                   </div>
-                  <span className="font-medium text-foreground shrink-0 pl-4">R$ {((item.unit_price || 0) * item.quantity).toFixed(2).replace('.', ',')}</span>
+                  <span className="font-medium text-foreground shrink-0 pl-4">R$ {((item.price || item.unit_price || 0) * item.quantity).toFixed(2).replace('.', ',')}</span>
                 </div>
               ))}
             </div>
@@ -341,7 +341,7 @@ export default function OrderDetail() {
             <div className="space-y-2 mb-5 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Subtotal</span>
-                <span className="font-medium text-foreground">R$ {orderItems.reduce((acc, curr) => acc + ((curr.unit_price || 0) * curr.quantity), 0).toFixed(2).replace('.', ',')}</span>
+                <span className="font-medium text-foreground">R$ {orderItems.reduce((acc, curr) => acc + ((curr.price || curr.unit_price || 0) * curr.quantity), 0).toFixed(2).replace('.', ',')}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Taxa de entrega</span>
@@ -367,7 +367,7 @@ export default function OrderDetail() {
 
             <div className="flex justify-between items-center font-bold text-base mb-6">
               <span className="text-foreground">Total com entrega</span>
-              <span>R$ {(orderItems.reduce((acc, curr) => acc + ((curr.unit_price || 0) * curr.quantity), 0) + (order.delivery_fee || 0)).toFixed(2).replace('.', ',')}</span>
+              <span>R$ {(orderItems.reduce((acc, curr) => acc + ((curr.price || curr.unit_price || 0) * curr.quantity), 0) + (order.delivery_fee || 0)).toFixed(2).replace('.', ',')}</span>
             </div>
 
             <div className="border-t border-border/50 pt-5 text-center flex flex-col gap-3">
