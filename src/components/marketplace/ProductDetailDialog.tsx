@@ -270,13 +270,13 @@ export function ProductDetailDialog({ product, isOpen, onClose, onAddToCart, ini
             </button>
           </div>
 
-          <button 
-            onClick={handleAdd} 
-            disabled={isClosed}
+          <Button
             className={cn(
-              "flex-1 h-[52px] rounded-xl flex items-center justify-between px-6 bg-primary hover:bg-primary/90 text-primary-foreground transition-all shadow-lg",
+              "flex-1 rounded-2xl h-14 bg-primary text-primary-foreground font-semibold flex items-center justify-between px-6 hover:bg-primary/90 transition-colors",
               isClosed && "opacity-50 cursor-not-allowed grayscale"
             )}
+            onClick={handleAdd}
+            disabled={isClosed}
           >
             <span className="text-[15px] font-bold">Adicionar</span>
             <span className="text-[15px] font-bold">

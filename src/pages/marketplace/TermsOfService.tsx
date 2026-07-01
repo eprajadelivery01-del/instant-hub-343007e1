@@ -56,7 +56,7 @@ export default function TermsOfService() {
             Última atualização: 08 de Abril de 2026.
           </div>
         </div>
-      </div>
+        </main>
     </MarketplaceLayout>
   );
 }
