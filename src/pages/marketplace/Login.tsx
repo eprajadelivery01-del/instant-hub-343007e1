@@ -23,7 +23,11 @@ export default function Login() {
       await signIn(email, password);
       navigate('/marketplace');
     } catch (err: any) {
-      toast.error(err.message || 'Erro ao fazer login');
+      if (err.message === 'Invalid login credentials') {
+        toast.error('Credenciais inválidas. Verifique seu e-mail e senha.');
+      } else {
+        toast.error(err.message || 'Erro ao fazer login');
+      }
     } finally {
       setLoading(false);
     }
