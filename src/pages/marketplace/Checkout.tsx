@@ -251,8 +251,8 @@ export default function Checkout() {
     
     setLoading(true);
     try {
-      const { data: storeStatus } = await supabase.from('companies').select('is_open, business_hours').eq('id', company.id).single();
-      if (!storeStatus || !(storeStatus.is_open === true && isStoreOpenBySchedule(storeStatus.business_hours))) {
+      const { data: storeStatus } = await supabase.from('companies').select('is_open, active, is_active, business_hours, timezone').eq('id', company.id).single();
+      if (!storeStatus || !isStoreOpenNow(storeStatus as any)) {
         toast.error('Este restaurante ainda não abriu ou já fechou.', {
           description: 'Verifique o horário de funcionamento na página da loja.'
         });
@@ -622,7 +622,7 @@ export default function Checkout() {
               </p>
             </div>
             <Button 
-              className="h-14 w-[60%] rounded-xl text-base font-bold bg-[#EA1D2C] hover:bg-[#D11825] text-white" 
+              className="h-14 w-[60%] rounded-xl text-base font-bold bg-primary hover:bg-primary/90 text-primary-foreground" 
               onClick={handleOpenReview} 
               disabled={unavailable || !selectedAddress || loadingFee}
             >
@@ -742,7 +742,7 @@ export default function Checkout() {
 
           <div className="p-6 pt-4 pb-8 space-y-3 bg-background">
             <Button 
-              className="w-full h-14 rounded-xl text-base font-bold bg-[#EA1D2C] hover:bg-[#D11825] text-white"
+              className="w-full h-14 rounded-xl text-base font-bold bg-primary hover:bg-primary/90 text-primary-foreground"
               onClick={handleSubmit}
               disabled={loading}
             >

@@ -221,8 +221,8 @@ export default function Profile() {
                   </div>
                 )}
                 {uploading && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/60">
-                    <Loader2 className="h-5 w-5 animate-spin text-white" />
+                  <div className="absolute inset-0 flex items-center justify-center bg-background/60">
+                    <Loader2 className="h-5 w-5 animate-spin text-foreground" />
                   </div>
                 )}
               </button>
@@ -262,13 +262,13 @@ export default function Profile() {
             >
               <div className="flex items-center justify-between mb-4">
                 <div className={cn("w-9 h-9 rounded-xl bg-gradient-to-br flex items-center justify-center", tier.color)}>
-                  <Trophy className="h-4 w-4 text-black" />
+                  <Trophy className="h-4 w-4 text-black/80" />
                 </div>
                 <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/70">{ordersCount}{tier.next ? `/${tier.next}` : ''}</span>
               </div>
               <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">Nível</p>
               <p className="font-display text-2xl font-bold tracking-tight mt-1">{tier.name}</p>
-              <div className="mt-2 h-1 rounded-full bg-white/10 overflow-hidden">
+              <div className="mt-2 h-1 rounded-full bg-muted/50 overflow-hidden">
                 <div
                   className={cn("h-full bg-gradient-to-r", tier.color)}
                   style={{ width: `${Math.min(100, tier.progress)}%` }}
@@ -418,7 +418,7 @@ export default function Profile() {
                       theme === 'dark' ? 'bg-primary' : 'bg-muted-foreground/30'
                     )}>
                       <div className={cn(
-                        "absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform",
+                        "absolute top-0.5 h-5 w-5 rounded-full bg-background shadow transition-transform",
                         theme === 'dark' ? 'translate-x-5' : 'translate-x-0.5'
                       )} />
                     </div>

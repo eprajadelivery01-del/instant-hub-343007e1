@@ -32,7 +32,7 @@ function MenuTile({ icon: Icon, label, badge, color, onClick, variant = 'square'
       </div>
       <div className="flex flex-col items-center">
         <span className={cn(
-          "text-[12px] font-black uppercase tracking-widest text-slate-700 transition-colors group-hover:text-primary",
+          "text-[12px] font-black uppercase tracking-widest text-foreground transition-colors group-hover:text-primary",
           variant === 'wide' && "text-sm text-left items-start"
         )}>
           {label}
@@ -95,18 +95,18 @@ export function MarketplaceMenu({ children, onSelectCategory, onOpenPartnership 
         {children}
       </SheetTrigger>
       <SheetContent side="left" hideClose className="w-full sm:w-[400px] p-0 border-r-0 rounded-r-[40px] overflow-hidden">
-        <div className="h-full flex flex-col bg-[#fdfdfd]">
+        <div className="h-full flex flex-col bg-background">
             <div className="px-8 pt-10 pb-6 flex items-center justify-between">
               <SheetHeader>
                 <SheetTitle className="text-left flex flex-col items-start gap-1">
-                  <span className="text-2xl font-black text-slate-900 tracking-tight">
+                  <span className="text-2xl font-black text-foreground tracking-tight">
                     Aproveite o <span className="text-primary">É Pra Já!</span>
                   </span>
                 </SheetTitle>
               </SheetHeader>
               <button 
                 onClick={() => setIsOpen(false)}
-                className="h-12 w-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200 hover:text-slate-900 transition-all active:scale-95"
+                className="h-12 w-12 rounded-2xl bg-muted flex items-center justify-center text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-all active:scale-95"
               >
                 <X className="h-6 w-6" />
               </button>
@@ -147,7 +147,7 @@ export function MarketplaceMenu({ children, onSelectCategory, onOpenPartnership 
                          <div className="h-10 w-10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
                             <item.icon className="h-5 w-5" />
                          </div>
-                         <span className="text-xs font-black uppercase tracking-wider text-slate-600">{item.label}</span>
+                         <span className="text-xs font-black uppercase tracking-wider text-foreground">{item.label}</span>
                       </button>
                     ))}
                   </div>

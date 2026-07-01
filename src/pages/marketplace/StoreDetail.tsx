@@ -77,7 +77,7 @@ export default function StoreDetail() {
     staleTime: 30_000,
     queryFn: async () => {
       const [companyResponse, productResponse] = await Promise.all([
-        supabase.from('companies').select('id, name, description, category, rating, is_open, active, is_active, delivery_fee, delivery_regions_pricing, show_in_marketplace, city, state, banner_url, cover_url, logo_url, business_hours, prep_time_min, prep_time_max, created_at, user_id').eq('id', id!).single(),
+        supabase.from('companies').select('id, name, description, category, rating, is_open, active, is_active, delivery_fee, delivery_regions_pricing, show_in_marketplace, city, state, banner_url, cover_url, logo_url, business_hours, prep_time_min, prep_time_max, created_at, user_id, timezone').eq('id', id!).single(),
         supabase.from('products').select('*').eq('company_id', id!).eq('active', true).order('category').order('sort_order', { ascending: true }).order('created_at', { ascending: true }),
       ]);
       if (productResponse.error) {
@@ -88,7 +88,7 @@ export default function StoreDetail() {
   });
 
   const company: Company | null = storeData?.company
-    ? ({ ...storeData.company, is_open: storeData.company.is_open === true && isStoreOpenBySchedule(storeData.company.business_hours) } as Company)
+    ? ({ ...storeData.company, is_open: isStoreOpenNow(storeData.company as any) } as Company)
     : null;
   const products: Product[] = (storeData?.products as Product[]) ?? [];
 

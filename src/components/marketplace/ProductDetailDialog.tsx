@@ -170,7 +170,7 @@ export function ProductDetailDialog({ product, isOpen, onClose, onAddToCart, ini
             
             <button
               onClick={onClose}
-              className="absolute left-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-foreground shadow-lg transition-transform active:scale-90 z-50"
+              className="absolute left-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-background/90 text-foreground shadow-lg transition-transform active:scale-90 z-50"
             >
               <X className="h-5 w-5" />
             </button>
@@ -215,8 +215,8 @@ export function ProductDetailDialog({ product, isOpen, onClose, onAddToCart, ini
                             )}
                           </div>
                           <div className={cn(
-                            "flex h-6 w-6 items-center justify-center rounded-full border transition-all",
-                            active ? "bg-primary border-primary text-white" : "border-muted-foreground/30 text-muted-foreground/30"
+                            "flex h-4 w-4 items-center justify-center rounded-full border-2 transition-all",
+                            active ? "bg-primary border-primary text-primary-foreground" : "border-muted-foreground/30 text-muted-foreground/30"
                           )}>
                             {active ? <Minus className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
                           </div>
@@ -270,12 +270,12 @@ export function ProductDetailDialog({ product, isOpen, onClose, onAddToCart, ini
             </button>
           </div>
 
-          <Button 
+          <button 
             onClick={handleAdd} 
             disabled={isClosed}
             className={cn(
-              "flex-1 h-[52px] rounded-xl flex items-center justify-between px-6 bg-[#ED1C24] hover:bg-[#D11B21] text-white transition-all shadow-lg",
-              isClosed && "opacity-50 cursor-not-allowed"
+              "flex-1 h-[52px] rounded-xl flex items-center justify-between px-6 bg-primary hover:bg-primary/90 text-primary-foreground transition-all shadow-lg",
+              isClosed && "opacity-50 cursor-not-allowed grayscale"
             )}
           >
             <span className="text-[15px] font-bold">Adicionar</span>

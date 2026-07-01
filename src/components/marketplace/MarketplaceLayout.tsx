@@ -134,7 +134,7 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
   const fixedUi = (
     <>
       {!hideNav && (
-        <nav className="fixed inset-x-0 bottom-0 z-[80] w-full border-t border-white/5 bg-[#0a0a0a] marketplace-bottom-nav">
+        <nav className="fixed inset-x-0 bottom-0 z-[80] w-full border-t border-border bg-background marketplace-bottom-nav">
           <div className="flex h-16 items-center justify-around px-2">
             {navItems.map((item) => {
               const isHome = item.path === '/marketplace';
@@ -159,7 +159,7 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
                   <div className="relative">
                     <item.icon className={cn(
                       'h-[24px] w-[24px] transition-all duration-200',
-                      active ? 'text-white stroke-[2px]' : 'text-[#8a8a8a] stroke-[1.5px]'
+                      active ? 'text-primary stroke-[2.5px]' : 'text-muted-foreground stroke-[1.5px]'
                     )} />
                     {item.path === '/marketplace/orders' && orderCount > 0 && (
                       <span className="absolute -top-1.5 -right-2.5 flex h-[15px] min-w-[15px] px-1 items-center justify-center rounded-full bg-primary text-[10px] font-black text-white shadow-sm">
@@ -169,7 +169,7 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
                   </div>
                   <span className={cn(
                     'text-[11px] transition-all duration-200 mt-0.5',
-                    active ? 'text-white font-semibold' : 'text-[#8a8a8a] font-medium'
+                    active ? 'text-primary font-bold' : 'text-muted-foreground font-medium'
                   )}>
                     {item.label}
                   </span>
@@ -203,7 +203,7 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
   );
 
   return (
-    <div className="app-shell min-h-screen flex flex-col font-sans text-foreground bg-slate-50/30">
+    <div className="app-shell min-h-screen flex flex-col font-sans text-foreground bg-background">
       <OrderRatingModal />
       
       {/* Marketing Notification Popup */}
@@ -214,7 +214,7 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
       
       {/* Desktop Header */}
       {!hideNav && (
-        <header className="hidden md:block sticky top-0 z-[100] w-full border-b border-border/50 bg-white/80 backdrop-blur-xl pt-[env(safe-area-inset-top,0px)]">
+        <header className="hidden md:block sticky top-0 z-[100] w-full border-b border-border/50 bg-background/80 backdrop-blur-xl pt-[env(safe-area-inset-top,0px)]">
           <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6">
             <Link to="/marketplace" className="flex items-center gap-2 outline-none">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-white shadow-lg shadow-primary/20 overflow-hidden">

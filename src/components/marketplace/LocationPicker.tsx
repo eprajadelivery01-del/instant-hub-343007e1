@@ -140,16 +140,16 @@ export function LocationPicker({ initialCoords, onConfirm, onCancel }: LocationP
       
       <button 
         onClick={handleMyLocation}
-        className="absolute top-4 right-4 h-11 w-11 rounded-2xl bg-card shadow-xl flex items-center justify-center text-primary group active:scale-95 transition-all border border-border"
+        className="absolute top-4 right-4 h-11 w-11 rounded-2xl bg-background shadow-xl flex items-center justify-center text-primary group active:scale-95 transition-all border border-border"
         title="Minha localização"
       >
         <Navigation className="h-5 w-5 group-hover:rotate-12 transition-transform" />
       </button>
 
-      <div className="absolute bottom-6 inset-x-6 flex flex-col gap-3 pointer-events-none">
+      <div className="absolute bottom-6 left-6 right-6 z-[100] pointer-events-none">
         {addressPreview && (
-          <div className="bg-white/90 backdrop-blur-md p-4 rounded-3xl shadow-2xl border border-white/20 animate-in slide-in-from-bottom-2 pointer-events-auto">
-            <div className="flex items-start gap-3">
+          <div className="bg-background/90 backdrop-blur-md p-4 rounded-3xl shadow-2xl border border-border animate-in slide-in-from-bottom-2 pointer-events-auto mb-3">
+            <div className="flex items-center justify-between mb-4">
               <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                  <MapPin className="h-4 w-4 text-primary" />
               </div>
@@ -160,8 +160,8 @@ export function LocationPicker({ initialCoords, onConfirm, onCancel }: LocationP
           </div>
         )}
 
-        <div className="flex gap-2 pointer-events-auto">
-          <Button variant="outline" onClick={onCancel} className="flex-1 h-12 rounded-2xl bg-white/80 backdrop-blur-md font-bold">
+        <div className="flex gap-3 pointer-events-auto">
+          <Button variant="outline" onClick={onCancel} className="flex-1 h-12 rounded-2xl bg-background/80 backdrop-blur-md font-bold">
             Cancelar
           </Button>
           <Button 

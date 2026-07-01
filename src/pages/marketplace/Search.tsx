@@ -31,7 +31,7 @@ export default function Search() {
         // e filtrar os produtos no frontend, similar à Home.
         const { data } = await supabase
           .from("companies")
-          .select("*, products(*)")
+          .select("*, products(*), timezone")
           .eq("active", true)
           .eq("is_active", true); // Handle potential dual boolean flags
 
@@ -41,7 +41,7 @@ export default function Search() {
         if (activeCompanies.length === 0) {
            const { data: fallbackData } = await supabase
              .from("companies")
-             .select("*, products(*)")
+             .select("*, products(*), timezone")
              .eq("active", true);
            activeCompanies = fallbackData || [];
         }
@@ -51,7 +51,7 @@ export default function Search() {
           products: (c.products || []),
           rating: c.rating || 4.5 + Math.random() * 0.5,
           isPremium: false,
-          is_open: c.is_open === true && isStoreOpenBySchedule(c.business_hours),
+          is_open: isStoreOpenNow(c as any),
         })).sort((a, b) => {
           const aOpen = a.is_open === true;
           const bOpen = b.is_open === true;

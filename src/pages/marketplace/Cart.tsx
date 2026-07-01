@@ -131,10 +131,10 @@ export default function Cart() {
       setLoadingStatus(true);
       const { data } = await supabase
         .from('companies')
-        .select('is_open, business_hours')
+        .select('is_open, active, is_active, business_hours, timezone')
         .eq('id', company.id)
         .single();
-      if (data) setIsStoreOpen(data.is_open === true && isStoreOpenBySchedule(data.business_hours));
+      if (data) setIsStoreOpen(isStoreOpenNow(data as any));
       setLoadingStatus(false);
     };
     fetchStatus();
@@ -154,7 +154,13 @@ export default function Cart() {
     // Subscribe to changes
     const channel = supabase.channel(`company-status-${company.id}`)
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'companies', filter: `id=eq.${company.id}` }, 
-        (p) => setIsStoreOpen(p.new.is_open))
+        (p) => {
+          if (p.new.active === false || p.new.is_active === false) {
+             setIsStoreOpen(false);
+          } else {
+             setIsStoreOpen(p.new.is_open === true);
+          }
+        })
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
@@ -395,7 +401,7 @@ export default function Cart() {
       <div className="fixed bottom-0 left-0 right-0 border-t border-border bg-card p-4 safe-area-bottom shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
         <div className="mx-auto max-w-lg">
           <Button
-            className="h-14 w-full rounded-xl text-base font-bold flex justify-between px-6 bg-[#EA1D2C] hover:bg-[#D11825] text-white"
+            className="h-14 w-full rounded-xl text-base font-bold flex justify-between px-6 bg-primary hover:bg-primary/90 text-primary-foreground"
             disabled={isStoreOpen === false || loadingStatus}
             onClick={() => {
               if (!user) {

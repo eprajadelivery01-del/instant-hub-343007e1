@@ -36,7 +36,7 @@ const categories = [
 type MarketplaceCompany = Company & { products: Product[]; rating: number; isPremium?: boolean };
 
 const COMPANY_LIST_COLUMNS =
-  'id, name, description, category, rating, is_open, active, is_active, delivery_fee, delivery_regions_pricing, show_in_marketplace, city, state, banner_url, cover_url, logo_url, business_hours, prep_time_min, prep_time_max, created_at';
+  'id, name, description, category, rating, is_open, active, is_active, delivery_fee, delivery_regions_pricing, show_in_marketplace, city, state, banner_url, cover_url, logo_url, business_hours, prep_time_min, prep_time_max, created_at, timezone';
 
 export default function Home() {
   const [companies, setCompanies] = useState<MarketplaceCompany[]>([]);
@@ -75,7 +75,7 @@ export default function Home() {
           return {
             ...company,
             name: company.name || 'Loja Parceira',
-            is_open: company.is_open === true && isStoreOpenBySchedule(company.business_hours),
+            is_open: isStoreOpenNow(company as any),
             active: company.active === true || (company as any).is_active === true,
             products: (((company as any).products) || [])
               .filter((p: any) => p.active !== false)
@@ -119,9 +119,17 @@ export default function Home() {
       .on("postgres_changes", { event: "*", schema: "public", table: "companies" }, scheduleRefetch)
       .subscribe();
 
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchCompanies();
+      }
+    };
+    window.addEventListener('visibilitychange', handleVisibilityChange);
+
     return () => {
       if (refetchTimer) clearTimeout(refetchTimer);
       supabase.removeChannel(channel);
+      window.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, []);
 

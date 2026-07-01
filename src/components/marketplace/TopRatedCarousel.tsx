@@ -35,7 +35,7 @@ export function TopRatedCarousel({ companies }: TopRatedCarouselProps) {
             className="flex flex-col items-center gap-3 min-w-[84px] group active:scale-95 transition-all"
           >
             <div className="relative">
-              <div className="h-20 w-20 rounded-full bg-white shadow-xl shadow-black/5 border border-slate-100 flex items-center justify-center overflow-hidden p-1.5 ring-2 ring-transparent group-hover:ring-primary/20 transition-all duration-300">
+              <div className="h-20 w-20 rounded-full bg-card shadow-xl shadow-black/5 border border-border flex items-center justify-center overflow-hidden p-1.5 ring-2 ring-transparent group-hover:ring-primary/20 transition-all duration-300">
                 {company.logo_url ? (
                   <img 
                     src={company.logo_url} 
@@ -43,19 +43,19 @@ export function TopRatedCarousel({ companies }: TopRatedCarouselProps) {
                     className="h-full w-full rounded-full object-cover"
                   />
                 ) : (
-                  <div className="h-full w-full rounded-full bg-slate-50 flex items-center justify-center">
-                    <Store className="h-8 w-8 text-slate-300" />
+                  <div className="h-full w-full rounded-full bg-muted flex items-center justify-center">
+                    <Store className="h-8 w-8 text-muted-foreground" />
                   </div>
                 )}
               </div>
               
               {/* Badge for rating (optional but adds premium feel) */}
-              <div className="absolute -bottom-1 -right-1 bg-yellow-400 text-black text-[9px] font-black px-1.5 py-0.5 rounded-full shadow-lg border-2 border-white">
-                ★ {company.rating?.toFixed(1) || '4.5'}
+              <div className="absolute -bottom-1 -right-1 bg-yellow-400 text-black text-[9px] font-black px-1.5 py-0.5 rounded-full shadow-lg border-2 border-background">
+                ★ {(company.rating || 5.0).toFixed(1)}
               </div>
             </div>
             
-            <span className="text-[11px] font-bold text-slate-600 text-center line-clamp-2 max-w-[80px] leading-tight group-hover:text-primary transition-colors">
+            <span className="text-[11px] font-bold text-foreground text-center line-clamp-2 max-w-[80px] leading-tight group-hover:text-primary transition-colors">
               {company.name}
             </span>
           </button>
