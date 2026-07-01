@@ -8,7 +8,7 @@ import MarketplaceLayout from '@/components/marketplace/MarketplaceLayout';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Minus, Plus, Star, Clock, Store as StoreIcon, Share2, Utensils, Search, Info, Ticket, AlertCircle, Flame, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { getPrepTimeLabel, getStoreStatusLabel, isStoreOpenBySchedule } from '@/lib/storeHours';
+import { getPrepTimeLabel, getStoreStatusLabel, isStoreOpenNow } from '@/lib/storeHours';
 import { ProductDetailDialog } from '@/components/marketplace/ProductDetailDialog';
 import { MediaImage } from '@/components/shared/MediaImage';
 import { getCompanyBannerImage, getCompanyLogoImage, getPrimaryProductImage } from '@/lib/media';
@@ -77,7 +77,7 @@ export default function StoreDetail() {
     staleTime: 30_000,
     queryFn: async () => {
       const [companyResponse, productResponse] = await Promise.all([
-        supabase.from('companies').select('id, name, description, category, rating, is_open, active, is_active, delivery_fee, delivery_regions_pricing, show_in_marketplace, city, state, banner_url, cover_url, logo_url, business_hours, prep_time_min, prep_time_max, created_at, user_id, timezone').eq('id', id!).single(),
+        supabase.from('companies').select('id, name, description, category, rating, is_open, active, is_active, delivery_fee, delivery_regions_pricing, show_in_marketplace, city, state, banner_url, cover_url, logo_url, business_hours, prep_time_min, prep_time_max, created_at, user_id').eq('id', id!).single(),
         supabase.from('products').select('*').eq('company_id', id!).eq('active', true).order('category').order('sort_order', { ascending: true }).order('created_at', { ascending: true }),
       ]);
       if (productResponse.error) {

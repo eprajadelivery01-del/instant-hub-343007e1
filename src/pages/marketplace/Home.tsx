@@ -6,7 +6,7 @@ import { Company, Product } from '@/types/database';
 import { useAddress } from '@/contexts/AddressContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
-import { getPrepTimeLabel, isStoreOpenBySchedule, isStoreOpenNow } from '@/lib/storeHours';
+import { getPrepTimeLabel, isStoreOpenNow } from '@/lib/storeHours';
 import MarketplaceLayout from '@/components/marketplace/MarketplaceLayout';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -36,7 +36,7 @@ const categories = [
 type MarketplaceCompany = Company & { products: Product[]; rating: number; isPremium?: boolean };
 
 const COMPANY_LIST_COLUMNS =
-  'id, name, description, category, rating, is_open, active, is_active, delivery_fee, delivery_regions_pricing, show_in_marketplace, city, state, banner_url, cover_url, logo_url, business_hours, prep_time_min, prep_time_max, created_at, timezone';
+  'id, name, description, category, rating, is_open, active, is_active, delivery_fee, delivery_regions_pricing, show_in_marketplace, city, state, banner_url, cover_url, logo_url, business_hours, prep_time_min, prep_time_max, created_at';
 
 export default function Home() {
   const [companies, setCompanies] = useState<MarketplaceCompany[]>([]);
