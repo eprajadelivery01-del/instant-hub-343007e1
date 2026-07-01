@@ -50,12 +50,6 @@ function toMinutes(value: string | undefined, fallback: number): number {
  */
 export function resolveTimezone(explicit?: string | null): string {
   if (explicit && typeof explicit === "string") return explicit;
-  try {
-    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    if (tz) return tz;
-  } catch {
-    /* ignore */
-  }
   return "America/Sao_Paulo";
 }
 
