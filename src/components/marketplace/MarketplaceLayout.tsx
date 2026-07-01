@@ -11,6 +11,7 @@ import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
 import { OrderRatingModal } from './OrderRatingModal';
 import { ThemeToggle } from '../shared/ThemeToggle';
+import { SmartAppBanner } from './SmartAppBanner';
 
 const navItems = [
   { path: '/marketplace', icon: Home, label: 'Início' },
@@ -204,6 +205,7 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
 
   return (
     <div className="app-shell min-h-screen flex flex-col font-sans text-foreground bg-background">
+      <SmartAppBanner />
       <OrderRatingModal />
       
       {/* Marketing Notification Popup */}
