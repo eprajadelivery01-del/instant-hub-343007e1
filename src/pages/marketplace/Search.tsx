@@ -10,7 +10,7 @@ import { MediaImage } from "@/components/shared/MediaImage";
 import { useCart } from "@/contexts/CartContext";
 import { ProductDetailDialog } from "@/components/marketplace/ProductDetailDialog";
 import { Product, Company } from "@/types/database";
-import { isStoreOpenBySchedule } from "@/lib/storeHours";
+import { isStoreOpenNow } from "@/lib/storeHours";
 import { SafeAreaHeader } from "@/components/shared/SafeAreaHeader";
 
 export default function Search() {
@@ -31,7 +31,7 @@ export default function Search() {
         // e filtrar os produtos no frontend, similar à Home.
         const { data } = await supabase
           .from("companies")
-          .select("*, products(*), timezone")
+          .select("*, products(*)")
           .eq("active", true)
           .eq("is_active", true); // Handle potential dual boolean flags
 
@@ -41,7 +41,7 @@ export default function Search() {
         if (activeCompanies.length === 0) {
            const { data: fallbackData } = await supabase
              .from("companies")
-             .select("*, products(*), timezone")
+             .select("*, products(*)")
              .eq("active", true);
            activeCompanies = fallbackData || [];
         }
