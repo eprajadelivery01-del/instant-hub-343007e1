@@ -503,10 +503,12 @@ Deno.serve(async (req) => {
       const match = pricingArray.find((p: any) => (p?.region_id === regionId) || (p?.to === regionId));
       if (match) {
         const rawPrice = match.customer_price ?? match.price ?? '';
-        const price = Number(String(rawPrice).replace(',', '.'));
-        if (!isNaN(price) && price > 0) {
-          deliveryFee = price;
-          feeCalculated = true;
+        if (String(rawPrice).trim() !== '') {
+          const price = Number(String(rawPrice).replace(',', '.'));
+          if (!isNaN(price) && price >= 0) {
+            deliveryFee = price;
+            feeCalculated = true;
+          }
         }
       } else {
         // Lojista não configurou preço para a região do cliente → não entrega aqui
@@ -533,7 +535,7 @@ Deno.serve(async (req) => {
     }
   }
 
-  if (!feeCalculated && regionId && regionPrice > 0) {
+  if (!feeCalculated && regionId && regionPrice >= 0) {
     deliveryFee = regionPrice;
     feeCalculated = true;
   }

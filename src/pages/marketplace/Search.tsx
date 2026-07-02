@@ -86,7 +86,9 @@ export default function Search() {
     const allProducts: (Product & { company: Company })[] = [];
     results.forEach(c => {
       (c.products || []).forEach((p: Product) => {
-        allProducts.push({ ...p, company: c });
+        if (p.active !== false && p.is_active !== false) {
+          allProducts.push({ ...p, company: c });
+        }
       });
     });
 

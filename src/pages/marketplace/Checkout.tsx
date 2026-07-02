@@ -164,20 +164,31 @@ export default function Checkout() {
         }
 
         if (destRegionId) {
-           // 1. Verifica se a loja configurou o preço personalizado na tela de PERFIL (JSON array)
+           // 1. Verifica se a loja configurou o preço personalizado na tela de PERFIL (JSON array ou {matrix: array})
            if (dbCompany?.delivery_regions_pricing) {
              let pricing: any = dbCompany.delivery_regions_pricing;
              if (typeof pricing === 'string') {
-               try { pricing = JSON.parse(pricing); } catch { pricing = []; }
+               try { pricing = JSON.parse(pricing); } catch { pricing = null; }
              }
+             
+             let pricingArray: any[] = [];
              if (Array.isArray(pricing)) {
-               const match = pricing.find((p: any) => p?.region_id === destRegionId);
+               pricingArray = pricing;
+             } else if (pricing && Array.isArray(pricing.matrix)) {
+               pricingArray = pricing.matrix;
+             }
+
+             if (pricingArray.length > 0) {
+               const match = pricingArray.find((p: any) => (p?.region_id === destRegionId) || (p?.to === destRegionId));
                if (match) {
-                 const price = Number(String(match.customer_price ?? '').replace(',', '.'));
-                 if (!isNaN(price) && price >= 0) {
-                   setDeliveryFee(price);
-                   setLoadingFee(false);
-                   return;
+                 const rawPrice = match.customer_price ?? match.price ?? '';
+                 if (String(rawPrice).trim() !== '') {
+                   const price = Number(String(rawPrice).replace(',', '.'));
+                   if (!isNaN(price) && price >= 0) {
+                     setDeliveryFee(price);
+                     setLoadingFee(false);
+                     return;
+                   }
                  }
                }
              }

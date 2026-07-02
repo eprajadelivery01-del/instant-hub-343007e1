@@ -146,7 +146,9 @@ export default function Home() {
     const allProducts: (Product & { company: MarketplaceCompany })[] = [];
     companies.forEach(c => {
       (c.products || []).forEach(p => {
-        allProducts.push({ ...p, company: c });
+        if (p.active !== false && p.is_active !== false) {
+          allProducts.push({ ...p, company: c });
+        }
       });
     });
 
