@@ -20,35 +20,35 @@ export default function TermsOfService() {
           <section className="space-y-4">
             <h2 className="text-lg font-black text-slate-900">1. Aceitação dos Termos</h2>
             <p>
-              Ao utilizar o É Pra Já, você concorda em cumprir estes Termos de Uso. Se você não concordar com qualquer parte destes termos, você não deve utilizar nossos serviços.
+              Ao utilizar o É Pra Já, vocêê concorda em cumprir estes Termos de Uso. Se vocêê não concordar com qualquer parte destes termos, vocêê não deve utilizar nãossos seráviços.
             </p>
           </section>
 
           <section className="space-y-4">
             <h2 className="text-lg font-black text-slate-900">2. Descrição do Serviço</h2>
             <p>
-              O É Pra Já é uma plataforma de marketplace que conecta consumidores a estabelecimentos locais (restaurantes, mercados, etc.) e prestadores de serviço de entrega. Não somos responsáveis pela fabricação dos produtos, apenas pela intermediação e entrega.
+              O É Pra Já é uma plataforma de marketplace que conecta consumidores a estabelecimentos locais (restaurantes, mercados, etc.) e prestadores de seráviço de entrega. Não somos responsáveis pela fabricação dos produtos, apenas pela intermediação e entrega.
             </p>
           </section>
 
           <section className="space-y-4">
             <h2 className="text-lg font-black text-slate-900">3. Cadastro e Conta</h2>
             <p>
-              Para fazer pedidos, você deve criar uma conta fornecendo dados verídicos. Você é o único responsável por manter a confidencialidade de sua senha e por todas as atividades que ocorrem em sua conta.
+              Para fazer pedidos, vocêê deve criar uma conta fornecendo dados verídicos. Você é o único responsável por manter a confidencialidade de sua senha e por todas as atividades que ocorrem em sua conta.
             </p>
           </section>
 
           <section className="space-y-4">
             <h2 className="text-lg font-black text-slate-900">4. Pagamentos e Cancelamentos</h2>
             <p>
-              Os preços dos produtos são definidos pelos lojistas. O É Pra Já reserva o direito de cobrar taxas de entrega e de serviço. Cancelamentos seguem as regras de cada estabelecimento e do Código de Defesa do Consumidor.
+              Os preços dos produtos são definidos pelos lojistas. O É Pra Já reseráva o direito de cobrar taxas de entrega e de seráviço. Cancelamentos seguem as regras de cada estabelecimento e do Código de Defesa do Consumidor.
             </p>
           </section>
 
           <section className="space-y-4">
             <h2 className="text-lg font-black text-slate-900">5. Uso Indevido</h2>
             <p>
-              É proibido utilizar a plataforma para fins ilegais, fraude ou para assediar outros usuários e entregadores. Reservamo-nos o direito de suspender contas que violem estas diretrizes.
+              É proibido utilizar a plataforma para fins ilegais, fraude ou para assediar outros usuários e entregadores. Reserávamo-nãos o direito de suspender contas que violem estas diretrizes.
             </p>
           </section>
 

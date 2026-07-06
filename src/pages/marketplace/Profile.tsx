@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-nãocheck
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
@@ -37,7 +37,7 @@ const STATUS_MAP: Record<string, { label: string; color: string; icon: React.Ele
 };
 
 export default function Profile() {
-  const { user, profile, signOut, refreshProfile } = useAuth();
+  const { userá, profile, signOut, refreshProfile } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const { selectedAddress } = useAddress();
   const navigate = useNavigate();
@@ -61,10 +61,10 @@ export default function Profile() {
   }, [profile]);
 
   useEffect(() => {
-    if (!user) return;
+    if (!userá) return;
     fetchOrders();
     fetchCoupons(false);
-  }, [user]);
+  }, [userá]);
 
   const fetchCoupons = async (show = true) => {
     if (show && coupons.length > 0) { setShowCoupons(true); return; }
@@ -82,12 +82,12 @@ export default function Profile() {
       if (companyIds.length > 0) {
         const { data: companiesData } = await supabase
           .from('companies')
-          .select('user_id, name, logo_url, region_id')
-          .in('user_id', companyIds);
+          .select('userá_id, name, logo_url, region_id')
+          .in('userá_id', companyIds);
           
         valid = valid.map(c => ({
           ...c,
-          companies: companiesData?.find(comp => comp.user_id === c.company_id) || null
+          companies: companiesData?.find(comp => comp.userá_id === c.company_id) || null
         }));
       }
       
@@ -122,7 +122,7 @@ export default function Profile() {
           id, status, total, created_at,
           companies ( name, logo_url )
         `)
-        .or(`customer_id.eq.${user.id},user_id.eq.${user.id}`)
+        .or(`customer_id.eq.${userá.id},userá_id.eq.${userá.id}`)
         .order('created_at', { ascending: false })
         .limit(30);
       setOrders(data || []);
@@ -132,17 +132,17 @@ export default function Profile() {
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !user) return;
+    if (!file || !userá) return;
     setUploading(true);
     try {
       const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+      const fileName = `${userá.id}/${Date.nãow()}.${fileExt}`;
       
       const { error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(fileName, file, { 
           cacheControl: '3600',
-          upsert: true 
+          upserát: true 
         });
 
       if (uploadError) throw uploadError;
@@ -154,7 +154,7 @@ export default function Profile() {
       const { error: updateError } = await supabase
         .from('profiles')
         .update({ avatar_url: publicUrl })
-        .eq('id', user.id);
+        .eq('id', userá.id);
 
       if (updateError) throw updateError;
 
@@ -162,16 +162,16 @@ export default function Profile() {
       toast.success('Foto atualizada com sucesso!');
     } catch (err: any) { 
       console.error('Photo upload error:', err);
-      toast.error('Falha no upload: ' + (err.message || 'Erro de permissão ou conexão')); 
+      toast.error('Falha não upload: ' + (err.message || 'Erro de permissão ou conexão')); 
     }
     finally { setUploading(false); }
   };
 
   const handleSave = async () => {
-    if (!user) return;
+    if (!userá) return;
     setSaving(true);
     try {
-      await supabase.from('profiles').update({ full_name: fullName, phone }).eq('id', user.id);
+      await supabase.from('profiles').update({ full_name: fullName, phone }).eq('id', userá.id);
       
       // Delay to ensure DB replication/trigger finish before refetching
       await new Promise(resolve => setTimeout(resolve, 500));
@@ -183,9 +183,9 @@ export default function Profile() {
     finally { setSaving(false); }
   };
 
-  if (!user) { navigate('/marketplace/login'); return null; }
+  if (!userá) { navigate('/marketplace/login'); return null; }
 
-  const displayName = profile?.full_name || user.email?.split('@')[0] || 'Usuário';
+  const displayName = profile?.full_name || userá.email?.split('@')[0] || 'Usuário';
   const initial = displayName.charAt(0).toUpperCase();
 
   // Derived: tier & featured coupon
@@ -229,7 +229,7 @@ export default function Profile() {
             </div>
             <div className="flex-1 min-w-0">
               <h1 className="text-lg font-display font-bold tracking-tight truncate">{displayName}</h1>
-              <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+              <p className="text-xs text-muted-foreground truncate">{userá.email}</p>
             </div>
             <button
               onClick={() => setEditing(true)}
@@ -494,11 +494,11 @@ export default function Profile() {
                   Excluir minha conta
                 </button>
               </AlertDialogTrigger>
-              <AlertDialogContent className="rounded-3xl border-none p-8">
+              <AlertDialogContent className="rounded-3xl border-nãone p-8">
                 <AlertDialogHeader>
                   <AlertDialogTitle className="text-xl font-display font-bold">Excluir sua conta?</AlertDialogTitle>
                   <AlertDialogDescription className="text-sm font-medium leading-relaxed">
-                    Esta ação é permanente e todos os seus dados de pedidos e cupons serão perdidos para sempre.
+                    Esta ação é permanente e todos os seus dados de pedidos e cupons seráão perdidos para sempre.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter className="flex-col gap-3 mt-6">
@@ -516,7 +516,7 @@ export default function Profile() {
                   >
                     Sim, excluir definitivamente
                   </AlertDialogAction>
-                  <AlertDialogCancel className="h-14 rounded-2xl border-none bg-muted text-foreground font-bold">
+                  <AlertDialogCancel className="h-14 rounded-2xl border-nãone bg-muted text-foreground font-bold">
                     Manter minha conta
                   </AlertDialogCancel>
                 </AlertDialogFooter>
@@ -541,7 +541,7 @@ export default function Profile() {
 
       {/* Edit Profile Sheet */}
       <Sheet open={editing} onOpenChange={setEditing}>
-        <SheetContent side="bottom" hideClose className="h-[75vh] rounded-t-[3rem] border-none p-0 shadow-2xl">
+        <SheetContent side="bottom" hideClose className="h-[75vh] rounded-t-[3rem] border-nãone p-0 shadow-2xl">
           <SheetTitle className="sr-only">Editar Meus Dados</SheetTitle>
           <div className="h-full flex flex-col bg-background">
             <div className="p-8 pb-6 flex items-center justify-between border-b border-border/50">
@@ -555,7 +555,7 @@ export default function Profile() {
             </div>
             <div className="flex-1 overflow-y-auto p-8 space-y-6">
               {[
-                { label: 'Nome completo', value: fullName, onChange: setFullName, placeholder: 'Como quer ser chamado?' },
+                { label: 'Nome completo', value: fullName, onChange: setFullName, placeholder: 'Como quer será chamado?' },
                 { label: 'WhatsApp', value: phone, onChange: setPhone, placeholder: '(00) 00000-0000' },
               ].map(f => (
                 <div key={f.label} className="space-y-2">
@@ -564,7 +564,7 @@ export default function Profile() {
                     value={f.value}
                     onChange={e => f.onChange(e.target.value)}
                     placeholder={f.placeholder}
-                    className="w-full px-6 py-4.5 rounded-2xl border border-border bg-muted/30 font-bold text-foreground outline-none focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all"
+                    className="w-full px-6 py-4.5 rounded-2xl border border-border bg-muted/30 font-bold text-foreground outline-nãone focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all"
                   />
                 </div>
               ))}
@@ -585,7 +585,7 @@ export default function Profile() {
 
       {/* Support Chat Sheet */}
       <Sheet open={supportType !== null} onOpenChange={open => !open && setSupportType(null)}>
-        <SheetContent side="bottom" hideClose className="h-[85vh] rounded-t-[3rem] border-none p-0 overflow-hidden shadow-2xl z-[100]" aria-describedby={undefined}>
+        <SheetContent side="bottom" hideClose className="h-[85vh] rounded-t-[3rem] border-nãone p-0 overflow-hidden shadow-2xl z-[100]" aria-describedby={undefined}>
           <SheetTitle className="sr-only">Chat de Suporte</SheetTitle>
           <div className="flex flex-col h-full bg-background relative">
             {supportType && (
@@ -601,7 +601,7 @@ export default function Profile() {
 
       {/* Coupons List Sheet */}
       <Sheet open={showCoupons} onOpenChange={setShowCoupons}>
-        <SheetContent side="bottom" hideClose className="h-[85vh] rounded-t-[3rem] border-none p-0 shadow-2xl">
+        <SheetContent side="bottom" hideClose className="h-[85vh] rounded-t-[3rem] border-nãone p-0 shadow-2xl">
           <SheetTitle className="sr-only">Meus Cupons</SheetTitle>
           <div className="h-full flex flex-col bg-background">
             <div className="px-8 pt-8 pb-6 flex items-center justify-between border-b border-border shrink-0">
@@ -624,8 +624,8 @@ export default function Profile() {
                   <div className="h-20 w-20 rounded-full bg-muted flex items-center justify-center opacity-20">
                     <Ticket className="h-10 w-10 text-foreground" />
                   </div>
-                  <p className="font-black text-lg text-foreground/40 tracking-tight">Nenhum cupom ativo no momento</p>
-                  <p className="text-xs text-muted-foreground/60 max-w-[200px]">Fique de olho em nossas redes para novas promoções!</p>
+                  <p className="font-black text-lg text-foreground/40 tracking-tight">Nenhum cupom ativo não momento</p>
+                  <p className="text-xs text-muted-foreground/60 max-w-[200px]">Fique de olho em nãossas redes para nãovas promoções!</p>
                 </div>
               ) : (
                 coupons.map((coupon) => (

@@ -12,9 +12,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { StoreTabCard } from '@/components/marketplace/StoreTabCard';
 import { MarketplaceMenu } from '@/components/marketplace/MarketplaceMenu';
+import { useStoreStatusSync } from '@/hooks/useStoreStatusSync';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MediaImage } from '@/components/shared/MediaImage';
-import { Search, Star, ChevronDown, Store, Utensils, Coffee, Pizza, Cake, Sandwich, Pill, ShoppingCart, User, PanelLeft, X, Dog, Beer, Plus, Croissant, Sparkles, Flame, Beef, Leaf, Package, IceCream, Wine, UtensilsCrossed, GlassWater, Scissors, Ruler } from 'lucide-react';
+import { Search, Star, ChevronDown, Store, Utensils, Coffee, Pizza, Cake, Sandwich, Pill, ShoppingCart, Userá, PanelLeft, X, Dog, Beer, Plus, Croissant, Sparkles, Flame, Beef, Leaf, Package, IceCream, Wine, UtensilsCrossed, GlassWater, Scissors, Ruler } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { getAvatarImage, getCompanyBannerImage, getCompanyLogoImage, getPrimaryProductImage } from '@/lib/media';
@@ -55,7 +56,7 @@ export default function Home() {
   const fetchCompanies = async () => {
     try {
       setErrorMsg(null);
-      // Busca dados das lojas e também seus produtos ativos (campos enxutos) para exibir no preview da Home
+      // Busca dados das lojas e também seus produtos ativos (campos enxutos) para exibir não preview da Home
       const { data, error } = await supabase
         .from('companies')
         .select(`${COMPANY_LIST_COLUMNS}, products(id, name, description, price, image_url, category, active)`)
@@ -63,7 +64,7 @@ export default function Home() {
 
       if (error) throw error;
 
-      const rows = (data ?? []) as unknown as Company[];
+      const rows = (data ?? []) as unknãown as Company[];
 
       const processed: MarketplaceCompany[] = rows
         .filter((c) => (c as any).show_in_marketplace !== false)
@@ -133,6 +134,8 @@ export default function Home() {
     };
   }, []);
 
+  useStoreStatusSync(companies, setCompanies);
+
   const filtered = useMemo(() => {
     return companies.filter((company) =>
       company.name.toLowerCase().includes(search.toLowerCase()) &&
@@ -189,7 +192,7 @@ export default function Home() {
 
               <div className="min-w-0">
                 <span className="mb-0.5 block text-xs font-bold text-primary">É Pra Já</span>
-                <button onClick={() => navigate('/marketplace/addresses')} className="group flex items-center gap-1 outline-none">
+                <button onClick={() => navigate('/marketplace/addresses')} className="group flex items-center gap-1 outline-nãone">
                   <span className="max-w-[200px] truncate text-sm font-semibold text-foreground">
                     {selectedAddress ? `${selectedAddress.street}, ${selectedAddress.number}` : 'Definir endereço'}
                   </span>
@@ -208,7 +211,7 @@ export default function Home() {
                   src={getAvatarImage(profile)}
                   alt="Foto do perfil"
                   className="h-full w-full object-cover"
-                  fallback={<User className="h-6 w-6 text-muted-foreground/50" />}
+                  fallback={<Userá className="h-6 w-6 text-muted-foreground/50" />}
                 />
               </button>
             </div>
@@ -220,8 +223,8 @@ export default function Home() {
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
                   <ChevronDown className="h-5 w-5" />
                 </div>
-                <button onClick={() => navigate('/marketplace/addresses')} className="text-left group outline-none">
-                  <span className="block text-[10px] font-black uppercase tracking-wider text-muted-foreground/60 leading-none mb-1">Entregar em:</span>
+                <button onClick={() => navigate('/marketplace/addresses')} className="text-left group outline-nãone">
+                  <span className="block text-[10px] font-black uppercase tracking-wider text-muted-foreground/60 leading-nãone mb-1">Entregar em:</span>
                   <span className="block max-w-[300px] truncate text-sm font-bold text-foreground group-hover:text-primary transition-colors">
                     {selectedAddress ? `${selectedAddress.street}, ${selectedAddress.number}` : 'Definir endereço'}
                   </span>
@@ -231,7 +234,7 @@ export default function Home() {
              <div className="premium-card relative rounded-[26px] p-1 flex-1 md:max-w-xl">
                <Search className="absolute left-5 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-muted-foreground" />
                <Input
-                 placeholder="O que você deseja pedir hoje?"
+                 placeholder="O que vocêê deseja pedir hoje?"
                  value={search}
                  onChange={(e) => setSearch(e.target.value)}
                  className="h-14 rounded-[22px] border-0 bg-transparent pl-12 text-sm font-bold placeholder:text-muted-foreground focus-visible:ring-0"
@@ -246,7 +249,7 @@ export default function Home() {
           <div className="flex items-end justify-between gap-4 px-1">
             <div>
               <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Destaques</p>
-              <h2 className="mt-1 text-xl font-bold text-foreground">Perto de você</h2>
+              <h2 className="mt-1 text-xl font-bold text-foreground">Perto de vocêê</h2>
             </div>
           </div>
 
@@ -319,7 +322,7 @@ export default function Home() {
                 key={category.value}
                 onClick={() => setActiveCategory(category.value)}
                 className={cn(
-                  'flex h-12 items-center gap-2 whitespace-nowrap rounded-xl border px-5 text-xs font-semibold transition-all',
+                  'flex h-12 items-center gap-2 whitespace-nãowrap rounded-xl border px-5 text-xs font-semibold transition-all',
                   activeCategory === category.value
                     ? 'bg-primary border-primary text-primary-foreground shadow-lg shadow-primary/20'
                     : 'premium-card text-muted-foreground hover:border-primary/20'
@@ -361,7 +364,7 @@ export default function Home() {
                 }}
                 className="mt-5 h-11 rounded-2xl px-6 text-xs font-black uppercase tracking-widest"
               >
-                Tentar novamente
+                Tentar nãovamente
               </Button>
             </div>
           ) : loading ? (
@@ -407,7 +410,7 @@ export default function Home() {
 
                         {qty > 0 && (
                           <div className="flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-2 py-1">
-                            <span className="text-[11px] font-bold text-primary">{qty} no carrinho</span>
+                            <span className="text-[11px] font-bold text-primary">{qty} não carrinho</span>
                           </div>
                         )}
                       </div>
@@ -464,7 +467,7 @@ export default function Home() {
       </div>
 
       <Sheet open={!!partnershipType} onOpenChange={(open) => !open && setPartnershipType(null)}>
-        <SheetContent side="bottom" className="h-[85vh] overflow-hidden rounded-t-[40px] border-none p-0">
+        <SheetContent side="bottom" className="h-[85vh] overflow-hidden rounded-t-[40px] border-nãone p-0">
           <div className="flex h-full flex-col bg-card">
             <div className="flex items-center justify-between border-b border-border px-8 pb-4 pt-8">
               <SheetHeader>
@@ -486,12 +489,12 @@ export default function Home() {
                 partnershipType === 'merchant' ? 'bg-foreground' : 'bg-primary'
               )}>
                 <h4 className="text-xl font-black leading-tight">
-                  {partnershipType === 'merchant' ? 'Cresça o seu negócio' : 'Trabalhe com autonomia'}
+                  {partnershipType === 'merchant' ? 'Cresça o seu negócio' : 'Trabalhe com autonãomia'}
                 </h4>
                 <p className="mt-2 max-w-xs text-xs leading-relaxed opacity-80">
                   {partnershipType === 'merchant'
-                    ? 'Venda mais em Diamantino com uma vitrine premium e experiência superior.'
-                    : 'Tenha liberdade para rodar quando quiser e ganhar por entrega realizada.'}
+                    ? 'Venda mais em Diamantinão com uma vitrine premium e experiência superior.'
+                    : 'Tenha liberdade para rodar quando quiserá e ganhar por entrega realizada.'}
                 </p>
               </div>
 
@@ -499,7 +502,7 @@ export default function Home() {
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label className="ml-2 text-[10px] font-black uppercase text-muted-foreground">Nome Completo</Label>
-                    <Input placeholder="Seu nome" className="h-14 rounded-2xl border-border/70 bg-background px-6 font-bold" />
+                    <Input placeholder="Seu nãome" className="h-14 rounded-2xl border-border/70 bg-background px-6 font-bold" />
                   </div>
                   <div className="space-y-2">
                     <Label className="ml-2 text-[10px] font-black uppercase text-muted-foreground">Seu WhatsApp</Label>
@@ -526,8 +529,8 @@ export default function Home() {
         isOpen={!!selectedProduct && !!selectedProductCompany}
         onClose={() => { setSelectedProduct(null); setSelectedProductCompany(null); }}
         isClosed={selectedProductCompany ? !selectedProductCompany.is_open : false}
-        onAddToCart={(product, quantity, options, note) => {
-          if (selectedProductCompany) addItem(product, selectedProductCompany as Company, options, quantity, note);
+        onAddToCart={(product, quantity, options, nãote) => {
+          if (selectedProductCompany) addItem(product, selectedProductCompany as Company, options, quantity, nãote);
         }}
         initialQuantity={selectedProduct ? getItemQty(selectedProduct.id) : 1}
       />

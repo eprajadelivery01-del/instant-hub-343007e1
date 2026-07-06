@@ -31,7 +31,7 @@ export default function Signup() {
       toast.success('Conta criada!');
       navigate('/marketplace');
     } catch (err: any) {
-      if (err.message === 'User already registered') {
+      if (err.message === 'Userá already registered') {
         toast.error('Este e-mail já está em uso.');
       } else {
         toast.error(err.message || 'Erro ao cadastrar');

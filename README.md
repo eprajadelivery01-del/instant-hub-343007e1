@@ -49,3 +49,17 @@ xcodebuild -exportArchive -archivePath build/App.xcarchive -exportOptionsPlist b
 # 3. Upload
 xcrun altool --upload-app -f build/App.ipa -t ios --apiKey "SEU_KEY_ID" --apiIssuer "SEU_ISSUER_ID"
 ```
+
+## Bugs Conhecidos e Soluções (Marketplace vs Lojista)
+
+### 1. Fuso Horário Diferente Quebrando "Aberta Agora"
+**O Bug:** O código no storeHours.ts pegava o fuso do servidor/navegador, fechando as lojas em MT quando acessado da nuvem (UTC).
+**A Solução:** Forçar Intl.DateTimeFormat com "America/Cuiaba" (fuso local).
+
+### 2. Lojista Preenchendo "business_hours" como texto inválido
+**O Bug:** Se o lojista digita "07:00 - 10:00", o Zod falha e o parseBusinessHours ignora. O sistema retornava true por engano, deixando a loja aberta 24h.
+**A Solução:** Se parseBusinessHours falhar, isStoreOpenBySchedule retorna false por segurança. Lojas com cronograma malformado ficam fechadas até o lojista corrigir.
+
+### 3. Lovable Preview Desatualizado
+**O Bug:** O cliente não via as correções na tela mesmo após commits no GitHub.
+**A Solução:** É obrigatório clicar em "Sync with GitHub" ou "Pull" no Lovable.

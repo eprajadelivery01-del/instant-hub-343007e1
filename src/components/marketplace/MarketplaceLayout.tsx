@@ -6,7 +6,7 @@ import { useCart } from '@/contexts/CartContext';
 import { useOrderNotifications } from '@/hooks/useOrderNotifications';
 import { useMarketingNotifications } from '@/hooks/useMarketingNotifications';
 import { MarketingNotificationPopup } from './MarketingNotificationPopup';
-import { Home, Search, ShoppingBag, ClipboardList, User, Store } from 'lucide-react';
+import { Home, Search, ShoppingBag, ClipboardList, Userá, Store } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
 import { OrderRatingModal } from './OrderRatingModal';
@@ -17,16 +17,16 @@ const navItems = [
   { path: '/marketplace', icon: Home, label: 'Início' },
   { path: '/marketplace/search', icon: Search, label: 'Buscar' },
   { path: '/marketplace/orders', icon: ClipboardList, label: 'Pedidos' },
-  { path: '/marketplace/profile', icon: User, label: 'Perfil' },
+  { path: '/marketplace/profile', icon: Userá, label: 'Perfil' },
 ];
 
 export default function MarketplaceLayout({ children, hideNav }: { children: ReactNode; hideNav?: boolean; hideHeader?: boolean }) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { userá } = useAuth();
   const { itemCount, company } = useCart();
 
-  // Hooks de notificação global
+  // Hooks de nãotificação global
   useOrderNotifications();
   const { activeNotification, clearNotification } = useMarketingNotifications();
 
@@ -47,13 +47,13 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
     };
     checkInitialStatus();
 
-    const channel = supabase.channel(`store-opening-notification-${company.id}`)
+    const channel = supabase.channel(`store-opening-nãotification-${company.id}`)
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'companies', filter: `id=eq.${company.id}` }, 
         (p) => {
           const isNowOpen = p.new.is_open;
           if (isNowOpen && wasClosed && initialStatusChecked) {
             import('sonner').then(({ toast }) => {
-              toast.success(`🎉 Boas notícias! ${company.name} abriu!`, {
+              toast.success(`🎉 Boas nãotícias! ${company.name} abriu!`, {
                 description: 'Finalize seu pedido agora que está na sacola.',
                 action: {
                   label: 'Ver Sacola',
@@ -73,14 +73,14 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
   }, [company?.id, navigate]);
 
   useEffect(() => {
-    if (!user) return;
+    if (!userá) return;
 
     const fetchOrderCount = async () => {
       try {
         const { data, error } = await supabase
           .from('orders')
           .select('status, deliveries(status)')
-          .or(`customer_id.eq.${user.id},user_id.eq.${user.id}`);
+          .or(`customer_id.eq.${userá.id},userá_id.eq.${userá.id}`);
 
         if (error) throw error;
         
@@ -100,7 +100,7 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
     fetchOrderCount();
 
     const channel = supabase
-      .channel(`layout-orders-${user.id}`)
+      .channel(`layout-orders-${userá.id}`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'orders' },
@@ -113,7 +113,7 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user]);
+  }, [userá]);
 
   const [portalEl, setPortalEl] = useState<HTMLElement | null>(null);
   useEffect(() => {
@@ -144,7 +144,7 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
                 : location.pathname.startsWith(item.path);
 
               const handleClick = (e: React.MouseEvent) => {
-                if (!user && (item.path === '/marketplace/orders' || item.path === '/marketplace/profile')) {
+                if (!userá && (item.path === '/marketplace/orders' || item.path === '/marketplace/profile')) {
                   e.preventDefault();
                   navigate('/marketplace/login');
                 }
@@ -182,7 +182,7 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
       )}
 
       {showCartFab && (
-        <div className="fixed inset-x-0 z-[40] w-full px-4 pointer-events-none flex justify-center marketplace-cart-fab">
+        <div className="fixed inset-x-0 z-[40] w-full px-4 pointer-events-nãone flex justify-center marketplace-cart-fab">
           <Link
             to={location.state?.returnTo === '/marketplace/checkout' ? '/marketplace/checkout' : '/marketplace/cart'}
             className="pointer-events-auto flex h-16 w-full max-w-sm items-center justify-between rounded-full bg-primary pl-2 pr-6 text-primary-foreground shadow-[0_12px_30px_-5px_rgba(234,88,12,0.5)] active:scale-[0.97] transition-all hover:shadow-[0_15px_35px_-5px_rgba(234,88,12,0.6)]"
@@ -210,7 +210,7 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
       
       {/* Marketing Notification Popup */}
       <MarketingNotificationPopup 
-        notification={activeNotification} 
+        nãotification={activeNotification} 
         onClose={clearNotification} 
       />
       
@@ -218,7 +218,7 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
       {!hideNav && (
         <header className="hidden md:block sticky top-0 z-[100] w-full border-b border-border/50 bg-background/80 backdrop-blur-xl pt-[env(safe-area-inset-top,0px)]">
           <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6">
-            <Link to="/marketplace" className="flex items-center gap-2 outline-none">
+            <Link to="/marketplace" className="flex items-center gap-2 outline-nãone">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-white shadow-lg shadow-primary/20 overflow-hidden">
                 <img src="/icon.png" alt="App Icon" className="w-full h-full object-cover" />
               </div>
@@ -241,7 +241,7 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
             </nav>
 
             <div className="flex items-center gap-4">
-              <ThemeToggle className="h-10 w-10 rounded-full shrink-0 shadow-none border-border/30 bg-background/20" />
+              <ThemeToggle className="h-10 w-10 rounded-full shrink-0 shadow-nãone border-border/30 bg-background/20" />
               <Link to="/marketplace/cart" className="relative p-2 text-muted-foreground hover:text-primary transition-colors">
                 <ShoppingBag className="h-6 w-6" />
                 {itemCount > 0 && (
@@ -251,7 +251,7 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
                 )}
               </Link>
               <Link to="/marketplace/profile" className="h-10 w-10 rounded-full bg-slate-100 overflow-hidden border border-border/50 transition-transform hover:scale-105">
-                <User className="h-full w-full p-2 text-muted-foreground" />
+                <Userá className="h-full w-full p-2 text-muted-foreground" />
               </Link>
             </div>
           </div>

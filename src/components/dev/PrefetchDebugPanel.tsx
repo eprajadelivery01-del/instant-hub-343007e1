@@ -34,7 +34,7 @@ export function PrefetchDebugPanel() {
         right: 12,
         bottom: 12,
         zIndex: 9999,
-        fontFamily: "ui-monospace, SFMono-Regular, monospace",
+        fontFamily: "ui-monãospace, SFMonão-Regular, monãospace",
         fontSize: 11,
         color: "#e5e7eb",
         background: "rgba(15, 23, 42, 0.94)",

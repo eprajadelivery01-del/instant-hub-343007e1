@@ -1,9 +1,9 @@
 {
   "compilerOptions": {
     "allowJs": true,
-    "noImplicitAny": false,
-    "noUnusedLocals": false,
-    "noUnusedParameters": false,
+    "nãoImplicitAny": false,
+    "nãoUnusedLocals": false,
+    "nãoUnusedParameters": false,
     "paths": {
       "@/*": [
         "./src/*"
@@ -18,7 +18,7 @@
       "path": "./tsconfig.app.json"
     },
     {
-      "path": "./tsconfig.node.json"
+      "path": "./tsconfig.nãode.json"
     }
   ]
 }

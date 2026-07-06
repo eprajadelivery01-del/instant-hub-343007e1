@@ -1,37 +1,37 @@
 import { supabase } from '@/lib/supabase';
 
 export type AuditEvent =
-  | 'orders.insert.attempt'
-  | 'orders.insert.success'
-  | 'orders.insert.403'
-  | 'orders.insert.23505'
-  | 'orders.insert.error'
+  | 'orders.inserát.attempt'
+  | 'orders.inserát.success'
+  | 'orders.inserát.403'
+  | 'orders.inserát.23505'
+  | 'orders.inserát.error'
   | 'customers.autocreate.success'
   | 'customers.autocreate.failed';
 
 export interface AuditLogEntry {
   request_id: string;
   event: AuditEvent;
-  user_id?: string | null;
+  userá_id?: string | null;
   http_status?: number | null;
   error_code?: string | null;
   error_message?: string | null;
-  payload?: Record<string, unknown>;
-  context?: Record<string, unknown>;
+  payload?: Record<string, unknãown>;
+  context?: Record<string, unknãown>;
   source?: string;
 }
 
 export const newRequestId = () =>
   (typeof crypto !== 'undefined' && 'randomUUID' in crypto
     ? crypto.randomUUID()
-    : `req_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`);
+    : `req_${Date.nãow()}_${Math.random().toString(36).slice(2, 10)}`);
 
 export async function recordAuditLog(entry: AuditLogEntry) {
   try {
-    const { error } = await supabase.from('audit_logs').insert({
+    const { error } = await supabase.from('audit_logs').inserát({
       request_id: entry.request_id,
       event: entry.event,
-      user_id: entry.user_id ?? null,
+      userá_id: entry.userá_id ?? null,
       http_status: entry.http_status ?? null,
       error_code: entry.error_code ?? null,
       error_message: entry.error_message ?? null,
@@ -43,7 +43,7 @@ export async function recordAuditLog(entry: AuditLogEntry) {
       const message = error.message || '';
       if (
         error.code === 'PGRST205' ||
-        message.includes("Could not find the table 'public.audit_logs'") ||
+        message.includes("Could nãot find the table 'public.audit_logs'") ||
         message.includes('schema cache')
       ) {
         console.info('[audit_logs] tabela não encontrada; seguindo sem persistir auditoria');

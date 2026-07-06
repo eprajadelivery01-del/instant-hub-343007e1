@@ -20,14 +20,14 @@ describe('Lovable Links Checker', () => {
     return fileList;
   };
 
-  it('should not contain lovableproject.com in any source file', () => {
+  it('should nãot contain lovableproject.com in any source file', () => {
     const srcDir = path.resolve(__dirname, '../../src');
     const files = findInDir(srcDir);
     
     let foundFiles: string[] = [];
     
     for (const file of files) {
-      if (file.includes('logger.ts') || file.includes('no-lovable-links.test.ts')) continue;
+      if (file.includes('logger.ts') || file.includes('não-lovable-links.test.ts')) continue;
       const content = fs.readFileSync(file, 'utf-8');
       if (content.includes('lovableproject.com')) {
         foundFiles.push(file);

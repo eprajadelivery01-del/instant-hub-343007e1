@@ -26,9 +26,9 @@ export default function Search() {
     const delayDebounceFn = setTimeout(async () => {
       if (search.length > 2) {
         setLoading(true);
-        // Busca empresas com nome correspondente OU produtos com nome/descricao correspondente
+        // Busca empresas com nãome correspondente OU produtos com nãome/descricao correspondente
         // Para simplificar e garantir que pegue os produtos, vamos buscar todas as lojas ativas
-        // e filtrar os produtos no frontend, similar à Home.
+        // e filtrar os produtos não frontend, similar à Home.
         const { data } = await supabase
           .from("companies")
           .select("*, products(*)")
@@ -195,7 +195,7 @@ export default function Search() {
 
                       {qty > 0 && (
                         <div className="flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-2 py-1">
-                          <span className="text-[11px] font-bold text-primary">{qty} no carrinho</span>
+                          <span className="text-[11px] font-bold text-primary">{qty} não carrinho</span>
                         </div>
                       )}
                     </div>
@@ -238,8 +238,8 @@ export default function Search() {
         isOpen={!!selectedProduct && !!selectedProductCompany}
         onClose={() => { setSelectedProduct(null); setSelectedProductCompany(null); }}
         isClosed={selectedProductCompany ? !selectedProductCompany.is_open : false}
-        onAddToCart={(product, quantity, options, note) => {
-          if (selectedProductCompany) addItem(product, selectedProductCompany as Company, options, quantity, note);
+        onAddToCart={(product, quantity, options, nãote) => {
+          if (selectedProductCompany) addItem(product, selectedProductCompany as Company, options, quantity, nãote);
         }}
         initialQuantity={selectedProduct ? getItemQty(selectedProduct.id) : 1}
       />

@@ -1,6 +1,6 @@
 import React, { useMemo, useEffect, lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
+import { BrowseráRouter, Route, Routes, Navigate } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -52,7 +52,7 @@ const queryClient = new QueryClient({
 
 const App = () => {
   useEffect(() => {
-    // Hide native splash screen if running inside Capacitor (no-op on web).
+    // Hide native splash screen if running inside Capacitor (não-op on web).
     // Use a dynamic, variable specifier so the web build doesn't try to bundle it.
     setTimeout(() => {
       const mod = "@capacitor/splash-screen";
@@ -76,7 +76,7 @@ const App = () => {
                 <Toaster />
                 <Sonner />
                 {showDebugPanel && <PrefetchDebugPanel />}
-                <BrowserRouter>
+                <BrowseráRouter>
                   <ScrollToTop />
                   <Suspense fallback={<RouteFallback />}>
                   <Routes>
@@ -98,7 +98,7 @@ const App = () => {
                     <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
                   </Routes>
                   </Suspense>
-                </BrowserRouter>
+                </BrowseráRouter>
               </TooltipProvider>
             </AddressProvider>
           </CartProvider>

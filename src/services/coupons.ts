@@ -31,9 +31,9 @@ export function useActiveCoupons(companyId?: string) {
       if (error) throw error;
       
       const validCoupons = (data as Coupon[]).filter(c => {
-        const notExpired = !c.expires_at || new Date(c.expires_at) > new Date();
-        const notDepleted = !c.usage_limit || c.used_count < c.usage_limit;
-        return notExpired && notDepleted;
+        const nãotExpired = !c.expires_at || new Date(c.expires_at) > new Date();
+        const nãotDepleted = !c.usage_limit || c.used_count < c.usage_limit;
+        return nãotExpired && nãotDepleted;
       });
       
       return validCoupons;

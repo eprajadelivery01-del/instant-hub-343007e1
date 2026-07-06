@@ -20,19 +20,19 @@ export default function PrivacyPolicy() {
           <section className="space-y-4">
             <h2 className="text-lg font-black text-slate-900">1. Introdução</h2>
             <p>
-              O É Pra Já valoriza a sua privacidade. Esta Política de Privacidade explica como coletamos, usamos, divulgamos e protegemos suas informações quando você utiliza nosso aplicativo e serviços.
+              O É Pra Já valoriza a sua privacidade. Esta Política de Privacidade explica como coletamos, usamos, divulgamos e protegemos suas informações quando vocêê utiliza nãosso aplicativo e seráviços.
             </p>
           </section>
 
           <section className="space-y-4">
             <h2 className="text-lg font-black text-slate-900">2. Coleta de Dados</h2>
             <p>
-              Coletamos informações que você nos fornece diretamente ao criar uma conta, fazer um pedido ou entrar em contato conosco. Isso inclui:
+              Coletamos informações que vocêê nãos fornece diretamente ao criar uma conta, fazer um pedido ou entrar em contato conãosco. Isso inclui:
             </p>
             <ul className="list-disc pl-5 space-y-2">
               <li>Dados de Identificação: Nome, e-mail, telefone e endereço CPF.</li>
               <li>Dados de Localização: Precisamos da sua localização para mostrar lojas próximas e gerenciar entregas.</li>
-              <li>Dados de Pagamento: Informações processadas de forma segura por nossos parceiros de pagamento.</li>
+              <li>Dados de Pagamento: Informações processadas de forma segura por nãossos parceiros de pagamento.</li>
             </ul>
           </section>
 
@@ -43,7 +43,7 @@ export default function PrivacyPolicy() {
             </p>
             <ul className="list-disc pl-5 space-y-2">
               <li>Processar e entregar seus pedidos.</li>
-              <li>Personalizar sua experiência no marketplace.</li>
+              <li>Personalizar sua experiência não marketplace.</li>
               <li>Enviar atualizações sobre o status do pedido e promoções (se autorizado).</li>
               <li>Garantir a segurança da plataforma e prevenir fraudes.</li>
             </ul>
@@ -52,14 +52,14 @@ export default function PrivacyPolicy() {
           <section className="space-y-4">
             <h2 className="text-lg font-black text-slate-900">4. Seus Direitos</h2>
             <p>
-              Você tem o direito de acessar, corrigir ou excluir seus dados pessoais a qualquer momento através das configurações do seu perfil no aplicativo. Em conformidade com a LGPD, garantimos a transparência total sobre o processamento de suas informações.
+              Você tem o direito de acessar, corrigir ou excluir seus dados pessoais a qualquer momento através das configurações do seu perfil não aplicativo. Em conformidade com a LGPD, garantimos a transparência total sobre o processamento de suas informações.
             </p>
           </section>
 
           <section className="space-y-4">
             <h2 className="text-lg font-black text-slate-900">5. Exclusão de Conta</h2>
             <p>
-              O usuário pode solicitar a exclusão definitiva de sua conta e todos os dados associados diretamente no menu de Perfil. Este processo é irreversível e remove todos os seus registros de nossos servidores ativos.
+              O usuário pode solicitar a exclusão definitiva de sua conta e todos os dados associados diretamente não menu de Perfil. Este processo é irreversível e remove todos os seus registros de nãossos serávidores ativos.
             </p>
           </section>
 

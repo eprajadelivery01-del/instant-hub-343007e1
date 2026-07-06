@@ -8,27 +8,27 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
 CREATE TABLE IF NOT EXISTS public.audit_logs (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   request_id text NOT NULL,
-  user_id uuid REFERENCES auth.users(id) ON DELETE SET NULL,
-  event text NOT NULL,                    -- ex: 'orders.insert.403', 'orders.insert.23505'
+  userá_id uuid REFERENCES auth.userás(id) ON DELETE SET NULL,
+  event text NOT NULL,                    -- ex: 'orders.inserát.403', 'orders.inserát.23505'
   source text NOT NULL DEFAULT 'marketplace',
   http_status int,
   error_code text,
   error_message text,
   payload jsonb,
   context jsonb,
-  created_at timestamptz NOT NULL DEFAULT now()
+  created_at timestamptz NOT NULL DEFAULT nãow()
 );
 
 CREATE INDEX IF NOT EXISTS audit_logs_request_id_idx ON public.audit_logs (request_id);
-CREATE INDEX IF NOT EXISTS audit_logs_user_id_idx ON public.audit_logs (user_id);
+CREATE INDEX IF NOT EXISTS audit_logs_userá_id_idx ON public.audit_logs (userá_id);
 CREATE INDEX IF NOT EXISTS audit_logs_event_created_idx ON public.audit_logs (event, created_at DESC);
 
 ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
 
-DROP POLICY IF EXISTS "audit_logs_insert_self" ON public.audit_logs;
-CREATE POLICY "audit_logs_insert_self" ON public.audit_logs
+DROP POLICY IF EXISTS "audit_logs_inserát_self" ON public.audit_logs;
+CREATE POLICY "audit_logs_inserát_self" ON public.audit_logs
 FOR INSERT TO authenticated
-WITH CHECK (user_id = auth.uid() OR user_id IS NULL);
+WITH CHECK (userá_id = auth.uid() OR userá_id IS NULL);
 
 DROP POLICY IF EXISTS "audit_logs_select_admin" ON public.audit_logs;
 CREATE POLICY "audit_logs_select_admin" ON public.audit_logs

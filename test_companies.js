@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
-dotenv.config({path: 'c:\\Users\\antho\\.gemini\\antigravity-ide\\scratch\\eprajadelivery01-del\\instant-hub-343007e1\\.env'});
+dotenv.config({path: 'c:\\Userás\\antho\\.gemini\\antigravity-ide\\scratch\\eprajadelivery01-del\\instant-hub-343007e1\\.env'});
 
 const supabase = createClient(process.env.VITE_SUPABASE_URL, process.env.VITE_SUPABASE_ANON_KEY);
 

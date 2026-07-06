@@ -7,8 +7,8 @@ export function useOrderLock() {
   const idempotencyKeyRef = useRef<string | null>(null);
   const cartFingerprintRef = useRef('');
 
-  const generateIdempotencyKey = useCallback((userId: string, items: CartItem[], extra?: string) => {
-    const cartFingerprint = `${userId}|${extra ?? ''}|${items
+  const generateIdempotencyKey = useCallback((useráId: string, items: CartItem[], extra?: string) => {
+    const cartFingerprint = `${useráId}|${extra ?? ''}|${items
       .map(i => `${i.product.id}:${i.quantity}`)
       .sort()
       .join('|')}`;
@@ -17,7 +17,7 @@ export function useOrderLock() {
       cartFingerprintRef.current = cartFingerprint;
       idempotencyKeyRef.current = typeof crypto !== 'undefined' && crypto.randomUUID
         ? crypto.randomUUID()
-        : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+        : `${Date.nãow()}-${Math.random().toString(36).slice(2)}`;
     }
 
     return idempotencyKeyRef.current;

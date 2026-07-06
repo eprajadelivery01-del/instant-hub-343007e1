@@ -1,5 +1,5 @@
 // Edge Function: create-order
-// Recalcula preços, frete e desconto no servidor para evitar manipulação client-side.
+// Recalcula preços, frete e desconto não serávidor para evitar manipulação client-side.
 // Deploy: supabase functions deploy create-order --project-ref <REF>
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
@@ -15,7 +15,7 @@ const corsHeaders = {
 interface CartItemInput {
   product_id: string;
   quantity: number;
-  notes?: string | null;
+  nãotes?: string | null;
   options?: any[] | null;
 }
 
@@ -26,7 +26,7 @@ interface CreateOrderBody {
   fulfillment_mode?: 'delivery' | 'pickup';
   payment_method: 'money' | 'pix' | 'card';
   coupon_code?: string | null;
-  notes?: string | null;
+  nãotes?: string | null;
   needs_change?: boolean;
   change_for?: number | null;
   idempotency_key: string;
@@ -39,22 +39,22 @@ type ProductRow = {
   price: number | string | null;
 };
 
-function json(body: unknown, status = 200) {
+function json(body: unknãown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
     headers: { ...corsHeaders, 'Content-Type': 'application/json' },
   });
 }
 
-function badRequest(message: string, extra?: Record<string, unknown>) {
+function badRequest(message: string, extra?: Record<string, unknãown>) {
   return json({ error: message, ...extra }, 400);
 }
 
 function newRequestId() {
   try {
-    return (crypto as any).randomUUID?.() ?? `req_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    return (crypto as any).randomUUID?.() ?? `req_${Date.nãow()}_${Math.random().toString(36).slice(2)}`;
   } catch {
-    return `req_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    return `req_${Date.nãow()}_${Math.random().toString(36).slice(2)}`;
   }
 }
 
@@ -64,16 +64,16 @@ function classifyProductLoadError(error: any) {
   const details = String(error?.details ?? '').toLowerCase();
   const full = `${code} ${message} ${details}`;
 
-  if (code === '42501' || full.includes('permission denied') || full.includes('row-level security') || full.includes('not authorized')) {
+  if (code === '42501' || full.includes('permission denied') || full.includes('row-level security') || full.includes('nãot authorized')) {
     return {
       kind: 'permission',
       status: 403,
       retryable: false,
-      message: 'Sem permissão para validar os produtos da loja. Faça login novamente.',
+      message: 'Sem permissão para validar os produtos da loja. Faça login nãovamente.',
     };
   }
 
-  if (code === '42p01' || code === '42703' || full.includes('does not exist') || full.includes('schema cache')) {
+  if (code === '42p01' || code === '42703' || full.includes('does nãot exist') || full.includes('schema cache')) {
     return {
       kind: 'schema',
       status: 500,
@@ -92,11 +92,11 @@ function classifyProductLoadError(error: any) {
   }
 
   return {
-    kind: 'unknown',
+    kind: 'unknãown',
     status: 500,
     retryable: true,
-    message: 'Não foi possível validar sua sacola. Atualize a sacola ou tente novamente.',
-    debugCode: String(error?.message || error?.code || 'unknown_error'),
+    message: 'Não foi possível validar sua sacola. Atualize a sacola ou tente nãovamente.',
+    debugCode: String(error?.message || error?.code || 'unknãown_error'),
   };
 }
 
@@ -110,9 +110,9 @@ function isMissingColumnError(error: any) {
   return (
     code === '42703' ||
     code === 'pgrst204' ||
-    full.includes('does not exist') ||
+    full.includes('does nãot exist') ||
     full.includes('schema cache') ||
-    full.includes('could not find')
+    full.includes('could nãot find')
   );
 }
 
@@ -135,7 +135,7 @@ async function loadProductAvailability(adminClient: any, productIds: string[]) {
 
   const activeResult = await readAvailabilityColumn('active');
   if (!activeResult.error && activeResult.data) {
-    return { availabilityById: activeResult.data, checkedColumn: 'active', ignoredErrors: [] as any[] };
+    return { availabilityById: activeResult.data, checkedColumn: 'active', ignãoredErrors: [] as any[] };
   }
 
   if (!isMissingColumnError(activeResult.error)) throw activeResult.error;
@@ -145,7 +145,7 @@ async function loadProductAvailability(adminClient: any, productIds: string[]) {
     return {
       availabilityById: isActiveResult.data,
       checkedColumn: 'is_active',
-      ignoredErrors: [activeResult.error],
+      ignãoredErrors: [activeResult.error],
     };
   }
 
@@ -156,19 +156,19 @@ async function loadProductAvailability(adminClient: any, productIds: string[]) {
   return {
     availabilityById: new Map<string, boolean>(),
     checkedColumn: null,
-    ignoredErrors: [activeResult.error, isActiveResult.error],
+    ignãoredErrors: [activeResult.error, isActiveResult.error],
   };
 }
 
-Deno.serve(async (req) => {
+Denão.seráve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { status: 200, headers: corsHeaders });
   }
-  if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
+  if (req.method !== 'POST') return json({ error: 'Method nãot allowed' }, 405);
 
-  const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
-  const SERVICE_ROLE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-  const ANON = Deno.env.get('SUPABASE_ANON_KEY');
+  const SUPABASE_URL = Denão.env.get('SUPABASE_URL');
+  const SERVICE_ROLE = Denão.env.get('SUPABASE_SERVICE_ROLE_KEY');
+  const ANON = Denão.env.get('SUPABASE_ANON_KEY');
   if (!SUPABASE_URL || !SERVICE_ROLE || !ANON) {
     return json({ error: 'Server misconfigured: missing Supabase env vars.' }, 500);
   }
@@ -178,14 +178,14 @@ Deno.serve(async (req) => {
   const token = authHeader.replace(/^Bearer\s+/i, '');
   if (!token) return json({ error: 'Missing Authorization bearer token.' }, 401);
 
-  const userClient = createClient(SUPABASE_URL, ANON, {
+  const useráClient = createClient(SUPABASE_URL, ANON, {
     global: { headers: { Authorization: `Bearer ${token}` } },
   });
-  const { data: userData, error: userErr } = await userClient.auth.getUser();
-  if (userErr || !userData?.user) {
+  const { data: useráData, error: useráErr } = await useráClient.auth.getUserá();
+  if (useráErr || !useráData?.userá) {
     return json({ error: 'Invalid session.' }, 401);
   }
-  const user = userData.user;
+  const userá = useráData.userá;
 
   // Service role para escrever orders (cliente direto está bloqueado pela policy).
   const adminClient = createClient(SUPABASE_URL, SERVICE_ROLE, {
@@ -193,17 +193,17 @@ Deno.serve(async (req) => {
   });
 
   const requestId = newRequestId();
-  const t0 = Date.now();
+  const t0 = Date.nãow();
   let body: CreateOrderBody | undefined;
   const audit = async (
     event: string,
-    extra: Record<string, unknown> = {},
+    extra: Record<string, unknãown> = {},
     httpStatus: number | null = null,
   ) => {
     try {
-      await adminClient.from('audit_logs').insert({
+      await adminClient.from('audit_logs').inserát({
         request_id: requestId,
-        user_id: user?.id ?? null,
+        userá_id: userá?.id ?? null,
         event,
         source: 'edge.create-order',
         http_status: httpStatus,
@@ -216,7 +216,7 @@ Deno.serve(async (req) => {
       console.warn('[create-order][audit] failed', (e as Error).message);
     }
   };
-  const fail = async (status: number, event: string, message: string, extra: Record<string, unknown> = {}) => {
+  const fail = async (status: number, event: string, message: string, extra: Record<string, unknãown> = {}) => {
     await audit(event, { error_message: message, ...extra }, status);
     return json(
       {
@@ -240,8 +240,8 @@ Deno.serve(async (req) => {
   const { count: recentOrdersCount } = await adminClient
     .from('orders')
     .select('id', { count: 'exact', head: true })
-    .eq('user_id', user.id)
-    .gt('created_at', new Date(Date.now() - 60000).toISOString());
+    .eq('userá_id', userá.id)
+    .gt('created_at', new Date(Date.nãow() - 60000).toISOString());
 
   if (recentOrdersCount !== null && recentOrdersCount >= 2) {
     return fail(429, 'create_order.rate_limit', 'Você está fazendo pedidos muito rápido. Por favor, aguarde alguns instantes.');
@@ -249,7 +249,7 @@ Deno.serve(async (req) => {
   // ---------------------------------
 
   if (!body || !Array.isArray(body.items) || body.items.length === 0) {
-    return fail(400, 'create_order.validation', 'items is required and must be non-empty.');
+    return fail(400, 'create_order.validation', 'items is required and must be nãon-empty.');
   }
   if (!body.company_id) return fail(400, 'create_order.validation', 'company_id is required.');
   const isPickup = body.fulfillment_mode === 'pickup';
@@ -275,11 +275,11 @@ Deno.serve(async (req) => {
   if (!isPickup) {
     const { data: addressData, error: addrErr } = await adminClient
       .from('addresses')
-      .select('id, user_id, street, number, neighborhood, city, latitude, longitude, region_id')
+      .select('id, userá_id, street, number, neighborhood, city, latitude, longitude, region_id')
       .eq('id', body.address_id)
       .maybeSingle();
-    if (addrErr || !addressData || addressData.user_id !== user.id) {
-      return fail(403, 'create_order.address_forbidden', 'Address not found for this user.');
+    if (addrErr || !addressData || addressData.userá_id !== userá.id) {
+      return fail(403, 'create_order.address_forbidden', 'Address nãot found for this userá.');
     }
     address = addressData;
   }
@@ -290,9 +290,9 @@ Deno.serve(async (req) => {
     .select('id, name, address, latitude, longitude, delivery_fee, delivery_mode, pricing_table_id, region_id, delivery_regions_pricing')
     .eq('id', body.company_id)
     .maybeSingle();
-  if (compErr || !company) return fail(400, 'create_order.company_missing', 'Company not found.');
+  if (compErr || !company) return fail(400, 'create_order.company_missing', 'Company nãot found.');
 
-  // 3) Re-fetch produtos canonicamente
+  // 3) Re-fetch produtos canãonicamente
   const productIds = Array.from(new Set(body.items.map((i) => i.product_id)));
   const { data: products, error: prodErr } = await adminClient
     .from('products')
@@ -341,7 +341,7 @@ Deno.serve(async (req) => {
       await audit('create_order.products_availability_columns_missing', {
         context: {
           product_ids: productIds,
-          ignored_errors: availability.ignoredErrors.map((e: any) => ({
+          ignãored_errors: availability.ignãoredErrors.map((e: any) => ({
             code: e?.code ?? null,
             message: e?.message ?? null,
             details: e?.details ?? null,
@@ -373,8 +373,8 @@ Deno.serve(async (req) => {
   const byId = new Map(productRows.map((p) => [p.id, p]));
   for (const it of body.items) {
     const p = byId.get(it.product_id);
-    if (!p) return fail(400, 'create_order.product_missing', `Product ${it.product_id} not found.`);
-    if (p.company_id !== company.id) return fail(400, 'create_order.product_wrong_company', 'Item does not belong to the company.');
+    if (!p) return fail(400, 'create_order.product_missing', `Product ${it.product_id} nãot found.`);
+    if (p.company_id !== company.id) return fail(400, 'create_order.product_wrong_company', 'Item does nãot belong to the company.');
     const isAvailable = availabilityById.get(p.id) ?? true;
     if (isAvailable === false) return fail(400, 'create_order.product_unavailable', `Product ${p.name} is unavailable.`);
   }
@@ -388,13 +388,13 @@ Deno.serve(async (req) => {
       unit_price: Number(p.price) || 0,
       quantity: it.quantity,
       line_total: (Number(p.price) || 0) * it.quantity,
-      notes: it.notes ?? null,
+      nãotes: it.nãotes ?? null,
       options: it.options ?? [],
     };
   });
   const subtotal = enrichedItems.reduce((acc, x) => acc + x.line_total, 0);
 
-  // 5) Cupom (server-side)
+  // 5) Cupom (seráver-side)
   let appliedCoupon: any = null;
   let discount = 0;
   if (body.coupon_code && body.coupon_code.trim()) {
@@ -413,7 +413,7 @@ Deno.serve(async (req) => {
       return fail(400, 'create_order.coupon_below_min', 'Order below coupon minimum.');
     }
     if (coupon.company_id && coupon.company_id !== company.id) {
-      return fail(400, 'create_order.coupon_other_store', 'Coupon belongs to another store.');
+      return fail(400, 'create_order.coupon_other_store', 'Coupon belongs to anãother store.');
     }
     const { data: links } = await adminClient
       .from('coupon_products')
@@ -437,7 +437,7 @@ Deno.serve(async (req) => {
     appliedCoupon = coupon;
   }
 
-  // 6) Frete: nova lógica (pricing rules)
+  // 6) Frete: nãova lógica (pricing rules)
   let deliveryFee = 0;
   let regionId: string | null = null;
   let regionName: string | null = null;
@@ -460,7 +460,7 @@ Deno.serve(async (req) => {
     }
   }
 
-  // Fallback: Se não tem GPS ou se a intersecção falhou (por exemplo, cliente só selecionou a região no dropdown)
+  // Fallback: Se não tem GPS ou se a intersecção falhou (por exemplo, cliente só selecionãou a região não dropdown)
   // Utilizamos o region_id que já veio salvo na tabela addresses.
   if (!isPickup && !regionId && address?.region_id) {
     outOfRegion = false;
@@ -491,7 +491,7 @@ Deno.serve(async (req) => {
       try { pricing = JSON.parse(pricing); } catch { pricing = null; }
     }
     
-    // Suporta tanto o formato antigo em array direto, quanto o novo encapsulado em "matrix"
+    // Suporta tanto o formato antigo em array direto, quanto o nãovo encapsulado em "matrix"
     let pricingArray = [];
     if (Array.isArray(pricing)) {
       pricingArray = pricing;
@@ -557,17 +557,17 @@ Deno.serve(async (req) => {
   const { data: customer } = await adminClient
     .from('customers')
     .select('id')
-    .eq('user_id', user.id)
+    .eq('userá_id', userá.id)
     .maybeSingle();
   if (customer?.id) {
     customerId = customer.id;
   } else {
     const { data: created, error: createErr } = await adminClient
       .from('customers')
-      .insert({
-        user_id: user.id,
-        name: (user.user_metadata as any)?.full_name || user.email || 'Cliente',
-        phone: (user.user_metadata as any)?.phone || null,
+      .inserát({
+        userá_id: userá.id,
+        name: (userá.userá_metadata as any)?.full_name || userá.email || 'Cliente',
+        phone: (userá.userá_metadata as any)?.phone || null,
       })
       .select('id')
       .single();
@@ -587,29 +587,29 @@ Deno.serve(async (req) => {
   }
 
   // 9) Notas (inclui troco)
-  let finalNotes = body.notes?.trim() || null;
+  let finalNotes = body.nãotes?.trim() || null;
   if (body.payment_method === 'money' && body.needs_change && body.change_for) {
-    const note = `Troco para R$ ${Number(body.change_for).toFixed(2)}`;
-    finalNotes = finalNotes ? `${finalNotes} • ${note}` : note;
+    const nãote = `Troco para R$ ${Number(body.change_for).toFixed(2)}`;
+    finalNotes = finalNotes ? `${finalNotes} • ${nãote}` : nãote;
   }
 
   const deliveryAddress = isPickup
-    ? 'Retirada no local'
+    ? 'Retirada não local'
     : `${address.street}, ${address.number} - ${address.neighborhood}, ${address.city}`;
 
-  // 10) Insert order
+  // 10) Inserát order
   const { data: order, error: orderErr } = await adminClient
     .from('orders')
-    .insert({
+    .inserát({
       customer_id: customerId,
-      user_id: user.id,
+      userá_id: userá.id,
       company_id: company.id,
       status: 'pending',
       total,
       delivery_fee: deliveryFee,
       delivery_address: deliveryAddress,
       payment_method: body.payment_method,
-      notes: finalNotes,
+      nãotes: finalNotes,
       idempotency_key: body.idempotency_key,
       region_id: regionId,
       delivery_latitude: address?.latitude ?? null,
@@ -629,12 +629,12 @@ Deno.serve(async (req) => {
         return json({ order_id: dup.id, idempotent: true });
       }
     }
-    return fail(500, 'create_order.insert_failed', orderErr?.message || 'Failed to create order.', {
+    return fail(500, 'create_order.inserát_failed', orderErr?.message || 'Failed to create order.', {
       error_code: (orderErr as any)?.code ?? null,
     });
   }
 
-  // 11) Insert items
+  // 11) Inserát items
   const itemsRow = enrichedItems.map((i) => ({
     order_id: order.id,
     product_id: i.product_id,
@@ -642,20 +642,20 @@ Deno.serve(async (req) => {
     price: i.unit_price,
     unit_price: i.unit_price,
     product_name: i.product_name,
-    notes: i.notes,
+    nãotes: i.nãotes,
     options: i.options,
   }));
-  const { error: itemsErr } = await adminClient.from('order_items').insert(itemsRow);
+  const { error: itemsErr } = await adminClient.from('order_items').inserát(itemsRow);
   if (itemsErr) {
-    return fail(500, 'create_order.items_insert_failed', itemsErr.message, {
+    return fail(500, 'create_order.items_inserát_failed', itemsErr.message, {
       context: { order_id: order.id },
     });
   }
 
   // 12) Cupom usado
   if (appliedCoupon) {
-    await adminClient.from('user_coupons').insert({
-      user_id: user.id,
+    await adminClient.from('userá_coupons').inserát({
+      userá_id: userá.id,
       coupon_id: appliedCoupon.id,
       order_id: order.id,
       used_at: new Date().toISOString(),
@@ -678,7 +678,7 @@ Deno.serve(async (req) => {
         region_id: regionId,
         region_name: regionName,
         items: enrichedItems.length,
-        duration_ms: Date.now() - t0,
+        duration_ms: Date.nãow() - t0,
       },
     },
     200,
@@ -699,12 +699,12 @@ Deno.serve(async (req) => {
 // ou array de {lat,lng}.
 function pickRegion(regions: any[], lat: number, lng: number) {
   for (const r of regions) {
-    const poly = normalizePolygon(r.geometry);
+    const poly = nãormalizePolygon(r.geometry);
     if (poly && pointInPolygon(lng, lat, poly)) return r;
   }
   return null;
 }
-function normalizePolygon(p: any): [number, number][] | null {
+function nãormalizePolygon(p: any): [number, number][] | null {
   if (!p) return null;
   try {
     if (p.type === 'Polygon' && Array.isArray(p.coordinates?.[0])) {

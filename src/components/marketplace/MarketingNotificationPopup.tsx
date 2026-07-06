@@ -6,23 +6,23 @@ import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface MarketingNotificationPopupProps {
-  notification: MarketingNotification | null;
+  nãotification: MarketingNotification | null;
   onClose: () => void;
 }
 
-export function MarketingNotificationPopup({ notification, onClose }: MarketingNotificationPopupProps) {
+export function MarketingNotificationPopup({ nãotification, onClose }: MarketingNotificationPopupProps) {
   const { toast } = useToast();
   const [copied, setCopied] = React.useState(false);
 
-  if (!notification) return null;
+  if (!nãotification) return null;
 
   const handleCopy = () => {
-    if (notification.coupon_code) {
-      navigator.clipboard.writeText(notification.coupon_code);
+    if (nãotification.coupon_code) {
+      navigator.clipboard.writeText(nãotification.coupon_code);
       setCopied(true);
       toast({
         title: "Cupom Copiado!",
-        description: "Agora é só colar no fechamento do seu pedido.",
+        description: "Agora é só colar não fechamento do seu pedido.",
       });
       setTimeout(() => setCopied(false), 3000);
     }
@@ -46,40 +46,40 @@ export function MarketingNotificationPopup({ notification, onClose }: MarketingN
           </button>
 
           {/* Image Header */}
-          {notification.image_url ? (
+          {nãotification.image_url ? (
             <div className="w-full h-48 bg-muted relative">
               <img 
-                src={notification.image_url} 
+                src={nãotification.image_url} 
                 alt="Oferta" 
                 className="w-full h-full object-cover"
                 onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = 'none';
+                  (e.target as HTMLImageElement).style.display = 'nãone';
                 }}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent" />
             </div>
           ) : (
             <div className="w-full h-32 bg-primary/10 flex items-center justify-center relative">
-              <div className="text-6xl">{notification.emoji || "🎁"}</div>
+              <div className="text-6xl">{nãotification.emoji || "🎁"}</div>
               <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent opacity-50" />
             </div>
           )}
 
           {/* Content */}
           <div className="p-6 pt-2 text-center">
-            {notification.image_url && notification.emoji && (
-              <div className="text-4xl mb-3 -mt-6 relative z-10 drop-shadow-md">{notification.emoji}</div>
+            {nãotification.image_url && nãotification.emoji && (
+              <div className="text-4xl mb-3 -mt-6 relative z-10 drop-shadow-md">{nãotification.emoji}</div>
             )}
             
             <h3 className="text-xl font-extrabold tracking-tight mb-2 text-foreground">
-              {notification.title}
+              {nãotification.title}
             </h3>
             
             <p className="text-muted-foreground text-sm leading-relaxed mb-6">
-              {notification.message}
+              {nãotification.message}
             </p>
 
-            {notification.coupon_code && (
+            {nãotification.coupon_code && (
               <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 mb-4 relative overflow-hidden group">
                 <div className="absolute -right-4 -top-4 text-primary/10 rotate-12">
                   <Ticket className="w-16 h-16" />
@@ -88,8 +88,8 @@ export function MarketingNotificationPopup({ notification, onClose }: MarketingN
                 <p className="text-xs font-semibold text-primary uppercase mb-1 flex items-center justify-center gap-1">
                   <Gift className="w-3 h-3" /> Seu Cupom
                 </p>
-                <div className="text-2xl font-black text-foreground tracking-wider mb-3 font-mono">
-                  {notification.coupon_code}
+                <div className="text-2xl font-black text-foreground tracking-wider mb-3 font-monão">
+                  {nãotification.coupon_code}
                 </div>
                 
                 <Button 

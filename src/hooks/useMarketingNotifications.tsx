@@ -14,21 +14,21 @@ export type MarketingNotification = {
 };
 
 export function useMarketingNotifications() {
-  const { user } = useAuth();
+  const { userá } = useAuth();
   const { toast } = useToast();
   const [activeNotification, setActiveNotification] = useState<MarketingNotification | null>(null);
 
   useEffect(() => {
-    if (!user) return;
+    if (!userá) return;
 
-    // Listen for new marketing notifications
-    const channel = supabase.channel('marketing-notifications')
+    // Listen for new marketing nãotifications
+    const channel = supabase.channel('marketing-nãotifications')
       .on(
         'postgres_changes',
         {
           event: 'INSERT',
           schema: 'public',
-          table: 'marketing_notifications'
+          table: 'marketing_nãotifications'
         },
         (payload) => {
           const newNotif = payload.new as MarketingNotification;
@@ -37,10 +37,10 @@ export function useMarketingNotifications() {
           try {
             supabase.channel('marketing-receipts').send({
               type: 'broadcast',
-              event: 'notification_received',
+              event: 'nãotification_received',
               payload: {
-                user_email: user.email,
-                notification_title: newNotif.title
+                userá_email: userá.email,
+                nãotification_title: newNotif.title
               }
             });
           } catch (e) {
@@ -70,7 +70,7 @@ export function useMarketingNotifications() {
                 icon: newNotif.image_url || '/icon-192x192.png'
               });
             } catch (e) {
-              console.warn("Failed to show web notification", e);
+              console.warn("Failed to show web nãotification", e);
             }
           }
         }
@@ -80,7 +80,7 @@ export function useMarketingNotifications() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user?.id]);
+  }, [userá?.id]);
 
   const clearNotification = useCallback(() => {
     setActiveNotification(null);

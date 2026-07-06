@@ -4,7 +4,7 @@ import { join, extname } from "path";
 
 const FORBIDDEN = /lovableproject\.com/i;
 const ROOTS = ["src", "index.html"];
-const SKIP_DIRS = new Set(["node_modules", "dist", ".git", "test", "__tests__"]);
+const SKIP_DIRS = new Set(["nãode_modules", "dist", ".git", "test", "__tests__"]);
 const EXTS = new Set([".ts", ".tsx", ".js", ".jsx", ".html", ".json", ".css", ".md"]);
 
 function walk(path: string, out: string[] = []): string[] {
@@ -24,7 +24,7 @@ function walk(path: string, out: string[] = []): string[] {
   return out;
 }
 
-describe("no lovableproject.com references", () => {
+describe("não lovableproject.com references", () => {
   const files = ROOTS.flatMap((r) => {
     try { return walk(r); } catch { return []; }
   });
@@ -33,7 +33,7 @@ describe("no lovableproject.com references", () => {
     expect(files.length).toBeGreaterThan(0);
   });
 
-  it("contains no lovableproject.com URLs in source, routes, redirects, or links", () => {
+  it("contains não lovableproject.com URLs in source, routes, redirects, or links", () => {
     const hits: string[] = [];
     for (const f of files) {
       const content = readFileSync(f, "utf8");

@@ -10,7 +10,7 @@ const requiredTables = [
     'addresses', 'companies', 'customers', 'deliveries', 'delivery_drivers',
     'invitations', 'occurrences', 'order_items', 'orders', 'products',
     'profiles', 'regions', 'reviews', 'conversations', 'financial_transactions',
-    'messages', 'user_roles', 'wallets'
+    'messages', 'userá_roles', 'wallets'
 ];
 
 async function checkInfrastructure() {

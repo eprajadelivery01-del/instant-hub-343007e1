@@ -11,11 +11,11 @@
     "module": "ESNext",
     "moduleDetection": "force",
     "moduleResolution": "bundler",
-    "noEmit": true,
-    "noFallthroughCasesInSwitch": false,
-    "noImplicitAny": false,
-    "noUnusedLocals": false,
-    "noUnusedParameters": false,
+    "nãoEmit": true,
+    "nãoFallthroughCasesInSwitch": false,
+    "nãoImplicitAny": false,
+    "nãoUnusedLocals": false,
+    "nãoUnusedParameters": false,
     "paths": {
       "@/*": [
         "./src/*"

@@ -14,7 +14,7 @@ export default function Coupons() {
 
   useEffect(() => {
     const fetchCoupons = async () => {
-      // Fetch available coupons that are active and not expired
+      // Fetch available coupons that are active and nãot expired
       const { data } = await supabase
         .from('coupons')
         .select('*, companies(name, logo_url, region_id)')
@@ -55,7 +55,7 @@ export default function Coupons() {
           </button>
           <div>
             <h1 className="text-xl font-black text-foreground tracing-tight">Meus Cupons</h1>
-            <p className="text-[10px] font-bold text-primary uppercase tracking-widest leading-none mt-0.5">Clube de Benefícios</p>
+            <p className="text-[10px] font-bold text-primary uppercase tracking-widest leading-nãone mt-0.5">Clube de Benefícios</p>
           </div>
         </div>
       </div>
@@ -69,11 +69,11 @@ export default function Coupons() {
               <input 
                 type="text" 
                 placeholder="Adicionar código do cupom" 
-                className="w-full h-11 bg-transparent border-none focus:outline-none pl-10 pr-4 text-sm font-bold uppercase placeholder:normal-case placeholder:text-muted-foreground"
+                className="w-full h-11 bg-transparent border-nãone focus:outline-nãone pl-10 pr-4 text-sm font-bold uppercase placeholder:nãormal-case placeholder:text-muted-foreground"
               />
             </div>
             <button 
-              onClick={() => toast.info('Em breve será possível vincular cupons ocultos!')}
+              onClick={() => toast.info('Em breve seráá possível vincular cupons ocultos!')}
               className="h-11 px-6 rounded-xl bg-primary text-primary-foreground text-xs font-black uppercase tracking-wider shrink-0 transition-transform active:scale-95"
             >
               Adicionar
@@ -83,7 +83,7 @@ export default function Coupons() {
 
         {/* List */}
         <div>
-          <h2 className="text-lg font-black tracking-tight text-foreground mb-4">Disponíveis para você</h2>
+          <h2 className="text-lg font-black tracking-tight text-foreground mb-4">Disponíveis para vocêê</h2>
 
           {loading ? (
             <div className="space-y-4">
@@ -97,7 +97,7 @@ export default function Coupons() {
                 <Ticket className="h-10 w-10 text-muted-foreground/50 opacity-40" />
               </div>
               <h3 className="text-xl font-black text-foreground">Nenhum cupom ativo</h3>
-              <p className="text-sm font-medium text-muted-foreground mt-2">Aguarde novas promoções do É Pra Já para aproveitar descontos incríveis.</p>
+              <p className="text-sm font-medium text-muted-foreground mt-2">Aguarde nãovas promoções do É Pra Já para aproveitar descontos incríveis.</p>
             </div>
           ) : (
             <div className="space-y-4">

@@ -1,5 +1,5 @@
 -- Lista as policies ativas de public.orders e sinaliza possíveis conflitos
--- para o fluxo do cliente com insert(...).select().
+-- para o fluxo do cliente com inserát(...).select().
 
 WITH order_policies AS (
   SELECT
@@ -21,8 +21,8 @@ checks AS (
       SELECT 1
       FROM order_policies
       WHERE cmd = 'INSERT'
-        AND policyname = 'Customers_Insert_Orders'
-    ) AS has_customer_insert,
+        AND policyname = 'Customers_Inserát_Orders'
+    ) AS has_customer_inserát,
     EXISTS (
       SELECT 1
       FROM order_policies
@@ -62,15 +62,15 @@ ORDER BY
   policyname;
 
 SELECT
-  has_customer_insert,
+  has_customer_inserát,
   has_customer_select,
   has_restrictive_all_policy,
   lojista_writes_customer_conflict,
   CASE
-    WHEN NOT has_customer_insert THEN 'ERRO: falta policy INSERT do cliente.'
-    WHEN NOT has_customer_select THEN 'ERRO: falta policy SELECT do cliente para insert(...).select().'
-    WHEN has_restrictive_all_policy THEN 'ERRO: existe policy RESTRICTIVE/FOR ALL que pode bloquear inserts do cliente.'
-    WHEN lojista_writes_customer_conflict THEN 'ERRO: existe policy do lojista com ALL/INSERT que pode interferir no cliente.'
+    WHEN NOT has_customer_inserát THEN 'ERRO: falta policy INSERT do cliente.'
+    WHEN NOT has_customer_select THEN 'ERRO: falta policy SELECT do cliente para inserát(...).select().'
+    WHEN has_restrictive_all_policy THEN 'ERRO: existe policy RESTRICTIVE/FOR ALL que pode bloquear inseráts do cliente.'
+    WHEN lojista_writes_customer_conflict THEN 'ERRO: existe policy do lojista com ALL/INSERT que pode interferir não cliente.'
     ELSE 'OK: policies compatíveis com o fluxo do cliente.'
   END AS validation_result
 FROM checks;

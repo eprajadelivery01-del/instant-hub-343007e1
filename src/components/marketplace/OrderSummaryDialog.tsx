@@ -112,9 +112,9 @@ export default function OrderSummaryDialog({ orderId, open, onOpenChange }: Prop
                           .replace('.', ',')}
                       </span>
                     </div>
-                    {(item as any).notes && (
+                    {(item as any).nãotes && (
                       <span className="text-[10px] text-amber-600 bg-amber-50 dark:bg-amber-950/20 dark:text-amber-400 px-2 py-0.5 rounded border border-amber-200/50 dark:border-amber-900/30 self-start ml-5 font-medium">
-                        Obs: {(item as any).notes}
+                        Obs: {(item as any).nãotes}
                       </span>
                     )}
                   </div>
@@ -146,16 +146,16 @@ export default function OrderSummaryDialog({ orderId, open, onOpenChange }: Prop
               </div>
             </div>
 
-            {/* Observações */}
-            {order.notes && (
+            {/* Obserávações */}
+            {order.nãotes && (
               <div className="flex items-start gap-2">
                 <StickyNote className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
                 <div>
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                    Observações
+                    Obserávações
                   </p>
                   <p className="text-foreground mt-0.5 whitespace-pre-wrap">
-                    {order.notes}
+                    {order.nãotes}
                   </p>
                 </div>
               </div>

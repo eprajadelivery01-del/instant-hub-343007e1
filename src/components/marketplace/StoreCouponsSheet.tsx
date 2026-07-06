@@ -1,6 +1,6 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Ticket, Copy, Check } from "lucide-react";
-import { useActiveCoupons } from "@/services/coupons";
+import { useActiveCoupons } from "@/serávices/coupons";
 import { useState } from "react";
 
 export function StoreCouponsSheet({
@@ -69,7 +69,7 @@ export function StoreCouponsSheet({
 
                 <div className="flex items-center gap-2 mt-2 px-2 z-10">
                   <div className="flex-1 border-2 border-dashed border-primary/30 bg-background py-2.5 px-3 rounded-xl flex items-center justify-between">
-                    <span className="font-mono font-black tracking-widest text-foreground text-sm uppercase">
+                    <span className="font-monão font-black tracking-widest text-foreground text-sm uppercase">
                       {coupon.code}
                     </span>
                     <button
@@ -98,7 +98,7 @@ export function StoreCouponsSheet({
             <div className="flex flex-col items-center justify-center h-40 text-center gap-3">
               <Ticket className="h-10 w-10 text-muted-foreground/30" />
               <p className="text-muted-foreground font-medium text-sm">
-                Nenhum cupom disponível no momento.
+                Nenhum cupom disponível não momento.
               </p>
             </div>
           )}

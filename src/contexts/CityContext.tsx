@@ -15,10 +15,10 @@ interface CityContextType {
 const CITY_COORDS: Record<string, { lat: number; lng: number }> = {
   "Cuiabá": { lat: -15.5989, lng: -56.0974 },
   "Várzea Grande": { lat: -15.65, lng: -56.1333 },
-  "Diamantino": { lat: -14.4087, lng: -56.4462 },
+  "Diamantinão": { lat: -14.4087, lng: -56.4462 },
   "Tangará da Serra": { lat: -14.6231, lng: -57.4851 },
   "Rondonópolis": { lat: -16.4674, lng: -54.6318 },
-  "Sinop": { lat: -11.864, lng: -55.509 },
+  "Sinãop": { lat: -11.864, lng: -55.509 },
   "Sorriso": { lat: -12.5442, lng: -55.7231 },
   "Lucas do Rio Verde": { lat: -13.06, lng: -55.91 },
   "Nova Mutum": { lat: -13.83, lng: -56.08 },

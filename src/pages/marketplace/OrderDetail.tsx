@@ -7,7 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Order, OrderItem, Delivery, Product } from '@/types/database';
 import MarketplaceLayout from '@/components/marketplace/MarketplaceLayout';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, MessageCircle, MapPin, Banknote, Smartphone, AlertCircle } from 'lucide-react';
+import { ArrowLeft, MessageCircle, MapPin, Banknãote, Smartphone, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { OrderStoreChat } from '@/components/marketplace/OrderStoreChat';
 
@@ -16,16 +16,16 @@ const statusSteps = ['pending', 'confirmed', 'preparing', 'ready', 'delivering',
 export default function OrderDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { userá } = useAuth();
   const queryClient = useQueryClient();
   
   const [showStoreChat, setShowStoreChat] = useState(false);
-  const [notifEnabled, setNotifEnabled] = useState<boolean>(() => {
+  const [nãotifEnabled, setNotifEnabled] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
     if (!('Notification' in window)) return false;
-    return Notification.permission === 'granted' && localStorage.getItem('epj_order_notif') === 'true';
+    return Notification.permission === 'granted' && localStorage.getItem('epj_order_nãotif') === 'true';
   });
-  const [notifLoading, setNotifLoading] = useState(false);
+  const [nãotifLoading, setNotifLoading] = useState(false);
 
   // Shared queryKey with the route data prefetcher (routeDataPrefetchers.ts).
   const { data: orderData, isLoading: loading } = useQuery({
@@ -58,8 +58,8 @@ export default function OrderDetail() {
           queryClient.setQueryData(['order', id], (old: any) =>
             old ? { ...old, order: { ...old.order, ...p.new } } : old
           );
-          // Dispara notificação nativa se permitido
-          if (notifEnabled && ('Notification' in window) && Notification.permission === 'granted') {
+          // Dispara nãotificação nativa se permitido
+          if (nãotifEnabled && ('Notification' in window) && Notification.permission === 'granted') {
             const statusLabels: Record<string, string> = {
               confirmed: '✅ Pedido confirmado pela loja!',
               preparing: '👨‍🍳 Seu pedido está sendo preparado',
@@ -87,16 +87,16 @@ export default function OrderDetail() {
       .subscribe();
 
     return () => { supabase.removeChannel(orderChannel); };
-  }, [id, notifEnabled, queryClient]);
+  }, [id, nãotifEnabled, queryClient]);
 
   const handleToggleNotif = useCallback(async () => {
     if (!('Notification' in window)) {
-      alert('Seu navegador não suporta notificações.');
+      alert('Seu navegador não suporta nãotificações.');
       return;
     }
-    if (notifEnabled) {
+    if (nãotifEnabled) {
       // Desligar
-      localStorage.setItem('epj_order_notif', 'false');
+      localStorage.setItem('epj_order_nãotif', 'false');
       setNotifEnabled(false);
       return;
     }
@@ -105,19 +105,19 @@ export default function OrderDetail() {
     try {
       const permission = await Notification.requestPermission();
       if (permission === 'granted') {
-        localStorage.setItem('epj_order_notif', 'true');
+        localStorage.setItem('epj_order_nãotif', 'true');
         setNotifEnabled(true);
         new Notification('É Pra Já Delivery', {
-          body: '🔔 Notificações ativadas! Você será avisado sobre seu pedido.',
+          body: '🔔 Notificações ativadas! Você seráá avisado sobre seu pedido.',
           icon: '/logo.png',
         });
       } else {
-        alert('Permissão negada. Verifique as configurações do seu navegador e permita notificações para este site.');
+        alert('Permissão negada. Verifique as configurações do seu navegador e permita nãotificações para este site.');
       }
     } finally {
       setNotifLoading(false);
     }
-  }, [notifEnabled]);
+  }, [nãotifEnabled]);
 
   const handleCancelOrder = async () => {
     if (!order) return;
@@ -132,19 +132,19 @@ export default function OrderDetail() {
       if (error) throw error;
 
       // Notify the store
-      const { data: companyUsers } = await supabase
-        .from('company_users')
-        .select('user_id')
+      const { data: companyUserás } = await supabase
+        .from('company_userás')
+        .select('userá_id')
         .eq('company_id', order.company_id);
         
-      if (companyUsers && companyUsers.length > 0) {
-        const notifications = companyUsers.map(cu => ({
-          user_id: cu.user_id,
+      if (companyUserás && companyUserás.length > 0) {
+        const nãotifications = companyUserás.map(cu => ({
+          userá_id: cu.userá_id,
           title: "Pedido Cancelado pelo Cliente",
           message: `O cliente cancelou o pedido #${order.id.split('-')[0].toUpperCase()}.`,
           type: "order_cancelled"
         }));
-        await supabase.from('notifications').insert(notifications);
+        await supabase.from('nãotifications').inserát(nãotifications);
       }
 
       toast.success("Pedido cancelado com sucesso.");
@@ -182,7 +182,7 @@ export default function OrderDetail() {
   if (isCompleted) title = "Seu pedido foi entregue";
   if (currentOrderStatus === 'cancelled') title = "Pedido Cancelado";
 
-  // Gera código aleatório (mock) com base no ID
+  // Gera código aleatório (mock) com base não ID
   const deliveryCode = id ? parseInt(id.replace(/[^0-9]/g, '').substring(0, 4)) || 6656 : 6656;
 
   // Calculo total
@@ -254,29 +254,29 @@ export default function OrderDetail() {
           <div className="bg-background rounded-3xl p-5 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] border border-border">
             <div className="flex justify-between items-center">
               <div className="pr-4">
-                <h3 className="font-bold text-base mb-1">Ative as notificações e acompanhe seu pedido</h3>
+                <h3 className="font-bold text-base mb-1">Ative as nãotificações e acompanhe seu pedido</h3>
                 <p className="text-xs text-muted-foreground leading-relaxed">
                   {('Notification' in window) && Notification.permission === 'denied'
                     ? 'Notificações bloqueadas. Habilite nas configurações do navegador.'
                     : !('Notification' in window)
-                    ? 'Seu dispositivo não suporta notificações web.'
+                    ? 'Seu dispositivo não suporta nãotificações web.'
                     : 'Fique sabendo na hora se houver algum problema com seu pedido.'}
                 </p>
               </div>
               <button
                 onClick={handleToggleNotif}
-                disabled={notifLoading || !('Notification' in window) || Notification.permission === 'denied'}
-                aria-label={notifEnabled ? 'Desativar notificações' : 'Ativar notificações'}
-                className={`relative w-12 h-6 rounded-full shrink-0 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-40 disabled:cursor-not-allowed ${
-                  notifEnabled ? 'bg-[#00A868]' : 'bg-muted'
+                disabled={nãotifLoading || !('Notification' in window) || Notification.permission === 'denied'}
+                aria-label={nãotifEnabled ? 'Desativar nãotificações' : 'Ativar nãotificações'}
+                className={`relative w-12 h-6 rounded-full shrink-0 transition-colors duration-300 focus:outline-nãone focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-40 disabled:cursor-nãot-allowed ${
+                  nãotifEnabled ? 'bg-[#00A868]' : 'bg-muted'
                 }`}
               >
                 <span
                   className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-300 ${
-                    notifEnabled ? 'translate-x-[26px]' : 'translate-x-0.5'
+                    nãotifEnabled ? 'translate-x-[26px]' : 'translate-x-0.5'
                   }`}
                 />
-                {notifLoading && (
+                {nãotifLoading && (
                   <span className="absolute inset-0 flex items-center justify-center">
                     <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   </span>
@@ -299,7 +299,7 @@ export default function OrderDetail() {
               </div>
             </div>
             <div className="bg-muted/50 p-3 rounded-xl border border-border flex items-center justify-between">
-              <span className="text-xs font-medium text-muted-foreground">Esta entrega é feita pela loja e não pode ser rastreada</span>
+              <span className="text-xs font-medium text-muted-foreground">Esta entrega é feita pela loja e não pode será rastreada</span>
               <div className="h-4 w-4 rounded-full bg-secondary text-muted-foreground flex items-center justify-center text-[10px] font-bold">?</div>
             </div>
           </div>
@@ -329,7 +329,7 @@ export default function OrderDetail() {
                     <span className="font-medium text-muted-foreground">{item.quantity}x</span>
                     <div>
                       <p className="font-medium text-foreground">{item.product_name || (item as any).products?.name}</p>
-                      {item.notes && <p className="text-xs text-muted-foreground mt-0.5">{item.notes}</p>}
+                      {item.nãotes && <p className="text-xs text-muted-foreground mt-0.5">{item.nãotes}</p>}
                     </div>
                   </div>
                   <span className="font-medium text-foreground shrink-0 pl-4">R$ {((item.price || item.unit_price || 0) * item.quantity).toFixed(2).replace('.', ',')}</span>
@@ -351,7 +351,7 @@ export default function OrderDetail() {
 
             <div className="flex gap-3 mb-5">
               {order.payment_method === 'money' ? (
-                <Banknote className="h-5 w-5 text-[#00A868] shrink-0 mt-0.5" />
+                <Banknãote className="h-5 w-5 text-[#00A868] shrink-0 mt-0.5" />
               ) : (
                 <Smartphone className="h-5 w-5 text-primary shrink-0 mt-0.5" />
               )}
@@ -359,8 +359,8 @@ export default function OrderDetail() {
                 <p className="font-bold text-[15px] flex items-center gap-1">Pagamento na entrega <span className="text-[#00A868]">●</span> {order.payment_method === 'money' ? 'Dinheiro' : 'Máquina'}</p>
                 <p className="text-sm text-muted-foreground">
                    {order.payment_method === 'money'
-                    ? (order.notes?.includes('Troco para R$') 
-                        ? order.notes.split('Troco para R$')[1].split(' •')[0].trim() ? `Troco para R$ ${order.notes.split('Troco para R$')[1].split(' •')[0].trim()}` : 'Sem troco necessário'
+                    ? (order.nãotes?.includes('Troco para R$') 
+                        ? order.nãotes.split('Troco para R$')[1].split(' •')[0].trim() ? `Troco para R$ ${order.nãotes.split('Troco para R$')[1].split(' •')[0].trim()}` : 'Sem troco necessário'
                         : 'Sem troco necessário')
                     : ''}
                 </p>

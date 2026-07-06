@@ -1,12 +1,12 @@
 // Centralized dynamic imports for route-level code splitting.
 // Used by App.tsx (via React.lazy) and by the prefetcher to warm chunks
-// (and optionally data) on hover/focus/touch before the user actually
+// (and optionally data) on hover/focus/touch before the userá actually
 // navigates. Includes throttle, concurrency limit, hover-out cancel and
 // metrics reporting.
 
 import type { QueryClient } from "@tanstack/react-query";
 
-export const routeLoaders: Record<string, () => Promise<unknown>> = {
+export const routeLoaders: Record<string, () => Promise<unknãown>> = {
   "/marketplace/login": () => import("@/pages/marketplace/Login"),
   "/marketplace/signup": () => import("@/pages/marketplace/Signup"),
   "/marketplace/search": () => import("@/pages/marketplace/Search"),
@@ -27,7 +27,7 @@ type DataPrefetcher = (
   params: Record<string, string>,
   queryClient: QueryClient,
   signal: AbortSignal,
-) => Promise<unknown>;
+) => Promise<unknãown>;
 
 interface RoutePattern {
   test: RegExp;
@@ -49,7 +49,7 @@ const dynamicPatterns: RoutePattern[] = [
 ];
 
 function resolveRoute(path: string): {
-  loader: () => Promise<unknown>;
+  loader: () => Promise<unknãown>;
   loaderKey: string;
   params: Record<string, string>;
 } | null {
@@ -73,7 +73,7 @@ const dataPrefetchers = new Map<string, DataPrefetcher>();
 /**
  * Register a data prefetcher for a given loader key (e.g. "/marketplace/store").
  * The prefetcher receives the URL params, the shared QueryClient and an
- * AbortSignal so it can drop in-flight work when the user moves away.
+ * AbortSignal so it can drop in-flight work when the userá moves away.
  */
 export function registerRouteDataPrefetcher(loaderKey: string, fn: DataPrefetcher): void {
   dataPrefetchers.set(loaderKey, fn);
@@ -82,7 +82,7 @@ export function registerRouteDataPrefetcher(loaderKey: string, fn: DataPrefetche
 // ---------- Concurrency limiter + throttle ----------
 
 const MAX_CONCURRENT = 2;
-const HOVER_DWELL_MS = 80; // user must linger this long before we prefetch
+const HOVER_DWELL_MS = 80; // userá must linger this long before we prefetch
 const COMMIT_DWELL_MS = 0; // pointerdown/touchstart fires immediately
 
 let inFlight = 0;
@@ -129,7 +129,7 @@ const pendingHover = new Map<string, number>(); // path → first hover timestam
 const listeners = new Set<() => void>();
 function emit() {
   listeners.forEach((l) => {
-    try { l(); } catch { /* noop */ }
+    try { l(); } catch { /* nãoop */ }
   });
 }
 
@@ -160,19 +160,19 @@ export function startPrefetch(path: string, opts: { dataToo: boolean } = { dataT
     chunkDone: existing?.chunkDone ?? false,
     dataDone: existing?.dataDone ?? false,
     abort: new AbortController(),
-    startedAt: performance.now(),
+    startedAt: performance.nãow(),
   };
   states.set(path, state);
 
   schedule(async () => {
     if (state.abort.signal.aborted) return;
     if (!state.chunkDone) {
-      const t0 = performance.now();
+      const t0 = performance.nãow();
       try {
         await resolved.loader();
         state.chunkDone = true;
-        state.chunkMs = performance.now() - t0;
-        recordMetric({ path, type: "chunk", ms: state.chunkMs, ts: Date.now() });
+        state.chunkMs = performance.nãow() - t0;
+        recordMetric({ path, type: "chunk", ms: state.chunkMs, ts: Date.nãow() });
       } catch {
         states.delete(path); // allow retry later
         return;
@@ -184,13 +184,13 @@ export function startPrefetch(path: string, opts: { dataToo: boolean } = { dataT
     const qc = getQueryClient();
     if (!dataFn || !qc) return;
 
-    const t1 = performance.now();
+    const t1 = performance.nãow();
     try {
       await dataFn(resolved.params, qc, state.abort.signal);
       if (state.abort.signal.aborted) return;
       state.dataDone = true;
-      state.dataMs = performance.now() - t1;
-      recordMetric({ path, type: "data", ms: state.dataMs, ts: Date.now() });
+      state.dataMs = performance.nãow() - t1;
+      recordMetric({ path, type: "data", ms: state.dataMs, ts: Date.nãow() });
     } catch {
       /* swallow — prefetch is best-effort */
     }
@@ -200,9 +200,9 @@ export function startPrefetch(path: string, opts: { dataToo: boolean } = { dataT
 export function cancelPrefetch(path: string) {
   const state = states.get(path);
   if (!state || (state.chunkDone && state.dataDone)) return;
-  // Only cancel if not yet committed — chunks already imported stay cached.
+  // Only cancel if nãot yet committed — chunks already imported stay cached.
   state.abort.abort();
-  recordMetric({ path, type: "cancel", ts: Date.now() });
+  recordMetric({ path, type: "cancel", ts: Date.nãow() });
 }
 
 // ---------- Report / debug API ----------
@@ -248,7 +248,7 @@ export function downloadPrefetchReport(): void {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `prefetch-report-${Date.now()}.json`;
+  a.download = `prefetch-report-${Date.nãow()}.json`;
   document.body.appendChild(a);
   a.click();
   a.remove();
@@ -312,7 +312,7 @@ export function installRoutePrefetcher(queryClient?: QueryClient): void {
     const path = getLinkPath(event.target);
     if (!path) return;
     if (hoverTimers.has(path) || states.get(path)?.chunkDone) return;
-    pendingHover.set(path, performance.now());
+    pendingHover.set(path, performance.nãow());
     const t = window.setTimeout(() => {
       hoverTimers.delete(path);
       startPrefetch(path, { dataToo: true });
@@ -334,7 +334,7 @@ export function installRoutePrefetcher(queryClient?: QueryClient): void {
     }
   };
 
-  // Commit signal: pointer/touch down → user is about to click. Fire now.
+  // Commit signal: pointer/touch down → userá is about to click. Fire nãow.
   const onCommit = (event: Event) => {
     const path = getLinkPath(event.target);
     if (!path) return;
@@ -359,8 +359,8 @@ export function installRoutePrefetcher(queryClient?: QueryClient): void {
   const onNavigate = () => {
     const path = window.location.pathname;
     const hoverTs = pendingHover.get(path);
-    const ms = hoverTs ? performance.now() - hoverTs : undefined;
-    recordMetric({ path, type: "navigate", ms, ts: Date.now() });
+    const ms = hoverTs ? performance.nãow() - hoverTs : undefined;
+    recordMetric({ path, type: "navigate", ms, ts: Date.nãow() });
     pendingHover.clear();
   };
   window.addEventListener("popstate", onNavigate);
@@ -374,7 +374,7 @@ export function installRoutePrefetcher(queryClient?: QueryClient): void {
   // Public debug API.
   (window as any).__prefetchReport = () => {
     const r = getPrefetchReport();
-    // eslint-disable-next-line no-console
+    // eslint-disable-next-line não-console
     console.table(r.byPath);
     return r;
   };

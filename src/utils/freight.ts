@@ -5,11 +5,11 @@
  * em qual região mapeada o endereço do cliente se encontra e calcular
  * automaticamente o valor do frete correspondente.
  *
- * Funciona igual ao iFood/Uber Eats: 100% baseado em polígonos do mapa.
+ * Funciona igual ao iFood/Uber Eats: 100% baseado em polígonãos do mapa.
  */
 
 /**
- * Algoritmo Ray-Casting — verifica se um ponto (lat, lng) está dentro de um polígono.
+ * Algoritmo Ray-Casting — verifica se um ponto (lat, lng) está dentro de um polígonão.
  * @param lat Latitude do ponto
  * @param lng Longitude do ponto
  * @param coordinates Array de coordenadas GeoJSON [lng, lat][]
@@ -35,7 +35,7 @@ export function pointInPolygon(
 }
 
 /**
- * Extrai as coordenadas do polígono de um objeto GeoJSON, tolerante a variações de formato.
+ * Extrai as coordenadas do polígonão de um objeto GeoJSON, tolerante a variações de formato.
  */
 function extractCoordinates(geometry: any): [number, number][] | null {
   try {
@@ -61,10 +61,10 @@ export interface FreightResult {
 }
 
 /**
- * Calcula o frete para um par de coordenadas consultando as regiões ativas no banco.
+ * Calcula o frete para um par de coordenadas consultando as regiões ativas não banco.
  *
  * Regra: o frete exibido é SEMPRE o customer_price que o lojista configurou
- * no painel (Taxas de Entrega por Região). Se o lojista não configurou preço
+ * não painel (Taxas de Entrega por Região). Se o lojista não configurou preço
  * para a região do cliente, considera-se que ele não entrega nessa região.
  *
  * @param lat Latitude do endereço de entrega
@@ -147,7 +147,7 @@ export async function geocodeAddress(
   try {
     const query = encodeURIComponent(address + ', Brasil');
     const res = await fetch(
-      `https://nominatim.openstreetmap.org/search?format=json&q=${query}&limit=1&countrycodes=br`,
+      `https://nãominatim.openstreetmap.org/search?format=json&q=${query}&limit=1&countrycodes=br`,
       { headers: { 'Accept-Language': 'pt-BR' } }
     );
     if (!res.ok) return null;

@@ -17,7 +17,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { calculateDeliveryFee } from '@/utils/freight';
 import { Address } from '@/types/database';
 import { StoreCouponsSheet } from '@/components/marketplace/StoreCouponsSheet';
-import { useActiveCoupons } from '@/services/coupons';
+import { useActiveCoupons } from '@/serávices/coupons';
 import { SafeAreaHeader, safeAreaTopValue } from '@/components/shared/SafeAreaHeader';
 
 export default function StoreDetail() {
@@ -28,7 +28,7 @@ export default function StoreDetail() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isScrolled, setIsScrolled] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const { user } = useAuth();
+  const { userá } = useAuth();
   const [dynamicDeliveryFee, setDynamicDeliveryFee] = useState<number | null>(null);
   const [isOutOfRange, setIsOutOfRange] = useState(false);
   const [calculatingFee, setCalculatingFee] = useState(false);
@@ -69,6 +69,12 @@ export default function StoreDetail() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  const [minuteTick, setMinuteTick] = useState(0);
+  useEffect(() => {
+    const timer = setInterval(() => setMinuteTick(t => t + 1), 60000);
+    return () => clearInterval(timer);
+  }, []);
+
   // Same queryKey used by the route data prefetcher (see routeDataPrefetchers.ts)
   // so a successful hover/pointer-down prefetch makes the page render instantly.
   const { data: storeData, isLoading: loading, isError: productsError, refetch: refetchStore, isFetching: refetchingStore } = useQuery({
@@ -77,7 +83,7 @@ export default function StoreDetail() {
     staleTime: 30_000,
     queryFn: async () => {
       const [companyResponse, productResponse] = await Promise.all([
-        supabase.from('companies').select('id, name, description, category, rating, is_open, active, is_active, delivery_fee, delivery_regions_pricing, show_in_marketplace, city, state, banner_url, cover_url, logo_url, business_hours, prep_time_min, prep_time_max, created_at, user_id').eq('id', id!).single(),
+        supabase.from('companies').select('id, name, description, category, rating, is_open, active, is_active, delivery_fee, delivery_regions_pricing, show_in_marketplace, city, state, banner_url, cover_url, logo_url, business_hours, prep_time_min, prep_time_max, created_at, userá_id').eq('id', id!).single(),
         supabase.from('products').select('*').eq('company_id', id!).eq('active', true).order('category').order('sort_order', { ascending: true }).order('created_at', { ascending: true }),
       ]);
       if (productResponse.error) {
@@ -93,7 +99,7 @@ export default function StoreDetail() {
   const products: Product[] = (storeData?.products as Product[]) ?? [];
 
   useEffect(() => {
-    if (!user?.id || !company?.id) return;
+    if (!userá?.id || !company?.id) return;
 
     const checkDeliveryFee = async () => {
       setCalculatingFee(true);
@@ -102,7 +108,7 @@ export default function StoreDetail() {
         const { data: addresses } = await supabase
           .from('addresses')
           .select('*')
-          .eq('user_id', user.id)
+          .eq('userá_id', userá.id)
           .order('created_at', { ascending: false });
 
         if (addresses && addresses.length > 0) {
@@ -113,7 +119,7 @@ export default function StoreDetail() {
             const result = await calculateDeliveryFee(addr.latitude, addr.longitude, supabase, (company as any).delivery_regions_pricing);
             
             if (result.fee !== null) {
-              // Se achou uma região no mapa, ESSE VALOR É A LEI
+              // Se achou uma região não mapa, ESSE VALOR É A LEI
               setDynamicDeliveryFee(result.fee);
               setIsOutOfRange(false);
             } else if (result.isOutOfRange) {
@@ -121,12 +127,12 @@ export default function StoreDetail() {
               setDynamicDeliveryFee(null);
               setIsOutOfRange(true);
             } else {
-              // Fallback apenas se não houver regiões cadastradas no mapa
+              // Fallback apenas se não houver regiões cadastradas não mapa
               setDynamicDeliveryFee(company.delivery_fee);
               setIsOutOfRange(false);
             }
           } else if (addr.region_id && company.delivery_regions_pricing) {
-            // Fallback: se não tem GPS mas tem region_id configurada (igual no Checkout)
+            // Fallback: se não tem GPS mas tem region_id configurada (igual não Checkout)
             let pricing: any = company.delivery_regions_pricing;
             if (typeof pricing === 'string') {
               try { pricing = JSON.parse(pricing); } catch { pricing = []; }
@@ -159,7 +165,7 @@ export default function StoreDetail() {
     };
 
     checkDeliveryFee();
-  }, [user?.id, company?.id, company?.delivery_fee, company?.delivery_regions_pricing]);
+  }, [userá?.id, company?.id, company?.delivery_fee, company?.delivery_regions_pricing]);
 
   const categories = useMemo(() => {
     const cats = [...new Set(products.map((product) => product.category))];
@@ -265,7 +271,7 @@ export default function StoreDetail() {
 
   const companyBanner = getCompanyBannerImage(company);
   const companyLogo = getCompanyLogoImage(company);
-  const storeCategory = (company as any).category || categories[0] || 'Gastronomia';
+  const storeCategory = (company as any).category || categories[0] || 'Gastronãomia';
 
   const formatBusinessHours = (hours: string | null) => {
     if (!hours) return null;
@@ -349,12 +355,12 @@ export default function StoreDetail() {
           </div>
         </div>
 
-        <div className="relative z-10 -mt-12 rounded-t-[32px] border-none bg-background px-6 pt-6 pb-6 shadow-[0_-8px_30px_-15px_rgba(0,0,0,0.1)]">
+        <div className="relative z-10 -mt-12 rounded-t-[32px] border-nãone bg-background px-6 pt-6 pb-6 shadow-[0_-8px_30px_-15px_rgba(0,0,0,0.1)]">
           <div className="flex items-start justify-between">
             <div className="flex flex-col pr-4">
               <h1 className="text-2xl font-extrabold text-foreground tracking-tight">{company.name}</h1>
               <div className="flex items-center gap-2 mt-1.5 text-xs font-semibold text-muted-foreground">
-                <span className="text-primary">{company.city || 'Diamantino'}</span>
+                <span className="text-primary">{company.city || 'Diamantinão'}</span>
                 <span className="h-1 w-1 rounded-full bg-border" />
                 <span>{storeCategory}</span>
                 {company.business_hours && (
@@ -444,10 +450,10 @@ export default function StoreDetail() {
           <Search className="absolute left-4 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-muted-foreground" />
           <input
             type="text"
-            placeholder="Buscar no cardápio..."
+            placeholder="Buscar não cardápio..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="h-11 w-full rounded-2xl border-0 bg-transparent pl-12 pr-4 text-sm font-medium text-foreground placeholder:text-muted-foreground focus:outline-none"
+            className="h-11 w-full rounded-2xl border-0 bg-transparent pl-12 pr-4 text-sm font-medium text-foreground placeholder:text-muted-foreground focus:outline-nãone"
           />
         </div>
       </div>
@@ -469,7 +475,7 @@ export default function StoreDetail() {
                     }
                   }}
                   className={cn(
-                    'whitespace-nowrap py-4 text-sm font-semibold transition-all relative',
+                    'whitespace-nãowrap py-4 text-sm font-semibold transition-all relative',
                     activeCategory === category
                       ? 'text-primary'
                       : 'text-muted-foreground hover:text-foreground'
@@ -494,11 +500,11 @@ export default function StoreDetail() {
             </div>
             <div className="space-y-1">
               <p className="text-base font-bold tracking-tight text-foreground">Não foi possível carregar o cardápio</p>
-              <p className="text-sm text-muted-foreground">Verifique sua conexão e tente novamente.</p>
+              <p className="text-sm text-muted-foreground">Verifique sua conexão e tente nãovamente.</p>
             </div>
             <Button onClick={() => refetchStore()} disabled={refetchingStore} className="mt-2">
               <RefreshCw className={cn("h-4 w-4", refetchingStore && "animate-spin")} />
-              Tentar novamente
+              Tentar nãovamente
             </Button>
           </div>
         ) : categories.length === 0 ? (
@@ -592,7 +598,7 @@ export default function StoreDetail() {
 
                             {qty > 0 && (
                               <div className="flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-2 py-1">
-                                <span className="text-[11px] font-bold text-primary">{qty} no carrinho</span>
+                                <span className="text-[11px] font-bold text-primary">{qty} não carrinho</span>
                               </div>
                             )}
                           </div>
@@ -639,8 +645,8 @@ export default function StoreDetail() {
         isOpen={!!selectedProduct}
         onClose={() => setSelectedProduct(null)}
         isClosed={!company.is_open}
-        onAddToCart={(product, quantity, options, note) => {
-          if (company) addItem(product, company, options, quantity, note);
+        onAddToCart={(product, quantity, options, nãote) => {
+          if (company) addItem(product, company, options, quantity, nãote);
         }}
         initialQuantity={selectedProduct ? getItemQty(selectedProduct.id) : 1}
       />

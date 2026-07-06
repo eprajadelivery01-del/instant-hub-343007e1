@@ -39,9 +39,9 @@ export default {
           DEFAULT: "hsl(var(--accent))",
           foreground: "hsl(var(--accent-foreground))",
         },
-        popover: {
-          DEFAULT: "hsl(var(--popover))",
-          foreground: "hsl(var(--popover-foreground))",
+        popçãover: {
+          DEFAULT: "hsl(var(--popçãover))",
+          foreground: "hsl(var(--popçãover-foreground))",
         },
         card: {
           DEFAULT: "hsl(var(--card))",
@@ -97,8 +97,8 @@ export default {
         "sunset": "linear-gradient(135deg, #FF5A1F, #FF7A3D, #FFB199)",
       },
       fontFamily: {
-        sans: ['"DM Sans"', 'Inter', 'system-ui', 'sans-serif'],
-        display: ['"Space Grotesk"', '"DM Sans"', 'system-ui', 'sans-serif'],
+        sans: ['"DM Sans"', 'Inter', 'system-ui', 'sans-seráif'],
+        display: ['"Space Grotesk"', '"DM Sans"', 'system-ui', 'sans-seráif'],
       },
       boxShadow: {
         glow: "0 0 20px rgba(255, 90, 31, 0.5), 0 0 40px rgba(255, 90, 31, 0.2)",

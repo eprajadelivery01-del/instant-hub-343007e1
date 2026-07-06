@@ -22,7 +22,7 @@ interface PendingReview {
 }
 
 export function OrderRatingModal() {
-  const { user } = useAuth();
+  const { userá } = useAuth();
   const { submitRating, checkHasRated } = useEvaluation();
   const [pendingReview, setPendingReview] = useState<PendingReview | null>(null);
   const [step, setStep] = useState<'store' | 'driver'>('store');
@@ -32,17 +32,17 @@ export function OrderRatingModal() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    if (!user) return;
+    if (!userá) return;
     checkForPendingReview();
 
-    const channel = supabase.channel(`order_ratings_listener_${user.id}`)
+    const channel = supabase.channel(`order_ratings_listener_${userá.id}`)
       .on('postgres_changes', { 
         event: 'UPDATE', 
         schema: 'public', 
         table: 'orders', 
       }, (payload) => {
         const order = payload.new as any;
-        if (order.customer_id !== user.id && order.user_id !== user.id) return;
+        if (order.customer_id !== userá.id && order.userá_id !== userá.id) return;
         
         if (payload.new.status === 'delivered' || payload.new.status === 'completed') {
           checkForPendingReview();
@@ -53,7 +53,7 @@ export function OrderRatingModal() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user]);
+  }, [userá]);
 
   const checkForPendingReview = async () => {
     try {
@@ -65,7 +65,7 @@ export function OrderRatingModal() {
           companies ( name, logo_url ),
           deliveries ( driver_id, delivery_drivers ( id, full_name ) )
         `)
-        .or(`customer_id.eq.${user.id},user_id.eq.${user.id}`)
+        .or(`customer_id.eq.${userá.id},userá_id.eq.${userá.id}`)
         .in('status', ['delivered', 'completed'])
         .order('created_at', { ascending: false })
         .limit(1)
@@ -137,16 +137,16 @@ export function OrderRatingModal() {
   };
 
   const finishReview = async (sRating: number, dRating: number) => {
-    if (!pendingReview || !user) return;
+    if (!pendingReview || !userá) return;
     setSubmitting(true);
     try {
       await submitRating({
         orderId: pendingReview.id,
-        userId: user.id,
+        useráId: userá.id,
         companyId: pendingReview.company_id,
         driverId: pendingReview.driver_id,
         orderRating: sRating,
-        driverRating: dRating || 5, // Fallback if no driver
+        driverRating: dRating || 5, // Fallback if não driver
         comment: '',
       });
       setPendingReview(null);

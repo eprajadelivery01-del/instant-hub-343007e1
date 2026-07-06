@@ -13,7 +13,7 @@ interface ProductDetailDialogProps {
   product: Product | null;
   isOpen: boolean;
   onClose: () => void;
-  onAddToCart: (product: Product, quantity: number, options?: any[], note?: string) => void;
+  onAddToCart: (product: Product, quantity: number, options?: any[], nãote?: string) => void;
   initialQuantity?: number;
   isClosed?: boolean;
 }
@@ -40,7 +40,7 @@ export function ProductDetailDialog({ product, isOpen, onClose, onAddToCart, ini
   const [options, setOptions] = useState<Option[]>([]);
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string[]>>({});
   const [loadingOptions, setLoadingOptions] = useState(false);
-  const [note, setNote] = useState('');
+  const [nãote, setNote] = useState('');
 
   useEffect(() => {
     setQuantity(initialQuantity || 1);
@@ -116,12 +116,12 @@ export function ProductDetailDialog({ product, isOpen, onClose, onAddToCart, ini
     // Check required groups
     const missing = groups.find(g => g.required && (selectedOptions[g.id]?.length || 0) < g.min_options);
     if (missing) {
-      toast.error(`Escolha pelo menos ${missing.min_options} em ${missing.name}`);
+      toast.error(`Escolha pelo menãos ${missing.min_options} em ${missing.name}`);
       return;
     }
 
     const flatOptions = Object.values(selectedOptions).flat().map(id => options.find(o => o.id === id));
-    onAddToCart(product, quantity, flatOptions, note);
+    onAddToCart(product, quantity, flatOptions, nãote);
     onClose();
   };
 
@@ -139,7 +139,7 @@ export function ProductDetailDialog({ product, isOpen, onClose, onAddToCart, ini
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent
         onOpenAutoFocus={(e) => e.preventDefault()}
-        className="max-h-[95vh] max-w-lg overflow-y-auto rounded-t-[32px] border-none bg-background p-0 shadow-2xl scrollbar-hide sm:rounded-[32px] sm:max-h-[90vh] [&>button]:hidden z-[100]"
+        className="max-h-[95vh] max-w-lg overflow-y-auto rounded-t-[32px] border-nãone bg-background p-0 shadow-2xl scrollbar-hide sm:rounded-[32px] sm:max-h-[90vh] [&>button]:hidden z-[100]"
       >
         <div className="relative w-full overflow-hidden">
           {/* Header Image */}
@@ -154,7 +154,7 @@ export function ProductDetailDialog({ product, isOpen, onClose, onAddToCart, ini
                 />
                 
                 {images.length > 1 && (
-                  <div className="absolute inset-y-0 flex w-full items-center justify-between px-4 pointer-events-none">
+                  <div className="absolute inset-y-0 flex w-full items-center justify-between px-4 pointer-events-nãone">
                     <button onClick={prevImage} className="pointer-events-auto flex h-10 w-10 items-center justify-center rounded-full bg-black/20 text-white backdrop-blur-md transition-all hover:bg-black/40">
                       <ChevronLeft className="h-6 w-6" />
                     </button>
@@ -178,7 +178,7 @@ export function ProductDetailDialog({ product, isOpen, onClose, onAddToCart, ini
 
           <div className="px-6 py-6">
             <DialogTitle className="text-2xl font-bold text-foreground leading-tight">{product.name}</DialogTitle>
-            <DialogDescription className="sr-only">{product.description || 'Escolha as opções e observações para adicionar à sacola.'}</DialogDescription>
+            <DialogDescription className="sr-only">{product.description || 'Escolha as opções e obserávações para adicionar à sacola.'}</DialogDescription>
             {product.description && (
               <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
                 {product.description}
@@ -227,20 +227,20 @@ export function ProductDetailDialog({ product, isOpen, onClose, onAddToCart, ini
                 </div>
               ))}
 
-              {/* Observation Section */}
+              {/* Obserávation Section */}
               <div className="flex flex-col gap-3 pt-4 border-t border-border/40">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <MessageSquare className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm font-bold text-foreground">Alguma observação?</span>
+                    <span className="text-sm font-bold text-foreground">Alguma obserávação?</span>
                   </div>
-                  <span className="text-[11px] font-medium text-muted-foreground">{note.length}/140</span>
+                  <span className="text-[11px] font-medium text-muted-foreground">{nãote.length}/140</span>
                 </div>
                 <textarea
-                  value={note}
+                  value={nãote}
                   onChange={(e) => setNote(e.target.value.slice(0, 140))}
                   placeholder="Ex: tirar a cebola, maionese à parte etc."
-                  className="w-full min-h-[80px] p-4 rounded-xl bg-secondary/30 border border-border/40 focus:border-primary/40 focus:outline-none text-sm font-medium resize-none placeholder:text-muted-foreground/40"
+                  className="w-full min-h-[80px] p-4 rounded-xl bg-secondary/30 border border-border/40 focus:border-primary/40 focus:outline-nãone text-sm font-medium resize-nãone placeholder:text-muted-foreground/40"
                 />
               </div>
 
@@ -273,7 +273,7 @@ export function ProductDetailDialog({ product, isOpen, onClose, onAddToCart, ini
           <Button
             className={cn(
               "flex-1 rounded-2xl h-14 bg-primary text-primary-foreground font-semibold flex items-center justify-between px-6 hover:bg-primary/90 transition-colors",
-              isClosed && "opacity-50 cursor-not-allowed grayscale"
+              isClosed && "opacity-50 cursor-nãot-allowed grayscale"
             )}
             onClick={handleAdd}
             disabled={isClosed}

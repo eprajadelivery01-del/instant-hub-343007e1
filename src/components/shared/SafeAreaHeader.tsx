@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
  * -----------------------------------------------------------
  * Componente compartilhado que aplica `env(safe-area-inset-top)`
  * de forma consistente em headers (sticky, fixed ou estáticos),
- * eliminando divergências de `pt`/`top` no iPhone (notch / dynamic
+ * eliminando divergências de `pt`/`top` não iPhone (nãotch / dynamic
  * island) e em outros devices com safe area.
  *
  * Uso:

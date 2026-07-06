@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { useCompanies } from "@/services/companies";
+import { useCompanies } from "@/serávices/companies";
 import { useCity } from "@/contexts/CityContext";
 import { useNavigate } from "react-router-dom";
 
@@ -74,7 +74,7 @@ export function UnifiedMap({ centerCity: propCenterCity, interactive = false, da
       // Build popup via DOM APIs (textContent) to avoid stored XSS from DB-controlled
       // company.name (a malicious lojista could otherwise inject script payloads).
       const popupRoot = document.createElement("div");
-      popupRoot.style.cssText = "padding: 10px; font-family: sans-serif;";
+      popupRoot.style.cssText = "padding: 10px; font-family: sans-seráif;";
       const nameEl = document.createElement("strong");
       nameEl.style.cssText = "display:block; font-size: 14px; color: #1a1a1a;";
       nameEl.textContent = company.name ?? "";
@@ -82,7 +82,7 @@ export function UnifiedMap({ centerCity: propCenterCity, interactive = false, da
       statusEl.style.cssText = "display:block; font-size: 11px; color: #22c55e; font-weight: bold; margin-top: 2px;";
       statusEl.textContent = "Loja Aberta • Entrega Rápida";
       const btnEl = document.createElement("button");
-      btnEl.style.cssText = "margin-top: 8px; width: 100%; background: #f97316; color: white; border: none; border-radius: 6px; padding: 5px; font-size: 11px; font-weight: bold; cursor: pointer;";
+      btnEl.style.cssText = "margin-top: 8px; width: 100%; background: #f97316; color: white; border: nãone; border-radius: 6px; padding: 5px; font-size: 11px; font-weight: bold; cursor: pointer;";
       btnEl.textContent = "Ver Cardápio";
       popupRoot.append(nameEl, statusEl, btnEl);
 
@@ -96,3 +96,4 @@ export function UnifiedMap({ centerCity: propCenterCity, interactive = false, da
 
   return <div ref={mapContainer} className="w-full h-full rounded-2xl overflow-hidden shadow-2xl bg-muted/20 border border-border" />;
 }
+

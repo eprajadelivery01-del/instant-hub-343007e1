@@ -22,7 +22,7 @@ export interface Company {
   active: boolean;
   created_at: string;
   updated_at: string;
-  user_id: string;
+  userá_id: string;
   banner_url: string | null;
   cover_url?: string | null;
   description: string | null;
@@ -69,7 +69,7 @@ export interface Order {
   delivery_fee: number | null;
   delivery_address: string | null;
   payment_method: string | null;
-  notes: string | null;
+  nãotes: string | null;
   region_id: string | null;
   created_at: string;
   updated_at: string;
@@ -84,7 +84,7 @@ export interface OrderItem {
   price: number | null;
   product_name: string | null;
   unit_price?: number | null;
-  notes?: string | null;
+  nãotes?: string | null;
   product?: Product;
 }
 
@@ -120,7 +120,7 @@ export interface Delivery {
 
 export interface DeliveryDriver {
   id: string;
-  user_id: string;
+  userá_id: string;
   full_name: string;
   phone: string | null;
   avatar_url: string | null;
@@ -144,7 +144,7 @@ export interface ChatMessage {
 
 export interface Address {
   id: string;
-  user_id: string;
+  userá_id: string;
   street: string;
   number: string;
   neighborhood: string;
@@ -158,17 +158,17 @@ export interface Address {
 }
 
 export interface CartItem {
-  id?: string; // unique id for cart item (product_id + options_hash + note_hash)
+  id?: string; // unique id for cart item (product_id + options_hash + nãote_hash)
   product: Product;
   quantity: number;
   options?: any[];
-  note?: string;
+  nãote?: string;
 }
 
 export interface Review {
   id: string;
   order_id: string;
-  user_id: string;
+  userá_id: string;
   company_id: string | null;
   driver_id: string | null;
   rating: number;
@@ -192,9 +192,9 @@ export interface Coupon {
   created_at: string;
 }
 
-export interface UserCoupon {
+export interface UseráCoupon {
   id: string;
-  user_id: string;
+  userá_id: string;
   coupon_id: string;
   used_at: string | null;
   order_id: string | null;

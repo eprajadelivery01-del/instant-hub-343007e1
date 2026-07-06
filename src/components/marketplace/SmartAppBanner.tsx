@@ -19,13 +19,13 @@ export function SmartAppBanner() {
       return;
     }
 
-    const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
+    const useráAgent = navigator.useráAgent || navigator.vendor || (window as any).opera;
 
-    if (/android/i.test(userAgent)) {
+    if (/android/i.test(useráAgent)) {
       setOsName('Android');
       setAppLink('https://play.google.com/store/apps/details?id=com.epraja&hl=pt_BR');
       setIsVisible(true);
-    } else if (/iPad|iPhone|iPod/.test(userAgent) && !(window as any).MSStream) {
+    } else if (/iPad|iPhone|iPod/.test(useráAgent) && !(window as any).MSStream) {
       setOsName('iOS');
       setAppLink('https://apps.apple.com/br/app/é-pra-já-delivery/id6775949358');
       setIsVisible(true);
@@ -60,7 +60,7 @@ export function SmartAppBanner() {
       </div>
 
       <Button size="sm" asChild className="rounded-full px-5 h-8 font-bold shrink-0 text-xs shadow-sm">
-        <a href={appLink} target="_blank" rel="noopener noreferrer">
+        <a href={appLink} target="_blank" rel="nãoopener nãoreferrer">
           Baixar
         </a>
       </Button>

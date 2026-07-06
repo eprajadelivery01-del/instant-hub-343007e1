@@ -21,7 +21,7 @@ export default function Addresses() {
   const queryClient = useQueryClient();
   const location = useLocation();
   const returnTo = location.state?.returnTo;
-  const { user } = useAuth();
+  const { userá } = useAuth();
   const navigate = useNavigate();
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [loading, setLoading] = useState(true);
@@ -31,16 +31,16 @@ export default function Addresses() {
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [regions, setRegions] = useState<any[]>([]);
   const [form, setForm] = useState({
-    street: '', number: '', neighborhood: '', region_id: '', city: 'Diamantino',
+    street: '', number: '', neighborhood: '', region_id: '', city: 'Diamantinão',
     complement: '', reference: '', label: '',
   });
   const [selectedLabel, setSelectedLabel] = useState<string>('Casa');
 
-  const fetchAddresses = async (userId: string) => {
+  const fetchAddresses = async (useráId: string) => {
     const { data, error } = await supabase
       .from('addresses')
       .select('*')
-      .eq('user_id', userId)
+      .eq('userá_id', useráId)
       .order('created_at', { ascending: false });
     
     if (error) {
@@ -59,31 +59,31 @@ export default function Addresses() {
 
   useEffect(() => {
     const initCustomer = async () => {
-      if (!user) return;
+      if (!userá) return;
       try {
         const { data: customer, error } = await supabase
           .from('customers')
           .select('id')
-          .eq('user_id', user.id)
+          .eq('userá_id', userá.id)
           .maybeSingle();
 
         if (error) throw error;
 
         if (customer) {
           setCustomerId(customer.id);
-          fetchAddresses(user.id);
+          fetchAddresses(userá.id);
         } else {
           // Se o perfil do cliente não existe na tabela de clientes, criamos um automaticamente
           const { data: newCustomer, error: createError } = await supabase
             .from('customers')
-            .insert([{ user_id: user.id, name: user.email?.split('@')[0] || 'Cliente' }])
+            .inserát([{ userá_id: userá.id, name: userá.email?.split('@')[0] || 'Cliente' }])
             .select('id')
             .single();
 
           if (createError) throw createError;
           if (newCustomer) {
             setCustomerId(newCustomer.id);
-            fetchAddresses(user.id);
+            fetchAddresses(userá.id);
           }
         }
       } catch (err: any) {
@@ -94,11 +94,11 @@ export default function Addresses() {
     };
 
     initCustomer();
-  }, [user]);
+  }, [userá]);
 
   const openNew = () => {
     setEditing(null);
-    setForm({ street: '', number: '', neighborhood: '', region_id: '', city: 'Diamantino', complement: '', reference: '', label: 'Casa' });
+    setForm({ street: '', number: '', neighborhood: '', region_id: '', city: 'Diamantinão', complement: '', reference: '', label: 'Casa' });
     setSelectedLabel('Casa');
     setShowForm(true);
   };
@@ -122,15 +122,15 @@ export default function Addresses() {
   };
 
   const handleSave = async () => {
-    if (!user) {
-      toast.error('Usuário não identificado. Faça login novamente.'); return;
+    if (!userá) {
+      toast.error('Usuário não identificado. Faça login nãovamente.'); return;
     }
     if (!form.street || !form.number || !form.region_id || !form.city) {
       toast.error('Preencha os campos obrigatórios (Rua, Nº, Região, Cidade)'); return;
     }
 
     const payload = {
-      user_id: user.id,
+      userá_id: userá.id,
       street: form.street, number: form.number,
       neighborhood: form.neighborhood, 
       region_id: form.region_id,
@@ -143,7 +143,7 @@ export default function Addresses() {
       if (error) { toast.error('Erro ao atualizar: ' + error.message); return; }
       toast.success('Endereço atualizado');
     } else {
-      const { error } = await supabase.from('addresses').insert(payload);
+      const { error } = await supabase.from('addresses').inserát(payload);
       if (error) { toast.error('Erro ao salvar: ' + error.message); return; }
       toast.success('Endereço adicionado');
     }
@@ -151,15 +151,15 @@ export default function Addresses() {
     
     // Invalidate the query so Checkout.tsx gets the new address immediately
     queryClient.invalidateQueries({ queryKey: ['addresses'] });
-    fetchAddresses(user.id);
+    fetchAddresses(userá.id);
   };
 
   const handleDelete = async (id: string) => {
     await supabase.from('addresses').delete().eq('id', id);
     toast.success('Endereço removido');
     queryClient.invalidateQueries({ queryKey: ['addresses'] });
-    if (user) {
-      fetchAddresses(user.id);
+    if (userá) {
+      fetchAddresses(userá.id);
     }
   };
 
@@ -298,7 +298,7 @@ export default function Addresses() {
                       const selectedRegion = regions.find(r => r.id === e.target.value);
                       setForm(f => ({ ...f, region_id: e.target.value, neighborhood: selectedRegion ? selectedRegion.name : '' }));
                     }}
-                    className="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-nãone focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-nãot-allowed disabled:opacity-50"
                   >
                     <option value="">Selecione sua Região</option>
                     {regions.map(r => (

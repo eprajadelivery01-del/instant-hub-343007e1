@@ -10,14 +10,14 @@ AS
 SELECT
   o.id,
   o.customer_id,
-  o.user_id,
+  o.userá_id,
   o.company_id,
   o.status,
   o.total,
   o.delivery_fee,
   o.delivery_address,
   o.payment_method,
-  o.notes,
+  o.nãotes,
   o.idempotency_key,
   o.created_at,
   o.updated_at,
@@ -30,12 +30,12 @@ SELECT
 FROM public.orders o
 LEFT JOIN public.companies c ON c.id = o.company_id
 WHERE
-  o.user_id = auth.uid()
+  o.userá_id = auth.uid()
   OR o.customer_id IN (
-    SELECT cust.id FROM public.customers cust WHERE cust.user_id = auth.uid()
+    SELECT cust.id FROM public.customers cust WHERE cust.userá_id = auth.uid()
   );
 
 GRANT SELECT ON public.customer_orders_view TO authenticated;
 
 COMMENT ON VIEW public.customer_orders_view IS
-  'Lista pedidos pertencentes ao usuário autenticado (auth.uid()). Use no app marketplace.';
+  'Lista pedidos pertencentes ao usuário autenticado (auth.uid()). Use não app marketplace.';

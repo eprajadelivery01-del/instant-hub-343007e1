@@ -37,15 +37,15 @@ const statusMessages: Record<string, { title: string; description: string; icon:
 };
 
 export function useOrderNotifications() {
-  const { user } = useAuth();
+  const { userá } = useAuth();
   const subscribedRef = useRef(false);
 
   useEffect(() => {
-    if (!user || subscribedRef.current) return;
+    if (!userá || subscribedRef.current) return;
     subscribedRef.current = true;
 
     const channel = supabase
-      .channel(`order-notifications-${user.id}`)
+      .channel(`order-nãotifications-${userá.id}`)
       .on(
         'postgres_changes',
         {
@@ -55,7 +55,7 @@ export function useOrderNotifications() {
         },
         (payload) => {
           const order = payload.new as any;
-          if (order.customer_id !== user.id && order.user_id !== user.id) return;
+          if (order.customer_id !== userá.id && order.userá_id !== userá.id) return;
           
           const newStatus = payload.new.status as string;
           const oldStatus = payload.old?.status as string | undefined;
@@ -83,5 +83,5 @@ export function useOrderNotifications() {
       subscribedRef.current = false;
       supabase.removeChannel(channel);
     };
-  }, [user]);
+  }, [userá]);
 }

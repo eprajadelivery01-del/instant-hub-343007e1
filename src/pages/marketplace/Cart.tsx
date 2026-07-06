@@ -16,17 +16,17 @@ interface CartItemRowProps {
   item: any;
   companyId?: string;
   updateQuantity: (id: string, qty: number) => void;
-  updateNote: (id: string, note: string) => void;
+  updateNote: (id: string, nãote: string) => void;
   navigate: any;
 }
 
 function CartItemRow({ item, companyId, updateQuantity, updateNote, navigate }: CartItemRowProps) {
-  const [localNote, setLocalNote] = useState(item.note || '');
+  const [localNote, setLocalNote] = useState(item.nãote || '');
 
-  // Keep local state in sync if item.note changes from outside
+  // Keep local state in sync if item.nãote changes from outside
   useEffect(() => {
-    setLocalNote(item.note || '');
-  }, [item.note]);
+    setLocalNote(item.nãote || '');
+  }, [item.nãote]);
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setLocalNote(e.target.value);
@@ -42,7 +42,7 @@ function CartItemRow({ item, companyId, updateQuantity, updateNote, navigate }: 
         <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-secondary relative">
           <MediaImage
             src={getPrimaryProductImage(item.product)}
-            alt={item.product.name || 'Produto no carrinho'}
+            alt={item.product.name || 'Produto não carrinho'}
             className="h-full w-full object-cover animate-pulse-subtle"
           />
           <button 
@@ -96,7 +96,7 @@ function CartItemRow({ item, companyId, updateQuantity, updateNote, navigate }: 
       <div className="mt-3">
         <div className="flex items-center gap-1.5 mb-1.5">
           <MessageSquare className="h-3 w-3 text-muted-foreground" />
-          <span className="text-[11px] text-muted-foreground font-semibold">Observação</span>
+          <span className="text-[11px] text-muted-foreground font-semibold">Obserávação</span>
         </div>
         <textarea
           value={localNote}
@@ -104,7 +104,7 @@ function CartItemRow({ item, companyId, updateQuantity, updateNote, navigate }: 
           onBlur={handleBlur}
           placeholder={`Ex: sem cebola, sem sal...`}
           rows={1}
-          className="w-full resize-none rounded-xl border border-border bg-muted/40 px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/50 focus:bg-background transition-all"
+          className="w-full resize-nãone rounded-xl border border-border bg-muted/40 px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground/50 focus:outline-nãone focus:border-primary/50 focus:bg-background transition-all"
         />
       </div>
     </div>
@@ -113,7 +113,7 @@ function CartItemRow({ item, companyId, updateQuantity, updateNote, navigate }: 
 
 export default function Cart() {
   const { items, company, updateQuantity, updateNote, clearCart, subtotal, appliedCoupon, applicableProductIds, setCouponData, removeCoupon, discountAmount, total, deliveryFee } = useCart();
-  const { user } = useAuth();
+  const { userá } = useAuth();
   const navigate = useNavigate();
   const [isStoreOpen, setIsStoreOpen] = useState<boolean | null>(null);
   const [loadingStatus, setLoadingStatus] = useState(false);
@@ -247,7 +247,7 @@ export default function Cart() {
           <div className="mx-4 mb-4 bg-destructive/10 border border-destructive/20 rounded-2xl p-4 flex items-start gap-3">
             <AlertCircle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
             <div className="space-y-1">
-              <p className="text-sm font-bold text-destructive">Loja fechada no momento</p>
+              <p className="text-sm font-bold text-destructive">Loja fechada não momento</p>
               <p className="text-xs text-muted-foreground leading-relaxed">
                 Este restaurante não está aceitando pedidos agora. Você pode manter os itens na sacola e finalizar assim que ele abrir!
               </p>
@@ -349,7 +349,7 @@ export default function Cart() {
                 placeholder="Digite um código" 
                 value={couponCode}
                 onChange={e => setCouponCode(e.target.value)}
-                className="flex-1 h-12 bg-background border border-border rounded-xl px-4 text-sm font-bold uppercase placeholder:normal-case placeholder:font-normal focus:outline-none focus:border-primary transition-colors"
+                className="flex-1 h-12 bg-background border border-border rounded-xl px-4 text-sm font-bold uppercase placeholder:nãormal-case placeholder:font-nãormal focus:outline-nãone focus:border-primary transition-colors"
                 disabled={validatingCoupon}
               />
               <button 
@@ -404,7 +404,7 @@ export default function Cart() {
             className="h-14 w-full rounded-xl text-base font-bold flex justify-between px-6 bg-primary hover:bg-primary/90 text-primary-foreground"
             disabled={isStoreOpen === false || loadingStatus}
             onClick={() => {
-              if (!user) {
+              if (!userá) {
                 navigate('/marketplace/login');
                 return;
               }

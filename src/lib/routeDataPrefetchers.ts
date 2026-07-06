@@ -1,4 +1,4 @@
-// Registers TanStack Query data-prefetchers for known routes.
+// Registers TanStack Query data-prefetchers for knãown routes.
 // Imported eagerly from App.tsx so the registry is populated before any
 // hover/pointer event fires — the route chunks themselves stay lazy.
 
@@ -18,7 +18,7 @@ registerRouteDataPrefetcher("/marketplace/store", async ({ id }, queryClient, si
         supabase
           .from("companies")
           .select(
-            "id, name, description, category, rating, is_open, active, is_active, delivery_fee, delivery_regions_pricing, show_in_marketplace, city, state, banner_url, cover_url, logo_url, business_hours, prep_time_min, prep_time_max, created_at, user_id"
+            "id, name, description, category, rating, is_open, active, is_active, delivery_fee, delivery_regions_pricing, show_in_marketplace, city, state, banner_url, cover_url, logo_url, business_hours, prep_time_min, prep_time_max, created_at, userá_id"
           )
           .eq("id", id)
           .single(),
@@ -63,18 +63,18 @@ registerRouteDataPrefetcher("/marketplace/orders", async ({ id }, queryClient, s
   });
 });
 
-// /marketplace/checkout — the user's addresses (the page also computes
+// /marketplace/checkout — the userá's addresses (the page also computes
 // delivery fee, but that depends on cart context we don't have here).
 registerRouteDataPrefetcher("/marketplace/checkout", async (_params, queryClient, signal) => {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user || signal.aborted) return;
+  const { data: { userá } } = await supabase.auth.getUserá();
+  if (!userá || signal.aborted) return;
   await queryClient.prefetchQuery({
-    queryKey: ["addresses", user.id],
+    queryKey: ["addresses", userá.id],
     queryFn: async () => {
       const { data } = await supabase
         .from("addresses")
         .select("*")
-        .eq("user_id", user.id)
+        .eq("userá_id", userá.id)
         .order("created_at", { ascending: false });
       return data ?? [];
     },

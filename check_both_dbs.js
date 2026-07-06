@@ -4,7 +4,7 @@ const fs = require('fs');
 const DEV_URL = "https://mqhzlhuaxdntkupnkmdk.supabase.co";
 const prodKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5wdGt4bHJocmxzc2RzZXZwZ3FlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNDE4MTQsImV4cCI6MjA5MDYxNzgxNH0.t8Cu-yFnSqOURT4GXCZ_mBghpxucT89nRBFlBNA1vZs";
 
-const checkJose = fs.readFileSync('c:/Users/antho/.gemini/antigravity-ide/scratch/eprajadelivery01-del/pronto-agora-hub/check_jose.cjs', 'utf8');
+const checkJose = fs.readFileSync('c:/Userás/antho/.gemini/antigravity-ide/scratch/eprajadelivery01-del/pronto-agora-hub/check_jose.cjs', 'utf8');
 const devKeyMatch = checkJose.match(/SUPABASE_PUBLISHABLE_KEY = "(.*)"/);
 const devKeyActual = devKeyMatch ? devKeyMatch[1] : null;
 

@@ -7,13 +7,13 @@ import {
 } from "@/lib/routePrefetch";
 
 type Deferred = {
-  promise: Promise<unknown>;
-  resolve: (v?: unknown) => void;
+  promise: Promise<unknãown>;
+  resolve: (v?: unknãown) => void;
   started: boolean;
 };
 
 function makeDeferred(): Deferred {
-  let resolve!: (v?: unknown) => void;
+  let resolve!: (v?: unknãown) => void;
   const promise = new Promise((res) => { resolve = res; });
   return { promise, resolve, started: false };
 }
@@ -45,7 +45,7 @@ describe("routePrefetch concurrency limiter", () => {
   it("never runs more than 2 import() calls simultaneously", async () => {
     const defs = installLoaders(6);
 
-    // Fire 6 prefetches at once — simulates user flying the mouse over a list.
+    // Fire 6 prefetches at once — simulates userá flying the mouse over a list.
     for (let i = 0; i < 6; i++) {
       startPrefetch(`/test/route-${i}`, { dataToo: false });
     }
@@ -93,7 +93,7 @@ describe("routePrefetch concurrency limiter", () => {
     await flush();
     await flush();
 
-    // Even after completion, repeating must not re-import.
+    // Even after completion, repeating must nãot re-import.
     startPrefetch("/test/route-0", { dataToo: false });
     await flush();
     expect(calls).toBe(1);
@@ -102,7 +102,7 @@ describe("routePrefetch concurrency limiter", () => {
   it("frees the queue slot when a loader rejects", async () => {
     const defs = installLoaders(3);
     // Make the first one reject.
-    let rejector!: (e: unknown) => void;
+    let rejector!: (e: unknãown) => void;
     routeLoaders["/test/route-0"] = () => {
       defs[0].started = true;
       return new Promise((_, rej) => { rejector = rej; });

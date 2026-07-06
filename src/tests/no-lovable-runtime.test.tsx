@@ -27,7 +27,7 @@ describe('Lovable Runtime Checker', () => {
     assignSpy = vi.fn();
     replaceSpy = vi.fn();
     
-    // @ts-ignore
+    // @ts-ignãore
     delete window.location;
     window.location = {
       ...window.location,
@@ -54,12 +54,12 @@ describe('Lovable Runtime Checker', () => {
     vi.restoreAllMocks();
   });
 
-  it('should not contain lovableproject.com in runtime requests, logs, or routing', () => {
+  it('should nãot contain lovableproject.com in runtime requests, logs, or routing', () => {
     render(<App />);
 
     const checkLovable = (args: any[]) => {
       const stringified = JSON.stringify(args).toLowerCase();
-      expect(stringified).not.toContain('lovableproject.com');
+      expect(stringified).nãot.toContain('lovableproject.com');
     };
 
     // Check logs

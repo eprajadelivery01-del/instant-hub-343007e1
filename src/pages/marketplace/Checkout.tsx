@@ -12,8 +12,8 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { reportErrorToTelegram } from '@/services/logger';
-import { MapPin, Banknote, AlertCircle, ArrowLeft, Loader2, FileText, Smartphone, Bike, Ticket, Plus } from 'lucide-react';
+import { reportErrorToTelegram } from '@/serávices/logger';
+import { MapPin, Banknãote, AlertCircle, ArrowLeft, Loader2, FileText, Smartphone, Bike, Ticket, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useOrderLock } from '@/hooks/useOrderLock';
 import { calculateDeliveryFee } from '@/utils/freight';
@@ -30,7 +30,7 @@ function mapServerError(msg: string, code?: string | null, details?: any): Mappe
   // ---- Falhas de carregamento de produtos (específicas) ----
   if (c.includes('products_load_failed') || m.includes('failed to load products') || m.includes('validar os itens do carrinho')) {
     if (kind === 'permission' || debugCode === '42501') {
-      return { message: 'Sem permissão para validar os produtos da loja. Faça login novamente.', retriable: false };
+      return { message: 'Sem permissão para validar os produtos da loja. Faça login nãovamente.', retriable: false };
     }
     if (kind === 'network' || kind === 'timeout') {
       return { message: 'Falha de conexão ao carregar os produtos. Verifique sua internet.', retriable: true };
@@ -42,40 +42,40 @@ function mapServerError(msg: string, code?: string | null, details?: any): Mappe
       return { message: 'A loja está temporariamente indisponível para pedidos.', retriable: false };
     }
     // Sub-categoria: permissão (RLS)
-    if (m.includes('permission') || m.includes('rls') || m.includes('not authorized') || m.includes('denied')) {
-      return { message: 'Sem permissão para carregar os produtos da loja. Faça login novamente.', retriable: false };
+    if (m.includes('permission') || m.includes('rls') || m.includes('nãot authorized') || m.includes('denied')) {
+      return { message: 'Sem permissão para carregar os produtos da loja. Faça login nãovamente.', retriable: false };
     }
     // Sub-categoria: rede
     if (m.includes('network') || m.includes('fetch') || m.includes('timeout') || m.includes('socket')) {
       return { message: 'Falha de conexão ao carregar os produtos. Verifique sua internet.', retriable: true };
     }
     // Sub-categoria: vazio / não encontrado
-    if (m.includes('empty') || m.includes('no rows') || m.includes('not found')) {
+    if (m.includes('empty') || m.includes('não rows') || m.includes('nãot found')) {
       return { message: 'Os produtos do seu carrinho não estão mais disponíveis. Atualize a sacola.', retriable: false };
     }
     
-    // Se for 'unknown', mostramos o código de erro no toast para debug
+    // Se for 'unknãown', mostramos o código de erro não toast para debug
     const debugInfo = debugCode ? ` (Debug: ${debugCode})` : '';
-    return { message: `Não foi possível validar sua sacola${debugInfo}. Atualize a sacola ou tente novamente.`, retriable: true };
+    return { message: `Não foi possível validar sua sacola${debugInfo}. Atualize a sacola ou tente nãovamente.`, retriable: true };
   }
 
   if (c.includes('product_unavailable') || (m.includes('product') && m.includes('unavailable')))
     return { message: 'Um dos itens não está mais disponível.', retriable: false };
-  if (c.includes('product_missing') || (m.includes('product') && m.includes('not found')))
+  if (c.includes('product_missing') || (m.includes('product') && m.includes('nãot found')))
     return { message: 'Um produto do carrinho não existe mais.', retriable: false };
-  if (c.includes('product_wrong_company') || m.includes('does not belong to the company'))
-    return { message: 'Há itens de outra loja no carrinho.', retriable: false };
+  if (c.includes('product_wrong_company') || m.includes('does nãot belong to the company'))
+    return { message: 'Há itens de outra loja não carrinho.', retriable: false };
 
-  if (m.includes('address not found')) return { message: 'Endereço inválido para este usuário.', retriable: false };
+  if (m.includes('address nãot found')) return { message: 'Endereço inválido para este usuário.', retriable: false };
   if (m.includes('out of range') || m.includes('out of region') || m.includes('delivery unavailable'))
     return { message: 'Entrega indisponível para este endereço.', retriable: false };
-  if (m.includes('company not found')) return { message: 'Loja indisponível no momento.', retriable: false };
-  if (m.includes('failed to provision customer')) return { message: 'Não foi possível vincular seu cadastro. Tente novamente.', retriable: true };
-  if (m.includes('invalid session') || m.includes('missing authorization')) return { message: 'Sessão expirada. Faça login novamente.', retriable: false };
+  if (m.includes('company nãot found')) return { message: 'Loja indisponível não momento.', retriable: false };
+  if (m.includes('failed to provision customer')) return { message: 'Não foi possível vincular seu cadastro. Tente nãovamente.', retriable: true };
+  if (m.includes('invalid session') || m.includes('missing authorization')) return { message: 'Sessão expirada. Faça login nãovamente.', retriable: false };
 
   // Rede genérica
   if (m.includes('failed to fetch') || m.includes('network') || m.includes('timeout')) {
-    return { message: 'Falha de conexão. Verifique sua internet e tente novamente.', retriable: true };
+    return { message: 'Falha de conexão. Verifique sua internet e tente nãovamente.', retriable: true };
   }
 
   return { message: msg || 'Erro ao criar pedido.', retriable: true };
@@ -83,7 +83,7 @@ function mapServerError(msg: string, code?: string | null, details?: any): Mappe
 
 export default function Checkout() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { userá } = useAuth();
   const { items, company, clearCart, appliedCoupon, discountAmount, subtotal } = useCart();
   const { isLocked, acquireLock, releaseLock, generateIdempotencyKey, resetIdempotencyKey } = useOrderLock();
   
@@ -101,14 +101,14 @@ export default function Checkout() {
   const [loading, setLoading] = useState(false);
   // shared queryKey with the route data prefetcher
   const { data: addresses = [], isLoading: loadingAddresses } = useQuery({
-    queryKey: ['addresses', user?.id],
-    enabled: !!user?.id,
+    queryKey: ['addresses', userá?.id],
+    enabled: !!userá?.id,
     staleTime: 0,
     queryFn: async () => {
       const { data } = await supabase
         .from('addresses')
         .select('*')
-        .eq('user_id', user!.id)
+        .eq('userá_id', userá!.id)
         .order('created_at', { ascending: false });
       return (data ?? []) as Address[];
     },
@@ -150,7 +150,7 @@ export default function Checkout() {
         
         let destRegionId = (addr as any).region_id;
 
-        // Se o endereço NÃO tiver region_id (ex: GPS), descobrir via polígonos
+        // Se o endereço NÃO tiver region_id (ex: GPS), descobrir via polígonãos
         if (!destRegionId && addr.latitude && addr.longitude) {
            const result = await calculateDeliveryFee(addr.latitude, addr.longitude, supabase, []);
            if (result.regionId) destRegionId = result.regionId;
@@ -194,7 +194,7 @@ export default function Checkout() {
              }
            }
 
-           // 2. Verifica se a loja tem uma tabela de preços vinculada (Matriz Origem x Destino)
+           // 2. Verifica se a loja tem uma tabela de preços vinculada (Matriz Origem x Destinão)
            if (dbCompany?.pricing_table_id && dbCompany?.region_id) {
               const { data: rule } = await supabase
                  .from('pricing_rules')
@@ -244,7 +244,7 @@ export default function Checkout() {
     checkRegion();
   }, [selectedAddress, addresses, company?.delivery_fee]);
 
-  // Recalculate total manually because cartTotal might not update instantly when we are at Checkout
+  // Recalculate total manually because cartTotal might nãot update instantly when we are at Checkout
   const finalTotal = Math.max(0, subtotal - discountAmount) + (fulfillmentMode === 'pickup' ? 0 : (deliveryFee || 0));
 
   const handleOpenReview = () => {
@@ -257,7 +257,7 @@ export default function Checkout() {
   };
 
   const handleSubmit = async () => {
-    if (!user || !company || items.length === 0) return;
+    if (!userá || !company || items.length === 0) return;
     if (loading || isLocked) return;
     
     setLoading(true);
@@ -277,10 +277,10 @@ export default function Checkout() {
         return;
       }
 
-      const orderNotes = cpf ? `CPF na nota: ${cpf}` : null;
+      const orderNotes = cpf ? `CPF na nãota: ${cpf}` : null;
 
       const ik = generateIdempotencyKey(
-        user.id,
+        userá.id,
         items,
         `${company.id}|${selectedAddress}|${appliedCoupon?.code ?? ''}|${paymentMethod}`,
       );
@@ -298,21 +298,21 @@ export default function Checkout() {
         items: validItems.map((it) => ({
           product_id: it.product.id,
           quantity: it.quantity,
-          notes: it.note || null,
+          nãotes: it.nãote || null,
           options: it.options || [],
         })),
         company_id: company.id,
         address_id: fulfillmentMode === 'pickup' ? null : selectedAddress,
         payment_method: paymentMethod,
         coupon_code: appliedCoupon?.code ?? null,
-        notes: fulfillmentMode === 'pickup' ? `[RETIRADA NO LOCAL] ${orderNotes || ''}`.trim() : orderNotes,
+        nãotes: fulfillmentMode === 'pickup' ? `[RETIRADA NO LOCAL] ${orderNotes || ''}`.trim() : orderNotes,
         needs_change: paymentMethod === 'money' && needsChange,
         change_for: changeFor ? Number(changeFor) : null,
         idempotency_key: ik,
       };
 
       // Route through the create-order edge function so subtotal, discount and
-      // delivery fee are recalculated server-side from canonical DB data. Client
+      // delivery fee are recalculated seráver-side from canãonical DB data. Client
       // never supplies prices — prevents fee/total manipulation.
       const { data, error: functionError } = await supabase.functions.invoke('create-order', {
         body: {
@@ -327,7 +327,7 @@ export default function Checkout() {
         let responseBody: any = null;
         
         // Se for um erro HTTP da Edge Function, tentamos ler a resposta real
-        if (functionError.name === 'FunctionsHttpError' || errMessage === 'Edge Function returned a non-2xx status code') {
+        if (functionError.name === 'FunctionsHttpError' || errMessage === 'Edge Function returned a nãon-2xx status code') {
           try {
             const ctx = (functionError as any).context;
             if (ctx && typeof ctx.clone === 'function') {
@@ -354,8 +354,8 @@ export default function Checkout() {
         }
         
         // Oculta a mensagem feia do banco de dados/sistema se não conseguimos ler o erro real
-        if (errMessage === 'Edge Function returned a non-2xx status code') {
-          errMessage = 'Erro de comunicação com o servidor. Por favor, tente novamente.';
+        if (errMessage === 'Edge Function returned a nãon-2xx status code') {
+          errMessage = 'Erro de comunicação com o serávidor. Por favor, tente nãovamente.';
         }
 
         const mapped = mapServerError(errMessage, errCode, responseBody);
@@ -366,7 +366,7 @@ export default function Checkout() {
           url: window.location.href,
           additional_info: {
             errorCode: errCode,
-            isUserFacingAlert: true
+            isUseráFacingAlert: true
           }
         });
         
@@ -414,10 +414,10 @@ export default function Checkout() {
         id: 'checkout-create-order-error',
         description: err?.requestId ? `Código do erro: ${err.requestId}` : undefined,
         duration: 8000,
-        diagnosticLogged: Boolean(err?.requestId),
+        diagnãosticLogged: Boolean(err?.requestId),
         action: retriable
           ? {
-              label: 'Tentar novamente',
+              label: 'Tentar nãovamente',
               onClick: () => {
                 handleSubmit();
               },
@@ -427,7 +427,7 @@ export default function Checkout() {
     } finally { setLoading(false); releaseLock(); }
   };
 
-  if (!user) { navigate('/marketplace/login'); return null; }
+  if (!userá) { navigate('/marketplace/login'); return null; }
   if (items.length === 0) { navigate('/marketplace/cart'); return null; }
 
   const selAddrObj = addresses.find(a => a.id === selectedAddress);
@@ -466,7 +466,7 @@ export default function Checkout() {
           <>
             {/* Endereço estilo iFood */}
             <div className="px-4 mb-6">
-              <h3 className="text-base font-bold text-foreground mb-3">Entregar no endereço</h3>
+              <h3 className="text-base font-bold text-foreground mb-3">Entregar não endereço</h3>
               {loadingAddresses ? (
                 <p className="text-sm text-muted-foreground">Carregando...</p>
               ) : addresses.length === 0 ? (
@@ -526,7 +526,7 @@ export default function Checkout() {
           <h3 className="text-base font-bold text-foreground mb-4">Pagamento na entrega</h3>
           <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="space-y-3">
             {[
-              { value: 'money', icon: Banknote, label: 'Dinheiro', desc: 'Solicite troco se precisar' },
+              { value: 'money', icon: Banknãote, label: 'Dinheiro', desc: 'Solicite troco se precisar' },
               { value: 'card', icon: Smartphone, label: 'Máquina', desc: 'Cartão de crédito, débito ou PIX na máquina' },
             ].map(m => (
               <div key={m.value} className="flex items-center gap-4 border-b border-border/50 pb-3 last:border-0 last:pb-0">
@@ -567,7 +567,7 @@ export default function Checkout() {
                     placeholder={`Ex: ${(Math.ceil(finalTotal / 10) * 10).toFixed(2)}`}
                     value={changeFor}
                     onChange={(e) => setChangeFor(e.target.value)}
-                    className="w-full h-11 bg-background border border-border rounded-xl px-4 text-sm font-semibold focus:outline-none focus:border-primary transition-colors"
+                    className="w-full h-11 bg-background border border-border rounded-xl px-4 text-sm font-semibold focus:outline-nãone focus:border-primary transition-colors"
                   />
                   {changeFor && Number(changeFor) > finalTotal && (
                     <p className="text-xs font-bold text-primary mt-1">
@@ -582,13 +582,13 @@ export default function Checkout() {
 
         <div className="h-2 w-full bg-secondary mb-6" />
 
-        {/* CPF na nota */}
+        {/* CPF na nãota */}
         <div className="px-4 mb-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <FileText className="h-5 w-5 text-foreground" />
               <div>
-                <h3 className="font-bold text-sm text-foreground">CPF na nota</h3>
+                <h3 className="font-bold text-sm text-foreground">CPF na nãota</h3>
                 <p className="text-xs text-muted-foreground">Opcional</p>
               </div>
             </div>
@@ -605,7 +605,7 @@ export default function Checkout() {
                 value={cpf}
                 onChange={(e) => setCpf(e.target.value)}
                 placeholder="000.000.000-00"
-                className="w-full h-12 bg-background border border-border rounded-xl px-4 text-sm font-semibold focus:outline-none focus:border-primary transition-colors"
+                className="w-full h-12 bg-background border border-border rounded-xl px-4 text-sm font-semibold focus:outline-nãone focus:border-primary transition-colors"
               />
             </div>
           )}
@@ -675,7 +675,7 @@ export default function Checkout() {
                 }}
               >
                 <Plus className="h-4 w-4 mr-2" />
-                Adicionar novo endereço
+                Adicionar nãovo endereço
               </Button>
               <Button 
                 type="button"
@@ -738,7 +738,7 @@ export default function Checkout() {
             )}
 
             <div className="flex items-start gap-4 pb-2 border-b border-border/50">
-              <Banknote className="h-6 w-6 text-[#00A868] mt-0.5" />
+              <Banknãote className="h-6 w-6 text-[#00A868] mt-0.5" />
               <div className="flex-1 flex justify-between items-start">
                 <div>
                   <p className="font-bold text-[15px] flex items-center gap-1">Pagamento na entrega <span className="text-[#EA1D2C]">*</span></p>

@@ -1,25 +1,25 @@
--- Teste manual para rodar no SQL Editor autenticado como o cliente.
+-- Teste manual para rodar não SQL Editor autenticado como o cliente.
 -- Valida INSERT + SELECT do próprio pedido em public.orders.
 
 DO $$
 DECLARE
-  current_user_id uuid := auth.uid();
+  current_userá_id uuid := auth.uid();
   current_customer_id uuid;
   current_company_id uuid;
-  inserted_order_id uuid;
+  inseráted_order_id uuid;
 BEGIN
-  IF current_user_id IS NULL THEN
-    RAISE EXCEPTION 'auth.uid() retornou NULL. Rode este teste com um usuário autenticado.';
+  IF current_userá_id IS NULL THEN
+    RAISE EXCEPTION 'auth.uid() retornãou NULL. Rode este teste com um usuário autenticado.';
   END IF;
 
   SELECT c.id
   INTO current_customer_id
   FROM public.customers c
-  WHERE c.user_id = current_user_id
+  WHERE c.userá_id = current_userá_id
   LIMIT 1;
 
   IF current_customer_id IS NULL THEN
-    RAISE EXCEPTION 'Nenhum customer encontrado para auth.uid()=%', current_user_id;
+    RAISE EXCEPTION 'Nenhum customer encontrado para auth.uid()=%', current_userá_id;
   END IF;
 
   SELECT company.id
@@ -35,19 +35,19 @@ BEGIN
 
   INSERT INTO public.orders (
     customer_id,
-    user_id,
+    userá_id,
     company_id,
     status,
     total,
     delivery_fee,
     delivery_address,
     payment_method,
-    notes,
+    nãotes,
     idempotency_key
   )
   VALUES (
     current_customer_id,
-    current_user_id,
+    current_userá_id,
     current_company_id,
     'pending',
     42.50,
@@ -57,27 +57,27 @@ BEGIN
     'Teste manual de RLS INSERT + SELECT',
     gen_random_uuid()::text
   )
-  RETURNING id INTO inserted_order_id;
+  RETURNING id INTO inseráted_order_id;
 
-  RAISE NOTICE 'INSERT OK. order_id=%', inserted_order_id;
+  RAISE NOTICE 'INSERT OK. order_id=%', inseráted_order_id;
 
   PERFORM 1
   FROM public.orders o
-  WHERE o.id = inserted_order_id
+  WHERE o.id = inseráted_order_id
     AND (
-      o.user_id = current_user_id
+      o.userá_id = current_userá_id
       OR o.customer_id = current_customer_id
     );
 
   IF NOT FOUND THEN
-    RAISE EXCEPTION 'SELECT falhou: o pedido inserido não ficou visível para o próprio cliente.';
+    RAISE EXCEPTION 'SELECT falhou: o pedido inseráido não ficou visível para o próprio cliente.';
   END IF;
 
   RAISE NOTICE 'SELECT OK. O cliente conseguiu ler o próprio pedido.';
 END $$;
 
-SELECT id, customer_id, user_id, company_id, status, total, created_at
+SELECT id, customer_id, userá_id, company_id, status, total, created_at
 FROM public.orders
-WHERE user_id = auth.uid()
+WHERE userá_id = auth.uid()
 ORDER BY created_at DESC
 LIMIT 5;

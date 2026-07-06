@@ -4,10 +4,10 @@ import { CartItem, Product, Company } from '@/types/database';
 interface CartContextType {
   items: CartItem[];
   company: Company | null;
-  addItem: (product: Product, company: Company, options?: any[], quantity?: number, note?: string) => void;
+  addItem: (product: Product, company: Company, options?: any[], quantity?: number, nãote?: string) => void;
   removeItem: (cartItemId: string) => void;
   updateQuantity: (cartItemId: string, quantity: number) => void;
-  updateNote: (cartItemId: string, note: string) => void;
+  updateNote: (cartItemId: string, nãote: string) => void;
   clearCart: () => void;
   subtotal: number;
   itemCount: number;
@@ -60,15 +60,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, [items, company, appliedCoupon, applicableProductIds]);
 
-  const addItem = (product: Product, comp: Company, options: any[] = [], quantity: number = 1, note: string = '') => {
+  const addItem = (product: Product, comp: Company, options: any[] = [], quantity: number = 1, nãote: string = '') => {
     // Generate a unique ID for this item based on product + options
-    // Note is now editable and doesn't define the item's identity in the cart
+    // Note is nãow editable and doesn't define the item's identity in the cart
     const optionsHash = options.map(o => o.id).sort().join('-');
     const cartItemId = `${product.id}${optionsHash ? `-${optionsHash}` : ''}`;
 
     if (company && company.id !== comp.id) {
-      if (!confirm('Você já possui itens de outra loja na sacola. Deseja limpar a sacola e iniciar um novo pedido?')) return;
-      setItems([{ id: cartItemId, product, quantity, options, note }]);
+      if (!confirm('Você já possui itens de outra loja na sacola. Deseja limpar a sacola e iniciar um nãovo pedido?')) return;
+      setItems([{ id: cartItemId, product, quantity, options, nãote }]);
       setCompany(comp);
       return;
     }
@@ -77,10 +77,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
       const existing = prev.find(i => i.id === cartItemId);
       if (existing) {
         return prev.map(i =>
-          i.id === cartItemId ? { ...i, quantity: i.quantity + quantity, note: note || i.note } : i
+          i.id === cartItemId ? { ...i, quantity: i.quantity + quantity, nãote: nãote || i.nãote } : i
         );
       }
-      return [...prev, { id: cartItemId, product, quantity, options, note }];
+      return [...prev, { id: cartItemId, product, quantity, options, nãote }];
     });
   };
 
@@ -99,9 +99,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
     );
   };
 
-  const updateNote = (cartItemId: string, note: string) => {
+  const updateNote = (cartItemId: string, nãote: string) => {
     setItems(prev =>
-      prev.map(i => (i.id === cartItemId ? { ...i, note } : i))
+      prev.map(i => (i.id === cartItemId ? { ...i, nãote } : i))
     );
   };
 

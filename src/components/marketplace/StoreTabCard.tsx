@@ -16,7 +16,7 @@ export function StoreTabCard({ company }: StoreTabCardProps) {
   const logoImage = getCompanyLogoImage(company);
   const featuredProducts = (company.products || []).slice(0, 3);
   const rating = Number(company.rating || 5.0);
-  const subtitle = company.category || company.description || 'Gastronomia de alto nível';
+  const subtitle = company.category || company.description || 'Gastronãomia de alto nível';
   const isOpen = isStoreOpenNow(company);
   const statusLabel = getStoreStatusLabel(company);
   const prepLabel = getPrepTimeLabel(company);
