@@ -1,6 +1,6 @@
 // Centralized dynamic imports for route-level code splitting.
 // Used by App.tsx (via React.lazy) and by the prefetcher to warm chunks
-// (and optionally data) on hover/focus/touch before the userá actually
+// (and optionally data) on hover/focus/touch before the user actually
 // navigates. Includes throttle, concurrency limit, hover-out cancel and
 // metrics reporting.
 
@@ -73,7 +73,7 @@ const dataPrefetchers = new Map<string, DataPrefetcher>();
 /**
  * Register a data prefetcher for a given loader key (e.g. "/marketplace/store").
  * The prefetcher receives the URL params, the shared QueryClient and an
- * AbortSignal so it can drop in-flight work when the userá moves away.
+ * AbortSignal so it can drop in-flight work when the user moves away.
  */
 export function registerRouteDataPrefetcher(loaderKey: string, fn: DataPrefetcher): void {
   dataPrefetchers.set(loaderKey, fn);
@@ -82,7 +82,7 @@ export function registerRouteDataPrefetcher(loaderKey: string, fn: DataPrefetche
 // ---------- Concurrency limiter + throttle ----------
 
 const MAX_CONCURRENT = 2;
-const HOVER_DWELL_MS = 80; // userá must linger this long before we prefetch
+const HOVER_DWELL_MS = 80; // user must linger this long before we prefetch
 const COMMIT_DWELL_MS = 0; // pointerdown/touchstart fires immediately
 
 let inFlight = 0;
@@ -334,7 +334,7 @@ export function installRoutePrefetcher(queryClient?: QueryClient): void {
     }
   };
 
-  // Commit signal: pointer/touch down → userá is about to click. Fire now.
+  // Commit signal: pointer/touch down → user is about to click. Fire now.
   const onCommit = (event: Event) => {
     const path = getLinkPath(event.target);
     if (!path) return;

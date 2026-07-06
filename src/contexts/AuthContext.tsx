@@ -1,10 +1,10 @@
 import { createContext, useContext, useEffect, useState, ReactNode, useRef } from 'react';
-import { Userá, Session } from '@supabase/supabase-js';
+import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { Profile } from '@/types/database';
 
 interface AuthContextType {
-  userá: Userá | null;
+  user: User | null;
   session: Session | null;
   profile: Profile | null;
   loading: boolean;
@@ -17,15 +17,15 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [userá, setUserá] = useState<Userá | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const fetchingRef = useRef<string | null>(null);
 
-  const fetchProfile = async (useráId: string) => {
-    if (fetchingRef.current === useráId) return;
-    fetchingRef.current = useráId;
+  const fetchProfile = async (userId: string) => {
+    if (fetchingRef.current === userId) return;
+    fetchingRef.current = userId;
 
     try {
       if (import.meta.env.DEV) {
@@ -39,7 +39,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const fetchPromise = supabase
         .from('profiles')
         .select('id, full_name, avatar_url, phone, role, created_at, updated_at')
-        .eq('id', useráId)
+        .eq('id', userId)
         .maybeSingle();
 
       const { data } = await Promise.race([fetchPromise, timeout]) as any;
@@ -65,14 +65,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const { data: { session } } = await supabase.auth.getSession();
         if (!mounted) return;
 
-        const currentUserá = session?.userá;
+        const currentUser = session?.user;
         setSession(session);
-        setUserá(currentUserá ?? null);
+        setUser(currentUser ?? null);
 
-        if (currentUserá) {
+        if (currentUser) {
           setLoading(false);
           setTimeout(() => {
-            if (mounted) fetchProfile(currentUserá.id);
+            if (mounted) fetchProfile(currentUser.id);
           }, 0);
         } else {
           setLoading(false);
@@ -92,18 +92,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
-          const currentUserá = session?.userá;
+          const currentUser = session?.user;
           setSession(session);
-          setUserá(currentUserá ?? null);
+          setUser(currentUser ?? null);
           setLoading(false);
-          if (currentUserá) {
+          if (currentUser) {
             setTimeout(() => {
-              if (mounted) fetchProfile(currentUserá.id);
+              if (mounted) fetchProfile(currentUser.id);
             }, 0);
           }
         } else if (event === 'SIGNED_OUT') {
           setSession(null);
-          setUserá(null);
+          setUser(null);
           setProfile(null);
           setLoading(false);
         }
@@ -131,16 +131,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     if (error) throw error;
 
-    // IMPORTANTE: profile + userá_roles são criados automaticamente pelo trigger
-    // public.handle_new_userá() (SECURITY DEFINER) em auth.userás — ver
-    // scripts/handle_new_userá_trigger.sql.
+    // IMPORTANTE: profile + user_roles são criados automaticamente pelo trigger
+    // public.handle_new_user() (SECURITY DEFINER) em auth.users — ver
+    // scripts/handle_new_user_trigger.sql.
     // Nunca escrever `role` a partir do client (risco de role escalation).
     // Atualizamos apenas campos não privilegiados após o signup.
-    if (data.userá) {
+    if (data.user) {
       await supabase.from('profiles').update({
         full_name: fullName,
         phone,
-      }).eq('id', data.userá.id);
+      }).eq('id', data.user.id);
     }
   };
 
@@ -148,7 +148,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await supabase.auth.signOut();
     } finally {
-      setUserá(null);
+      setUser(null);
       setSession(null);
       setProfile(null);
       localStorage.clear();
@@ -158,11 +158,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const refreshProfile = async () => {
-    if (userá) await fetchProfile(userá.id);
+    if (user) await fetchProfile(user.id);
   };
 
   return (
-    <AuthContext.Provider value={{ userá, session, profile, loading, signIn, signUp, signOut, refreshProfile }}>
+    <AuthContext.Provider value={{ user, session, profile, loading, signIn, signUp, signOut, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );

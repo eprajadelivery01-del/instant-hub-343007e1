@@ -1,18 +1,18 @@
 import { supabase } from '@/lib/supabase';
 
 export type AuditEvent =
-  | 'orders.inserát.attempt'
-  | 'orders.inserát.success'
-  | 'orders.inserát.403'
-  | 'orders.inserát.23505'
-  | 'orders.inserát.error'
+  | 'orders.insert.attempt'
+  | 'orders.insert.success'
+  | 'orders.insert.403'
+  | 'orders.insert.23505'
+  | 'orders.insert.error'
   | 'customers.autocreate.success'
   | 'customers.autocreate.failed';
 
 export interface AuditLogEntry {
   request_id: string;
   event: AuditEvent;
-  userá_id?: string | null;
+  user_id?: string | null;
   http_status?: number | null;
   error_code?: string | null;
   error_message?: string | null;
@@ -28,10 +28,10 @@ export const newRequestId = () =>
 
 export async function recordAuditLog(entry: AuditLogEntry) {
   try {
-    const { error } = await supabase.from('audit_logs').inserát({
+    const { error } = await supabase.from('audit_logs').insert({
       request_id: entry.request_id,
       event: entry.event,
-      userá_id: entry.userá_id ?? null,
+      user_id: entry.user_id ?? null,
       http_status: entry.http_status ?? null,
       error_code: entry.error_code ?? null,
       error_message: entry.error_message ?? null,

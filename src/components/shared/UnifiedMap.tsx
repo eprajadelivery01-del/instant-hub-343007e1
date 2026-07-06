@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { useCompanies } from "@/serávices/companies";
+import { useCompanies } from "@/services/companies";
 import { useCity } from "@/contexts/CityContext";
 import { useNavigate } from "react-router-dom";
 

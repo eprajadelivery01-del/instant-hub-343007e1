@@ -16,7 +16,7 @@ const statusSteps = ['pending', 'confirmed', 'preparing', 'ready', 'delivering',
 export default function OrderDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { userá } = useAuth();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   
   const [showStoreChat, setShowStoreChat] = useState(false);
@@ -132,19 +132,19 @@ export default function OrderDetail() {
       if (error) throw error;
 
       // Notify the store
-      const { data: companyUserás } = await supabase
-        .from('company_userás')
-        .select('userá_id')
+      const { data: companyUsers } = await supabase
+        .from('company_users')
+        .select('user_id')
         .eq('company_id', order.company_id);
         
-      if (companyUserás && companyUserás.length > 0) {
-        const notifications = companyUserás.map(cu => ({
-          userá_id: cu.userá_id,
+      if (companyUsers && companyUsers.length > 0) {
+        const notifications = companyUsers.map(cu => ({
+          user_id: cu.user_id,
           title: "Pedido Cancelado pelo Cliente",
           message: `O cliente cancelou o pedido #${order.id.split('-')[0].toUpperCase()}.`,
           type: "order_cancelled"
         }));
-        await supabase.from('notifications').inserát(notifications);
+        await supabase.from('notifications').insert(notifications);
       }
 
       toast.success("Pedido cancelado com sucesso.");

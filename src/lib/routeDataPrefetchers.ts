@@ -18,7 +18,7 @@ registerRouteDataPrefetcher("/marketplace/store", async ({ id }, queryClient, si
         supabase
           .from("companies")
           .select(
-            "id, name, description, category, rating, is_open, active, is_active, delivery_fee, delivery_regions_pricing, show_in_marketplace, city, state, banner_url, cover_url, logo_url, business_hours, prep_time_min, prep_time_max, created_at, userá_id"
+            "id, name, description, category, rating, is_open, active, is_active, delivery_fee, delivery_regions_pricing, show_in_marketplace, city, state, banner_url, cover_url, logo_url, business_hours, prep_time_min, prep_time_max, created_at, user_id"
           )
           .eq("id", id)
           .single(),
@@ -63,18 +63,18 @@ registerRouteDataPrefetcher("/marketplace/orders", async ({ id }, queryClient, s
   });
 });
 
-// /marketplace/checkout — the userá's addresses (the page also computes
+// /marketplace/checkout — the user's addresses (the page also computes
 // delivery fee, but that depends on cart context we don't have here).
 registerRouteDataPrefetcher("/marketplace/checkout", async (_params, queryClient, signal) => {
-  const { data: { userá } } = await supabase.auth.getUserá();
-  if (!userá || signal.aborted) return;
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user || signal.aborted) return;
   await queryClient.prefetchQuery({
-    queryKey: ["addresses", userá.id],
+    queryKey: ["addresses", user.id],
     queryFn: async () => {
       const { data } = await supabase
         .from("addresses")
         .select("*")
-        .eq("userá_id", userá.id)
+        .eq("user_id", user.id)
         .order("created_at", { ascending: false });
       return data ?? [];
     },

@@ -9,7 +9,7 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 async function debugLoginFetch() {
   const testEmail = 'loja8@nexuspro.test';
   
-  // 1. Get userá ID from email (if public) or just search by a profile link
+  // 1. Get user ID from email (if public) or just search by a profile link
   // Since we know the seed pattern, we can look for profile where full_name = 'Fruit Fresh'
   console.log('Searching for profile Fruit Fresh...');
   const { data: profile, error: pError } = await supabase
@@ -29,17 +29,17 @@ async function debugLoginFetch() {
     console.log('Profiles check: SUCCESS');
   }
 
-  // 2. Check userá_roles
-  console.log('\nChecking userá_roles...');
+  // 2. Check user_roles
+  console.log('\nChecking user_roles...');
   const { data: roles, error: rError } = await supabase
-    .from('userá_roles')
+    .from('user_roles')
     .select('role')
     .limit(5);
 
   if (rError) {
     console.error('[USER_ROLES ERROR]:', rError.message);
   } else {
-    console.log('Userá roles check: SUCCESS');
+    console.log('User roles check: SUCCESS');
   }
 }
 

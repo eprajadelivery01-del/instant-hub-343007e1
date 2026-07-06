@@ -45,7 +45,7 @@ describe("routePrefetch concurrency limiter", () => {
   it("never runs more than 2 import() calls simultaneously", async () => {
     const defs = installLoaders(6);
 
-    // Fire 6 prefetches at once — simulates userá flying the mouse over a list.
+    // Fire 6 prefetches at once — simulates user flying the mouse over a list.
     for (let i = 0; i < 6; i++) {
       startPrefetch(`/test/route-${i}`, { dataToo: false });
     }

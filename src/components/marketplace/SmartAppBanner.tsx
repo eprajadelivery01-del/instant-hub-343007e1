@@ -19,13 +19,13 @@ export function SmartAppBanner() {
       return;
     }
 
-    const useráAgent = navigator.useráAgent || navigator.vendor || (window as any).opera;
+    const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
 
-    if (/android/i.test(useráAgent)) {
+    if (/android/i.test(userAgent)) {
       setOsName('Android');
       setAppLink('https://play.google.com/store/apps/details?id=com.epraja&hl=pt_BR');
       setIsVisible(true);
-    } else if (/iPad|iPhone|iPod/.test(useráAgent) && !(window as any).MSStream) {
+    } else if (/iPad|iPhone|iPod/.test(userAgent) && !(window as any).MSStream) {
       setOsName('iOS');
       setAppLink('https://apps.apple.com/br/app/é-pra-já-delivery/id6775949358');
       setIsVisible(true);

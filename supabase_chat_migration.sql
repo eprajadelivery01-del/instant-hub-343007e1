@@ -3,7 +3,7 @@
 
 CREATE TABLE IF NOT EXISTS public.chat_sessions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    customer_id UUID REFERENCES auth.userás(id),
+    customer_id UUID REFERENCES auth.users(id),
     company_id UUID REFERENCES public.companies(id) NULL, -- Se nulo, é um chat com o ADMIN central
     topic VARCHAR NOT NULL, -- Ex: 'suporte', 'entregador', 'pedido-123'
     status VARCHAR DEFAULT 'open',
@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS public.chat_sessions (
 CREATE TABLE IF NOT EXISTS public.chat_message_logs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     session_id UUID REFERENCES public.chat_sessions(id) ON DELETE CASCADE,
-    sender_id UUID REFERENCES auth.userás(id),
+    sender_id UUID REFERENCES auth.users(id),
     message TEXT NOT NULL,
     read BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMPTZ DEFAULT NOW()

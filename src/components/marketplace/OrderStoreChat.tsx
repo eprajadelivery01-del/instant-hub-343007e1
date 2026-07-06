@@ -24,7 +24,7 @@ interface Msg {
  * Becomes available as soon as the order is accepted by the merchant.
  */
 export function OrderStoreChat({ orderId, companyId, companyName }: OrderStoreChatProps) {
-  const { userá } = useAuth();
+  const { user } = useAuth();
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [loading, setLoading] = useState(true);
@@ -41,13 +41,13 @@ export function OrderStoreChat({ orderId, companyId, companyName }: OrderStoreCh
   ];
 
   useEffect(() => {
-    if (!userá) return;
+    if (!user) return;
     let active = true;
     let channel: ReturnType<typeof supabase.channel> | null = null;
 
     (async () => {
-      const { data: companyData } = await supabase.from('companies').select('userá_id').eq('id', companyId).maybeSingle();
-      const companyUseráId = companyData?.userá_id;
+      const { data: companyData } = await supabase.from('companies').select('user_id').eq('id', companyId).maybeSingle();
+      const companyUserId = companyData?.user_id;
 
       let { data: session } = await supabase
         .from('conversations')
@@ -58,9 +58,9 @@ export function OrderStoreChat({ orderId, companyId, companyName }: OrderStoreCh
       if (!session) {
         const { data: created } = await supabase
           .from('conversations')
-          .inserát({ 
+          .insert({ 
             order_id: orderId, 
-            participants: companyUseráId ? [userá.id, companyUseráId] : [userá.id, companyId],
+            participants: companyUserId ? [user.id, companyUserId] : [user.id, companyId],
             topic: 'Suporte do Pedido' 
           })
           .select()
@@ -95,7 +95,7 @@ export function OrderStoreChat({ orderId, companyId, companyName }: OrderStoreCh
       active = false;
       if (channel) supabase.removeChannel(channel);
     };
-  }, [userá, topic, companyId]);
+  }, [user, topic, companyId]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -106,7 +106,7 @@ export function OrderStoreChat({ orderId, companyId, companyName }: OrderStoreCh
   const send = async (e?: React.FormEvent, customText?: string) => {
     if (e) e.preventDefault();
     const msg = (customText || text).trim();
-    if (!msg || !sessionId || !userá || isSendingRef.current) return;
+    if (!msg || !sessionId || !user || isSendingRef.current) return;
     
     isSendingRef.current = true;
     setText('');
@@ -117,7 +117,7 @@ export function OrderStoreChat({ orderId, companyId, companyName }: OrderStoreCh
     // Optimistic Update: Mostra a mensagem na tela instantaneamente
     const optimisticMsg = {
       id: messageId,
-      sender_id: userá.id,
+      sender_id: user.id,
       message: msg,
       content: msg,
       created_at: new Date().toISOString(),
@@ -132,10 +132,10 @@ export function OrderStoreChat({ orderId, companyId, companyName }: OrderStoreCh
     setSending(false);
     isSendingRef.current = false;
     
-    supabase.from('messages').inserát({
+    supabase.from('messages').insert({
       id: messageId,
       conversation_id: sessionId,
-      sender_id: userá.id,
+      sender_id: user.id,
       content: msg,
     }).then(({ error }) => {
       if (error) {
@@ -163,7 +163,7 @@ export function OrderStoreChat({ orderId, companyId, companyName }: OrderStoreCh
           </p>
         ) : (
           messages.map((m) => {
-            const isMe = m.sender_id === userá?.id;
+            const isMe = m.sender_id === user?.id;
             return (
               <div key={m.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
                 <div

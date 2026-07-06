@@ -8,7 +8,7 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 async function fixSchema() {
   console.log('Attempting to fix conversations table schema...');
-  // Note: Since we don't have migrations, we rely on the fact that if a column is missing, the first inserát might fail or we can try to detect it.
+  // Note: Since we don't have migrations, we rely on the fact that if a column is missing, the first insert might fail or we can try to detect it.
   // However, I'll just assume I can't run ALTER TABLE via anon key.
   // I will check if I can at least see the columns.
   

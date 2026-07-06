@@ -6,7 +6,7 @@ import { useCart } from '@/contexts/CartContext';
 import { useOrderNotifications } from '@/hooks/useOrderNotifications';
 import { useMarketingNotifications } from '@/hooks/useMarketingNotifications';
 import { MarketingNotificationPopup } from './MarketingNotificationPopup';
-import { Home, Search, ShoppingBag, ClipboardList, Userá, Store } from 'lucide-react';
+import { Home, Search, ShoppingBag, ClipboardList, User, Store } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
 import { OrderRatingModal } from './OrderRatingModal';
@@ -17,13 +17,13 @@ const navItems = [
   { path: '/marketplace', icon: Home, label: 'Início' },
   { path: '/marketplace/search', icon: Search, label: 'Buscar' },
   { path: '/marketplace/orders', icon: ClipboardList, label: 'Pedidos' },
-  { path: '/marketplace/profile', icon: Userá, label: 'Perfil' },
+  { path: '/marketplace/profile', icon: User, label: 'Perfil' },
 ];
 
 export default function MarketplaceLayout({ children, hideNav }: { children: ReactNode; hideNav?: boolean; hideHeader?: boolean }) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { userá } = useAuth();
+  const { user } = useAuth();
   const { itemCount, company } = useCart();
 
   // Hooks de nãotificação global
@@ -73,14 +73,14 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
   }, [company?.id, navigate]);
 
   useEffect(() => {
-    if (!userá) return;
+    if (!user) return;
 
     const fetchOrderCount = async () => {
       try {
         const { data, error } = await supabase
           .from('orders')
           .select('status, deliveries(status)')
-          .or(`customer_id.eq.${userá.id},userá_id.eq.${userá.id}`);
+          .or(`customer_id.eq.${user.id},user_id.eq.${user.id}`);
 
         if (error) throw error;
         
@@ -100,7 +100,7 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
     fetchOrderCount();
 
     const channel = supabase
-      .channel(`layout-orders-${userá.id}`)
+      .channel(`layout-orders-${user.id}`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'orders' },
@@ -113,7 +113,7 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [userá]);
+  }, [user]);
 
   const [portalEl, setPortalEl] = useState<HTMLElement | null>(null);
   useEffect(() => {
@@ -144,7 +144,7 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
                 : location.pathname.startsWith(item.path);
 
               const handleClick = (e: React.MouseEvent) => {
-                if (!userá && (item.path === '/marketplace/orders' || item.path === '/marketplace/profile')) {
+                if (!user && (item.path === '/marketplace/orders' || item.path === '/marketplace/profile')) {
                   e.preventDefault();
                   navigate('/marketplace/login');
                 }
@@ -251,7 +251,7 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
                 )}
               </Link>
               <Link to="/marketplace/profile" className="h-10 w-10 rounded-full bg-slate-100 overflow-hidden border border-border/50 transition-transform hover:scale-105">
-                <Userá className="h-full w-full p-2 text-muted-foreground" />
+                <User className="h-full w-full p-2 text-muted-foreground" />
               </Link>
             </div>
           </div>

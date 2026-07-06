@@ -14,12 +14,12 @@ export type MarketingNotification = {
 };
 
 export function useMarketingNotifications() {
-  const { userá } = useAuth();
+  const { user } = useAuth();
   const { toast } = useToast();
   const [activeNotification, setActiveNotification] = useState<MarketingNotification | null>(null);
 
   useEffect(() => {
-    if (!userá) return;
+    if (!user) return;
 
     // Listen for new marketing notifications
     const channel = supabase.channel('marketing-notifications')
@@ -39,7 +39,7 @@ export function useMarketingNotifications() {
               type: 'broadcast',
               event: 'notification_received',
               payload: {
-                userá_email: userá.email,
+                user_email: user.email,
                 notification_title: newNotif.title
               }
             });
@@ -80,7 +80,7 @@ export function useMarketingNotifications() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [userá?.id]);
+  }, [user?.id]);
 
   const clearNotification = useCallback(() => {
     setActiveNotification(null);

@@ -33,7 +33,7 @@ CREATE POLICY "Company owners can upload products images" ON storage.objects
   FOR INSERT WITH CHECK (
     bucket_id = 'products' 
     AND (storage.foldername(name))[1] IN (
-      SELECT id::text FROM public.companies WHERE userá_id = auth.uid()
+      SELECT id::text FROM public.companies WHERE user_id = auth.uid()
     )
   );
 
@@ -42,7 +42,7 @@ CREATE POLICY "Company owners can update products images" ON storage.objects
   FOR UPDATE USING (
     bucket_id = 'products' 
     AND (storage.foldername(name))[1] IN (
-      SELECT id::text FROM public.companies WHERE userá_id = auth.uid()
+      SELECT id::text FROM public.companies WHERE user_id = auth.uid()
     )
   );
 
@@ -51,6 +51,6 @@ CREATE POLICY "Company owners can delete products images" ON storage.objects
   FOR DELETE USING (
     bucket_id = 'products' 
     AND (storage.foldername(name))[1] IN (
-      SELECT id::text FROM public.companies WHERE userá_id = auth.uid()
+      SELECT id::text FROM public.companies WHERE user_id = auth.uid()
     )
   );

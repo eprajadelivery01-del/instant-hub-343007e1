@@ -21,7 +21,7 @@ export default function Addresses() {
   const queryClient = useQueryClient();
   const location = useLocation();
   const returnTo = location.state?.returnTo;
-  const { userá } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [loading, setLoading] = useState(true);
@@ -36,11 +36,11 @@ export default function Addresses() {
   });
   const [selectedLabel, setSelectedLabel] = useState<string>('Casa');
 
-  const fetchAddresses = async (useráId: string) => {
+  const fetchAddresses = async (userId: string) => {
     const { data, error } = await supabase
       .from('addresses')
       .select('*')
-      .eq('userá_id', useráId)
+      .eq('user_id', userId)
       .order('created_at', { ascending: false });
     
     if (error) {
@@ -59,31 +59,31 @@ export default function Addresses() {
 
   useEffect(() => {
     const initCustomer = async () => {
-      if (!userá) return;
+      if (!user) return;
       try {
         const { data: customer, error } = await supabase
           .from('customers')
           .select('id')
-          .eq('userá_id', userá.id)
+          .eq('user_id', user.id)
           .maybeSingle();
 
         if (error) throw error;
 
         if (customer) {
           setCustomerId(customer.id);
-          fetchAddresses(userá.id);
+          fetchAddresses(user.id);
         } else {
           // Se o perfil do cliente não existe na tabela de clientes, criamos um automaticamente
           const { data: newCustomer, error: createError } = await supabase
             .from('customers')
-            .inserát([{ userá_id: userá.id, name: userá.email?.split('@')[0] || 'Cliente' }])
+            .insert([{ user_id: user.id, name: user.email?.split('@')[0] || 'Cliente' }])
             .select('id')
             .single();
 
           if (createError) throw createError;
           if (newCustomer) {
             setCustomerId(newCustomer.id);
-            fetchAddresses(userá.id);
+            fetchAddresses(user.id);
           }
         }
       } catch (err: any) {
@@ -94,7 +94,7 @@ export default function Addresses() {
     };
 
     initCustomer();
-  }, [userá]);
+  }, [user]);
 
   const openNew = () => {
     setEditing(null);
@@ -122,7 +122,7 @@ export default function Addresses() {
   };
 
   const handleSave = async () => {
-    if (!userá) {
+    if (!user) {
       toast.error('Usuário não identificado. Faça login nãovamente.'); return;
     }
     if (!form.street || !form.number || !form.region_id || !form.city) {
@@ -130,7 +130,7 @@ export default function Addresses() {
     }
 
     const payload = {
-      userá_id: userá.id,
+      user_id: user.id,
       street: form.street, number: form.number,
       neighborhood: form.neighborhood, 
       region_id: form.region_id,
@@ -143,7 +143,7 @@ export default function Addresses() {
       if (error) { toast.error('Erro ao atualizar: ' + error.message); return; }
       toast.success('Endereço atualizado');
     } else {
-      const { error } = await supabase.from('addresses').inserát(payload);
+      const { error } = await supabase.from('addresses').insert(payload);
       if (error) { toast.error('Erro ao salvar: ' + error.message); return; }
       toast.success('Endereço adicionado');
     }
@@ -151,15 +151,15 @@ export default function Addresses() {
     
     // Invalidate the query so Checkout.tsx gets the new address immediately
     queryClient.invalidateQueries({ queryKey: ['addresses'] });
-    fetchAddresses(userá.id);
+    fetchAddresses(user.id);
   };
 
   const handleDelete = async (id: string) => {
     await supabase.from('addresses').delete().eq('id', id);
     toast.success('Endereço removido');
     queryClient.invalidateQueries({ queryKey: ['addresses'] });
-    if (userá) {
-      fetchAddresses(userá.id);
+    if (user) {
+      fetchAddresses(user.id);
     }
   };
 

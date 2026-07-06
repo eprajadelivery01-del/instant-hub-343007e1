@@ -10,7 +10,7 @@ AS
 SELECT
   o.id,
   o.customer_id,
-  o.userá_id,
+  o.user_id,
   o.company_id,
   o.status,
   o.total,
@@ -30,9 +30,9 @@ SELECT
 FROM public.orders o
 LEFT JOIN public.companies c ON c.id = o.company_id
 WHERE
-  o.userá_id = auth.uid()
+  o.user_id = auth.uid()
   OR o.customer_id IN (
-    SELECT cust.id FROM public.customers cust WHERE cust.userá_id = auth.uid()
+    SELECT cust.id FROM public.customers cust WHERE cust.user_id = auth.uid()
   );
 
 GRANT SELECT ON public.customer_orders_view TO authenticated;

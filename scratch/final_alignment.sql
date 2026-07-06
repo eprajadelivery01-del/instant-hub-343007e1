@@ -2,8 +2,8 @@
 -- 1. CRIAÇÃO DE ENUMS (Se não existirem)
 DO $$ 
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'userá_status') THEN
-        CREATE TYPE userá_status AS ENUM ('pending', 'active', 'rejected');
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_status') THEN
+        CREATE TYPE user_status AS ENUM ('pending', 'active', 'rejected');
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'app_role') THEN
         CREATE TYPE app_role AS ENUM ('admin', 'company', 'driver', 'customer');
@@ -26,7 +26,7 @@ ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFA
 
 -- Converte a coluna status para o tipo ENUM (Respeitando o cache do PostgREST)
 ALTER TABLE public.profiles DROP COLUMN IF EXISTS status;
-ALTER TABLE public.profiles ADD COLUMN status userá_status DEFAULT 'active';
+ALTER TABLE public.profiles ADD COLUMN status user_status DEFAULT 'active';
 
 -- 3. ALINHAMENTO DA TABELA COMPANIES
 ALTER TABLE public.companies ADD COLUMN IF NOT EXISTS document TEXT;

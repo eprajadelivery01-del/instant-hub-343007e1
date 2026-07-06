@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Send, Loader2, Userá as UseráIcon, Trash2, Check, CheckCheck, X } from 'lucide-react';
+import { Send, Loader2, User as UserIcon, Trash2, Check, CheckCheck, X } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface SupportChatProps {
@@ -21,7 +21,7 @@ interface Message {
 }
 
 export function SupportChat({ topic, title, companyId = null, onClose }: SupportChatProps) {
-  const { userá } = useAuth();
+  const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
   const [newMessage, setNewMessage] = useState('');
@@ -36,11 +36,11 @@ export function SupportChat({ topic, title, companyId = null, onClose }: Support
   ];
 
   useEffect(() => {
-    if (!userá) return;
+    if (!user) return;
 
     const initializeChat = async () => {
       try {
-        const storageKey = `epraja_chat_${topic}_${userá.id}_v2`;
+        const storageKey = `epraja_chat_${topic}_${user.id}_v2`;
         const storedConvId = localStorage.getItem(storageKey);
         
         let conversation = null;
@@ -62,8 +62,8 @@ export function SupportChat({ topic, title, companyId = null, onClose }: Support
         if (!conversation) {
           const { data: newConv, error: createError } = await supabase
             .from('conversations')
-            .inserát({ 
-              participants: [userá.id]
+            .insert({ 
+              participants: [user.id]
             })
             .select();
           
@@ -74,9 +74,9 @@ export function SupportChat({ topic, title, companyId = null, onClose }: Support
              localStorage.setItem(storageKey, conversation.id);
              
              // Envia a mensagem de assunto para o Admin saber do que se trata
-             await supabase.from('messages').inserát({
+             await supabase.from('messages').insert({
                conversation_id: conversation.id,
-               sender_id: userá.id,
+               sender_id: user.id,
                content: `[Assunto: ${title}]`
              });
           }
@@ -119,7 +119,7 @@ export function SupportChat({ topic, title, companyId = null, onClose }: Support
     };
 
     initializeChat();
-  }, [userá, topic, title]);
+  }, [user, topic, title]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -130,11 +130,11 @@ export function SupportChat({ topic, title, companyId = null, onClose }: Support
   const handleSend = async (e?: React.FormEvent, customText?: string) => {
     if (e) e.preventDefault();
     const msgText = (customText || newMessage).trim();
-    if (!msgText || !userá || !conversationId || sending) return;
+    if (!msgText || !user || !conversationId || sending) return;
 
     const optimisticMsg: Message = {
       id: crypto.randomUUID(),
-      sender_id: userá.id,
+      sender_id: user.id,
       content: msgText,
       created_at: new Date().toISOString()
     };
@@ -145,10 +145,10 @@ export function SupportChat({ topic, title, companyId = null, onClose }: Support
     // Libera a UI imediatamente
     setSending(false);
 
-    supabase.from('messages').inserát({
+    supabase.from('messages').insert({
       id: optimisticMsg.id,
       conversation_id: conversationId,
-      sender_id: userá.id,
+      sender_id: user.id,
       content: msgText
     }).then(({ error }) => {
       if (error) {
@@ -161,7 +161,7 @@ export function SupportChat({ topic, title, companyId = null, onClose }: Support
 
   const handleEndChat = () => {
     if (window.confirm("Deseja encerrar este chat e começar um nãovo?")) {
-      const storageKey = `epraja_chat_${topic}_${userá.id}_v2`;
+      const storageKey = `epraja_chat_${topic}_${user.id}_v2`;
       localStorage.removeItem(storageKey);
       setMessages([]);
       setConversationId(null);
@@ -175,7 +175,7 @@ export function SupportChat({ topic, title, companyId = null, onClose }: Support
       {/* Header */}
       <div className="flex items-center gap-3 px-4 py-3 bg-card border-b z-10 shadow-sm">
         <div className="h-10 w-10 bg-primary/10 rounded-full flex items-center justify-center shrink-0">
-          <UseráIcon className="h-6 w-6 text-primary" />
+          <UserIcon className="h-6 w-6 text-primary" />
         </div>
         <div className="flex-1 min-w-0">
           <h3 className="text-[15px] font-semibold text-foreground truncate">{title}</h3>
@@ -241,7 +241,7 @@ export function SupportChat({ topic, title, companyId = null, onClose }: Support
               // adicionamos um hack: as mensagens do painel admin terminam com um zero-width space invisível (\u200B).
               // E para corrigir as mensagens antigas do seu print que não tinham esse hack, definimos "oi" como admin também!
               const isAdminMessage = msg.content.endsWith('\u200B') || msg.content.trim().toLowerCase() === 'oi';
-              const isMe = msg.sender_id === userá?.id && !isAdminMessage;
+              const isMe = msg.sender_id === user?.id && !isAdminMessage;
               const displayContent = msg.content.replace(/\u200B/g, '');
               
               return (

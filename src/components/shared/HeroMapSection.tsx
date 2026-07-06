@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { UnifiedMap } from "./UnifiedMap";
-import { useRegions } from "@/serávices/regions";
+import { useRegions } from "@/services/regions";
 import { X, Map as MapIcon, Maximize2, Navigation, ShoppingBag, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 

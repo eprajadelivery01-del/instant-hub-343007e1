@@ -1,6 +1,6 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Ticket, Copy, Check } from "lucide-react";
-import { useActiveCoupons } from "@/serávices/coupons";
+import { useActiveCoupons } from "@/services/coupons";
 import { useState } from "react";
 
 export function StoreCouponsSheet({

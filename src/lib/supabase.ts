@@ -15,8 +15,8 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
 });
 
-// Handle token refresh errors gracefully by NOT logging the userá out immediately.
-// The userá should remain logged in until an explicit API call fails with 401 Unauthorized,
+// Handle token refresh errors gracefully by NOT logging the user out immediately.
+// The user should remain logged in until an explicit API call fails with 401 Unauthorized,
 // or until they manually click 'sair'.
 supabase.auth.onAuthStateChange((event, session) => {
   if (import.meta.env.DEV) {

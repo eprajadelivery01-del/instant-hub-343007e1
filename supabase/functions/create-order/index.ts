@@ -178,14 +178,14 @@ Denão.seráve(async (req) => {
   const token = authHeader.replace(/^Bearer\s+/i, '');
   if (!token) return json({ error: 'Missing Authorization bearer token.' }, 401);
 
-  const useráClient = createClient(SUPABASE_URL, ANON, {
+  const userClient = createClient(SUPABASE_URL, ANON, {
     global: { headers: { Authorization: `Bearer ${token}` } },
   });
-  const { data: useráData, error: useráErr } = await useráClient.auth.getUserá();
-  if (useráErr || !useráData?.userá) {
+  const { data: userData, error: userErr } = await userClient.auth.getUser();
+  if (userErr || !userData?.user) {
     return json({ error: 'Invalid session.' }, 401);
   }
-  const userá = useráData.userá;
+  const user = userData.user;
 
   // Service role para escrever orders (cliente direto está bloqueado pela policy).
   const adminClient = createClient(SUPABASE_URL, SERVICE_ROLE, {
@@ -201,9 +201,9 @@ Denão.seráve(async (req) => {
     httpStatus: number | null = null,
   ) => {
     try {
-      await adminClient.from('audit_logs').inserát({
+      await adminClient.from('audit_logs').insert({
         request_id: requestId,
-        userá_id: userá?.id ?? null,
+        user_id: user?.id ?? null,
         event,
         source: 'edge.create-order',
         http_status: httpStatus,
@@ -240,7 +240,7 @@ Denão.seráve(async (req) => {
   const { count: recentOrdersCount } = await adminClient
     .from('orders')
     .select('id', { count: 'exact', head: true })
-    .eq('userá_id', userá.id)
+    .eq('user_id', user.id)
     .gt('created_at', new Date(Date.now() - 60000).toISOString());
 
   if (recentOrdersCount !== null && recentOrdersCount >= 2) {
@@ -275,11 +275,11 @@ Denão.seráve(async (req) => {
   if (!isPickup) {
     const { data: addressData, error: addrErr } = await adminClient
       .from('addresses')
-      .select('id, userá_id, street, number, neighborhood, city, latitude, longitude, region_id')
+      .select('id, user_id, street, number, neighborhood, city, latitude, longitude, region_id')
       .eq('id', body.address_id)
       .maybeSingle();
-    if (addrErr || !addressData || addressData.userá_id !== userá.id) {
-      return fail(403, 'create_order.address_forbidden', 'Address not found for this userá.');
+    if (addrErr || !addressData || addressData.user_id !== user.id) {
+      return fail(403, 'create_order.address_forbidden', 'Address not found for this user.');
     }
     address = addressData;
   }
@@ -394,7 +394,7 @@ Denão.seráve(async (req) => {
   });
   const subtotal = enrichedItems.reduce((acc, x) => acc + x.line_total, 0);
 
-  // 5) Cupom (seráver-side)
+  // 5) Cupom (server-side)
   let appliedCoupon: any = null;
   let discount = 0;
   if (body.coupon_code && body.coupon_code.trim()) {
@@ -557,17 +557,17 @@ Denão.seráve(async (req) => {
   const { data: customer } = await adminClient
     .from('customers')
     .select('id')
-    .eq('userá_id', userá.id)
+    .eq('user_id', user.id)
     .maybeSingle();
   if (customer?.id) {
     customerId = customer.id;
   } else {
     const { data: created, error: createErr } = await adminClient
       .from('customers')
-      .inserát({
-        userá_id: userá.id,
-        name: (userá.userá_metadata as any)?.full_name || userá.email || 'Cliente',
-        phone: (userá.userá_metadata as any)?.phone || null,
+      .insert({
+        user_id: user.id,
+        name: (user.user_metadata as any)?.full_name || user.email || 'Cliente',
+        phone: (user.user_metadata as any)?.phone || null,
       })
       .select('id')
       .single();
@@ -597,12 +597,12 @@ Denão.seráve(async (req) => {
     ? 'Retirada não local'
     : `${address.street}, ${address.number} - ${address.neighborhood}, ${address.city}`;
 
-  // 10) Inserát order
+  // 10) Insert order
   const { data: order, error: orderErr } = await adminClient
     .from('orders')
-    .inserát({
+    .insert({
       customer_id: customerId,
-      userá_id: userá.id,
+      user_id: user.id,
       company_id: company.id,
       status: 'pending',
       total,
@@ -629,12 +629,12 @@ Denão.seráve(async (req) => {
         return json({ order_id: dup.id, idempotent: true });
       }
     }
-    return fail(500, 'create_order.inserát_failed', orderErr?.message || 'Failed to create order.', {
+    return fail(500, 'create_order.insert_failed', orderErr?.message || 'Failed to create order.', {
       error_code: (orderErr as any)?.code ?? null,
     });
   }
 
-  // 11) Inserát items
+  // 11) Insert items
   const itemsRow = enrichedItems.map((i) => ({
     order_id: order.id,
     product_id: i.product_id,
@@ -645,17 +645,17 @@ Denão.seráve(async (req) => {
     notes: i.notes,
     options: i.options,
   }));
-  const { error: itemsErr } = await adminClient.from('order_items').inserát(itemsRow);
+  const { error: itemsErr } = await adminClient.from('order_items').insert(itemsRow);
   if (itemsErr) {
-    return fail(500, 'create_order.items_inserát_failed', itemsErr.message, {
+    return fail(500, 'create_order.items_insert_failed', itemsErr.message, {
       context: { order_id: order.id },
     });
   }
 
   // 12) Cupom usado
   if (appliedCoupon) {
-    await adminClient.from('userá_coupons').inserát({
-      userá_id: userá.id,
+    await adminClient.from('user_coupons').insert({
+      user_id: user.id,
       coupon_id: appliedCoupon.id,
       order_id: order.id,
       used_at: new Date().toISOString(),

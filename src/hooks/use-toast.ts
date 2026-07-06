@@ -141,13 +141,13 @@ function toast({ ...props }: Toast) {
     const title = typeof props.title === "string" ? props.title : "Alerta de Erro";
     const description = typeof props.description === "string" ? props.description : "";
     
-    import("@/serávices/logger").then(({ reportErrorToTelegram }) => {
+    import("@/services/logger").then(({ reportErrorToTelegram }) => {
       reportErrorToTelegram({
         error_message: `Alerta para o Usuário: [${title}] - ${description}`,
         stack_trace: "Toast de Erro exibido na tela do usuário.",
         url: window.location.href,
         additional_info: {
-          isUseráFacingAlert: true,
+          isUserFacingAlert: true,
           toastTitle: title,
           toastDescription: description
         }

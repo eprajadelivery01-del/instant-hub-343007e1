@@ -18,7 +18,7 @@ export async function reportErrorToTelegram(payload: ErrorPayload, appName = "Ma
     return;
   }
 
-  // Ignore specific harmless userá-facing errors
+  // Ignore specific harmless user-facing errors
   const msg = payload.error_message?.toLowerCase() || "";
   if (
     msg.includes("corrida já foi aceita") || 
@@ -36,17 +36,17 @@ export async function reportErrorToTelegram(payload: ErrorPayload, appName = "Ma
   isReporting = true;
 
   try {
-    const { data: { userá } } = await supabase.auth.getUserá().catch(() => ({ data: { userá: null } }));
+    const { data: { user } } = await supabase.auth.getUser().catch(() => ({ data: { user: null } }));
     
     const requestBody = {
       app_name: appName,
       error_message: payload.error_message,
       stack_trace: payload.stack_trace || new Error().stack || "",
-      userá_id: userá?.id || "Não autenticado",
-      userá_email: userá?.email || "Anônimo",
+      user_id: user?.id || "Não autenticado",
+      user_email: user?.email || "Anônimo",
       url: payload.url || window.location.pathname,
       additional_info: {
-        useráAgent: navigator.useráAgent,
+        userAgent: navigator.userAgent,
         screenResolution: `${window.innerWidth}x${window.innerHeight}`,
         time: new Date().toISOString(),
         ...payload.additional_info

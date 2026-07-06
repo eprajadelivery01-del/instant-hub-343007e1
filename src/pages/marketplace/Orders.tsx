@@ -36,7 +36,7 @@ const statusColors: Record<string, string> = {
 };
 
 export default function Orders() {
-  const { userá } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -47,17 +47,17 @@ export default function Orders() {
   const PAGE_SIZE = 8;
 
   useEffect(() => {
-    if (!userá) return;
+    if (!user) return;
     const fetchOrders = async () => {
       try {
         const { data, error } = await supabase
           .from('orders')
           .select('*, company:companies(*), deliveries(status)')
-          .or(`customer_id.eq.${userá.id},userá_id.eq.${userá.id}`)
+          .or(`customer_id.eq.${user.id},user_id.eq.${user.id}`)
           .order('created_at', { ascending: false });
 
         if (error) throw error;
-        console.log(`[Orders] Pedidos encontrados para ${userá.id}:`, data?.length || 0);
+        console.log(`[Orders] Pedidos encontrados para ${user.id}:`, data?.length || 0);
         setOrders(data || []);
       } catch (error) {
         console.error("[Orders] Erro ao buscar pedidos:", error);
@@ -67,19 +67,19 @@ export default function Orders() {
     };
     fetchOrders();
 
-    // Realtime: escuta inseráts e updates dos pedidos do cliente
+    // Realtime: escuta inserts e updates dos pedidos do cliente
     const channel = supabase
-      .channel(`customer-orders-${userá.id}`)
+      .channel(`customer-orders-${user.id}`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'orders' },
         (payload) => {
           const nextOrder = (payload.new || payload.old) as
-            | (Partial<Order> & { id?: string; userá_id?: string })
+            | (Partial<Order> & { id?: string; user_id?: string })
             | undefined;
           if (!nextOrder) return;
           const isMine =
-            nextOrder.customer_id === userá.id || nextOrder.userá_id === userá.id;
+            nextOrder.customer_id === user.id || nextOrder.user_id === user.id;
           if (!isMine) return;
 
           if (payload.eventType === 'UPDATE') {
@@ -99,7 +99,7 @@ export default function Orders() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [userá]);
+  }, [user]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -128,7 +128,7 @@ export default function Orders() {
     currentPage * PAGE_SIZE,
   );
 
-  if (!userá) { navigate('/marketplace/login'); return null; }
+  if (!user) { navigate('/marketplace/login'); return null; }
 
   return (
     <MarketplaceLayout>

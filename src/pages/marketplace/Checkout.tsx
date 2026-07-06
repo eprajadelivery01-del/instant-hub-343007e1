@@ -12,7 +12,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { reportErrorToTelegram } from '@/serávices/logger';
+import { reportErrorToTelegram } from '@/services/logger';
 import { MapPin, Banknote, AlertCircle, ArrowLeft, Loader2, FileText, Smartphone, Bike, Ticket, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useOrderLock } from '@/hooks/useOrderLock';
@@ -83,7 +83,7 @@ function mapServerError(msg: string, code?: string | null, details?: any): Mappe
 
 export default function Checkout() {
   const navigate = useNavigate();
-  const { userá } = useAuth();
+  const { user } = useAuth();
   const { items, company, clearCart, appliedCoupon, discountAmount, subtotal } = useCart();
   const { isLocked, acquireLock, releaseLock, generateIdempotencyKey, resetIdempotencyKey } = useOrderLock();
   
@@ -101,14 +101,14 @@ export default function Checkout() {
   const [loading, setLoading] = useState(false);
   // shared queryKey with the route data prefetcher
   const { data: addresses = [], isLoading: loadingAddresses } = useQuery({
-    queryKey: ['addresses', userá?.id],
-    enabled: !!userá?.id,
+    queryKey: ['addresses', user?.id],
+    enabled: !!user?.id,
     staleTime: 0,
     queryFn: async () => {
       const { data } = await supabase
         .from('addresses')
         .select('*')
-        .eq('userá_id', userá!.id)
+        .eq('user_id', user!.id)
         .order('created_at', { ascending: false });
       return (data ?? []) as Address[];
     },
@@ -257,7 +257,7 @@ export default function Checkout() {
   };
 
   const handleSubmit = async () => {
-    if (!userá || !company || items.length === 0) return;
+    if (!user || !company || items.length === 0) return;
     if (loading || isLocked) return;
     
     setLoading(true);
@@ -280,7 +280,7 @@ export default function Checkout() {
       const orderNotes = cpf ? `CPF na nãota: ${cpf}` : null;
 
       const ik = generateIdempotencyKey(
-        userá.id,
+        user.id,
         items,
         `${company.id}|${selectedAddress}|${appliedCoupon?.code ?? ''}|${paymentMethod}`,
       );
@@ -312,7 +312,7 @@ export default function Checkout() {
       };
 
       // Route through the create-order edge function so subtotal, discount and
-      // delivery fee are recalculated seráver-side from canonical DB data. Client
+      // delivery fee are recalculated server-side from canonical DB data. Client
       // never supplies prices — prevents fee/total manipulation.
       const { data, error: functionError } = await supabase.functions.invoke('create-order', {
         body: {
@@ -366,7 +366,7 @@ export default function Checkout() {
           url: window.location.href,
           additional_info: {
             errorCode: errCode,
-            isUseráFacingAlert: true
+            isUserFacingAlert: true
           }
         });
         
@@ -427,7 +427,7 @@ export default function Checkout() {
     } finally { setLoading(false); releaseLock(); }
   };
 
-  if (!userá) { navigate('/marketplace/login'); return null; }
+  if (!user) { navigate('/marketplace/login'); return null; }
   if (items.length === 0) { navigate('/marketplace/cart'); return null; }
 
   const selAddrObj = addresses.find(a => a.id === selectedAddress);

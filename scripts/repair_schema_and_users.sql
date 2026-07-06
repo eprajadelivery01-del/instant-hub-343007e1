@@ -52,14 +52,14 @@ BEGIN
     END IF;
 END $$;
 
--- 4. TABELAS DE USUÁRIOS (Harmonizada: id/userá_id)
+-- 4. TABELAS DE USUÁRIOS (Harmonizada: id/user_id)
 DO $$ 
 BEGIN
     -- Perfis
     IF NOT EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'profiles') THEN
         CREATE TABLE public.profiles (
             id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), -- PK
-            userá_id UUID REFERENCES auth.userás(id) ON DELETE CASCADE NOT NULL UNIQUE, -- Admin Link
+            user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL UNIQUE, -- Admin Link
             full_name TEXT NOT NULL DEFAULT '',
             avatar_url TEXT,
             phone TEXT,
@@ -70,13 +70,13 @@ BEGIN
     END IF;
 
     -- Roles (Usando Enum)
-    IF NOT EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'userá_roles') THEN
-        CREATE TABLE public.userá_roles (
+    IF NOT EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'user_roles') THEN
+        CREATE TABLE public.user_roles (
             id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-            userá_id UUID REFERENCES auth.userás(id) ON DELETE CASCADE NOT NULL,
+            user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
             role public.app_role NOT NULL,
             created_at TIMESTAMPTZ DEFAULT NOW(),
-            UNIQUE(userá_id, role)
+            UNIQUE(user_id, role)
         );
     END IF;
 
@@ -84,7 +84,7 @@ BEGIN
     IF NOT EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'customers') THEN
         CREATE TABLE public.customers (
             id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-            userá_id UUID REFERENCES auth.userás(id) ON DELETE CASCADE UNIQUE,
+            user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE UNIQUE,
             name TEXT NOT NULL,
             cpf TEXT, phone TEXT,
             created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -100,7 +100,7 @@ BEGIN
     IF NOT EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'companies') THEN
         CREATE TABLE public.companies (
             id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-            userá_id UUID REFERENCES auth.userás(id) ON DELETE CASCADE NOT NULL,
+            user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
             name TEXT NOT NULL,
             email TEXT,
             description TEXT,
@@ -143,7 +143,7 @@ BEGIN
         CREATE TABLE public.orders (
             id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
             customer_id UUID REFERENCES public.customers(id),
-            client_id UUID REFERENCES auth.userás(id), -- Alias para o Cliente App
+            client_id UUID REFERENCES auth.users(id), -- Alias para o Cliente App
             company_id UUID REFERENCES public.companies(id) NOT NULL,
             status public.order_status DEFAULT 'pending',
             total NUMERIC(10,2) DEFAULT 0,
@@ -218,8 +218,8 @@ END $$;
 -- 9. RESET E SEEDING EXPANSÃO (V7.5)
 DO $$ 
 DECLARE 
-    target_userá_id UUID := gen_random_uuid();
-    comp_userá_id UUID;
+    target_user_id UUID := gen_random_uuid();
+    comp_user_id UUID;
     comp_id UUID;
     city_id UUID;
     store_names TEXT[] := ARRAY['Burger King Fake', 'Pizza Hut Fake', 'Sushi Master', 'Taco Bell Fake', 'Veggie Delight', 'Sweet Dreams', 'Pasta Palace', 'Fruit Fresh', 'Steak House', 'Ice Cream Heaven'];
@@ -227,50 +227,50 @@ DECLARE
     i INTEGER;
 BEGIN
     -- Limpeza total de dados de teste
-    DELETE FROM public.order_items WHERE order_id IN (SELECT id FROM public.orders WHERE customer_id IN (SELECT id FROM public.customers WHERE userá_id IN (SELECT id FROM auth.userás WHERE email LIKE '%@nexuspro.test')));
-    DELETE FROM public.orders WHERE customer_id IN (SELECT id FROM public.customers WHERE userá_id IN (SELECT id FROM auth.userás WHERE email LIKE '%@nexuspro.test'));
+    DELETE FROM public.order_items WHERE order_id IN (SELECT id FROM public.orders WHERE customer_id IN (SELECT id FROM public.customers WHERE user_id IN (SELECT id FROM auth.users WHERE email LIKE '%@nexuspro.test')));
+    DELETE FROM public.orders WHERE customer_id IN (SELECT id FROM public.customers WHERE user_id IN (SELECT id FROM auth.users WHERE email LIKE '%@nexuspro.test'));
     DELETE FROM public.products WHERE company_id IN (SELECT id FROM public.companies WHERE email LIKE '%@nexuspro.test');
     DELETE FROM public.companies WHERE email LIKE '%@nexuspro.test';
-    DELETE FROM public.profiles WHERE userá_id IN (SELECT id FROM auth.userás WHERE email LIKE '%@nexuspro.test');
-    DELETE FROM public.customers WHERE userá_id IN (SELECT id FROM auth.userás WHERE email LIKE '%@nexuspro.test');
-    DELETE FROM public.userá_roles WHERE userá_id IN (SELECT id FROM auth.userás WHERE email LIKE '%@nexuspro.test');
-    DELETE FROM auth.userás WHERE email LIKE '%@nexuspro.test';
+    DELETE FROM public.profiles WHERE user_id IN (SELECT id FROM auth.users WHERE email LIKE '%@nexuspro.test');
+    DELETE FROM public.customers WHERE user_id IN (SELECT id FROM auth.users WHERE email LIKE '%@nexuspro.test');
+    DELETE FROM public.user_roles WHERE user_id IN (SELECT id FROM auth.users WHERE email LIKE '%@nexuspro.test');
+    DELETE FROM auth.users WHERE email LIKE '%@nexuspro.test';
 
     -- Cidade
     INSERT INTO public.cities (name, latitude, longitude) VALUES ('Diamantinão', -14.4087, -56.4462)
     ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name RETURNING id INTO city_id;
 
     -- CLIENTE TESTE
-    INSERT INTO auth.userás (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_userá_meta_data, created_at, updated_at)
-    VALUES ('00000000-0000-0000-0000-000000000000', target_userá_id, 'authenticated', 'authenticated', 'cliente@nexuspro.test', crypt('Password123!', gen_salt('bf')), NOW(), '{"provider":"email","providers":["email"]}'::jsonb, '{"full_name":"Cliente Teste", "role":"customer"}'::jsonb, NOW(), NOW())
+    INSERT INTO auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
+    VALUES ('00000000-0000-0000-0000-000000000000', target_user_id, 'authenticated', 'authenticated', 'cliente@nexuspro.test', crypt('Password123!', gen_salt('bf')), NOW(), '{"provider":"email","providers":["email"]}'::jsonb, '{"full_name":"Cliente Teste", "role":"customer"}'::jsonb, NOW(), NOW())
     ON CONFLICT (id) DO NOTHING;
 
-    INSERT INTO public.profiles (id, userá_id, full_name, role)
-    VALUES (target_userá_id, target_userá_id, 'Cliente Teste', 'customer')
-    ON CONFLICT (id) DO UPDATE SET userá_id = EXCLUDED.userá_id, full_name = EXCLUDED.full_name, role = EXCLUDED.role;
+    INSERT INTO public.profiles (id, user_id, full_name, role)
+    VALUES (target_user_id, target_user_id, 'Cliente Teste', 'customer')
+    ON CONFLICT (id) DO UPDATE SET user_id = EXCLUDED.user_id, full_name = EXCLUDED.full_name, role = EXCLUDED.role;
     
-    INSERT INTO public.customers (userá_id, name) VALUES (target_userá_id, 'Cliente Teste') ON CONFLICT (userá_id) DO NOTHING;
-    INSERT INTO public.userá_roles (userá_id, role) VALUES (target_userá_id, 'customer') ON CONFLICT DO NOTHING;
+    INSERT INTO public.customers (user_id, name) VALUES (target_user_id, 'Cliente Teste') ON CONFLICT (user_id) DO NOTHING;
+    INSERT INTO public.user_roles (user_id, role) VALUES (target_user_id, 'customer') ON CONFLICT DO NOTHING;
 
     -- SEEDING DAS 10 LOJAS
     FOR i IN 1..10 LOOP
-        comp_userá_id := gen_random_uuid();
+        comp_user_id := gen_random_uuid();
         comp_id := gen_random_uuid();
         
         -- Usuário e Perfil
-        INSERT INTO auth.userás (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_userá_meta_data, created_at, updated_at)
-        VALUES ('00000000-0000-0000-0000-000000000000', comp_userá_id, 'authenticated', 'authenticated', 'loja' || i || '@nexuspro.test', crypt('Password123!', gen_salt('bf')), NOW(), '{"provider":"email","providers":["email"]}'::jsonb, jsonb_build_object('full_name', store_names[i]), NOW(), NOW())
+        INSERT INTO auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
+        VALUES ('00000000-0000-0000-0000-000000000000', comp_user_id, 'authenticated', 'authenticated', 'loja' || i || '@nexuspro.test', crypt('Password123!', gen_salt('bf')), NOW(), '{"provider":"email","providers":["email"]}'::jsonb, jsonb_build_object('full_name', store_names[i]), NOW(), NOW())
         ON CONFLICT (id) DO NOTHING;
         
-        INSERT INTO public.profiles (id, userá_id, full_name, role) 
-        VALUES (comp_userá_id, comp_userá_id, store_names[i], 'company')
-        ON CONFLICT (id) DO UPDATE SET userá_id = EXCLUDED.userá_id, full_name = EXCLUDED.full_name, role = EXCLUDED.role;
+        INSERT INTO public.profiles (id, user_id, full_name, role) 
+        VALUES (comp_user_id, comp_user_id, store_names[i], 'company')
+        ON CONFLICT (id) DO UPDATE SET user_id = EXCLUDED.user_id, full_name = EXCLUDED.full_name, role = EXCLUDED.role;
         
-        INSERT INTO public.userá_roles (userá_id, role) VALUES (comp_userá_id, 'company') ON CONFLICT DO NOTHING;
+        INSERT INTO public.user_roles (user_id, role) VALUES (comp_user_id, 'company') ON CONFLICT DO NOTHING;
         
         -- Empresa
-        INSERT INTO public.companies (id, name, email, userá_id, description, category, city, city_id, active, is_active, rating)
-        VALUES (comp_id, store_names[i], 'loja' || i || '@nexuspro.test', comp_userá_id, 'Melhor loja de ' || store_categories[i] || ' da região.', store_categories[i], 'Diamantinão', city_id, true, true, 4.0 + (random() * 1.0));
+        INSERT INTO public.companies (id, name, email, user_id, description, category, city, city_id, active, is_active, rating)
+        VALUES (comp_id, store_names[i], 'loja' || i || '@nexuspro.test', comp_user_id, 'Melhor loja de ' || store_categories[i] || ' da região.', store_categories[i], 'Diamantinão', city_id, true, true, 4.0 + (random() * 1.0));
 
         -- Produtos para esta empresa
         INSERT INTO public.products (company_id, name, price, description, category, active, is_active)

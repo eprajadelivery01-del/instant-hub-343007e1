@@ -1,7 +1,7 @@
 -- =====================================================================
--- Bloqueia role escalation em profiles e userá_roles.
+-- Bloqueia role escalation em profiles e user_roles.
 --
--- Após aplicar handle_new_userá_trigger.sql, o client NÃO precisa
+-- Após aplicar handle_new_user_trigger.sql, o client NÃO precisa
 -- (e não pode) escrever `role` em nenhuma tabela.
 -- =====================================================================
 
@@ -46,31 +46,31 @@ CREATE TRIGGER profiles_block_role_change
 BEFORE UPDATE ON public.profiles
 FOR EACH ROW EXECUTE FUNCTION public.prevent_profile_role_change();
 
--- 2) userá_roles: client NÃO pode INSERT/UPDATE/DELETE diretamente.
---    Escrita feita pelo trigger handle_new_userá (SECURITY DEFINER) ou pelo admin.
-ALTER TABLE public.userá_roles ENABLE ROW LEVEL SECURITY;
+-- 2) user_roles: client NÃO pode INSERT/UPDATE/DELETE diretamente.
+--    Escrita feita pelo trigger handle_new_user (SECURITY DEFINER) ou pelo admin.
+ALTER TABLE public.user_roles ENABLE ROW LEVEL SECURITY;
 
-DROP POLICY IF EXISTS "userá_roles_self_select" ON public.userá_roles;
-CREATE POLICY "userá_roles_self_select"
-ON public.userá_roles
+DROP POLICY IF EXISTS "user_roles_self_select" ON public.user_roles;
+CREATE POLICY "user_roles_self_select"
+ON public.user_roles
 FOR SELECT
 TO authenticated
-USING (userá_id = auth.uid() OR public.has_role(auth.uid(), 'admin'));
+USING (user_id = auth.uid() OR public.has_role(auth.uid(), 'admin'));
 
 -- Garante que NÃO existam policies abertas de INSERT/UPDATE/DELETE para o cliente.
-DROP POLICY IF EXISTS "userá_roles_self_inserát" ON public.userá_roles;
-DROP POLICY IF EXISTS "userá_roles_inserát" ON public.userá_roles;
-DROP POLICY IF EXISTS "userá_roles_update" ON public.userá_roles;
-DROP POLICY IF EXISTS "userá_roles_delete" ON public.userá_roles;
+DROP POLICY IF EXISTS "user_roles_self_insert" ON public.user_roles;
+DROP POLICY IF EXISTS "user_roles_insert" ON public.user_roles;
+DROP POLICY IF EXISTS "user_roles_update" ON public.user_roles;
+DROP POLICY IF EXISTS "user_roles_delete" ON public.user_roles;
 
--- Apenas admin escreve (via UI admin / função serávice-role).
-DROP POLICY IF EXISTS "userá_roles_admin_write" ON public.userá_roles;
-CREATE POLICY "userá_roles_admin_write"
-ON public.userá_roles
+-- Apenas admin escreve (via UI admin / função service-role).
+DROP POLICY IF EXISTS "user_roles_admin_write" ON public.user_roles;
+CREATE POLICY "user_roles_admin_write"
+ON public.user_roles
 FOR ALL
 TO authenticated
 USING (public.has_role(auth.uid(), 'admin'))
 WITH CHECK (public.has_role(auth.uid(), 'admin'));
 
-COMMENT ON TABLE public.userá_roles IS
-  'Roles do usuário. Cliente nunca grava; provisionamento via trigger handle_new_userá.';
+COMMENT ON TABLE public.user_roles IS
+  'Roles do usuário. Cliente nunca grava; provisionamento via trigger handle_new_user.';

@@ -46,7 +46,7 @@ function toMinutes(value: string | undefined, fallback: number): number {
 
 /**
  * Returns the IANA timezone the schedule should be evaluated in.
- * Order: explicit override → browserá/userá timezone → São Paulo fallback.
+ * Order: explicit override → browser/user timezone → São Paulo fallback.
  */
 export function resolveTimezone(explicit?: string | null): string {
   if (explicit && typeof explicit === "string") return explicit;

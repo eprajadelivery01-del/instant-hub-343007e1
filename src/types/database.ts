@@ -22,7 +22,7 @@ export interface Company {
   active: boolean;
   created_at: string;
   updated_at: string;
-  userá_id: string;
+  user_id: string;
   banner_url: string | null;
   cover_url?: string | null;
   description: string | null;
@@ -120,7 +120,7 @@ export interface Delivery {
 
 export interface DeliveryDriver {
   id: string;
-  userá_id: string;
+  user_id: string;
   full_name: string;
   phone: string | null;
   avatar_url: string | null;
@@ -144,7 +144,7 @@ export interface ChatMessage {
 
 export interface Address {
   id: string;
-  userá_id: string;
+  user_id: string;
   street: string;
   number: string;
   neighborhood: string;
@@ -168,7 +168,7 @@ export interface CartItem {
 export interface Review {
   id: string;
   order_id: string;
-  userá_id: string;
+  user_id: string;
   company_id: string | null;
   driver_id: string | null;
   rating: number;
@@ -192,9 +192,9 @@ export interface Coupon {
   created_at: string;
 }
 
-export interface UseráCoupon {
+export interface UserCoupon {
   id: string;
-  userá_id: string;
+  user_id: string;
   coupon_id: string;
   used_at: string | null;
   order_id: string | null;

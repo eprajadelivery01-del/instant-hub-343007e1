@@ -14,17 +14,17 @@ interface AddressContextType {
 const AddressContext = createContext<AddressContextType | undefined>(undefined);
 
 export function AddressProvider({ children }: { children: ReactNode }) {
-  const { userá } = useAuth();
+  const { user } = useAuth();
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   const fetchAddresses = async () => {
-    if (!userá) { setAddresses([]); setLoading(false); return; }
+    if (!user) { setAddresses([]); setLoading(false); return; }
     const { data } = await supabase
       .from('addresses')
       .select('*')
-      .eq('userá_id', userá.id)
+      .eq('user_id', user.id)
       .order('created_at', { ascending: false });
     const list = data || [];
     setAddresses(list);
@@ -34,7 +34,7 @@ export function AddressProvider({ children }: { children: ReactNode }) {
     setLoading(false);
   };
 
-  useEffect(() => { fetchAddresses(); }, [userá]);
+  useEffect(() => { fetchAddresses(); }, [user]);
 
   const selectedAddress = addresses.find(a => a.id === selectedId) || null;
 

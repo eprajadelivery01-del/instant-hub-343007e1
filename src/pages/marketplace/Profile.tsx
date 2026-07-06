@@ -37,7 +37,7 @@ const STATUS_MAP: Record<string, { label: string; color: string; icon: React.Ele
 };
 
 export default function Profile() {
-  const { userá, profile, signOut, refreshProfile } = useAuth();
+  const { user, profile, signOut, refreshProfile } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const { selectedAddress } = useAddress();
   const navigate = useNavigate();
@@ -61,10 +61,10 @@ export default function Profile() {
   }, [profile]);
 
   useEffect(() => {
-    if (!userá) return;
+    if (!user) return;
     fetchOrders();
     fetchCoupons(false);
-  }, [userá]);
+  }, [user]);
 
   const fetchCoupons = async (show = true) => {
     if (show && coupons.length > 0) { setShowCoupons(true); return; }
@@ -82,12 +82,12 @@ export default function Profile() {
       if (companyIds.length > 0) {
         const { data: companiesData } = await supabase
           .from('companies')
-          .select('userá_id, name, logo_url, region_id')
-          .in('userá_id', companyIds);
+          .select('user_id, name, logo_url, region_id')
+          .in('user_id', companyIds);
           
         valid = valid.map(c => ({
           ...c,
-          companies: companiesData?.find(comp => comp.userá_id === c.company_id) || null
+          companies: companiesData?.find(comp => comp.user_id === c.company_id) || null
         }));
       }
       
@@ -122,7 +122,7 @@ export default function Profile() {
           id, status, total, created_at,
           companies ( name, logo_url )
         `)
-        .or(`customer_id.eq.${userá.id},userá_id.eq.${userá.id}`)
+        .or(`customer_id.eq.${user.id},user_id.eq.${user.id}`)
         .order('created_at', { ascending: false })
         .limit(30);
       setOrders(data || []);
@@ -132,11 +132,11 @@ export default function Profile() {
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !userá) return;
+    if (!file || !user) return;
     setUploading(true);
     try {
       const fileExt = file.name.split('.').pop();
-      const fileName = `${userá.id}/${Date.now()}.${fileExt}`;
+      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
       
       const { error: uploadError } = await supabase.storage
         .from('avatars')
@@ -154,7 +154,7 @@ export default function Profile() {
       const { error: updateError } = await supabase
         .from('profiles')
         .update({ avatar_url: publicUrl })
-        .eq('id', userá.id);
+        .eq('id', user.id);
 
       if (updateError) throw updateError;
 
@@ -168,10 +168,10 @@ export default function Profile() {
   };
 
   const handleSave = async () => {
-    if (!userá) return;
+    if (!user) return;
     setSaving(true);
     try {
-      await supabase.from('profiles').update({ full_name: fullName, phone }).eq('id', userá.id);
+      await supabase.from('profiles').update({ full_name: fullName, phone }).eq('id', user.id);
       
       // Delay to ensure DB replication/trigger finish before refetching
       await new Promise(resolve => setTimeout(resolve, 500));
@@ -183,9 +183,9 @@ export default function Profile() {
     finally { setSaving(false); }
   };
 
-  if (!userá) { navigate('/marketplace/login'); return null; }
+  if (!user) { navigate('/marketplace/login'); return null; }
 
-  const displayName = profile?.full_name || userá.email?.split('@')[0] || 'Usuário';
+  const displayName = profile?.full_name || user.email?.split('@')[0] || 'Usuário';
   const initial = displayName.charAt(0).toUpperCase();
 
   // Derived: tier & featured coupon
@@ -229,7 +229,7 @@ export default function Profile() {
             </div>
             <div className="flex-1 min-w-0">
               <h1 className="text-lg font-display font-bold tracking-tight truncate">{displayName}</h1>
-              <p className="text-xs text-muted-foreground truncate">{userá.email}</p>
+              <p className="text-xs text-muted-foreground truncate">{user.email}</p>
             </div>
             <button
               onClick={() => setEditing(true)}

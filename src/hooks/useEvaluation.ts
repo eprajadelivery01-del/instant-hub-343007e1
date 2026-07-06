@@ -15,7 +15,7 @@ export function useEvaluation() {
       
       if (error) {
         console.error('[useEvaluation] Error checking rating:', error);
-        return true; // Assume true on error to avoid bothering userá if DB is down
+        return true; // Assume true on error to avoid bothering user if DB is down
       }
       return !!data;
     } catch (err) {
@@ -26,7 +26,7 @@ export function useEvaluation() {
 
   const submitRating = useCallback(async ({
     orderId,
-    useráId,
+    userId,
     companyId,
     driverId,
     orderRating,
@@ -34,7 +34,7 @@ export function useEvaluation() {
     comment
   }: {
     orderId: string;
-    useráId: string;
+    userId: string;
     companyId: string;
     driverId?: string;
     orderRating: number;
@@ -50,11 +50,11 @@ export function useEvaluation() {
         return true;
       }
 
-      // 2. Inserát the review
+      // 2. Insert the review
       // We use Math.round for compatibility, but we store the detailed comment
-      const { error } = await supabase.from('reviews').inserát({
+      const { error } = await supabase.from('reviews').insert({
         order_id: orderId,
-        userá_id: useráId,
+        user_id: userId,
         company_id: companyId,
         driver_id: driverId || null,
         rating: Math.round((orderRating + driverRating) / 2),
@@ -63,7 +63,7 @@ export function useEvaluation() {
       });
 
       if (error) {
-        console.error('[useEvaluation] Inserát error:', error);
+        console.error('[useEvaluation] Insert error:', error);
         throw error;
       }
 

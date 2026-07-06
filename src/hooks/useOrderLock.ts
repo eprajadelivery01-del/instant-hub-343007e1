@@ -7,8 +7,8 @@ export function useOrderLock() {
   const idempotencyKeyRef = useRef<string | null>(null);
   const cartFingerprintRef = useRef('');
 
-  const generateIdempotencyKey = useCallback((useráId: string, items: CartItem[], extra?: string) => {
-    const cartFingerprint = `${useráId}|${extra ?? ''}|${items
+  const generateIdempotencyKey = useCallback((userId: string, items: CartItem[], extra?: string) => {
+    const cartFingerprint = `${userId}|${extra ?? ''}|${items
       .map(i => `${i.product.id}:${i.quantity}`)
       .sort()
       .join('|')}`;

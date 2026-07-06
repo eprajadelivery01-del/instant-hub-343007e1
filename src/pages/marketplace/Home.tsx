@@ -15,7 +15,7 @@ import { MarketplaceMenu } from '@/components/marketplace/MarketplaceMenu';
 import { useStoreStatusSync } from '@/hooks/useStoreStatusSync';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MediaImage } from '@/components/shared/MediaImage';
-import { Search, Star, ChevronDown, Store, Utensils, Coffee, Pizza, Cake, Sandwich, Pill, ShoppingCart, Userá, PanelLeft, X, Dog, Beer, Plus, Croissant, Sparkles, Flame, Beef, Leaf, Package, IceCream, Wine, UtensilsCrossed, GlassWater, Scissors, Ruler } from 'lucide-react';
+import { Search, Star, ChevronDown, Store, Utensils, Coffee, Pizza, Cake, Sandwich, Pill, ShoppingCart, User, PanelLeft, X, Dog, Beer, Plus, Croissant, Sparkles, Flame, Beef, Leaf, Package, IceCream, Wine, UtensilsCrossed, GlassWater, Scissors, Ruler } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { getAvatarImage, getCompanyBannerImage, getCompanyLogoImage, getPrimaryProductImage } from '@/lib/media';
@@ -211,7 +211,7 @@ export default function Home() {
                   src={getAvatarImage(profile)}
                   alt="Foto do perfil"
                   className="h-full w-full object-cover"
-                  fallback={<Userá className="h-6 w-6 text-muted-foreground/50" />}
+                  fallback={<User className="h-6 w-6 text-muted-foreground/50" />}
                 />
               </button>
             </div>

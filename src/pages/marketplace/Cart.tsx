@@ -113,7 +113,7 @@ function CartItemRow({ item, companyId, updateQuantity, updateNote, navigate }: 
 
 export default function Cart() {
   const { items, company, updateQuantity, updateNote, clearCart, subtotal, appliedCoupon, applicableProductIds, setCouponData, removeCoupon, discountAmount, total, deliveryFee } = useCart();
-  const { userá } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [isStoreOpen, setIsStoreOpen] = useState<boolean | null>(null);
   const [loadingStatus, setLoadingStatus] = useState(false);
@@ -404,7 +404,7 @@ export default function Cart() {
             className="h-14 w-full rounded-xl text-base font-bold flex justify-between px-6 bg-primary hover:bg-primary/90 text-primary-foreground"
             disabled={isStoreOpen === false || loadingStatus}
             onClick={() => {
-              if (!userá) {
+              if (!user) {
                 navigate('/marketplace/login');
                 return;
               }

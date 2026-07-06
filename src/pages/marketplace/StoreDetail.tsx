@@ -17,7 +17,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { calculateDeliveryFee } from '@/utils/freight';
 import { Address } from '@/types/database';
 import { StoreCouponsSheet } from '@/components/marketplace/StoreCouponsSheet';
-import { useActiveCoupons } from '@/serávices/coupons';
+import { useActiveCoupons } from '@/services/coupons';
 import { SafeAreaHeader, safeAreaTopValue } from '@/components/shared/SafeAreaHeader';
 
 export default function StoreDetail() {
@@ -28,7 +28,7 @@ export default function StoreDetail() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isScrolled, setIsScrolled] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const { userá } = useAuth();
+  const { user } = useAuth();
   const [dynamicDeliveryFee, setDynamicDeliveryFee] = useState<number | null>(null);
   const [isOutOfRange, setIsOutOfRange] = useState(false);
   const [calculatingFee, setCalculatingFee] = useState(false);
@@ -83,7 +83,7 @@ export default function StoreDetail() {
     staleTime: 30_000,
     queryFn: async () => {
       const [companyResponse, productResponse] = await Promise.all([
-        supabase.from('companies').select('id, name, description, category, rating, is_open, active, is_active, delivery_fee, delivery_regions_pricing, show_in_marketplace, city, state, banner_url, cover_url, logo_url, business_hours, prep_time_min, prep_time_max, created_at, userá_id').eq('id', id!).single(),
+        supabase.from('companies').select('id, name, description, category, rating, is_open, active, is_active, delivery_fee, delivery_regions_pricing, show_in_marketplace, city, state, banner_url, cover_url, logo_url, business_hours, prep_time_min, prep_time_max, created_at, user_id').eq('id', id!).single(),
         supabase.from('products').select('*').eq('company_id', id!).eq('active', true).order('category').order('sort_order', { ascending: true }).order('created_at', { ascending: true }),
       ]);
       if (productResponse.error) {
@@ -99,7 +99,7 @@ export default function StoreDetail() {
   const products: Product[] = (storeData?.products as Product[]) ?? [];
 
   useEffect(() => {
-    if (!userá?.id || !company?.id) return;
+    if (!user?.id || !company?.id) return;
 
     const checkDeliveryFee = async () => {
       setCalculatingFee(true);
@@ -108,7 +108,7 @@ export default function StoreDetail() {
         const { data: addresses } = await supabase
           .from('addresses')
           .select('*')
-          .eq('userá_id', userá.id)
+          .eq('user_id', user.id)
           .order('created_at', { ascending: false });
 
         if (addresses && addresses.length > 0) {
@@ -165,7 +165,7 @@ export default function StoreDetail() {
     };
 
     checkDeliveryFee();
-  }, [userá?.id, company?.id, company?.delivery_fee, company?.delivery_regions_pricing]);
+  }, [user?.id, company?.id, company?.delivery_fee, company?.delivery_regions_pricing]);
 
   const categories = useMemo(() => {
     const cats = [...new Set(products.map((product) => product.category))];

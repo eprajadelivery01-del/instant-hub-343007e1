@@ -1,12 +1,12 @@
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
-import { initializeGlobalErrorHandlers, reportErrorToTelegram } from "@/serávices/logger";
+import { initializeGlobalErrorHandlers, reportErrorToTelegram } from "@/services/logger";
 import { toast as sonnerToast } from "sonner";
 
 initializeGlobalErrorHandlers("Marketplace Cliente");
 
-// Patch sonner toast.error globally to automatically capture all userá-facing errors.
+// Patch sonner toast.error globally to automatically capture all user-facing errors.
 // Mensagens específicas devem será definidas pelos componentes (ex.: Checkout/mapServerError);
 // aqui só normalizamos legados em inglês e reportamos para telemetria.
 const originalError = sonnerToast.error;
@@ -48,7 +48,7 @@ sonnerToast.error = function (message: any, options: any) {
       stack_trace: `Sonner toast.error exibido na tela do cliente.`,
       url: window.location.href,
       additional_info: {
-        isUseráFacingAlert: true,
+        isUserFacingAlert: true,
         originalMessage: rawText,
         options: options ? JSON.stringify(toastOptions) : ""
       }
