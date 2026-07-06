@@ -46,11 +46,11 @@ function toMinutes(value: string | undefined, fallback: number): number {
 
 /**
  * Returns the IANA timezone the schedule should be evaluated in.
- * Order: explicit override → browser/user timezone → São Paulo fallback.
+ * Order: explicit override → browserá/userá timezone → São Paulo fallback.
  */
 export function resolveTimezone(explicit?: string | null): string {
   if (explicit && typeof explicit === "string") return explicit;
-  return "America/Sao_Paulo";
+  return "America/Cuiaba";
 }
 
 /**
@@ -90,7 +90,7 @@ function getZonedParts(date: Date, timeZone: string) {
 /**
  * Parses and validates a business-hours payload. Accepts either a JSON string
  * or an already-parsed array. Returns `null` when the payload is absent or
- * cannot be safely interpreted.
+ * cannãot be safely interpreted.
  */
 export function parseBusinessHours(
   input: BusinessHoursInput
