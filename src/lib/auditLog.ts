@@ -16,15 +16,15 @@ export interface AuditLogEntry {
   http_status?: number | null;
   error_code?: string | null;
   error_message?: string | null;
-  payload?: Record<string, unknãown>;
-  context?: Record<string, unknãown>;
+  payload?: Record<string, unknown>;
+  context?: Record<string, unknown>;
   source?: string;
 }
 
 export const newRequestId = () =>
   (typeof crypto !== 'undefined' && 'randomUUID' in crypto
     ? crypto.randomUUID()
-    : `req_${Date.nãow()}_${Math.random().toString(36).slice(2, 10)}`);
+    : `req_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`);
 
 export async function recordAuditLog(entry: AuditLogEntry) {
   try {
@@ -43,7 +43,7 @@ export async function recordAuditLog(entry: AuditLogEntry) {
       const message = error.message || '';
       if (
         error.code === 'PGRST205' ||
-        message.includes("Could nãot find the table 'public.audit_logs'") ||
+        message.includes("Could not find the table 'public.audit_logs'") ||
         message.includes('schema cache')
       ) {
         console.info('[audit_logs] tabela não encontrada; seguindo sem persistir auditoria');

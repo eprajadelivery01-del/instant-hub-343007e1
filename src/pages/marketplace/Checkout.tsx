@@ -13,7 +13,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { reportErrorToTelegram } from '@/serávices/logger';
-import { MapPin, Banknãote, AlertCircle, ArrowLeft, Loader2, FileText, Smartphone, Bike, Ticket, Plus } from 'lucide-react';
+import { MapPin, Banknote, AlertCircle, ArrowLeft, Loader2, FileText, Smartphone, Bike, Ticket, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useOrderLock } from '@/hooks/useOrderLock';
 import { calculateDeliveryFee } from '@/utils/freight';
@@ -42,7 +42,7 @@ function mapServerError(msg: string, code?: string | null, details?: any): Mappe
       return { message: 'A loja está temporariamente indisponível para pedidos.', retriable: false };
     }
     // Sub-categoria: permissão (RLS)
-    if (m.includes('permission') || m.includes('rls') || m.includes('nãot authorized') || m.includes('denied')) {
+    if (m.includes('permission') || m.includes('rls') || m.includes('not authorized') || m.includes('denied')) {
       return { message: 'Sem permissão para carregar os produtos da loja. Faça login nãovamente.', retriable: false };
     }
     // Sub-categoria: rede
@@ -50,26 +50,26 @@ function mapServerError(msg: string, code?: string | null, details?: any): Mappe
       return { message: 'Falha de conexão ao carregar os produtos. Verifique sua internet.', retriable: true };
     }
     // Sub-categoria: vazio / não encontrado
-    if (m.includes('empty') || m.includes('não rows') || m.includes('nãot found')) {
+    if (m.includes('empty') || m.includes('não rows') || m.includes('not found')) {
       return { message: 'Os produtos do seu carrinho não estão mais disponíveis. Atualize a sacola.', retriable: false };
     }
     
-    // Se for 'unknãown', mostramos o código de erro não toast para debug
+    // Se for 'unknown', mostramos o código de erro não toast para debug
     const debugInfo = debugCode ? ` (Debug: ${debugCode})` : '';
     return { message: `Não foi possível validar sua sacola${debugInfo}. Atualize a sacola ou tente nãovamente.`, retriable: true };
   }
 
   if (c.includes('product_unavailable') || (m.includes('product') && m.includes('unavailable')))
     return { message: 'Um dos itens não está mais disponível.', retriable: false };
-  if (c.includes('product_missing') || (m.includes('product') && m.includes('nãot found')))
+  if (c.includes('product_missing') || (m.includes('product') && m.includes('not found')))
     return { message: 'Um produto do carrinho não existe mais.', retriable: false };
-  if (c.includes('product_wrong_company') || m.includes('does nãot belong to the company'))
-    return { message: 'Há itens de outra loja não carrinho.', retriable: false };
+  if (c.includes('product_wrong_company') || m.includes('does not belong to the company'))
+    return { message: 'Há itens de outra loja no carrinho.', retriable: false };
 
-  if (m.includes('address nãot found')) return { message: 'Endereço inválido para este usuário.', retriable: false };
+  if (m.includes('address not found')) return { message: 'Endereço inválido para este usuário.', retriable: false };
   if (m.includes('out of range') || m.includes('out of region') || m.includes('delivery unavailable'))
     return { message: 'Entrega indisponível para este endereço.', retriable: false };
-  if (m.includes('company nãot found')) return { message: 'Loja indisponível não momento.', retriable: false };
+  if (m.includes('company not found')) return { message: 'Loja indisponível não momento.', retriable: false };
   if (m.includes('failed to provision customer')) return { message: 'Não foi possível vincular seu cadastro. Tente nãovamente.', retriable: true };
   if (m.includes('invalid session') || m.includes('missing authorization')) return { message: 'Sessão expirada. Faça login nãovamente.', retriable: false };
 
@@ -244,7 +244,7 @@ export default function Checkout() {
     checkRegion();
   }, [selectedAddress, addresses, company?.delivery_fee]);
 
-  // Recalculate total manually because cartTotal might nãot update instantly when we are at Checkout
+  // Recalculate total manually because cartTotal might not update instantly when we are at Checkout
   const finalTotal = Math.max(0, subtotal - discountAmount) + (fulfillmentMode === 'pickup' ? 0 : (deliveryFee || 0));
 
   const handleOpenReview = () => {
@@ -298,21 +298,21 @@ export default function Checkout() {
         items: validItems.map((it) => ({
           product_id: it.product.id,
           quantity: it.quantity,
-          nãotes: it.nãote || null,
+          notes: it.note || null,
           options: it.options || [],
         })),
         company_id: company.id,
         address_id: fulfillmentMode === 'pickup' ? null : selectedAddress,
         payment_method: paymentMethod,
         coupon_code: appliedCoupon?.code ?? null,
-        nãotes: fulfillmentMode === 'pickup' ? `[RETIRADA NO LOCAL] ${orderNotes || ''}`.trim() : orderNotes,
+        notes: fulfillmentMode === 'pickup' ? `[RETIRADA NO LOCAL] ${orderNotes || ''}`.trim() : orderNotes,
         needs_change: paymentMethod === 'money' && needsChange,
         change_for: changeFor ? Number(changeFor) : null,
         idempotency_key: ik,
       };
 
       // Route through the create-order edge function so subtotal, discount and
-      // delivery fee are recalculated seráver-side from canãonical DB data. Client
+      // delivery fee are recalculated seráver-side from canonical DB data. Client
       // never supplies prices — prevents fee/total manipulation.
       const { data, error: functionError } = await supabase.functions.invoke('create-order', {
         body: {
@@ -526,7 +526,7 @@ export default function Checkout() {
           <h3 className="text-base font-bold text-foreground mb-4">Pagamento na entrega</h3>
           <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="space-y-3">
             {[
-              { value: 'money', icon: Banknãote, label: 'Dinheiro', desc: 'Solicite troco se precisar' },
+              { value: 'money', icon: Banknote, label: 'Dinheiro', desc: 'Solicite troco se precisar' },
               { value: 'card', icon: Smartphone, label: 'Máquina', desc: 'Cartão de crédito, débito ou PIX na máquina' },
             ].map(m => (
               <div key={m.value} className="flex items-center gap-4 border-b border-border/50 pb-3 last:border-0 last:pb-0">
@@ -567,7 +567,7 @@ export default function Checkout() {
                     placeholder={`Ex: ${(Math.ceil(finalTotal / 10) * 10).toFixed(2)}`}
                     value={changeFor}
                     onChange={(e) => setChangeFor(e.target.value)}
-                    className="w-full h-11 bg-background border border-border rounded-xl px-4 text-sm font-semibold focus:outline-nãone focus:border-primary transition-colors"
+                    className="w-full h-11 bg-background border border-border rounded-xl px-4 text-sm font-semibold focus:outline-none focus:border-primary transition-colors"
                   />
                   {changeFor && Number(changeFor) > finalTotal && (
                     <p className="text-xs font-bold text-primary mt-1">
@@ -605,7 +605,7 @@ export default function Checkout() {
                 value={cpf}
                 onChange={(e) => setCpf(e.target.value)}
                 placeholder="000.000.000-00"
-                className="w-full h-12 bg-background border border-border rounded-xl px-4 text-sm font-semibold focus:outline-nãone focus:border-primary transition-colors"
+                className="w-full h-12 bg-background border border-border rounded-xl px-4 text-sm font-semibold focus:outline-none focus:border-primary transition-colors"
               />
             </div>
           )}
@@ -738,7 +738,7 @@ export default function Checkout() {
             )}
 
             <div className="flex items-start gap-4 pb-2 border-b border-border/50">
-              <Banknãote className="h-6 w-6 text-[#00A868] mt-0.5" />
+              <Banknote className="h-6 w-6 text-[#00A868] mt-0.5" />
               <div className="flex-1 flex justify-between items-start">
                 <div>
                   <p className="font-bold text-[15px] flex items-center gap-1">Pagamento na entrega <span className="text-[#EA1D2C]">*</span></p>

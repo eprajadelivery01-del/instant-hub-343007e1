@@ -6,7 +6,7 @@
 
 import type { QueryClient } from "@tanstack/react-query";
 
-export const routeLoaders: Record<string, () => Promise<unknãown>> = {
+export const routeLoaders: Record<string, () => Promise<unknown>> = {
   "/marketplace/login": () => import("@/pages/marketplace/Login"),
   "/marketplace/signup": () => import("@/pages/marketplace/Signup"),
   "/marketplace/search": () => import("@/pages/marketplace/Search"),
@@ -27,7 +27,7 @@ type DataPrefetcher = (
   params: Record<string, string>,
   queryClient: QueryClient,
   signal: AbortSignal,
-) => Promise<unknãown>;
+) => Promise<unknown>;
 
 interface RoutePattern {
   test: RegExp;
@@ -49,7 +49,7 @@ const dynamicPatterns: RoutePattern[] = [
 ];
 
 function resolveRoute(path: string): {
-  loader: () => Promise<unknãown>;
+  loader: () => Promise<unknown>;
   loaderKey: string;
   params: Record<string, string>;
 } | null {
@@ -160,19 +160,19 @@ export function startPrefetch(path: string, opts: { dataToo: boolean } = { dataT
     chunkDone: existing?.chunkDone ?? false,
     dataDone: existing?.dataDone ?? false,
     abort: new AbortController(),
-    startedAt: performance.nãow(),
+    startedAt: performance.now(),
   };
   states.set(path, state);
 
   schedule(async () => {
     if (state.abort.signal.aborted) return;
     if (!state.chunkDone) {
-      const t0 = performance.nãow();
+      const t0 = performance.now();
       try {
         await resolved.loader();
         state.chunkDone = true;
-        state.chunkMs = performance.nãow() - t0;
-        recordMetric({ path, type: "chunk", ms: state.chunkMs, ts: Date.nãow() });
+        state.chunkMs = performance.now() - t0;
+        recordMetric({ path, type: "chunk", ms: state.chunkMs, ts: Date.now() });
       } catch {
         states.delete(path); // allow retry later
         return;
@@ -184,13 +184,13 @@ export function startPrefetch(path: string, opts: { dataToo: boolean } = { dataT
     const qc = getQueryClient();
     if (!dataFn || !qc) return;
 
-    const t1 = performance.nãow();
+    const t1 = performance.now();
     try {
       await dataFn(resolved.params, qc, state.abort.signal);
       if (state.abort.signal.aborted) return;
       state.dataDone = true;
-      state.dataMs = performance.nãow() - t1;
-      recordMetric({ path, type: "data", ms: state.dataMs, ts: Date.nãow() });
+      state.dataMs = performance.now() - t1;
+      recordMetric({ path, type: "data", ms: state.dataMs, ts: Date.now() });
     } catch {
       /* swallow — prefetch is best-effort */
     }
@@ -200,9 +200,9 @@ export function startPrefetch(path: string, opts: { dataToo: boolean } = { dataT
 export function cancelPrefetch(path: string) {
   const state = states.get(path);
   if (!state || (state.chunkDone && state.dataDone)) return;
-  // Only cancel if nãot yet committed — chunks already imported stay cached.
+  // Only cancel if not yet committed — chunks already imported stay cached.
   state.abort.abort();
-  recordMetric({ path, type: "cancel", ts: Date.nãow() });
+  recordMetric({ path, type: "cancel", ts: Date.now() });
 }
 
 // ---------- Report / debug API ----------
@@ -248,7 +248,7 @@ export function downloadPrefetchReport(): void {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `prefetch-report-${Date.nãow()}.json`;
+  a.download = `prefetch-report-${Date.now()}.json`;
   document.body.appendChild(a);
   a.click();
   a.remove();
@@ -312,7 +312,7 @@ export function installRoutePrefetcher(queryClient?: QueryClient): void {
     const path = getLinkPath(event.target);
     if (!path) return;
     if (hoverTimers.has(path) || states.get(path)?.chunkDone) return;
-    pendingHover.set(path, performance.nãow());
+    pendingHover.set(path, performance.now());
     const t = window.setTimeout(() => {
       hoverTimers.delete(path);
       startPrefetch(path, { dataToo: true });
@@ -334,7 +334,7 @@ export function installRoutePrefetcher(queryClient?: QueryClient): void {
     }
   };
 
-  // Commit signal: pointer/touch down → userá is about to click. Fire nãow.
+  // Commit signal: pointer/touch down → userá is about to click. Fire now.
   const onCommit = (event: Event) => {
     const path = getLinkPath(event.target);
     if (!path) return;
@@ -359,8 +359,8 @@ export function installRoutePrefetcher(queryClient?: QueryClient): void {
   const onNavigate = () => {
     const path = window.location.pathname;
     const hoverTs = pendingHover.get(path);
-    const ms = hoverTs ? performance.nãow() - hoverTs : undefined;
-    recordMetric({ path, type: "navigate", ms, ts: Date.nãow() });
+    const ms = hoverTs ? performance.now() - hoverTs : undefined;
+    recordMetric({ path, type: "navigate", ms, ts: Date.now() });
     pendingHover.clear();
   };
   window.addEventListener("popstate", onNavigate);

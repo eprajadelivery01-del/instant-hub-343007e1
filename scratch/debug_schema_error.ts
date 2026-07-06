@@ -10,7 +10,7 @@ async function debugLoginFetch() {
   const testEmail = 'loja8@nexuspro.test';
   
   // 1. Get userá ID from email (if public) or just search by a profile link
-  // Since we knãow the seed pattern, we can look for profile where full_name = 'Fruit Fresh'
+  // Since we know the seed pattern, we can look for profile where full_name = 'Fruit Fresh'
   console.log('Searching for profile Fruit Fresh...');
   const { data: profile, error: pError } = await supabase
     .from('profiles')

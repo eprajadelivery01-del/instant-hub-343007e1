@@ -1,4 +1,4 @@
-// Registers TanStack Query data-prefetchers for knãown routes.
+// Registers TanStack Query data-prefetchers for known routes.
 // Imported eagerly from App.tsx so the registry is populated before any
 // hover/pointer event fires — the route chunks themselves stay lazy.
 

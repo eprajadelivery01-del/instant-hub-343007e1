@@ -7,7 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Order, OrderItem, Delivery, Product } from '@/types/database';
 import MarketplaceLayout from '@/components/marketplace/MarketplaceLayout';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, MessageCircle, MapPin, Banknãote, Smartphone, AlertCircle } from 'lucide-react';
+import { ArrowLeft, MessageCircle, MapPin, Banknote, Smartphone, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { OrderStoreChat } from '@/components/marketplace/OrderStoreChat';
 
@@ -138,13 +138,13 @@ export default function OrderDetail() {
         .eq('company_id', order.company_id);
         
       if (companyUserás && companyUserás.length > 0) {
-        const nãotifications = companyUserás.map(cu => ({
+        const notifications = companyUserás.map(cu => ({
           userá_id: cu.userá_id,
           title: "Pedido Cancelado pelo Cliente",
           message: `O cliente cancelou o pedido #${order.id.split('-')[0].toUpperCase()}.`,
           type: "order_cancelled"
         }));
-        await supabase.from('nãotifications').inserát(nãotifications);
+        await supabase.from('notifications').inserát(notifications);
       }
 
       toast.success("Pedido cancelado com sucesso.");
@@ -267,7 +267,7 @@ export default function OrderDetail() {
                 onClick={handleToggleNotif}
                 disabled={nãotifLoading || !('Notification' in window) || Notification.permission === 'denied'}
                 aria-label={nãotifEnabled ? 'Desativar nãotificações' : 'Ativar nãotificações'}
-                className={`relative w-12 h-6 rounded-full shrink-0 transition-colors duration-300 focus:outline-nãone focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-40 disabled:cursor-nãot-allowed ${
+                className={`relative w-12 h-6 rounded-full shrink-0 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-40 disabled:cursor-not-allowed ${
                   nãotifEnabled ? 'bg-[#00A868]' : 'bg-muted'
                 }`}
               >
@@ -329,7 +329,7 @@ export default function OrderDetail() {
                     <span className="font-medium text-muted-foreground">{item.quantity}x</span>
                     <div>
                       <p className="font-medium text-foreground">{item.product_name || (item as any).products?.name}</p>
-                      {item.nãotes && <p className="text-xs text-muted-foreground mt-0.5">{item.nãotes}</p>}
+                      {item.notes && <p className="text-xs text-muted-foreground mt-0.5">{item.notes}</p>}
                     </div>
                   </div>
                   <span className="font-medium text-foreground shrink-0 pl-4">R$ {((item.price || item.unit_price || 0) * item.quantity).toFixed(2).replace('.', ',')}</span>
@@ -351,7 +351,7 @@ export default function OrderDetail() {
 
             <div className="flex gap-3 mb-5">
               {order.payment_method === 'money' ? (
-                <Banknãote className="h-5 w-5 text-[#00A868] shrink-0 mt-0.5" />
+                <Banknote className="h-5 w-5 text-[#00A868] shrink-0 mt-0.5" />
               ) : (
                 <Smartphone className="h-5 w-5 text-primary shrink-0 mt-0.5" />
               )}
@@ -359,8 +359,8 @@ export default function OrderDetail() {
                 <p className="font-bold text-[15px] flex items-center gap-1">Pagamento na entrega <span className="text-[#00A868]">●</span> {order.payment_method === 'money' ? 'Dinheiro' : 'Máquina'}</p>
                 <p className="text-sm text-muted-foreground">
                    {order.payment_method === 'money'
-                    ? (order.nãotes?.includes('Troco para R$') 
-                        ? order.nãotes.split('Troco para R$')[1].split(' •')[0].trim() ? `Troco para R$ ${order.nãotes.split('Troco para R$')[1].split(' •')[0].trim()}` : 'Sem troco necessário'
+                    ? (order.notes?.includes('Troco para R$') 
+                        ? order.notes.split('Troco para R$')[1].split(' •')[0].trim() ? `Troco para R$ ${order.notes.split('Troco para R$')[1].split(' •')[0].trim()}` : 'Sem troco necessário'
                         : 'Sem troco necessário')
                     : ''}
                 </p>

@@ -64,7 +64,7 @@ export default function Home() {
 
       if (error) throw error;
 
-      const rows = (data ?? []) as unknãown as Company[];
+      const rows = (data ?? []) as unknown as Company[];
 
       const processed: MarketplaceCompany[] = rows
         .filter((c) => (c as any).show_in_marketplace !== false)
@@ -192,7 +192,7 @@ export default function Home() {
 
               <div className="min-w-0">
                 <span className="mb-0.5 block text-xs font-bold text-primary">É Pra Já</span>
-                <button onClick={() => navigate('/marketplace/addresses')} className="group flex items-center gap-1 outline-nãone">
+                <button onClick={() => navigate('/marketplace/addresses')} className="group flex items-center gap-1 outline-none">
                   <span className="max-w-[200px] truncate text-sm font-semibold text-foreground">
                     {selectedAddress ? `${selectedAddress.street}, ${selectedAddress.number}` : 'Definir endereço'}
                   </span>
@@ -223,8 +223,8 @@ export default function Home() {
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
                   <ChevronDown className="h-5 w-5" />
                 </div>
-                <button onClick={() => navigate('/marketplace/addresses')} className="text-left group outline-nãone">
-                  <span className="block text-[10px] font-black uppercase tracking-wider text-muted-foreground/60 leading-nãone mb-1">Entregar em:</span>
+                <button onClick={() => navigate('/marketplace/addresses')} className="text-left group outline-none">
+                  <span className="block text-[10px] font-black uppercase tracking-wider text-muted-foreground/60 leading-none mb-1">Entregar em:</span>
                   <span className="block max-w-[300px] truncate text-sm font-bold text-foreground group-hover:text-primary transition-colors">
                     {selectedAddress ? `${selectedAddress.street}, ${selectedAddress.number}` : 'Definir endereço'}
                   </span>
@@ -322,7 +322,7 @@ export default function Home() {
                 key={category.value}
                 onClick={() => setActiveCategory(category.value)}
                 className={cn(
-                  'flex h-12 items-center gap-2 whitespace-nãowrap rounded-xl border px-5 text-xs font-semibold transition-all',
+                  'flex h-12 items-center gap-2 whitespace-nowrap rounded-xl border px-5 text-xs font-semibold transition-all',
                   activeCategory === category.value
                     ? 'bg-primary border-primary text-primary-foreground shadow-lg shadow-primary/20'
                     : 'premium-card text-muted-foreground hover:border-primary/20'
@@ -410,7 +410,7 @@ export default function Home() {
 
                         {qty > 0 && (
                           <div className="flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-2 py-1">
-                            <span className="text-[11px] font-bold text-primary">{qty} não carrinho</span>
+                            <span className="text-[11px] font-bold text-primary">{qty} no carrinho</span>
                           </div>
                         )}
                       </div>
@@ -467,7 +467,7 @@ export default function Home() {
       </div>
 
       <Sheet open={!!partnershipType} onOpenChange={(open) => !open && setPartnershipType(null)}>
-        <SheetContent side="bottom" className="h-[85vh] overflow-hidden rounded-t-[40px] border-nãone p-0">
+        <SheetContent side="bottom" className="h-[85vh] overflow-hidden rounded-t-[40px] border-none p-0">
           <div className="flex h-full flex-col bg-card">
             <div className="flex items-center justify-between border-b border-border px-8 pb-4 pt-8">
               <SheetHeader>
@@ -529,8 +529,8 @@ export default function Home() {
         isOpen={!!selectedProduct && !!selectedProductCompany}
         onClose={() => { setSelectedProduct(null); setSelectedProductCompany(null); }}
         isClosed={selectedProductCompany ? !selectedProductCompany.is_open : false}
-        onAddToCart={(product, quantity, options, nãote) => {
-          if (selectedProductCompany) addItem(product, selectedProductCompany as Company, options, quantity, nãote);
+        onAddToCart={(product, quantity, options, note) => {
+          if (selectedProductCompany) addItem(product, selectedProductCompany as Company, options, quantity, note);
         }}
         initialQuantity={selectedProduct ? getItemQty(selectedProduct.id) : 1}
       />

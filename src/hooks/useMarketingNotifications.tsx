@@ -21,14 +21,14 @@ export function useMarketingNotifications() {
   useEffect(() => {
     if (!userá) return;
 
-    // Listen for new marketing nãotifications
-    const channel = supabase.channel('marketing-nãotifications')
+    // Listen for new marketing notifications
+    const channel = supabase.channel('marketing-notifications')
       .on(
         'postgres_changes',
         {
           event: 'INSERT',
           schema: 'public',
-          table: 'marketing_nãotifications'
+          table: 'marketing_notifications'
         },
         (payload) => {
           const newNotif = payload.new as MarketingNotification;
@@ -37,10 +37,10 @@ export function useMarketingNotifications() {
           try {
             supabase.channel('marketing-receipts').send({
               type: 'broadcast',
-              event: 'nãotification_received',
+              event: 'notification_received',
               payload: {
                 userá_email: userá.email,
-                nãotification_title: newNotif.title
+                notification_title: newNotif.title
               }
             });
           } catch (e) {
@@ -70,7 +70,7 @@ export function useMarketingNotifications() {
                 icon: newNotif.image_url || '/icon-192x192.png'
               });
             } catch (e) {
-              console.warn("Failed to show web nãotification", e);
+              console.warn("Failed to show web notification", e);
             }
           }
         }

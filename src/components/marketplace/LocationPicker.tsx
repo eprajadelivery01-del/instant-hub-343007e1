@@ -146,7 +146,7 @@ export function LocationPicker({ initialCoords, onConfirm, onCancel }: LocationP
         <Navigation className="h-5 w-5 group-hover:rotate-12 transition-transform" />
       </button>
 
-      <div className="absolute bottom-6 left-6 right-6 z-[100] pointer-events-nãone">
+      <div className="absolute bottom-6 left-6 right-6 z-[100] pointer-events-none">
         {addressPreview && (
           <div className="bg-background/90 backdrop-blur-md p-4 rounded-3xl shadow-2xl border border-border animate-in slide-in-from-bottom-2 pointer-events-auto mb-3">
             <div className="flex items-center justify-between mb-4">

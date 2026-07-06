@@ -6,19 +6,19 @@ import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface MarketingNotificationPopupProps {
-  nãotification: MarketingNotification | null;
+  notification: MarketingNotification | null;
   onClose: () => void;
 }
 
-export function MarketingNotificationPopup({ nãotification, onClose }: MarketingNotificationPopupProps) {
+export function MarketingNotificationPopup({ notification, onClose }: MarketingNotificationPopupProps) {
   const { toast } = useToast();
   const [copied, setCopied] = React.useState(false);
 
-  if (!nãotification) return null;
+  if (!notification) return null;
 
   const handleCopy = () => {
-    if (nãotification.coupon_code) {
-      navigator.clipboard.writeText(nãotification.coupon_code);
+    if (notification.coupon_code) {
+      navigator.clipboard.writeText(notification.coupon_code);
       setCopied(true);
       toast({
         title: "Cupom Copiado!",
@@ -46,40 +46,40 @@ export function MarketingNotificationPopup({ nãotification, onClose }: Marketin
           </button>
 
           {/* Image Header */}
-          {nãotification.image_url ? (
+          {notification.image_url ? (
             <div className="w-full h-48 bg-muted relative">
               <img 
-                src={nãotification.image_url} 
+                src={notification.image_url} 
                 alt="Oferta" 
                 className="w-full h-full object-cover"
                 onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = 'nãone';
+                  (e.target as HTMLImageElement).style.display = 'none';
                 }}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent" />
             </div>
           ) : (
             <div className="w-full h-32 bg-primary/10 flex items-center justify-center relative">
-              <div className="text-6xl">{nãotification.emoji || "🎁"}</div>
+              <div className="text-6xl">{notification.emoji || "🎁"}</div>
               <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent opacity-50" />
             </div>
           )}
 
           {/* Content */}
           <div className="p-6 pt-2 text-center">
-            {nãotification.image_url && nãotification.emoji && (
-              <div className="text-4xl mb-3 -mt-6 relative z-10 drop-shadow-md">{nãotification.emoji}</div>
+            {notification.image_url && notification.emoji && (
+              <div className="text-4xl mb-3 -mt-6 relative z-10 drop-shadow-md">{notification.emoji}</div>
             )}
             
             <h3 className="text-xl font-extrabold tracking-tight mb-2 text-foreground">
-              {nãotification.title}
+              {notification.title}
             </h3>
             
             <p className="text-muted-foreground text-sm leading-relaxed mb-6">
-              {nãotification.message}
+              {notification.message}
             </p>
 
-            {nãotification.coupon_code && (
+            {notification.coupon_code && (
               <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 mb-4 relative overflow-hidden group">
                 <div className="absolute -right-4 -top-4 text-primary/10 rotate-12">
                   <Ticket className="w-16 h-16" />
@@ -89,7 +89,7 @@ export function MarketingNotificationPopup({ nãotification, onClose }: Marketin
                   <Gift className="w-3 h-3" /> Seu Cupom
                 </p>
                 <div className="text-2xl font-black text-foreground tracking-wider mb-3 font-monão">
-                  {nãotification.coupon_code}
+                  {notification.coupon_code}
                 </div>
                 
                 <Button 

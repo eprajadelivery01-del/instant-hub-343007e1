@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS public.coupons (
   used_count INTEGER DEFAULT 0,
   company_id UUID REFERENCES public.companies(id) NULL,
   active BOOLEAN DEFAULT true,
-  created_at TIMESTAMPTZ DEFAULT nãow()
+  created_at TIMESTAMPTZ DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS public.userá_coupons (
@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS public.userá_coupons (
   coupon_id UUID REFERENCES public.coupons(id),
   used_at TIMESTAMPTZ,
   order_id UUID REFERENCES public.orders(id) NULL,
-  created_at TIMESTAMPTZ DEFAULT nãow()
+  created_at TIMESTAMPTZ DEFAULT now()
 );
 
 -- Habilitar a segurança de sessão
@@ -33,7 +33,7 @@ ALTER TABLE public.userá_coupons ENABLE ROW LEVEL SECURITY;
 -- Clientes podem consultar/enxergar todos os cupons que estão ativos
 CREATE POLICY "Clientes podem ver cupons ativos"
 ON public.coupons FOR SELECT
-USING (active = true AND (expires_at IS NULL OR expires_at > nãow()));
+USING (active = true AND (expires_at IS NULL OR expires_at > now()));
 
 -- Apenas Admin ou a Engine do sistema pode ver carteira inteira, ou o próprio Userá
 CREATE POLICY "Clientes podem ver seus proprios cupons resgatados"

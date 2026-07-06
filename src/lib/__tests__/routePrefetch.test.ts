@@ -7,13 +7,13 @@ import {
 } from "@/lib/routePrefetch";
 
 type Deferred = {
-  promise: Promise<unknãown>;
-  resolve: (v?: unknãown) => void;
+  promise: Promise<unknown>;
+  resolve: (v?: unknown) => void;
   started: boolean;
 };
 
 function makeDeferred(): Deferred {
-  let resolve!: (v?: unknãown) => void;
+  let resolve!: (v?: unknown) => void;
   const promise = new Promise((res) => { resolve = res; });
   return { promise, resolve, started: false };
 }
@@ -93,7 +93,7 @@ describe("routePrefetch concurrency limiter", () => {
     await flush();
     await flush();
 
-    // Even after completion, repeating must nãot re-import.
+    // Even after completion, repeating must not re-import.
     startPrefetch("/test/route-0", { dataToo: false });
     await flush();
     expect(calls).toBe(1);
@@ -102,7 +102,7 @@ describe("routePrefetch concurrency limiter", () => {
   it("frees the queue slot when a loader rejects", async () => {
     const defs = installLoaders(3);
     // Make the first one reject.
-    let rejector!: (e: unknãown) => void;
+    let rejector!: (e: unknown) => void;
     routeLoaders["/test/route-0"] = () => {
       defs[0].started = true;
       return new Promise((_, rej) => { rejector = rej; });

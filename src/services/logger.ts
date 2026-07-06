@@ -12,13 +12,13 @@ let isReporting = false;
 export async function reportErrorToTelegram(payload: ErrorPayload, appName = "Marketplace Cliente") {
   if (isReporting) return;
   
-  // Ignãore errors from Lovable preview environments to avoid false alarms
+  // Ignore errors from Lovable preview environments to avoid false alarms
   const currentUrl = payload.url || window.location.href;
   if (currentUrl.includes("lovableproject.com")) {
     return;
   }
 
-  // Ignãore specific harmless userá-facing errors
+  // Ignore specific harmless userá-facing errors
   const msg = payload.error_message?.toLowerCase() || "";
   if (
     msg.includes("corrida já foi aceita") || 

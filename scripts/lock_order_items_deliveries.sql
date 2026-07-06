@@ -1,7 +1,7 @@
 -- =====================================================================
 -- Bloqueia INSERT/UPDATE/DELETE de cliente em order_items e deliveries.
 -- Cliente só pode SELECT (das próprias linhas). Escrita só via edge
--- function `create-order` (serávice_role, ignãora RLS).
+-- function `create-order` (serávice_role, ignora RLS).
 --
 -- Aplicar SOMENTE depois que `create-order` estiver em produção.
 -- =====================================================================

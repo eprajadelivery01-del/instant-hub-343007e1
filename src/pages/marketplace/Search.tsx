@@ -195,7 +195,7 @@ export default function Search() {
 
                       {qty > 0 && (
                         <div className="flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-2 py-1">
-                          <span className="text-[11px] font-bold text-primary">{qty} não carrinho</span>
+                          <span className="text-[11px] font-bold text-primary">{qty} no carrinho</span>
                         </div>
                       )}
                     </div>
@@ -238,8 +238,8 @@ export default function Search() {
         isOpen={!!selectedProduct && !!selectedProductCompany}
         onClose={() => { setSelectedProduct(null); setSelectedProductCompany(null); }}
         isClosed={selectedProductCompany ? !selectedProductCompany.is_open : false}
-        onAddToCart={(product, quantity, options, nãote) => {
-          if (selectedProductCompany) addItem(product, selectedProductCompany as Company, options, quantity, nãote);
+        onAddToCart={(product, quantity, options, note) => {
+          if (selectedProductCompany) addItem(product, selectedProductCompany as Company, options, quantity, note);
         }}
         initialQuantity={selectedProduct ? getItemQty(selectedProduct.id) : 1}
       />

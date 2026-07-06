@@ -16,17 +16,17 @@ interface CartItemRowProps {
   item: any;
   companyId?: string;
   updateQuantity: (id: string, qty: number) => void;
-  updateNote: (id: string, nãote: string) => void;
+  updateNote: (id: string, note: string) => void;
   navigate: any;
 }
 
 function CartItemRow({ item, companyId, updateQuantity, updateNote, navigate }: CartItemRowProps) {
-  const [localNote, setLocalNote] = useState(item.nãote || '');
+  const [localNote, setLocalNote] = useState(item.note || '');
 
-  // Keep local state in sync if item.nãote changes from outside
+  // Keep local state in sync if item.note changes from outside
   useEffect(() => {
-    setLocalNote(item.nãote || '');
-  }, [item.nãote]);
+    setLocalNote(item.note || '');
+  }, [item.note]);
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setLocalNote(e.target.value);
@@ -42,7 +42,7 @@ function CartItemRow({ item, companyId, updateQuantity, updateNote, navigate }: 
         <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-secondary relative">
           <MediaImage
             src={getPrimaryProductImage(item.product)}
-            alt={item.product.name || 'Produto não carrinho'}
+            alt={item.product.name || 'Produto no carrinho'}
             className="h-full w-full object-cover animate-pulse-subtle"
           />
           <button 
@@ -104,7 +104,7 @@ function CartItemRow({ item, companyId, updateQuantity, updateNote, navigate }: 
           onBlur={handleBlur}
           placeholder={`Ex: sem cebola, sem sal...`}
           rows={1}
-          className="w-full resize-nãone rounded-xl border border-border bg-muted/40 px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground/50 focus:outline-nãone focus:border-primary/50 focus:bg-background transition-all"
+          className="w-full resize-none rounded-xl border border-border bg-muted/40 px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/50 focus:bg-background transition-all"
         />
       </div>
     </div>
@@ -349,7 +349,7 @@ export default function Cart() {
                 placeholder="Digite um código" 
                 value={couponCode}
                 onChange={e => setCouponCode(e.target.value)}
-                className="flex-1 h-12 bg-background border border-border rounded-xl px-4 text-sm font-bold uppercase placeholder:nãormal-case placeholder:font-nãormal focus:outline-nãone focus:border-primary transition-colors"
+                className="flex-1 h-12 bg-background border border-border rounded-xl px-4 text-sm font-bold uppercase placeholder:normal-case placeholder:font-normal focus:outline-none focus:border-primary transition-colors"
                 disabled={validatingCoupon}
               />
               <button 

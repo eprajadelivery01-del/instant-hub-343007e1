@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS public.audit_logs (
   error_message text,
   payload jsonb,
   context jsonb,
-  created_at timestamptz NOT NULL DEFAULT nãow()
+  created_at timestamptz NOT NULL DEFAULT now()
 );
 
 CREATE INDEX IF NOT EXISTS audit_logs_request_id_idx ON public.audit_logs (request_id);

@@ -194,7 +194,7 @@ export function OrderStoreChat({ orderId, companyId, companyName }: OrderStoreCh
               e.stopPropagation();
               send(undefined, msg);
             }}
-            className="shrink-0 px-3 py-1.5 rounded-full bg-primary/5 border border-primary/10 text-[10px] font-bold text-primary active:scale-95 transition-all disabled:opacity-50 disabled:cursor-nãot-allowed"
+            className="shrink-0 px-3 py-1.5 rounded-full bg-primary/5 border border-primary/10 text-[10px] font-bold text-primary active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {msg}
           </button>

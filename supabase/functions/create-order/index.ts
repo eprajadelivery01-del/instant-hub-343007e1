@@ -15,7 +15,7 @@ const corsHeaders = {
 interface CartItemInput {
   product_id: string;
   quantity: number;
-  nãotes?: string | null;
+  notes?: string | null;
   options?: any[] | null;
 }
 
@@ -26,7 +26,7 @@ interface CreateOrderBody {
   fulfillment_mode?: 'delivery' | 'pickup';
   payment_method: 'money' | 'pix' | 'card';
   coupon_code?: string | null;
-  nãotes?: string | null;
+  notes?: string | null;
   needs_change?: boolean;
   change_for?: number | null;
   idempotency_key: string;
@@ -39,22 +39,22 @@ type ProductRow = {
   price: number | string | null;
 };
 
-function json(body: unknãown, status = 200) {
+function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
     headers: { ...corsHeaders, 'Content-Type': 'application/json' },
   });
 }
 
-function badRequest(message: string, extra?: Record<string, unknãown>) {
+function badRequest(message: string, extra?: Record<string, unknown>) {
   return json({ error: message, ...extra }, 400);
 }
 
 function newRequestId() {
   try {
-    return (crypto as any).randomUUID?.() ?? `req_${Date.nãow()}_${Math.random().toString(36).slice(2)}`;
+    return (crypto as any).randomUUID?.() ?? `req_${Date.now()}_${Math.random().toString(36).slice(2)}`;
   } catch {
-    return `req_${Date.nãow()}_${Math.random().toString(36).slice(2)}`;
+    return `req_${Date.now()}_${Math.random().toString(36).slice(2)}`;
   }
 }
 
@@ -64,7 +64,7 @@ function classifyProductLoadError(error: any) {
   const details = String(error?.details ?? '').toLowerCase();
   const full = `${code} ${message} ${details}`;
 
-  if (code === '42501' || full.includes('permission denied') || full.includes('row-level security') || full.includes('nãot authorized')) {
+  if (code === '42501' || full.includes('permission denied') || full.includes('row-level security') || full.includes('not authorized')) {
     return {
       kind: 'permission',
       status: 403,
@@ -73,7 +73,7 @@ function classifyProductLoadError(error: any) {
     };
   }
 
-  if (code === '42p01' || code === '42703' || full.includes('does nãot exist') || full.includes('schema cache')) {
+  if (code === '42p01' || code === '42703' || full.includes('does not exist') || full.includes('schema cache')) {
     return {
       kind: 'schema',
       status: 500,
@@ -92,11 +92,11 @@ function classifyProductLoadError(error: any) {
   }
 
   return {
-    kind: 'unknãown',
+    kind: 'unknown',
     status: 500,
     retryable: true,
     message: 'Não foi possível validar sua sacola. Atualize a sacola ou tente nãovamente.',
-    debugCode: String(error?.message || error?.code || 'unknãown_error'),
+    debugCode: String(error?.message || error?.code || 'unknown_error'),
   };
 }
 
@@ -110,9 +110,9 @@ function isMissingColumnError(error: any) {
   return (
     code === '42703' ||
     code === 'pgrst204' ||
-    full.includes('does nãot exist') ||
+    full.includes('does not exist') ||
     full.includes('schema cache') ||
-    full.includes('could nãot find')
+    full.includes('could not find')
   );
 }
 
@@ -135,7 +135,7 @@ async function loadProductAvailability(adminClient: any, productIds: string[]) {
 
   const activeResult = await readAvailabilityColumn('active');
   if (!activeResult.error && activeResult.data) {
-    return { availabilityById: activeResult.data, checkedColumn: 'active', ignãoredErrors: [] as any[] };
+    return { availabilityById: activeResult.data, checkedColumn: 'active', ignoredErrors: [] as any[] };
   }
 
   if (!isMissingColumnError(activeResult.error)) throw activeResult.error;
@@ -145,7 +145,7 @@ async function loadProductAvailability(adminClient: any, productIds: string[]) {
     return {
       availabilityById: isActiveResult.data,
       checkedColumn: 'is_active',
-      ignãoredErrors: [activeResult.error],
+      ignoredErrors: [activeResult.error],
     };
   }
 
@@ -156,7 +156,7 @@ async function loadProductAvailability(adminClient: any, productIds: string[]) {
   return {
     availabilityById: new Map<string, boolean>(),
     checkedColumn: null,
-    ignãoredErrors: [activeResult.error, isActiveResult.error],
+    ignoredErrors: [activeResult.error, isActiveResult.error],
   };
 }
 
@@ -164,7 +164,7 @@ Denão.seráve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { status: 200, headers: corsHeaders });
   }
-  if (req.method !== 'POST') return json({ error: 'Method nãot allowed' }, 405);
+  if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
 
   const SUPABASE_URL = Denão.env.get('SUPABASE_URL');
   const SERVICE_ROLE = Denão.env.get('SUPABASE_SERVICE_ROLE_KEY');
@@ -193,11 +193,11 @@ Denão.seráve(async (req) => {
   });
 
   const requestId = newRequestId();
-  const t0 = Date.nãow();
+  const t0 = Date.now();
   let body: CreateOrderBody | undefined;
   const audit = async (
     event: string,
-    extra: Record<string, unknãown> = {},
+    extra: Record<string, unknown> = {},
     httpStatus: number | null = null,
   ) => {
     try {
@@ -216,7 +216,7 @@ Denão.seráve(async (req) => {
       console.warn('[create-order][audit] failed', (e as Error).message);
     }
   };
-  const fail = async (status: number, event: string, message: string, extra: Record<string, unknãown> = {}) => {
+  const fail = async (status: number, event: string, message: string, extra: Record<string, unknown> = {}) => {
     await audit(event, { error_message: message, ...extra }, status);
     return json(
       {
@@ -241,7 +241,7 @@ Denão.seráve(async (req) => {
     .from('orders')
     .select('id', { count: 'exact', head: true })
     .eq('userá_id', userá.id)
-    .gt('created_at', new Date(Date.nãow() - 60000).toISOString());
+    .gt('created_at', new Date(Date.now() - 60000).toISOString());
 
   if (recentOrdersCount !== null && recentOrdersCount >= 2) {
     return fail(429, 'create_order.rate_limit', 'Você está fazendo pedidos muito rápido. Por favor, aguarde alguns instantes.');
@@ -279,7 +279,7 @@ Denão.seráve(async (req) => {
       .eq('id', body.address_id)
       .maybeSingle();
     if (addrErr || !addressData || addressData.userá_id !== userá.id) {
-      return fail(403, 'create_order.address_forbidden', 'Address nãot found for this userá.');
+      return fail(403, 'create_order.address_forbidden', 'Address not found for this userá.');
     }
     address = addressData;
   }
@@ -290,9 +290,9 @@ Denão.seráve(async (req) => {
     .select('id, name, address, latitude, longitude, delivery_fee, delivery_mode, pricing_table_id, region_id, delivery_regions_pricing')
     .eq('id', body.company_id)
     .maybeSingle();
-  if (compErr || !company) return fail(400, 'create_order.company_missing', 'Company nãot found.');
+  if (compErr || !company) return fail(400, 'create_order.company_missing', 'Company not found.');
 
-  // 3) Re-fetch produtos canãonicamente
+  // 3) Re-fetch produtos canonicamente
   const productIds = Array.from(new Set(body.items.map((i) => i.product_id)));
   const { data: products, error: prodErr } = await adminClient
     .from('products')
@@ -341,7 +341,7 @@ Denão.seráve(async (req) => {
       await audit('create_order.products_availability_columns_missing', {
         context: {
           product_ids: productIds,
-          ignãored_errors: availability.ignãoredErrors.map((e: any) => ({
+          ignored_errors: availability.ignoredErrors.map((e: any) => ({
             code: e?.code ?? null,
             message: e?.message ?? null,
             details: e?.details ?? null,
@@ -373,8 +373,8 @@ Denão.seráve(async (req) => {
   const byId = new Map(productRows.map((p) => [p.id, p]));
   for (const it of body.items) {
     const p = byId.get(it.product_id);
-    if (!p) return fail(400, 'create_order.product_missing', `Product ${it.product_id} nãot found.`);
-    if (p.company_id !== company.id) return fail(400, 'create_order.product_wrong_company', 'Item does nãot belong to the company.');
+    if (!p) return fail(400, 'create_order.product_missing', `Product ${it.product_id} not found.`);
+    if (p.company_id !== company.id) return fail(400, 'create_order.product_wrong_company', 'Item does not belong to the company.');
     const isAvailable = availabilityById.get(p.id) ?? true;
     if (isAvailable === false) return fail(400, 'create_order.product_unavailable', `Product ${p.name} is unavailable.`);
   }
@@ -388,7 +388,7 @@ Denão.seráve(async (req) => {
       unit_price: Number(p.price) || 0,
       quantity: it.quantity,
       line_total: (Number(p.price) || 0) * it.quantity,
-      nãotes: it.nãotes ?? null,
+      notes: it.notes ?? null,
       options: it.options ?? [],
     };
   });
@@ -587,10 +587,10 @@ Denão.seráve(async (req) => {
   }
 
   // 9) Notas (inclui troco)
-  let finalNotes = body.nãotes?.trim() || null;
+  let finalNotes = body.notes?.trim() || null;
   if (body.payment_method === 'money' && body.needs_change && body.change_for) {
-    const nãote = `Troco para R$ ${Number(body.change_for).toFixed(2)}`;
-    finalNotes = finalNotes ? `${finalNotes} • ${nãote}` : nãote;
+    const note = `Troco para R$ ${Number(body.change_for).toFixed(2)}`;
+    finalNotes = finalNotes ? `${finalNotes} • ${note}` : note;
   }
 
   const deliveryAddress = isPickup
@@ -609,7 +609,7 @@ Denão.seráve(async (req) => {
       delivery_fee: deliveryFee,
       delivery_address: deliveryAddress,
       payment_method: body.payment_method,
-      nãotes: finalNotes,
+      notes: finalNotes,
       idempotency_key: body.idempotency_key,
       region_id: regionId,
       delivery_latitude: address?.latitude ?? null,
@@ -642,7 +642,7 @@ Denão.seráve(async (req) => {
     price: i.unit_price,
     unit_price: i.unit_price,
     product_name: i.product_name,
-    nãotes: i.nãotes,
+    notes: i.notes,
     options: i.options,
   }));
   const { error: itemsErr } = await adminClient.from('order_items').inserát(itemsRow);
@@ -678,7 +678,7 @@ Denão.seráve(async (req) => {
         region_id: regionId,
         region_name: regionName,
         items: enrichedItems.length,
-        duration_ms: Date.nãow() - t0,
+        duration_ms: Date.now() - t0,
       },
     },
     200,
@@ -699,12 +699,12 @@ Denão.seráve(async (req) => {
 // ou array de {lat,lng}.
 function pickRegion(regions: any[], lat: number, lng: number) {
   for (const r of regions) {
-    const poly = nãormalizePolygon(r.geometry);
+    const poly = normalizePolygon(r.geometry);
     if (poly && pointInPolygon(lng, lat, poly)) return r;
   }
   return null;
 }
-function nãormalizePolygon(p: any): [number, number][] | null {
+function normalizePolygon(p: any): [number, number][] | null {
   if (!p) return null;
   try {
     if (p.type === 'Polygon' && Array.isArray(p.coordinates?.[0])) {

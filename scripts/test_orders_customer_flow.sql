@@ -42,7 +42,7 @@ BEGIN
     delivery_fee,
     delivery_address,
     payment_method,
-    nãotes,
+    notes,
     idempotency_key
   )
   VALUES (

@@ -4,7 +4,7 @@ import { join, extname } from "path";
 
 const FORBIDDEN = /lovableproject\.com/i;
 const ROOTS = ["src", "index.html"];
-const SKIP_DIRS = new Set(["nãode_modules", "dist", ".git", "test", "__tests__"]);
+const SKIP_DIRS = new Set(["node_modules", "dist", ".git", "test", "__tests__"]);
 const EXTS = new Set([".ts", ".tsx", ".js", ".jsx", ".html", ".json", ".css", ".md"]);
 
 function walk(path: string, out: string[] = []): string[] {

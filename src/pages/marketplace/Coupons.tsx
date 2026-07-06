@@ -14,7 +14,7 @@ export default function Coupons() {
 
   useEffect(() => {
     const fetchCoupons = async () => {
-      // Fetch available coupons that are active and nãot expired
+      // Fetch available coupons that are active and not expired
       const { data } = await supabase
         .from('coupons')
         .select('*, companies(name, logo_url, region_id)')
@@ -55,7 +55,7 @@ export default function Coupons() {
           </button>
           <div>
             <h1 className="text-xl font-black text-foreground tracing-tight">Meus Cupons</h1>
-            <p className="text-[10px] font-bold text-primary uppercase tracking-widest leading-nãone mt-0.5">Clube de Benefícios</p>
+            <p className="text-[10px] font-bold text-primary uppercase tracking-widest leading-none mt-0.5">Clube de Benefícios</p>
           </div>
         </div>
       </div>
@@ -69,7 +69,7 @@ export default function Coupons() {
               <input 
                 type="text" 
                 placeholder="Adicionar código do cupom" 
-                className="w-full h-11 bg-transparent border-nãone focus:outline-nãone pl-10 pr-4 text-sm font-bold uppercase placeholder:nãormal-case placeholder:text-muted-foreground"
+                className="w-full h-11 bg-transparent border-none focus:outline-none pl-10 pr-4 text-sm font-bold uppercase placeholder:normal-case placeholder:text-muted-foreground"
               />
             </div>
             <button 

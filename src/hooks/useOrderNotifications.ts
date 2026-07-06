@@ -45,7 +45,7 @@ export function useOrderNotifications() {
     subscribedRef.current = true;
 
     const channel = supabase
-      .channel(`order-nãotifications-${userá.id}`)
+      .channel(`order-notifications-${userá.id}`)
       .on(
         'postgres_changes',
         {

@@ -47,7 +47,7 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
     };
     checkInitialStatus();
 
-    const channel = supabase.channel(`store-opening-nãotification-${company.id}`)
+    const channel = supabase.channel(`store-opening-notification-${company.id}`)
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'companies', filter: `id=eq.${company.id}` }, 
         (p) => {
           const isNowOpen = p.new.is_open;
@@ -182,7 +182,7 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
       )}
 
       {showCartFab && (
-        <div className="fixed inset-x-0 z-[40] w-full px-4 pointer-events-nãone flex justify-center marketplace-cart-fab">
+        <div className="fixed inset-x-0 z-[40] w-full px-4 pointer-events-none flex justify-center marketplace-cart-fab">
           <Link
             to={location.state?.returnTo === '/marketplace/checkout' ? '/marketplace/checkout' : '/marketplace/cart'}
             className="pointer-events-auto flex h-16 w-full max-w-sm items-center justify-between rounded-full bg-primary pl-2 pr-6 text-primary-foreground shadow-[0_12px_30px_-5px_rgba(234,88,12,0.5)] active:scale-[0.97] transition-all hover:shadow-[0_15px_35px_-5px_rgba(234,88,12,0.6)]"
@@ -210,7 +210,7 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
       
       {/* Marketing Notification Popup */}
       <MarketingNotificationPopup 
-        nãotification={activeNotification} 
+        notification={activeNotification} 
         onClose={clearNotification} 
       />
       
@@ -218,7 +218,7 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
       {!hideNav && (
         <header className="hidden md:block sticky top-0 z-[100] w-full border-b border-border/50 bg-background/80 backdrop-blur-xl pt-[env(safe-area-inset-top,0px)]">
           <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6">
-            <Link to="/marketplace" className="flex items-center gap-2 outline-nãone">
+            <Link to="/marketplace" className="flex items-center gap-2 outline-none">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-white shadow-lg shadow-primary/20 overflow-hidden">
                 <img src="/icon.png" alt="App Icon" className="w-full h-full object-cover" />
               </div>
@@ -241,7 +241,7 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
             </nav>
 
             <div className="flex items-center gap-4">
-              <ThemeToggle className="h-10 w-10 rounded-full shrink-0 shadow-nãone border-border/30 bg-background/20" />
+              <ThemeToggle className="h-10 w-10 rounded-full shrink-0 shadow-none border-border/30 bg-background/20" />
               <Link to="/marketplace/cart" className="relative p-2 text-muted-foreground hover:text-primary transition-colors">
                 <ShoppingBag className="h-6 w-6" />
                 {itemCount > 0 && (

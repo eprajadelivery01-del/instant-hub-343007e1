@@ -148,7 +148,7 @@ BEGIN
             status public.order_status DEFAULT 'pending',
             total NUMERIC(10,2) DEFAULT 0,
             delivery_fee NUMERIC(10,2) DEFAULT 0,
-            delivery_address TEXT, payment_method TEXT, nãotes TEXT,
+            delivery_address TEXT, payment_method TEXT, notes TEXT,
             created_at TIMESTAMPTZ DEFAULT NOW(),
             updated_at TIMESTAMPTZ DEFAULT NOW()
         );

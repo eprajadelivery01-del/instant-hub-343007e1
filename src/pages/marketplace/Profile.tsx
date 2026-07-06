@@ -136,7 +136,7 @@ export default function Profile() {
     setUploading(true);
     try {
       const fileExt = file.name.split('.').pop();
-      const fileName = `${userá.id}/${Date.nãow()}.${fileExt}`;
+      const fileName = `${userá.id}/${Date.now()}.${fileExt}`;
       
       const { error: uploadError } = await supabase.storage
         .from('avatars')
@@ -494,7 +494,7 @@ export default function Profile() {
                   Excluir minha conta
                 </button>
               </AlertDialogTrigger>
-              <AlertDialogContent className="rounded-3xl border-nãone p-8">
+              <AlertDialogContent className="rounded-3xl border-none p-8">
                 <AlertDialogHeader>
                   <AlertDialogTitle className="text-xl font-display font-bold">Excluir sua conta?</AlertDialogTitle>
                   <AlertDialogDescription className="text-sm font-medium leading-relaxed">
@@ -516,7 +516,7 @@ export default function Profile() {
                   >
                     Sim, excluir definitivamente
                   </AlertDialogAction>
-                  <AlertDialogCancel className="h-14 rounded-2xl border-nãone bg-muted text-foreground font-bold">
+                  <AlertDialogCancel className="h-14 rounded-2xl border-none bg-muted text-foreground font-bold">
                     Manter minha conta
                   </AlertDialogCancel>
                 </AlertDialogFooter>
@@ -541,7 +541,7 @@ export default function Profile() {
 
       {/* Edit Profile Sheet */}
       <Sheet open={editing} onOpenChange={setEditing}>
-        <SheetContent side="bottom" hideClose className="h-[75vh] rounded-t-[3rem] border-nãone p-0 shadow-2xl">
+        <SheetContent side="bottom" hideClose className="h-[75vh] rounded-t-[3rem] border-none p-0 shadow-2xl">
           <SheetTitle className="sr-only">Editar Meus Dados</SheetTitle>
           <div className="h-full flex flex-col bg-background">
             <div className="p-8 pb-6 flex items-center justify-between border-b border-border/50">
@@ -564,7 +564,7 @@ export default function Profile() {
                     value={f.value}
                     onChange={e => f.onChange(e.target.value)}
                     placeholder={f.placeholder}
-                    className="w-full px-6 py-4.5 rounded-2xl border border-border bg-muted/30 font-bold text-foreground outline-nãone focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all"
+                    className="w-full px-6 py-4.5 rounded-2xl border border-border bg-muted/30 font-bold text-foreground outline-none focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all"
                   />
                 </div>
               ))}
@@ -585,7 +585,7 @@ export default function Profile() {
 
       {/* Support Chat Sheet */}
       <Sheet open={supportType !== null} onOpenChange={open => !open && setSupportType(null)}>
-        <SheetContent side="bottom" hideClose className="h-[85vh] rounded-t-[3rem] border-nãone p-0 overflow-hidden shadow-2xl z-[100]" aria-describedby={undefined}>
+        <SheetContent side="bottom" hideClose className="h-[85vh] rounded-t-[3rem] border-none p-0 overflow-hidden shadow-2xl z-[100]" aria-describedby={undefined}>
           <SheetTitle className="sr-only">Chat de Suporte</SheetTitle>
           <div className="flex flex-col h-full bg-background relative">
             {supportType && (
@@ -601,7 +601,7 @@ export default function Profile() {
 
       {/* Coupons List Sheet */}
       <Sheet open={showCoupons} onOpenChange={setShowCoupons}>
-        <SheetContent side="bottom" hideClose className="h-[85vh] rounded-t-[3rem] border-nãone p-0 shadow-2xl">
+        <SheetContent side="bottom" hideClose className="h-[85vh] rounded-t-[3rem] border-none p-0 shadow-2xl">
           <SheetTitle className="sr-only">Meus Cupons</SheetTitle>
           <div className="h-full flex flex-col bg-background">
             <div className="px-8 pt-8 pb-6 flex items-center justify-between border-b border-border shrink-0">

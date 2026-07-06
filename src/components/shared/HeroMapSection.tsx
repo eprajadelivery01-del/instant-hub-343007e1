@@ -9,7 +9,7 @@ export function HeroMapSection() {
 
   return (
     <div className="relative w-full h-[220px] rounded-[32px] overflow-hidden shadow-2xl border-4 border-white mb-6 group cursor-pointer" onClick={() => setIsOpen(true)}>
-      <div className="absolute inset-0 pointer-events-nãone z-10">
+      <div className="absolute inset-0 pointer-events-none z-10">
         <UnifiedMap />
       </div>
 
@@ -21,7 +21,7 @@ export function HeroMapSection() {
                  <div className="h-2 w-2 rounded-full bg-success animate-pulse" />
                  <span className="text-white text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Sincronizado em tempo real</span>
               </div>
-              <h3 className="text-white text-xl font-black tracking-tight leading-nãone">Explorar Redondezas</h3>
+              <h3 className="text-white text-xl font-black tracking-tight leading-none">Explorar Redondezas</h3>
               <p className="text-white/70 text-xs font-bold mt-1">Veja lojas e entregadores ao vivo</p>
            </div>
            
@@ -47,7 +47,7 @@ export function HeroMapSection() {
             </button>
             
             {/* Floating Title (Top Left) */}
-            <div className="absolute top-6 left-4 md:top-safe md:mt-4 pointer-events-nãone z-50">
+            <div className="absolute top-6 left-4 md:top-safe md:mt-4 pointer-events-none z-50">
               <div className="bg-background/95 backdrop-blur px-5 py-3 rounded-[20px] shadow-2xl border border-border/50">
                 <h2 className="text-sm font-black tracking-tight text-foreground">Mapa Interativo</h2>
                 <div className="flex items-center gap-1.5 mt-0.5">

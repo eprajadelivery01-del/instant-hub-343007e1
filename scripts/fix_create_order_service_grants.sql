@@ -4,29 +4,29 @@
 
 BEGIN;
 
-GRANT USAGE ON SCHEMA public TO anãon, authenticated, serávice_role;
+GRANT USAGE ON SCHEMA public TO anon, authenticated, serávice_role;
 
 DO $$
 BEGIN
   -- Catálogo público usado pelo app e pela create-order.
   IF to_regclass('public.companies') IS NOT NULL THEN
-    GRANT SELECT ON public.companies TO anãon, authenticated, serávice_role;
-    DROP POLICY IF EXISTS "companies_select_anãon" ON public.companies;
-    CREATE POLICY "companies_select_anãon" ON public.companies FOR SELECT TO anãon USING (true);
+    GRANT SELECT ON public.companies TO anon, authenticated, serávice_role;
+    DROP POLICY IF EXISTS "companies_select_anon" ON public.companies;
+    CREATE POLICY "companies_select_anon" ON public.companies FOR SELECT TO anon USING (true);
     DROP POLICY IF EXISTS "companies_select_authenticated" ON public.companies;
     CREATE POLICY "companies_select_authenticated" ON public.companies FOR SELECT TO authenticated USING (true);
   END IF;
 
   IF to_regclass('public.products') IS NOT NULL THEN
-    GRANT SELECT ON public.products TO anãon, authenticated, serávice_role;
-    DROP POLICY IF EXISTS "products_select_anãon" ON public.products;
-    CREATE POLICY "products_select_anãon" ON public.products FOR SELECT TO anãon USING (true);
+    GRANT SELECT ON public.products TO anon, authenticated, serávice_role;
+    DROP POLICY IF EXISTS "products_select_anon" ON public.products;
+    CREATE POLICY "products_select_anon" ON public.products FOR SELECT TO anon USING (true);
     DROP POLICY IF EXISTS "products_select_authenticated" ON public.products;
     CREATE POLICY "products_select_authenticated" ON public.products FOR SELECT TO authenticated USING (true);
   END IF;
 
   IF to_regclass('public.regions') IS NOT NULL THEN
-    GRANT SELECT ON public.regions TO anãon, authenticated, serávice_role;
+    GRANT SELECT ON public.regions TO anon, authenticated, serávice_role;
   END IF;
 
   IF to_regclass('public.pricing_rules') IS NOT NULL THEN

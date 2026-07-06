@@ -90,7 +90,7 @@ function getZonedParts(date: Date, timeZone: string) {
 /**
  * Parses and validates a business-hours payload. Accepts either a JSON string
  * or an already-parsed array. Returns `null` when the payload is absent or
- * cannãot be safely interpreted.
+ * cannot be safely interpreted.
  */
 export function parseBusinessHours(
   input: BusinessHoursInput

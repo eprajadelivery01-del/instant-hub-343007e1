@@ -60,7 +60,7 @@ export function SmartAppBanner() {
       </div>
 
       <Button size="sm" asChild className="rounded-full px-5 h-8 font-bold shrink-0 text-xs shadow-sm">
-        <a href={appLink} target="_blank" rel="nãoopener nãoreferrer">
+        <a href={appLink} target="_blank" rel="nãoopener noreferrer">
           Baixar
         </a>
       </Button>

@@ -132,7 +132,7 @@ export default function StoreDetail() {
               setIsOutOfRange(false);
             }
           } else if (addr.region_id && company.delivery_regions_pricing) {
-            // Fallback: se não tem GPS mas tem region_id configurada (igual não Checkout)
+            // Fallback: se não tem GPS mas tem region_id configurada (igual no Checkout)
             let pricing: any = company.delivery_regions_pricing;
             if (typeof pricing === 'string') {
               try { pricing = JSON.parse(pricing); } catch { pricing = []; }
@@ -355,7 +355,7 @@ export default function StoreDetail() {
           </div>
         </div>
 
-        <div className="relative z-10 -mt-12 rounded-t-[32px] border-nãone bg-background px-6 pt-6 pb-6 shadow-[0_-8px_30px_-15px_rgba(0,0,0,0.1)]">
+        <div className="relative z-10 -mt-12 rounded-t-[32px] border-none bg-background px-6 pt-6 pb-6 shadow-[0_-8px_30px_-15px_rgba(0,0,0,0.1)]">
           <div className="flex items-start justify-between">
             <div className="flex flex-col pr-4">
               <h1 className="text-2xl font-extrabold text-foreground tracking-tight">{company.name}</h1>
@@ -450,10 +450,10 @@ export default function StoreDetail() {
           <Search className="absolute left-4 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-muted-foreground" />
           <input
             type="text"
-            placeholder="Buscar não cardápio..."
+            placeholder="Buscar no cardápio..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="h-11 w-full rounded-2xl border-0 bg-transparent pl-12 pr-4 text-sm font-medium text-foreground placeholder:text-muted-foreground focus:outline-nãone"
+            className="h-11 w-full rounded-2xl border-0 bg-transparent pl-12 pr-4 text-sm font-medium text-foreground placeholder:text-muted-foreground focus:outline-none"
           />
         </div>
       </div>
@@ -475,7 +475,7 @@ export default function StoreDetail() {
                     }
                   }}
                   className={cn(
-                    'whitespace-nãowrap py-4 text-sm font-semibold transition-all relative',
+                    'whitespace-nowrap py-4 text-sm font-semibold transition-all relative',
                     activeCategory === category
                       ? 'text-primary'
                       : 'text-muted-foreground hover:text-foreground'
@@ -598,7 +598,7 @@ export default function StoreDetail() {
 
                             {qty > 0 && (
                               <div className="flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-2 py-1">
-                                <span className="text-[11px] font-bold text-primary">{qty} não carrinho</span>
+                                <span className="text-[11px] font-bold text-primary">{qty} no carrinho</span>
                               </div>
                             )}
                           </div>
@@ -645,8 +645,8 @@ export default function StoreDetail() {
         isOpen={!!selectedProduct}
         onClose={() => setSelectedProduct(null)}
         isClosed={!company.is_open}
-        onAddToCart={(product, quantity, options, nãote) => {
-          if (company) addItem(product, company, options, quantity, nãote);
+        onAddToCart={(product, quantity, options, note) => {
+          if (company) addItem(product, company, options, quantity, note);
         }}
         initialQuantity={selectedProduct ? getItemQty(selectedProduct.id) : 1}
       />

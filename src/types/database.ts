@@ -69,7 +69,7 @@ export interface Order {
   delivery_fee: number | null;
   delivery_address: string | null;
   payment_method: string | null;
-  nãotes: string | null;
+  notes: string | null;
   region_id: string | null;
   created_at: string;
   updated_at: string;
@@ -84,7 +84,7 @@ export interface OrderItem {
   price: number | null;
   product_name: string | null;
   unit_price?: number | null;
-  nãotes?: string | null;
+  notes?: string | null;
   product?: Product;
 }
 
@@ -158,11 +158,11 @@ export interface Address {
 }
 
 export interface CartItem {
-  id?: string; // unique id for cart item (product_id + options_hash + nãote_hash)
+  id?: string; // unique id for cart item (product_id + options_hash + note_hash)
   product: Product;
   quantity: number;
   options?: any[];
-  nãote?: string;
+  note?: string;
 }
 
 export interface Review {

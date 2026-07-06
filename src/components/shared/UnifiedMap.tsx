@@ -82,7 +82,7 @@ export function UnifiedMap({ centerCity: propCenterCity, interactive = false, da
       statusEl.style.cssText = "display:block; font-size: 11px; color: #22c55e; font-weight: bold; margin-top: 2px;";
       statusEl.textContent = "Loja Aberta • Entrega Rápida";
       const btnEl = document.createElement("button");
-      btnEl.style.cssText = "margin-top: 8px; width: 100%; background: #f97316; color: white; border: nãone; border-radius: 6px; padding: 5px; font-size: 11px; font-weight: bold; cursor: pointer;";
+      btnEl.style.cssText = "margin-top: 8px; width: 100%; background: #f97316; color: white; border: none; border-radius: 6px; padding: 5px; font-size: 11px; font-weight: bold; cursor: pointer;";
       btnEl.textContent = "Ver Cardápio";
       popupRoot.append(nameEl, statusEl, btnEl);
 

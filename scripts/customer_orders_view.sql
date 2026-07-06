@@ -17,7 +17,7 @@ SELECT
   o.delivery_fee,
   o.delivery_address,
   o.payment_method,
-  o.nãotes,
+  o.notes,
   o.idempotency_key,
   o.created_at,
   o.updated_at,

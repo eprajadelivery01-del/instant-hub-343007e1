@@ -17,7 +17,7 @@ export function useOrderLock() {
       cartFingerprintRef.current = cartFingerprint;
       idempotencyKeyRef.current = typeof crypto !== 'undefined' && crypto.randomUUID
         ? crypto.randomUUID()
-        : `${Date.nãow()}-${Math.random().toString(36).slice(2)}`;
+        : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     }
 
     return idempotencyKeyRef.current;

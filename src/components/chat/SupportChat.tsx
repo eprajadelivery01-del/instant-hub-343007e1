@@ -281,7 +281,7 @@ export function SupportChat({ topic, title, companyId = null, onClose }: Support
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
           placeholder="Escreva sua mensagem..."
-          className="flex-1 bg-muted/50 rounded-full px-4 py-2 text-[15px] text-foreground placeholder:text-muted-foreground/50 border-nãone outline-nãone focus:ring-1 focus:ring-primary/30 transition-all"
+          className="flex-1 bg-muted/50 rounded-full px-4 py-2 text-[15px] text-foreground placeholder:text-muted-foreground/50 border-none outline-none focus:ring-1 focus:ring-primary/30 transition-all"
         />
         <button
           type="submit"

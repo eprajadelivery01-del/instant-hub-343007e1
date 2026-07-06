@@ -40,7 +40,7 @@ BEGIN
     RAISE EXCEPTION 'Nenhuma empresa cadastrada — impossível testar.';
   END IF;
 
-  -- 2. Simula o JWT do usuário autenticado para acionar RLS como anãon role
+  -- 2. Simula o JWT do usuário autenticado para acionar RLS como anon role
   v_jwt := jsonb_build_object(
     'sub', v_uid::text,
     'role', 'authenticated',
@@ -74,9 +74,9 @@ BEGIN
   -- 5. Tenta SELECT de pedido alheio (deve retornar 0)
   SELECT count(*) INTO v_select_count FROM public.orders WHERE id <> v_order_id LIMIT 1;
   IF v_select_count = 0 THEN
-    v_results := v_results || jsonb_build_object('test', 'Cannãot read other orders', 'status', 'PASS');
+    v_results := v_results || jsonb_build_object('test', 'Cannot read other orders', 'status', 'PASS');
   ELSE
-    v_results := v_results || jsonb_build_object('test', 'Cannãot read other orders', 'status', 'FAIL', 'leaked', v_select_count);
+    v_results := v_results || jsonb_build_object('test', 'Cannot read other orders', 'status', 'FAIL', 'leaked', v_select_count);
   END IF;
 
   -- 6. Volta para superuserá e limpa

@@ -20,7 +20,7 @@ describe('Lovable Links Checker', () => {
     return fileList;
   };
 
-  it('should nãot contain lovableproject.com in any source file', () => {
+  it('should not contain lovableproject.com in any source file', () => {
     const srcDir = path.resolve(__dirname, '../../src');
     const files = findInDir(srcDir);
     
