@@ -234,7 +234,7 @@ export default function Home() {
              <div className="premium-card relative rounded-[26px] p-1 flex-1 md:max-w-xl">
                <Search className="absolute left-5 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-muted-foreground" />
                <Input
-                 placeholder="O que você deseja pedir hoje?"
+                 placeholder="O que vocêê deseja pedir hoje?"
                  value={search}
                  onChange={(e) => setSearch(e.target.value)}
                  className="h-14 rounded-[22px] border-0 bg-transparent pl-12 text-sm font-bold placeholder:text-muted-foreground focus-visible:ring-0"
@@ -249,7 +249,7 @@ export default function Home() {
           <div className="flex items-end justify-between gap-4 px-1">
             <div>
               <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Destaques</p>
-              <h2 className="mt-1 text-xl font-bold text-foreground">Perto de você</h2>
+              <h2 className="mt-1 text-xl font-bold text-foreground">Perto de vocêê</h2>
             </div>
           </div>
 
