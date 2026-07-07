@@ -11,13 +11,13 @@ export function useEvaluation() {
         .from('reviews')
         .select('id')
         .eq('order_id', orderId)
-        .maybeSingle();
+        .limit(1);
       
       if (error) {
         console.error('[useEvaluation] Error checking rating:', error);
         return true; // Assume true on error to avoid bothering user if DB is down
       }
-      return !!data;
+      return data && data.length > 0;
     } catch (err) {
       console.error('[useEvaluation] Exception checking rating:', err);
       return true;
