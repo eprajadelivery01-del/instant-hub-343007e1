@@ -168,21 +168,25 @@ export default function OrderDetail() {
   const currentOrderStatus = (delivery?.status === 'completed' || delivery?.status === 'delivered') ? 'delivered' : order.status || 'pending';
   const isCompleted = currentOrderStatus === 'delivered' || currentOrderStatus === 'completed';
   
-  const currentStepIndex = statusSteps.indexOf(
-    currentOrderStatus === 'in_route' || currentOrderStatus === 'in_transit' ? 'delivering' : 
-    currentOrderStatus === 'completed' ? 'delivered' : 
-    currentOrderStatus
-  );
+  // Mapeamos status similares para os mesmos steps lógicos para a UI não se confundir
+  const normalizedStatus = 
+    currentOrderStatus === 'in_route' || currentOrderStatus === 'in_transit' || currentOrderStatus === 'collecting' ? 'delivering' :
+    currentOrderStatus === 'completed' ? 'delivered' :
+    currentOrderStatus === 'accepted' ? 'confirmed' :
+    currentOrderStatus;
 
-  // Derivações textuais
+  const currentStepIndex = statusSteps.indexOf(normalizedStatus);
+
+  // Derivações textuais corretas por status
   let title = "Seu pedido foi solicitado";
-  if (currentStepIndex >= 1) title = "O lojista está confirmando o pedido";
-  if (currentStepIndex >= 2) title = "Seu pedido está sendo preparado";
-  if (currentStepIndex >= 4) title = "O entregador está a caminho";
-  if (isCompleted) title = "Seu pedido foi entregue";
-  if (currentOrderStatus === 'cancelled') title = "Pedido Cancelado";
+  if (normalizedStatus === 'confirmed') title = "O lojista está confirmando o pedido";
+  if (normalizedStatus === 'preparing') title = "Seu pedido está sendo preparado";
+  if (normalizedStatus === 'ready') title = "Seu pedido está pronto para entrega!";
+  if (normalizedStatus === 'delivering') title = "O entregador está a caminho";
+  if (normalizedStatus === 'delivered') title = "Seu pedido foi entregue";
+  if (normalizedStatus === 'cancelled') title = "Pedido Cancelado";
 
-  // Gera código aleatório (mock) com base não ID
+  // Gera código aleatório (mock) com base no ID
   const deliveryCode = id ? parseInt(id.replace(/[^0-9]/g, '').substring(0, 4)) || 6656 : 6656;
 
   // Calculo total
@@ -299,7 +303,7 @@ export default function OrderDetail() {
               </div>
             </div>
             <div className="bg-muted/50 p-3 rounded-xl border border-border flex items-center justify-between">
-              <span className="text-xs font-medium text-muted-foreground">Esta entrega é feita pela loja e não pode será rastreada</span>
+              <span className="text-xs font-medium text-muted-foreground">Esta entrega é feita pela loja e não poderá ser rastreada</span>
               <div className="h-4 w-4 rounded-full bg-secondary text-muted-foreground flex items-center justify-center text-[10px] font-bold">?</div>
             </div>
           </div>
