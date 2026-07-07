@@ -143,12 +143,10 @@ export default function Cart() {
 
     // Fetch up-sell products
     const fetchSuggestions = async () => {
-      const cartProductIds = items.map(i => i.product.id);
       let query = supabase.from('products').select('*').eq('company_id', company.id).eq('is_active', true);
       const { data } = await query.limit(10);
       if (data) {
-        const filtered = data.filter(p => !cartProductIds.includes(p.id));
-        setSuggestedProducts(filtered.slice(0, 4));
+        setSuggestedProducts(data.slice(0, 4));
       }
     };
     fetchSuggestions();
@@ -166,7 +164,7 @@ export default function Cart() {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [company?.id, items.length]);
+  }, [company?.id]);
 
   const handleApplyCoupon = async () => {
     if (!couponCode.trim()) return;
