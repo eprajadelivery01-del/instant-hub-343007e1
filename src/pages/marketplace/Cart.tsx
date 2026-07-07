@@ -11,6 +11,7 @@ import { getPrimaryProductImage, getCompanyLogoImage } from '@/lib/media';
 import { Product } from '@/types/database';
 import { toast } from 'sonner';
 import { isStoreOpenNow } from '@/lib/storeHours';
+import { ProductDetailDialog } from '@/components/marketplace/ProductDetailDialog';
 
 interface CartItemRowProps {
   item: any;
@@ -116,6 +117,7 @@ export default function Cart() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [isStoreOpen, setIsStoreOpen] = useState<boolean | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [loadingStatus, setLoadingStatus] = useState(false);
   
   // Coupon
@@ -208,8 +210,7 @@ export default function Cart() {
   };
 
   const handleAddSuggested = (product: Product) => {
-    navigate(`/marketplace/store/${company?.id}`);
-    // Ideally we'd open a modal, but returning to store is easiest
+    setSelectedProduct(product);
   };
 
   if (items.length === 0) {
@@ -424,6 +425,16 @@ export default function Cart() {
           </Button>
         </div>
       </div>
+
+      <ProductDetailDialog
+        product={selectedProduct}
+        isOpen={!!selectedProduct}
+        onClose={() => setSelectedProduct(null)}
+        isClosed={!isStoreOpen}
+        onAddToCart={(product, quantity, options, note) => {
+          if (company) addItem(product, company, options, quantity, note);
+        }}
+      />
     </MarketplaceLayout>
   );
 }

@@ -6,6 +6,24 @@ import { toast as sonnerToast } from "sonner";
 
 initializeGlobalErrorHandlers("Marketplace Cliente");
 
+// Polyfill for Node.prototype.closest to prevent "t.closest is not a function"
+// when events bubble from TextNodes (especially on iOS Safari with certain libraries like Radix/Vaul)
+if (typeof document !== "undefined" && typeof Node !== "undefined") {
+  if (!(Node.prototype as any).closest) {
+    (Node.prototype as any).closest = function (this: Node, s: string) {
+      if (this instanceof Element) {
+        return Element.prototype.closest.call(this, s);
+      }
+      let el = this.parentElement || this.parentNode;
+      while (el !== null && el.nodeType === 1) {
+        if ((el as Element).matches(s)) return el as Element;
+        el = el.parentElement || el.parentNode;
+      }
+      return null;
+    };
+  }
+}
+
 // Patch sonner toast.error globally to automatically capture all user-facing errors.
 // Mensagens específicas devem será definidas pelos componentes (ex.: Checkout/mapServerError);
 // aqui só normalizamos legados em inglês e reportamos para telemetria.
