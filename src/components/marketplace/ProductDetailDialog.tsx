@@ -232,7 +232,7 @@ export function ProductDetailDialog({ product, isOpen, onClose, onAddToCart, ini
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <MessageSquare className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm font-bold text-foreground">Alguma obserávação?</span>
+                    <span className="text-sm font-bold text-foreground">Alguma observação?</span>
                   </div>
                   <span className="text-[11px] font-medium text-muted-foreground">{note.length}/140</span>
                 </div>
