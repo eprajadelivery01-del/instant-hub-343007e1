@@ -20,12 +20,12 @@ export default function OrderDetail() {
   const queryClient = useQueryClient();
   
   const [showStoreChat, setShowStoreChat] = useState(false);
-  const [nãotifEnabled, setNotifEnabled] = useState<boolean>(() => {
+  const [notifEnabled, setNotifEnabled] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
     if (!('Notification' in window)) return false;
-    return Notification.permission === 'granted' && localStorage.getItem('epj_order_nãotif') === 'true';
+    return Notification.permission === 'granted' && localStorage.getItem('epj_order_notif') === 'true';
   });
-  const [nãotifLoading, setNotifLoading] = useState(false);
+  const [notifLoading, setNotifLoading] = useState(false);
 
   // Shared queryKey with the route data prefetcher (routeDataPrefetchers.ts).
   const { data: orderData, isLoading: loading } = useQuery({
@@ -58,8 +58,8 @@ export default function OrderDetail() {
           queryClient.setQueryData(['order', id], (old: any) =>
             old ? { ...old, order: { ...old.order, ...p.new } } : old
           );
-          // Dispara nãotificação nativa se permitido
-          if (nãotifEnabled && ('Notification' in window) && Notification.permission === 'granted') {
+          // Dispara notificação nativa se permitido
+          if (notifEnabled && ('Notification' in window) && Notification.permission === 'granted') {
             const statusLabels: Record<string, string> = {
               confirmed: '✅ Pedido confirmado pela loja!',
               preparing: '👨‍🍳 Seu pedido está sendo preparado',
@@ -87,16 +87,16 @@ export default function OrderDetail() {
       .subscribe();
 
     return () => { supabase.removeChannel(orderChannel); };
-  }, [id, nãotifEnabled, queryClient]);
+  }, [id, notifEnabled, queryClient]);
 
   const handleToggleNotif = useCallback(async () => {
     if (!('Notification' in window)) {
-      alert('Seu navegador não suporta nãotificações.');
+      alert('Seu navegador não suporta notificações.');
       return;
     }
-    if (nãotifEnabled) {
+    if (notifEnabled) {
       // Desligar
-      localStorage.setItem('epj_order_nãotif', 'false');
+      localStorage.setItem('epj_order_notif', 'false');
       setNotifEnabled(false);
       return;
     }
@@ -105,19 +105,19 @@ export default function OrderDetail() {
     try {
       const permission = await Notification.requestPermission();
       if (permission === 'granted') {
-        localStorage.setItem('epj_order_nãotif', 'true');
+        localStorage.setItem('epj_order_notif', 'true');
         setNotifEnabled(true);
         new Notification('É Pra Já Delivery', {
-          body: '🔔 Notificações ativadas! Você seráá avisado sobre seu pedido.',
+          body: '🔔 Notificações ativadas! Você será avisado sobre seu pedido.',
           icon: '/logo.png',
         });
       } else {
-        alert('Permissão negada. Verifique as configurações do seu navegador e permita nãotificações para este site.');
+        alert('Permissão negada. Verifique as configurações do seu navegador e permita notificações para este site.');
       }
     } finally {
       setNotifLoading(false);
     }
-  }, [nãotifEnabled]);
+  }, [notifEnabled]);
 
   const handleCancelOrder = async () => {
     if (!order) return;
@@ -165,7 +165,10 @@ export default function OrderDetail() {
     );
   }
 
-  const currentOrderStatus = (delivery?.status === 'completed' || delivery?.status === 'delivered') ? 'delivered' : order.status || 'pending';
+  const currentOrderStatus =
+    (delivery?.status === 'completed' || delivery?.status === 'delivered') ? 'delivered' :
+    (delivery?.status === 'in_route' || delivery?.status === 'in_transit' || delivery?.status === 'collecting' || delivery?.status === 'accepted') ? 'in_route' :
+    order.status || 'pending';
   const isCompleted = currentOrderStatus === 'delivered' || currentOrderStatus === 'completed';
   
   // Mapeamos status similares para os mesmos steps lógicos para a UI não se confundir
@@ -258,26 +261,26 @@ export default function OrderDetail() {
           <div className="bg-background rounded-3xl p-5 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] border border-border">
             <div className="flex justify-between items-center">
               <div className="pr-4">
-                <h3 className="font-bold text-base mb-1">Ative as nãotificações e acompanhe seu pedido</h3>
+                <h3 className="font-bold text-base mb-1">Ative as notificações e acompanhe seu pedido</h3>
                 <p className="text-xs text-muted-foreground leading-relaxed">
                   {('Notification' in window) && Notification.permission === 'denied'
                     ? 'Notificações bloqueadas. Habilite nas configurações do navegador.'
                     : !('Notification' in window)
-                    ? 'Seu dispositivo não suporta nãotificações web.'
+                    ? 'Seu dispositivo não suporta notificações web.'
                     : 'Fique sabendo na hora se houver algum problema com seu pedido.'}
                 </p>
               </div>
               <button
                 onClick={handleToggleNotif}
-                disabled={nãotifLoading || !('Notification' in window) || Notification.permission === 'denied'}
-                aria-label={nãotifEnabled ? 'Desativar nãotificações' : 'Ativar nãotificações'}
+                disabled={notifLoading || !('Notification' in window) || Notification.permission === 'denied'}
+                aria-label={notifEnabled ? 'Desativar notificações' : 'Ativar notificações'}
                 className={`relative w-12 h-6 rounded-full shrink-0 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-40 disabled:cursor-not-allowed ${
-                  nãotifEnabled ? 'bg-[#00A868]' : 'bg-muted'
+                  notifEnabled ? 'bg-[#00A868]' : 'bg-muted'
                 }`}
               >
                 <span
                   className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-300 ${
-                    nãotifEnabled ? 'translate-x-[26px]' : 'translate-x-0.5'
+                    notifEnabled ? 'translate-x-[26px]' : 'translate-x-0.5'
                   }`}
                 />
                 {nãotifLoading && (
