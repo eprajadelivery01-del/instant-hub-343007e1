@@ -62,25 +62,38 @@ try {
     logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
 }
 
-// Copia o APK e AAB para a pasta raiz "releases" automaticamente apos a geracao
+// Copia o APK gerado (debug ou release) SEMPRE para a mesma pasta fixa na raiz do projeto
+def fixedOutputDir = file("${rootDir}/../../apk-output")
+
 tasks.whenTaskAdded { task ->
-    if (task.name == 'assembleRelease' || task.name == 'bundleRelease') {
+    if (task.name == 'assembleDebug' || task.name == 'assembleRelease' || task.name == 'bundleRelease') {
         task.doLast {
-            def outputDir = file("${rootDir}/../../releases")
-            outputDir.mkdirs()
-            
-            if (task.name == 'assembleRelease') {
+            fixedOutputDir.mkdirs()
+
+            if (task.name == 'assembleDebug') {
+                copy {
+                    from "${buildDir}/outputs/apk/debug/"
+                    into fixedOutputDir
+                    include "**/*.apk"
+                    rename { "epraja-DEBUG.apk" }
+                }
+                println "✅ APK DE TESTE copiado para: ${fixedOutputDir}/epraja-DEBUG.apk"
+            } else if (task.name == 'assembleRelease') {
                 copy {
                     from "${buildDir}/outputs/apk/release/"
-                    into outputDir
+                    into fixedOutputDir
                     include "**/*.apk"
+                    rename { "epraja-RELEASE.apk" }
                 }
+                println "✅ APK RELEASE copiado para: ${fixedOutputDir}/epraja-RELEASE.apk"
             } else if (task.name == 'bundleRelease') {
                 copy {
                     from "${buildDir}/outputs/bundle/release/"
-                    into outputDir
+                    into fixedOutputDir
                     include "**/*.aab"
+                    rename { "epraja-RELEASE.aab" }
                 }
+                println "✅ AAB RELEASE copiado para: ${fixedOutputDir}/epraja-RELEASE.aab"
             }
         }
     }
