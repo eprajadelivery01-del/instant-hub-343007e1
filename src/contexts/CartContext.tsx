@@ -63,12 +63,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const addItem = (product: Product, comp: Company, options: any[] = [], quantity: number = 1, note: string = '') => {
     // Generate a unique ID for this item based on product + options
     // Note is now editable and doesn't define the item's identity in the cart
-    const optionsHash = options.map(o => o.id).sort().join('-');
+    const validOptions = (options || []).filter(Boolean);
+    const optionsHash = validOptions.map(o => o.id).sort().join('-');
     const cartItemId = `${product.id}${optionsHash ? `-${optionsHash}` : ''}`;
 
     if (company && company.id !== comp.id) {
       if (!confirm('Você já possui itens de outra loja na sacola. Deseja limpar a sacola e iniciar um nãovo pedido?')) return;
-      setItems([{ id: cartItemId, product, quantity, options, note }]);
+      setItems([{ id: cartItemId, product, quantity, options: validOptions, note }]);
       setCompany(comp);
       return;
     }
@@ -80,7 +81,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
           i.id === cartItemId ? { ...i, quantity: i.quantity + quantity, note: note || i.note } : i
         );
       }
-      return [...prev, { id: cartItemId, product, quantity, options, note }];
+      return [...prev, { id: cartItemId, product, quantity, options: validOptions, note }];
     });
   };
 
@@ -123,10 +124,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
   };
 
   const calculateItemPrice = (item: CartItem) => {
-    let price = Number(item.product.price || 0);
+    let price = Number(item.product?.price || 0);
     if (item.options) {
       item.options.forEach(opt => {
-        price += Number(opt.price || 0);
+        if (opt) price += Number(opt.price || 0);
       });
     }
     return price;

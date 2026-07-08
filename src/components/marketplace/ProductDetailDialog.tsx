@@ -120,7 +120,7 @@ export function ProductDetailDialog({ product, isOpen, onClose, onAddToCart, ini
       return;
     }
 
-    const flatOptions = Object.values(selectedOptions).flat().map(id => options.find(o => o.id === id));
+    const flatOptions = Object.values(selectedOptions).flat().map(id => options.find(o => o.id === id)).filter(Boolean);
     onAddToCart(product, quantity, flatOptions, note);
     onClose();
   };
