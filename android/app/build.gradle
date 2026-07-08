@@ -7,8 +7,8 @@ android {
         applicationId "com.epraja"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 5
-        versionName "4.1"
+        versionCode 15
+        versionName "4.15"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -60,4 +60,28 @@ try {
     }
 } catch(Exception e) {
     logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
+}
+
+// Copia o APK e AAB para a pasta raiz "releases" automaticamente apos a geracao
+tasks.whenTaskAdded { task ->
+    if (task.name == 'assembleRelease' || task.name == 'bundleRelease') {
+        task.doLast {
+            def outputDir = file("${rootDir}/../../releases")
+            outputDir.mkdirs()
+            
+            if (task.name == 'assembleRelease') {
+                copy {
+                    from "${buildDir}/outputs/apk/release/"
+                    into outputDir
+                    include "**/*.apk"
+                }
+            } else if (task.name == 'bundleRelease') {
+                copy {
+                    from "${buildDir}/outputs/bundle/release/"
+                    into outputDir
+                    include "**/*.aab"
+                }
+            }
+        }
+    }
 }

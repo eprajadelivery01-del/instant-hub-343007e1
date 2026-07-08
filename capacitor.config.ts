@@ -2,7 +2,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'br.com.epraja.appFma',
-  appName: 'É Pra Já - Cliente',
+  appName: 'É Pra Já - Delivery',
   webDir: 'dist',
   backgroundColor: '#0D0D0D',
   android: {
