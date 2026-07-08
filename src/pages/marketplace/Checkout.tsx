@@ -18,6 +18,8 @@ import { cn } from '@/lib/utils';
 import { useOrderLock } from '@/hooks/useOrderLock';
 import { calculateDeliveryFee } from '@/utils/freight';
 import { isStoreOpenNow } from '@/lib/storeHours';
+import { useRequirePhone } from '@/hooks/useRequirePhone';
+import { RequirePhoneModal } from '@/components/marketplace/RequirePhoneModal';
 
 type MappedError = { message: string; retriable: boolean };
 
@@ -99,6 +101,17 @@ export default function Checkout() {
   const [unavailable, setUnavailable] = useState(false);
   const [loadingFee, setLoadingFee] = useState(false);
   const [loading, setLoading] = useState(false);
+  
+  const {
+    checkPhoneAndProceed,
+    showPhoneModal,
+    setShowPhoneModal,
+    phoneInput,
+    setPhoneInput,
+    handlePhoneSubmit,
+    isSubmittingPhone
+  } = useRequirePhone();
+
   // shared queryKey with the route data prefetcher
   const { data: addresses = [], isLoading: loadingAddresses } = useQuery({
     queryKey: ['addresses', user?.id],
@@ -248,12 +261,14 @@ export default function Checkout() {
   const finalTotal = Math.max(0, subtotal - discountAmount) + (fulfillmentMode === 'pickup' ? 0 : (deliveryFee || 0));
 
   const handleOpenReview = () => {
-    if (fulfillmentMode === 'delivery') {
-      if (!selectedAddress) { toast.error('Selecione um endereço'); return; }
-      if (unavailable) { toast.error('Entrega não disponível'); return; }
-      if (loadingFee) { toast.error('Calculando frete, aguarde'); return; }
-    }
-    setShowReviewModal(true);
+    checkPhoneAndProceed(() => {
+      if (fulfillmentMode === 'delivery') {
+        if (!selectedAddress) { toast.error('Selecione um endereço'); return; }
+        if (unavailable) { toast.error('Entrega não disponível'); return; }
+        if (loadingFee) { toast.error('Calculando frete, aguarde'); return; }
+      }
+      setShowReviewModal(true);
+    });
   };
 
   const handleSubmit = async () => {
@@ -769,6 +784,15 @@ export default function Checkout() {
           </div>
         </SheetContent>
       </Sheet>
+
+      <RequirePhoneModal
+        isOpen={showPhoneModal}
+        onClose={() => setShowPhoneModal(false)}
+        phoneInput={phoneInput}
+        setPhoneInput={setPhoneInput}
+        onSubmit={handlePhoneSubmit}
+        isSubmitting={isSubmittingPhone}
+      />
     </MarketplaceLayout>
   );
 }
