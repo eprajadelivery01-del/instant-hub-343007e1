@@ -96,6 +96,7 @@ export default function Checkout() {
   const [changeFor, setChangeFor] = useState('');
   
   const [cpf, setCpf] = useState('');
+  const [showCpfInput, setShowCpfInput] = useState(false);
 
   const [deliveryFee, setDeliveryFee] = useState<number | null>(null);
   const [unavailable, setUnavailable] = useState(false);
@@ -607,13 +608,13 @@ export default function Checkout() {
                 <p className="text-xs text-muted-foreground">Opcional</p>
               </div>
             </div>
-            {!cpf ? (
-              <button className="text-sm font-semibold text-primary" onClick={() => setCpf('000.000.000-00')}>Adicionar</button>
+            {!showCpfInput ? (
+              <button className="text-sm font-semibold text-primary" onClick={() => setShowCpfInput(true)}>Adicionar</button>
             ) : (
-              <button className="text-sm font-semibold text-destructive" onClick={() => setCpf('')}>Remover</button>
+              <button className="text-sm font-semibold text-destructive" onClick={() => { setShowCpfInput(false); setCpf(''); }}>Remover</button>
             )}
           </div>
-          {cpf && (
+          {showCpfInput && (
             <div className="mt-3">
               <input
                 type="text"
