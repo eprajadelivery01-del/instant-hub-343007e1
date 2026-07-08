@@ -27,6 +27,9 @@ workflows:
       - name: Set up keychain
         script: keychain initialize
 
+      - name: Install manual certificate
+        script: keychain add-certificates --certificate ios_distribution.p12 --certificate-password "epraja2026"
+
       - name: Fetch signing files from Apple (auto-create if missing)
         script: |
           app-store-connect fetch-signing-files \
