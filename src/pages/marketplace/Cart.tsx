@@ -113,7 +113,7 @@ function CartItemRow({ item, companyId, updateQuantity, updateNote, navigate }: 
 }
 
 export default function Cart() {
-  const { items, company, addItem, updateQuantity, updateNote, clearCart, subtotal, appliedCoupon, applicableProductIds, setCouponData, removeCoupon, discountAmount, total, deliveryFee } = useCart();
+  const { items, addItem, company, updateQuantity, updateNote, clearCart, subtotal, appliedCoupon, applicableProductIds, setCouponData, removeCoupon, discountAmount, total, deliveryFee } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [isStoreOpen, setIsStoreOpen] = useState<boolean | null>(null);

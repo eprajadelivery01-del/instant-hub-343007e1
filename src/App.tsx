@@ -15,6 +15,7 @@ import { PageTransition } from "@/components/shared/PageTransition";
 import { installRoutePrefetcher, routeLoaders } from "@/lib/routePrefetch";
 import "@/lib/routeDataPrefetchers"; // side-effect: registers data prefetchers
 import { PrefetchDebugPanel, shouldShowPrefetchPanel } from "@/components/dev/PrefetchDebugPanel";
+import { GlobalMarketingListener } from "@/components/shared/GlobalMarketingListener";
 
 import Home from "./pages/marketplace/Home";
 
@@ -75,6 +76,7 @@ const App = () => {
               <TooltipProvider>
                 <Toaster />
                 <Sonner />
+                <GlobalMarketingListener />
                 {showDebugPanel && <PrefetchDebugPanel />}
                 <BrowserRouter>
                   <ScrollToTop />
