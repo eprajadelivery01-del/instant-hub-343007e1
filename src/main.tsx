@@ -1,3 +1,4 @@
+import React, { Component, ErrorInfo, ReactNode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
@@ -76,4 +77,39 @@ sonnerToast.error = function (message: any, options: any) {
   return originalError.call(this, text, toastOptions as any);
 };
 
-createRoot(document.getElementById("root")!).render(<App />);
+class GlobalErrorBoundary extends Component<{children: ReactNode}, {hasError: boolean, error: Error | null}> {
+  constructor(props: {children: ReactNode}) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error("Uncaught error:", error, errorInfo);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ padding: '20px', background: 'white', color: 'red', height: '100vh', width: '100vw', overflow: 'auto', zIndex: 999999, position: 'fixed', top: 0, left: 0 }}>
+          <h2 style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '10px' }}>Ocorreu um Erro no App</h2>
+          <pre style={{ fontSize: '11px', whiteSpace: 'pre-wrap', fontFamily: 'monospace' }}>{this.state.error?.message}</pre>
+          <pre style={{ fontSize: '9px', marginTop: '10px', whiteSpace: 'pre-wrap', fontFamily: 'monospace' }}>{this.state.error?.stack}</pre>
+          <button 
+            onClick={() => { localStorage.clear(); window.location.reload(); }}
+            style={{ marginTop: '20px', padding: '10px 20px', background: 'black', color: 'white', borderRadius: '8px' }}
+          >
+            Limpar Dados e Reiniciar
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+createRoot(document.getElementById("root")!).render(
+  <GlobalErrorBoundary>
+    <App />
+  </GlobalErrorBoundary>
+);

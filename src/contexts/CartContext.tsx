@@ -26,21 +26,42 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>(() => {
-    const saved = localStorage.getItem('cart_items');
-    return saved ? JSON.parse(saved) : [];
+    try {
+      const saved = localStorage.getItem('cart_items');
+      const parsed = saved ? JSON.parse(saved) : [];
+      if (Array.isArray(parsed)) {
+        return parsed.filter(i => i && i.product && i.product.id);
+      }
+      return [];
+    } catch {
+      return [];
+    }
   });
   const [company, setCompany] = useState<Company | null>(() => {
-    const saved = localStorage.getItem('cart_company');
-    return saved ? JSON.parse(saved) : null;
+    try {
+      const saved = localStorage.getItem('cart_company');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
   });
 
   const [appliedCoupon, setAppliedCoupon] = useState<any | null>(() => {
-    const saved = localStorage.getItem('cart_coupon');
-    return saved ? JSON.parse(saved) : null;
+    try {
+      const saved = localStorage.getItem('cart_coupon');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
   });
   const [applicableProductIds, setApplicableProductIds] = useState<string[]>(() => {
-    const saved = localStorage.getItem('cart_coupon_pids');
-    return saved ? JSON.parse(saved) : [];
+    try {
+      const saved = localStorage.getItem('cart_coupon_pids');
+      const parsed = saved ? JSON.parse(saved) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
   });
 
   useEffect(() => {
@@ -145,7 +166,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     
     const isSpecific = applicableProductIds.length > 0;
     const eligibleItems = isSpecific 
-      ? items.filter(item => applicableProductIds.includes(item.product.id))
+      ? items.filter(item => item?.product?.id && applicableProductIds.includes(item.product.id))
       : items;
     
     const eligibleSubtotal = eligibleItems.reduce(

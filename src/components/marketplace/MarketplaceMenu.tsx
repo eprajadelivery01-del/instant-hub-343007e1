@@ -5,6 +5,29 @@ import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 
+class ErrorBoundary extends React.Component<{children: React.ReactNode}, {hasError: boolean, error: Error | null}> {
+  constructor(props: {children: React.ReactNode}) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="p-8 text-red-500 bg-white h-full overflow-auto">
+          <h2 className="font-bold text-xl mb-4">Erro no Menu</h2>
+          <pre className="text-xs whitespace-pre-wrap">{this.state.error?.message}</pre>
+          <pre className="text-xs mt-4 whitespace-pre-wrap">{this.state.error?.stack}</pre>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+
 interface MenuTileProps {
   icon: any;
   label: string;
@@ -95,6 +118,7 @@ export function MarketplaceMenu({ children, onSelectCategory, onOpenPartnership 
         {children}
       </SheetTrigger>
       <SheetContent side="left" hideClose className="w-full sm:w-[400px] p-0 border-r-0 rounded-r-[40px] overflow-hidden">
+        <ErrorBoundary>
         <div className="h-full flex flex-col bg-background">
             <div className="px-8 pt-10 pb-6 flex items-center justify-between">
               <SheetHeader>
@@ -138,18 +162,20 @@ export function MarketplaceMenu({ children, onSelectCategory, onOpenPartnership 
                     <div className="h-px flex-1 bg-slate-100 ml-4" />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
-                    {highlights.map((item) => (
+                    {highlights.map((item) => {
+                      const ItemIcon = item.icon;
+                      return (
                       <button 
                         key={item.label}
                         onClick={() => { setIsOpen(false); navigate('/marketplace'); }}
                         className="flex items-center gap-4 p-4 rounded-2xl bg-muted/50 border border-border hover:bg-card hover:shadow-md transition-all group overflow-hidden"
                       >
                          <div className="h-10 w-10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
-                            <item.icon className="h-5 w-5" />
+                            {ItemIcon ? <ItemIcon className="h-5 w-5" /> : null}
                          </div>
                          <span className="text-xs font-black uppercase tracking-wider text-foreground">{item.label}</span>
                       </button>
-                    ))}
+                    )})}
                   </div>
               </div>
 
@@ -178,6 +204,7 @@ export function MarketplaceMenu({ children, onSelectCategory, onOpenPartnership 
             </div>
            </div>
         </div>
+        </ErrorBoundary>
       </SheetContent>
     </Sheet>
   );
