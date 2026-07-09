@@ -23,7 +23,7 @@ const navItems = [
 export default function MarketplaceLayout({ children, hideNav }: { children: ReactNode; hideNav?: boolean; hideHeader?: boolean }) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { itemCount, company } = useCart();
 
   // Hooks de nãotificação global
@@ -157,11 +157,22 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
                   onClick={handleClick}
                   className="group flex flex-1 flex-col items-center justify-center gap-1 h-full relative"
                 >
-                  <div className="relative">
-                    <item.icon className={cn(
-                      'h-[24px] w-[24px] transition-all duration-200',
-                      active ? 'text-primary stroke-[2.5px]' : 'text-muted-foreground stroke-[1.5px]'
-                    )} />
+                  <div className="relative flex items-center justify-center">
+                    {item.path === '/marketplace/profile' && profile?.avatar_url ? (
+                      <img 
+                        src={profile.avatar_url} 
+                        className={cn(
+                          'h-[24px] w-[24px] rounded-full object-cover border transition-all duration-200',
+                          active ? 'border-primary' : 'border-muted-foreground/30'
+                        )} 
+                        alt="" 
+                      />
+                    ) : (
+                      <item.icon className={cn(
+                        'h-[24px] w-[24px] transition-all duration-200',
+                        active ? 'text-primary stroke-[2.5px]' : 'text-muted-foreground stroke-[1.5px]'
+                      )} />
+                    )}
                     {item.path === '/marketplace/orders' && orderCount > 0 && (
                       <span className="absolute -top-1.5 -right-2.5 flex h-[15px] min-w-[15px] px-1 items-center justify-center rounded-full bg-primary text-[10px] font-black text-white shadow-sm">
                         {orderCount > 99 ? '99+' : orderCount}
@@ -250,8 +261,12 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
                   </span>
                 )}
               </Link>
-              <Link to="/marketplace/profile" className="h-10 w-10 rounded-full bg-slate-100 overflow-hidden border border-border/50 transition-transform hover:scale-105">
-                <User className="h-full w-full p-2 text-muted-foreground" />
+              <Link to="/marketplace/profile" className="h-10 w-10 rounded-full bg-slate-100 overflow-hidden border border-border/50 transition-transform hover:scale-105 flex items-center justify-center">
+                {profile?.avatar_url ? (
+                  <img src={profile.avatar_url} className="h-full w-full object-cover" alt="Perfil" />
+                ) : (
+                  <User className="h-full w-full p-2 text-muted-foreground" />
+                )}
               </Link>
             </div>
           </div>
