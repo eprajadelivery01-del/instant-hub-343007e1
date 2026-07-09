@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
@@ -6,14 +6,31 @@ import { toast } from 'sonner';
 export function useRequirePhone() {
   const { profile, refreshProfile } = useAuth();
   const [showPhoneModal, setShowPhoneModal] = useState(false);
-  const [phoneInput, setPhoneInput] = useState(profile?.phone || '');
+  const [phoneInput, setPhoneInput] = useState(() => {
+    const numeric = profile?.phone?.replace(/\D/g, '') || '';
+    return numeric.length >= 10 ? profile.phone : '';
+  });
   const [isSubmittingPhone, setIsSubmittingPhone] = useState(false);
   const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
+
+  useEffect(() => {
+    if (profile?.phone) {
+      const numeric = profile.phone.replace(/\D/g, '');
+      if (numeric.length >= 10) {
+        setPhoneInput(profile.phone);
+      } else {
+        setPhoneInput('');
+      }
+    } else {
+      setPhoneInput('');
+    }
+  }, [profile?.phone]);
 
   const checkPhoneAndProceed = (action: () => void) => {
     const numericPhone = profile?.phone?.replace(/\D/g, '') || '';
     if (!profile?.phone || numericPhone.length < 10) {
-      setPhoneInput(profile?.phone || '');
+      const numeric = profile?.phone?.replace(/\D/g, '') || '';
+      setPhoneInput(numeric.length >= 10 ? profile.phone : '');
       setPendingAction(() => action);
       setShowPhoneModal(true);
       return false;
