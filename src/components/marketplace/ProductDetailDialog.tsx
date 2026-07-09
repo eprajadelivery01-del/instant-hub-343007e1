@@ -244,9 +244,6 @@ export function ProductDetailDialog({ product, isOpen, onClose, onAddToCart, ini
                 />
               </div>
 
-              <button className="text-sm font-bold text-destructive/80 text-left pt-2">
-                Denunciar item
-              </button>
             </div>
           </div>
         </div>
