@@ -74,8 +74,9 @@ Uma modificação feita por IA adicionou um `throw companyResponse.error;` na co
 - No React (JSX), a verificação visual `if (!company)` (que renderiza "Loja não encontrada") estava posicionada **antes** da verificação de erro de rede `if (productsError)`. Como o erro na query fazia a variável `company` ficar nula, o código sempre entrava na condição de "Loja não encontrada", tornando o bloco visual de "Ocorreu um erro / Tentar novamente" completamente inacessível.
 
 ### Solução Aplicada
-1. **Tratamento de PGRST116:** A consulta de `company` foi corrigida para lançar exceções APENAS se o erro for diferente de `PGRST116` (`if (error && error.code !== 'PGRST116')`). Assim, lojas bloqueadas por RLS retornam `company: null` pacificamente, permitindo que a interface lidere com as regras de negócio de loja fechada.
-2. **Reordenação Visual no JSX:** O bloco `if (productsError)` (que exibe a tela de alerta e o botão de recarregar) foi movido para o topo do JSX, **antes** da checagem de loja vazia `if (!company)`. Agora, falhas técnicas mostram a tela correta, e a "Loja não encontrada" só aparece quando realmente não houverem dados a exibir.
+1. **Remoção da Coluna Restrita:** A coluna `user_id` foi removida da consulta `select(...)` do Supabase em `StoreDetail.tsx`, eliminando instantaneamente o erro 42501 (Permission Denied) para os usuários do aplicativo.
+2. **Tratamento de PGRST116:** A consulta de `company` foi corrigida para lançar exceções APENAS se o erro for diferente de `PGRST116` (`if (error && error.code !== 'PGRST116')`). Assim, lojas bloqueadas por RLS retornam `company: null` pacificamente, permitindo que a interface lidere com as regras de negócio de loja fechada.
+3. **Reordenação Visual no JSX:** O bloco `if (productsError)` (que exibe a tela de alerta e o botão de recarregar) foi movido para o topo do JSX, **antes** da checagem de loja vazia `if (!company)`. Agora, falhas técnicas mostram a tela correta, e a "Loja não encontrada" só aparece quando realmente não houverem dados a exibir.
 
 **Arquivos Afetados:**
 - `src/pages/marketplace/StoreDetail.tsx`
