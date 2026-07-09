@@ -85,7 +85,7 @@ function mapServerError(msg: string, code?: string | null, details?: any): Mappe
 
 export default function Checkout() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, profile, refreshProfile } = useAuth();
   const { items, company, clearCart, appliedCoupon, discountAmount, subtotal } = useCart();
   const { isLocked, acquireLock, releaseLock, generateIdempotencyKey, resetIdempotencyKey } = useOrderLock();
   
@@ -261,15 +261,38 @@ export default function Checkout() {
   // Recalculate total manually because cartTotal might not update instantly when we are at Checkout
   const finalTotal = Math.max(0, subtotal - discountAmount) + (fulfillmentMode === 'pickup' ? 0 : (deliveryFee || 0));
 
-  const handleOpenReview = () => {
-    checkPhoneAndProceed(() => {
-      if (fulfillmentMode === 'delivery') {
-        if (!selectedAddress) { toast.error('Selecione um endereço'); return; }
-        if (unavailable) { toast.error('Entrega não disponível'); return; }
-        if (loadingFee) { toast.error('Calculando frete, aguarde'); return; }
+  const handleOpenReview = async () => {
+    const numericPhoneInput = phoneInput.replace(/\D/g, '');
+    if (!profile?.phone || profile.phone.replace(/\D/g, '').length < 10) {
+      if (numericPhoneInput.length < 10 || numericPhoneInput.length > 11) {
+        toast.error('Por favor, informe um número de WhatsApp/Telefone válido com DDD.');
+        return;
       }
-      setShowReviewModal(true);
-    });
+      
+      setLoading(true);
+      try {
+        const { error } = await supabase
+          .from('profiles')
+          .update({ phone: phoneInput })
+          .eq('id', profile.id);
+        if (error) throw error;
+        await refreshProfile();
+        toast.success('WhatsApp salvo com sucesso!');
+      } catch (err) {
+        toast.error('Erro ao salvar o número. Tente novamente.');
+        setLoading(false);
+        return;
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    if (fulfillmentMode === 'delivery') {
+      if (!selectedAddress) { toast.error('Selecione um endereço'); return; }
+      if (unavailable) { toast.error('Entrega não disponível'); return; }
+      if (loadingFee) { toast.error('Calculando frete, aguarde'); return; }
+    }
+    setShowReviewModal(true);
   };
 
   const handleSubmit = async () => {
@@ -626,6 +649,29 @@ export default function Checkout() {
             </div>
           )}
         </div>
+
+        {/* WhatsApp obrigatório se não houver telefone no perfil */}
+        {(!profile?.phone || profile.phone.replace(/\D/g, '').length < 10) && (
+          <div className="px-4 mb-6">
+            <div className="flex items-center gap-3 mb-2">
+              <Smartphone className="h-5 w-5 text-foreground" />
+              <div>
+                <h3 className="font-bold text-sm text-foreground">Número de WhatsApp</h3>
+                <p className="text-xs text-destructive font-semibold">Obrigatório para ajudar o entregador se precisar</p>
+              </div>
+            </div>
+            <div className="mt-3">
+              <input
+                type="tel"
+                value={phoneInput}
+                onChange={(e) => setPhoneInput(e.target.value)}
+                placeholder="(11) 99999-9999"
+                className="w-full h-12 bg-background border border-destructive rounded-xl px-4 text-sm font-semibold focus:outline-none focus:border-primary transition-colors text-foreground"
+                required
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Sticky footer Checkout */}
