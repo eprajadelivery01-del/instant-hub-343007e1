@@ -273,8 +273,13 @@ export default function Checkout() {
       try {
         const { error } = await supabase
           .from('profiles')
-          .update({ phone: phoneInput })
-          .eq('id', profile.id);
+          .upsert({
+            id: user.id,
+            user_id: user.id,
+            phone: phoneInput,
+            full_name: profile?.full_name || user.user_metadata?.full_name || 'Cliente',
+            role: profile?.role || 'customer'
+          });
         if (error) throw error;
         await refreshProfile();
         toast.success('WhatsApp salvo com sucesso!');

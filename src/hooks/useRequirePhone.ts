@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 
 export function useRequirePhone() {
-  const { profile, refreshProfile } = useAuth();
+  const { user, profile, refreshProfile } = useAuth();
   const [showPhoneModal, setShowPhoneModal] = useState(false);
   const [phoneInput, setPhoneInput] = useState(() => {
     const numeric = profile?.phone?.replace(/\D/g, '') || '';
@@ -41,7 +41,7 @@ export function useRequirePhone() {
 
   const handlePhoneSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!profile) return;
+    if (!user) return;
     
     const numericPhone = phoneInput.replace(/\D/g, '');
     if (numericPhone.length < 10) {
@@ -53,8 +53,13 @@ export function useRequirePhone() {
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({ phone: phoneInput })
-        .eq('id', profile.id);
+        .upsert({
+          id: user.id,
+          user_id: user.id,
+          phone: phoneInput,
+          full_name: profile?.full_name || user.user_metadata?.full_name || 'Cliente',
+          role: profile?.role || 'customer'
+        });
 
       if (error) throw error;
       
