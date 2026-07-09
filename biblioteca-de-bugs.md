@@ -54,3 +54,28 @@ Como esse erro ocorria dentro do cálculo de renderização do `CartContext`, qu
 **Arquivos Afetados:**
 - `src/components/marketplace/ProductDetailDialog.tsx`
 - `src/contexts/CartContext.tsx`
+
+---
+
+## 🐛 Bug: Erro Silencioso Ocultando a Tela de Loja Fechada e Falhas de Rede
+
+**Data do Registro:** 09 de Julho de 2026
+**Severidade:** Alta
+**Onde Ocorria:** Na página de detalhes da loja (`StoreDetail.tsx`) no aplicativo do cliente (Marketplace).
+
+### Descrição do Problema
+O aplicativo exibia incorretamente a tela de "Loja não encontrada" em duas situações distintas:
+1. Quando uma loja estava legitimamente fechada (e consequentemente oculta pela política RLS do banco de dados). Em vez de mostrar a interface de "Loja Fechada", a página falhava e exibia "Loja não encontrada".
+2. Quando ocorria uma falha real de rede ou erro ao carregar os produtos, a UI ignorava o erro e também mostrava "Loja não encontrada", removendo a opção do usuário de clicar em "Tentar novamente".
+
+### Causa Raiz (Root Cause)
+Uma modificação feita por IA adicionou um `throw companyResponse.error;` na consulta do Supabase dentro do `StoreDetail.tsx` para tentar "propagar erros silenciosos". No entanto:
+- O Supabase retorna o erro `PGRST116` (row not found) quando a loja está inativa ou bloqueada pelo RLS. Ao forçar o código a lançar (throw) essa exceção de forma bruta, a consulta abortava.
+- No React (JSX), a verificação visual `if (!company)` (que renderiza "Loja não encontrada") estava posicionada **antes** da verificação de erro de rede `if (productsError)`. Como o erro na query fazia a variável `company` ficar nula, o código sempre entrava na condição de "Loja não encontrada", tornando o bloco visual de "Ocorreu um erro / Tentar novamente" completamente inacessível.
+
+### Solução Aplicada
+1. **Tratamento de PGRST116:** A consulta de `company` foi corrigida para lançar exceções APENAS se o erro for diferente de `PGRST116` (`if (error && error.code !== 'PGRST116')`). Assim, lojas bloqueadas por RLS retornam `company: null` pacificamente, permitindo que a interface lidere com as regras de negócio de loja fechada.
+2. **Reordenação Visual no JSX:** O bloco `if (productsError)` (que exibe a tela de alerta e o botão de recarregar) foi movido para o topo do JSX, **antes** da checagem de loja vazia `if (!company)`. Agora, falhas técnicas mostram a tela correta, e a "Loja não encontrada" só aparece quando realmente não houverem dados a exibir.
+
+**Arquivos Afetados:**
+- `src/pages/marketplace/StoreDetail.tsx`

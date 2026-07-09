@@ -86,7 +86,7 @@ export default function StoreDetail() {
         supabase.from('companies').select('id, name, description, category, rating, is_open, active, is_active, delivery_fee, delivery_regions_pricing, show_in_marketplace, city, state, banner_url, cover_url, logo_url, business_hours, prep_time_min, prep_time_max, created_at, user_id').eq('id', id!).single(),
         supabase.from('products').select('*').eq('company_id', id!).eq('active', true).order('category').order('sort_order', { ascending: true }).order('created_at', { ascending: true }),
       ]);
-      if (companyResponse.error) {
+      if (companyResponse.error && companyResponse.error.code !== 'PGRST116') {
         throw companyResponse.error;
       }
       if (productResponse.error) {
@@ -251,6 +251,29 @@ export default function StoreDetail() {
               ))}
             </div>
           </div>
+        </div>
+      </MarketplaceLayout>
+    );
+  }
+
+  if (productsError) {
+    return (
+      <MarketplaceLayout>
+        <div className="flex flex-col items-center gap-4 py-24 text-center px-6">
+          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-destructive/10">
+            <AlertCircle className="h-8 w-8 text-destructive" />
+          </div>
+          <div className="space-y-1">
+            <p className="text-base font-bold tracking-tight text-foreground">Ocorreu um erro</p>
+            <p className="text-sm text-muted-foreground">Não foi possível carregar as informações da loja.</p>
+          </div>
+          <Button onClick={() => refetchStore()} disabled={refetchingStore} className="mt-2">
+            <RefreshCw className={cn("h-4 w-4 mr-2", refetchingStore && "animate-spin")} />
+            Tentar novamente
+          </Button>
+          <Button onClick={() => navigate('/marketplace')} variant="link" className="font-bold text-primary mt-2">
+            Voltar para o marketplace
+          </Button>
         </div>
       </MarketplaceLayout>
     );
@@ -496,21 +519,7 @@ export default function StoreDetail() {
       )}
 
       <div className="mx-auto max-w-7xl px-4 pb-40">
-        {productsError ? (
-          <div className="flex flex-col items-center gap-4 py-24 text-center">
-            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-destructive/10">
-              <AlertCircle className="h-8 w-8 text-destructive" />
-            </div>
-            <div className="space-y-1">
-              <p className="text-base font-bold tracking-tight text-foreground">Não foi possível carregar o cardápio</p>
-              <p className="text-sm text-muted-foreground">Verifique sua conexão e tente nãovamente.</p>
-            </div>
-            <Button onClick={() => refetchStore()} disabled={refetchingStore} className="mt-2">
-              <RefreshCw className={cn("h-4 w-4", refetchingStore && "animate-spin")} />
-              Tentar nãovamente
-            </Button>
-          </div>
-        ) : categories.length === 0 ? (
+        {categories.length === 0 ? (
           <div className="flex flex-col items-center gap-4 py-24 text-center">
             <div className="flex h-20 w-20 items-center justify-center rounded-full bg-secondary/50">
               <Utensils className="h-8 w-8 text-muted-foreground/50" />

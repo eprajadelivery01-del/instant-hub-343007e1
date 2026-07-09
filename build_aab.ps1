@@ -1,21 +1,21 @@
 $ErrorActionPreference = "Stop"
-Write-Host "Starting build process for Marketplace App..."
+Write-Host "Setting JAVA_HOME..."
+$env:JAVA_HOME = 'C:\Program Files\Android\Android Studio\jbr'
 
-# 1. Install dependencies
-Write-Host "Running npm install..."
+Write-Host "Installing dependencies..."
 npm install
 
-# 2. Build the web assets
-Write-Host "Running npm run build..."
+Write-Host "Building web assets..."
 npm run build
 
-# 3. Sync with Capacitor
-Write-Host "Syncing Android project with Capacitor..."
+Write-Host "Syncing with Capacitor..."
 npx cap sync android
 
-# 4. Build the Android AAB
-Write-Host "Building Android App Bundle (AAB)..."
+Write-Host "Building Android Release AAB..."
 cd android
-.\gradlew.bat bundleRelease
+.\gradlew.bat clean bundleRelease
 
-Write-Host "Build finished! Check android/app/build/outputs/bundle/release/app-release-unsigned.aab or app-release.aab"
+Write-Host "Copying AAB to the target folder..."
+Copy-Item "app\build\outputs\bundle\release\app-release.aab" -Destination "..\..\apk-output\epraja-RELEASE.aab" -Force
+
+Write-Host "AAB Build finished successfully!"
