@@ -49,6 +49,24 @@ export default function OrderDetail() {
   const order = orderData?.order ?? null;
   const orderItems = orderData?.items ?? [];
   const delivery = orderData?.delivery ?? null;
+  const maxStatusRankRef = useRef<number>(0);
+
+  useEffect(() => {
+    if (orderData?.order?.status) {
+      const STATUS_HIERARCHY: Record<string, number> = {
+        pending: 1,
+        confirmed: 2,
+        preparing: 3,
+        ready: 4,
+        delivering: 5,
+        delivered: 6,
+      };
+      const currentRank = STATUS_HIERARCHY[orderData.order.status as string] || 0;
+      if (currentRank > maxStatusRankRef.current) {
+        maxStatusRankRef.current = currentRank;
+      }
+    }
+  }, [orderData?.order?.status]);
 
   useEffect(() => {
     if (!id) return;
@@ -68,8 +86,25 @@ export default function OrderDetail() {
               delivered: '🎉 Pedido entregue! Bom apetite!',
               cancelled: '❌ Pedido cancelado',
             };
-            const msg = statusLabels[p.new.status as string];
-            if (msg) {
+            const STATUS_HIERARCHY: Record<string, number> = {
+              pending: 1,
+              confirmed: 2,
+              preparing: 3,
+              ready: 4,
+              delivering: 5,
+              delivered: 6,
+            };
+
+            const newStatus = p.new.status as string;
+            const newRank = STATUS_HIERARCHY[newStatus] || 0;
+            const shouldNotify = newStatus === 'cancelled' || newRank > maxStatusRankRef.current;
+
+            if (newRank > maxStatusRankRef.current) {
+              maxStatusRankRef.current = newRank;
+            }
+
+            const msg = statusLabels[newStatus];
+            if (msg && shouldNotify) {
               new Notification('É Pra Já Delivery', {
                 body: msg,
                 icon: '/logo.png',
