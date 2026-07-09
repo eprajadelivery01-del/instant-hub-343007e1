@@ -283,7 +283,7 @@ export default function OrderDetail() {
                     notifEnabled ? 'translate-x-[26px]' : 'translate-x-0.5'
                   }`}
                 />
-                {nãotifLoading && (
+                {notifLoading && (
                   <span className="absolute inset-0 flex items-center justify-center">
                     <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   </span>
