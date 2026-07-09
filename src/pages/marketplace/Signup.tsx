@@ -25,6 +25,13 @@ export default function Signup() {
     e.preventDefault();
     if (!acceptedTerms) { toast.error('Aceite os termos para continuar'); return; }
     if (password !== confirmPassword) { toast.error('As senhas não coincidem'); return; }
+    
+    const cleanedPhone = phone.replace(/\D/g, '');
+    if (cleanedPhone.length < 10 || cleanedPhone.length > 11) {
+      toast.error('Por favor, insira um número de telefone válido com DDD (ex: 11999999999)');
+      return;
+    }
+    
     setLoading(true);
     try {
       await signUp(email, password, fullName, phone);
