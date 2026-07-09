@@ -178,7 +178,7 @@ export function ProductDetailDialog({ product, isOpen, onClose, onAddToCart, ini
 
           <div className="px-6 py-6">
             <DialogTitle className="text-2xl font-bold text-foreground leading-tight">{product.name}</DialogTitle>
-            <DialogDescription className="sr-only">{product.description || 'Escolha as opções e obserávações para adicionar à sacola.'}</DialogDescription>
+            <DialogDescription className="sr-only">{product.description || 'Escolha as opções e observações para adicionar à sacola.'}</DialogDescription>
             {product.description && (
               <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
                 {product.description}
@@ -227,7 +227,7 @@ export function ProductDetailDialog({ product, isOpen, onClose, onAddToCart, ini
                 </div>
               ))}
 
-              {/* Obserávation Section */}
+              {/* Observation Section */}
               <div className="flex flex-col gap-3 pt-4 border-t border-border/40">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">

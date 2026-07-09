@@ -146,13 +146,13 @@ export default function OrderSummaryDialog({ orderId, open, onOpenChange }: Prop
               </div>
             </div>
 
-            {/* Obserávações */}
+            {/* Observações */}
             {order.notes && (
               <div className="flex items-start gap-2">
                 <StickyNote className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
                 <div>
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                    Obserávações
+                    Observações
                   </p>
                   <p className="text-foreground mt-0.5 whitespace-pre-wrap">
                     {order.notes}

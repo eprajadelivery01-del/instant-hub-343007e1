@@ -293,7 +293,7 @@ export default function Checkout() {
         return;
       }
 
-      const orderNotes = cpf ? `CPF na nãota: ${cpf}` : null;
+      const orderNotes = cpf ? `CPF na nota: ${cpf}` : null;
 
       const ik = generateIdempotencyKey(
         user.id,
@@ -482,7 +482,7 @@ export default function Checkout() {
           <>
             {/* Endereço estilo iFood */}
             <div className="px-4 mb-6">
-              <h3 className="text-base font-bold text-foreground mb-3">Entregar não endereço</h3>
+              <h3 className="text-base font-bold text-foreground mb-3">Entregar no endereço</h3>
               {loadingAddresses ? (
                 <p className="text-sm text-muted-foreground">Carregando...</p>
               ) : addresses.length === 0 ? (
@@ -598,13 +598,13 @@ export default function Checkout() {
 
         <div className="h-2 w-full bg-secondary mb-6" />
 
-        {/* CPF na nãota */}
+        {/* CPF na nota */}
         <div className="px-4 mb-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <FileText className="h-5 w-5 text-foreground" />
               <div>
-                <h3 className="font-bold text-sm text-foreground">CPF na nãota</h3>
+                <h3 className="font-bold text-sm text-foreground">CPF na nota</h3>
                 <p className="text-xs text-muted-foreground">Opcional</p>
               </div>
             </div>
