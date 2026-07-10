@@ -289,8 +289,16 @@ function extractInternalPath(href: string | null | undefined): string | null {
 }
 
 function getLinkPath(target: EventTarget | null): string | null {
-  const el = target as HTMLElement | null;
+  let el = target as any;
   if (!el) return null;
+  
+  // If the target is a text node, move to its parent
+  if (el.nodeType === 3) {
+    el = el.parentNode;
+  }
+  
+  if (!el || typeof el.closest !== "function") return null;
+
   const anchor = el.closest("a[href]") as HTMLAnchorElement | null;
   if (!anchor) return null;
   return extractInternalPath(anchor.getAttribute("href"));
