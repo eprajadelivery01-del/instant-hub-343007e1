@@ -122,7 +122,7 @@ export function isStoreOpenBySchedule(
   timeZone?: string | null
 ): boolean {
   const schedule = parseBusinessHours(input);
-  if (!schedule) return false; // Se o cronograma estiver quebrado, assume fechada por segurança
+  if (!schedule) return true; // Sem horário cadastrado → confia no campo manual is_open do banco
   const tz = resolveTimezone(timeZone);
   const { day, minutes: currentMinutes } = getZonedParts(now, tz);
   const entry = schedule.find((d) => d.day === day);
