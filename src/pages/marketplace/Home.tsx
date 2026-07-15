@@ -26,6 +26,7 @@ import { SafeAreaHeader } from '@/components/shared/SafeAreaHeader';
 
 const categories = [
   { icon: Utensils, label: 'Todos', value: '' },
+  { icon: Flame, label: 'Lanches', value: 'lanches' },
   { icon: ShoppingCart, label: 'Mercado', value: 'mercado' },
   { icon: Pill, label: 'Farmácia', value: 'farmacia' },
   { icon: UtensilsCrossed, label: 'Restaurante', value: 'restaurante' },
@@ -60,7 +61,8 @@ export default function Home() {
       const { data, error } = await supabase
         .from('companies')
         .select(`${COMPANY_LIST_COLUMNS}, products(id, name, description, price, image_url, category, active)`)
-        .eq('show_in_marketplace', true);
+        .eq('show_in_marketplace', true)
+        .limit(4, { foreignTable: 'products' });
 
       if (error) throw error;
 

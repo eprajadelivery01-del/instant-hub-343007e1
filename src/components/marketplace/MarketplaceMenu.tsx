@@ -99,6 +99,7 @@ export function MarketplaceMenu({ children, onSelectCategory, onOpenPartnership 
 
   const categories = [
     { icon: Utensils, label: "Todos", color: "bg-sunset", value: "" },
+    { icon: Flame, label: "Lanches", color: "bg-sunset", value: "lanches" },
     { icon: ShoppingBag, label: "Mercado", color: "bg-sunset", value: "mercado" },
     { icon: Pill, label: "Farmácia", color: "bg-sunset", value: "farmacia" },
     { icon: UtensilsCrossed, label: "Restaurante", color: "bg-sunset", value: "restaurante" },
