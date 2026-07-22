@@ -552,22 +552,39 @@ Denão.seráve(async (req) => {
 
   const total = Math.max(0, subtotal - discount) + deliveryFee;
 
-  // 7) Garante customers vinculado
+  // 7) Garante customers vinculado e atualiza telefone do cadastro (profiles)
   let customerId: string | null = null;
   const { data: customer } = await adminClient
     .from('customers')
-    .select('id')
+    .select('id, phone, name')
     .eq('user_id', user.id)
     .maybeSingle();
+
+  // Buscar dados do perfil do usuário para garantir o telefone mais atualizado
+  const { data: userProfile } = await adminClient
+    .from('profiles')
+    .select('phone, full_name')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  const userPhone = userProfile?.phone || (user.user_metadata as any)?.phone || customer?.phone || null;
+  const userName = userProfile?.full_name || (user.user_metadata as any)?.full_name || customer?.name || 'Cliente Marketplace';
+
   if (customer?.id) {
     customerId = customer.id;
+    if (!customer.phone && userPhone) {
+      await adminClient
+        .from('customers')
+        .update({ phone: userPhone })
+        .eq('id', customer.id);
+    }
   } else {
     const { data: created, error: createErr } = await adminClient
       .from('customers')
       .insert({
         user_id: user.id,
-        name: (user.user_metadata as any)?.full_name || user.email || 'Cliente',
-        phone: (user.user_metadata as any)?.phone || null,
+        name: userName,
+        phone: userPhone,
       })
       .select('id')
       .single();
@@ -594,7 +611,7 @@ Denão.seráve(async (req) => {
   }
 
   const deliveryAddress = isPickup
-    ? 'Retirada não local'
+    ? 'Retirada no local'
     : `${address.street}, ${address.number} - ${address.neighborhood}, ${address.city}`;
 
   // 10) Insert order
@@ -614,6 +631,8 @@ Denão.seráve(async (req) => {
       region_id: regionId,
       delivery_latitude: address?.latitude ?? null,
       delivery_longitude: address?.longitude ?? null,
+      customer_phone: userPhone,
+      customer_name: userName,
     })
     .select('id')
     .single();
