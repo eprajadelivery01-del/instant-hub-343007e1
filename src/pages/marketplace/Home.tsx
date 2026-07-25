@@ -65,8 +65,7 @@ export default function Home() {
       let { data, error } = await supabase
         .from('companies')
         .select(`${COMPANY_LIST_COLUMNS}, products(id, name, description, price, image_url, category, active)`)
-        .eq('show_in_marketplace', true)
-        .limit(4, { foreignTable: 'products' });
+        .eq('show_in_marketplace', true);
 
       // Fallback em caso de restrição de permissão de colunas em 'products' ou RLS para anônimos
       if (error && (error.code === '42501' || error.message?.includes('permission denied'))) {
@@ -86,6 +85,32 @@ export default function Home() {
 
       const rows = (data ?? []) as unknown as Company[];
 
+      // Se alguma empresa não tiver produtos no resultado inicial, busca os produtos diretamente
+      const companyIdsWithoutProducts = rows
+        .filter((c: any) => !c.products || c.products.length === 0)
+        .map((c: any) => c.id);
+
+      let extraProductsMap: Record<string, any[]> = {};
+      if (companyIdsWithoutProducts.length > 0) {
+        try {
+          const { data: prodData } = await supabase
+            .from('products')
+            .select('id, company_id, name, description, price, image_url, category, active')
+            .in('company_id', companyIdsWithoutProducts);
+
+          (prodData || []).forEach((p: any) => {
+            if (p.active !== false) {
+              if (!extraProductsMap[p.company_id]) {
+                extraProductsMap[p.company_id] = [];
+              }
+              extraProductsMap[p.company_id].push(p);
+            }
+          });
+        } catch (e) {
+          console.warn('[Home] Aviso ao buscar produtos extras para empresas:', e);
+        }
+      }
+
       const processed: MarketplaceCompany[] = rows
         .filter((c) => (c as any).show_in_marketplace !== false)
         .map((company): MarketplaceCompany => {
@@ -93,12 +118,17 @@ export default function Home() {
             company.rating && Number(company.rating) > 0
               ? Number(company.rating)
               : 4.5 + Math.random() * 0.5;
+
+          const rawProds = ((company as any).products && (company as any).products.length > 0)
+            ? (company as any).products
+            : (extraProductsMap[company.id] || []);
+
           return {
             ...company,
             name: company.name || 'Loja Parceira',
             is_open: isStoreOpenNow(company as any),
             active: company.active === true || (company as any).is_active === true,
-            products: (((company as any).products) || [])
+            products: (rawProds || [])
               .filter((p: any) => p.active !== false)
               .slice(0, 4), // Preview de 4 produtos na Home
             rating: ratingValue,
