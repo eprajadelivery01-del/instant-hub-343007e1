@@ -266,9 +266,9 @@ export default function Home() {
         </div>
       </SafeAreaHeader>
 
-      <ActiveOfferHighlight />
-
       <div className="mx-auto max-w-7xl space-y-10 px-4 pb-32 pt-6 sm:px-6">
+        <ActiveOfferHighlight />
+
         <section className="space-y-4">
           <div className="flex items-end justify-between gap-4 px-1">
             <div>

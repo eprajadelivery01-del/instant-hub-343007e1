@@ -67,7 +67,7 @@ export function ActiveOfferHighlight() {
   };
 
   return (
-    <div className="w-full mx-auto my-3 px-4 sm:px-6">
+    <div className="w-full mx-auto my-1">
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-orange-600 via-amber-600 to-orange-500 p-4 text-white shadow-xl">
         {/* Glow backdrop */}
         <div className="absolute -right-8 -top-8 w-32 h-32 bg-white/10 rounded-full blur-2xl pointer-events-none" />
