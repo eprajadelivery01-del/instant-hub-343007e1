@@ -166,7 +166,7 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
           </div>
 
           {/* List of Notifications */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          <div className="flex-1 overflow-y-auto p-4 pb-36 space-y-4">
             {loading ? (
               <div className="flex flex-col items-center justify-center h-48 gap-3 text-muted-foreground">
                 <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
