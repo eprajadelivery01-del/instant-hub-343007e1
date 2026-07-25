@@ -18,7 +18,11 @@ export type MarketingNotifItem = {
   status?: string;
 };
 
-export function ClientNotificationsPopover() {
+interface ClientNotificationsPopoverProps {
+  className?: string;
+}
+
+export function ClientNotificationsPopover({ className }: ClientNotificationsPopoverProps) {
   const [notifications, setNotifications] = useState<MarketingNotifItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -127,7 +131,10 @@ export function ClientNotificationsPopover() {
     <Sheet open={isOpen} onOpenChange={handleOpenChange}>
       <SheetTrigger asChild>
         <button
-          className="premium-card relative flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-muted-foreground transition-all hover:text-foreground active:scale-95"
+          className={cn(
+            "premium-card relative flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-muted-foreground transition-all hover:text-foreground active:scale-95",
+            className
+          )}
           title="Notificações e Cupons"
         >
           <Bell className="h-5 w-5" />

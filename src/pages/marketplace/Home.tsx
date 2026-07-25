@@ -203,37 +203,37 @@ export default function Home() {
       <NotificationBanner />
       <SafeAreaHeader as="div" extraTopRem={0.25} className="border-b border-border bg-background">
         <div className="mx-auto flex max-w-7xl flex-col gap-5 px-4 pb-4 sm:px-6">
-          <div className="flex items-center justify-between gap-4 md:hidden">
-            <div className="flex min-w-0 items-center gap-4">
+          <div className="flex items-center justify-between gap-3 md:hidden">
+            <div className="flex min-w-0 flex-1 items-center gap-2.5">
               <MarketplaceMenu onSelectCategory={setActiveCategory} onOpenPartnership={setPartnershipType}>
-                <button className="premium-card flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-muted-foreground transition-all hover:text-foreground">
-                  <PanelLeft className="h-5 w-5" />
+                <button className="premium-card flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-muted-foreground transition-all hover:text-foreground">
+                  <PanelLeft className="h-4 w-4" />
                 </button>
               </MarketplaceMenu>
 
-              <div className="min-w-0">
-                <span className="mb-0.5 block text-xs font-bold text-primary">É Pra Já</span>
-                <button onClick={() => navigate('/marketplace/addresses')} className="group flex items-center gap-1 outline-none">
-                  <span className="max-w-[200px] truncate text-sm font-semibold text-foreground">
+              <div className="min-w-0 flex-1">
+                <span className="mb-0.5 block text-[10px] font-bold text-primary leading-none">É Pra Já</span>
+                <button onClick={() => navigate('/marketplace/addresses')} className="group flex items-center gap-1 outline-none max-w-full">
+                  <span className="max-w-[110px] xs:max-w-[150px] sm:max-w-[200px] truncate text-xs font-semibold text-foreground">
                     {selectedAddress ? `${selectedAddress.street}, ${selectedAddress.number}` : 'Definir endereço'}
                   </span>
-                  <ChevronDown className="h-3.5 w-3.5 text-primary transition-transform group-hover:translate-y-0.5" />
+                  <ChevronDown className="h-3 w-3 text-primary transition-transform group-hover:translate-y-0.5 shrink-0" />
                 </button>
               </div>
             </div>
 
-            <div className="flex items-center gap-2 shrink-0">
-              <ClientNotificationsPopover />
-              <ThemeToggle className="h-12 w-12 rounded-2xl" />
+            <div className="flex items-center gap-1.5 shrink-0 ml-auto">
+              <ClientNotificationsPopover className="h-10 w-10 rounded-xl" />
+              <ThemeToggle className="h-10 w-10 rounded-xl" />
               <button
                 onClick={() => navigate('/marketplace/profile')}
-                className="premium-card flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl"
+                className="premium-card flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl"
               >
                 <MediaImage
                   src={getAvatarImage(profile)}
                   alt="Foto do perfil"
                   className="h-full w-full object-cover"
-                  fallback={<User className="h-6 w-6 text-muted-foreground/50" />}
+                  fallback={<User className="h-4 w-4 text-muted-foreground/50" />}
                 />
               </button>
             </div>
