@@ -82,17 +82,58 @@ export default function StoreDetail() {
     enabled: !!id,
     staleTime: 30_000,
     queryFn: async () => {
-      const [companyResponse, productResponse] = await Promise.all([
-        supabase.from('companies').select('id, name, description, category, rating, is_open, active, is_active, delivery_fee, delivery_regions_pricing, show_in_marketplace, city, state, banner_url, cover_url, logo_url, business_hours, prep_time_min, prep_time_max, created_at').eq('id', id!).single(),
-        supabase.from('products').select('*').eq('company_id', id!).eq('active', true).order('category').order('sort_order', { ascending: true }).order('created_at', { ascending: true }),
-      ]);
-      if (companyResponse.error && companyResponse.error.code !== 'PGRST116') {
-        throw companyResponse.error;
+      let companyData: any = null;
+      let productsData: any[] = [];
+
+      // 1. Busca dados da empresa com fallback
+      try {
+        const companyRes = await supabase
+          .from('companies')
+          .select('id, name, description, category, rating, is_open, active, is_active, delivery_fee, delivery_regions_pricing, show_in_marketplace, city, state, banner_url, cover_url, logo_url, business_hours, prep_time_min, prep_time_max, created_at')
+          .eq('id', id!)
+          .maybeSingle();
+
+        if (companyRes.error) {
+          console.warn('[StoreDetail] Erro ao buscar empresa com colunas completas, tentando fallback básico:', companyRes.error);
+          const fallbackCompany = await supabase
+            .from('companies')
+            .select('id, name, description, category, rating, is_open, active, is_active, delivery_fee, show_in_marketplace, city, state, banner_url, cover_url, logo_url')
+            .eq('id', id!)
+            .maybeSingle();
+          companyData = fallbackCompany.data;
+        } else {
+          companyData = companyRes.data;
+        }
+      } catch (e) {
+        console.warn('[StoreDetail] Exceção ao consultar empresa:', e);
       }
-      if (productResponse.error) {
-        throw productResponse.error;
+
+      // 2. Busca produtos com colunas públicas e fallback
+      try {
+        const productRes = await supabase
+          .from('products')
+          .select('id, company_id, name, description, price, image_url, category, active, sort_order, created_at')
+          .eq('company_id', id!)
+          .eq('active', true)
+          .order('category')
+          .order('sort_order', { ascending: true })
+          .order('created_at', { ascending: true });
+
+        if (productRes.error) {
+          console.warn('[StoreDetail] Erro ao buscar produtos ordenados, tentando fallback de colunas simples:', productRes.error);
+          const fallbackProd = await supabase
+            .from('products')
+            .select('id, company_id, name, description, price, image_url, category, active')
+            .eq('company_id', id!);
+          productsData = (fallbackProd.data ?? []).filter((p: any) => p.active !== false);
+        } else {
+          productsData = productRes.data ?? [];
+        }
+      } catch (e) {
+        console.warn('[StoreDetail] Exceção ao consultar produtos:', e);
       }
-      return { company: companyResponse.data, products: productResponse.data ?? [] };
+
+      return { company: companyData, products: productsData };
     },
   });
 
