@@ -41,6 +41,8 @@ const COMPANY_LIST_COLUMNS =
   'id, name, description, category, rating, is_open, active, is_active, delivery_fee, delivery_regions_pricing, show_in_marketplace, city, state, banner_url, cover_url, logo_url, business_hours, prep_time_min, prep_time_max, created_at';
 
 import { NotificationBanner } from '@/components/shared/NotificationBanner';
+import { ClientNotificationsPopover } from '@/components/marketplace/ClientNotificationsPopover';
+import { ActiveOfferHighlight } from '@/components/marketplace/ActiveOfferHighlight';
 
 export default function Home() {
   const [companies, setCompanies] = useState<MarketplaceCompany[]>([]);
@@ -207,6 +209,7 @@ export default function Home() {
             </div>
 
             <div className="flex items-center gap-2 shrink-0">
+              <ClientNotificationsPopover />
               <ThemeToggle className="h-12 w-12 rounded-2xl" />
               <button
                 onClick={() => navigate('/marketplace/profile')}
@@ -248,6 +251,8 @@ export default function Home() {
           </div>
         </div>
       </SafeAreaHeader>
+
+      <ActiveOfferHighlight />
 
       <div className="mx-auto max-w-7xl space-y-10 px-4 pb-32 pt-6 sm:px-6">
         <section className="space-y-4">
