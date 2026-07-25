@@ -28,21 +28,28 @@ export function ActiveOfferHighlight() {
 
     fetchLatestNotif();
 
-    // Listen to real-time inserts com canal único
-    const channelId = `home-active-offer-${Math.random().toString(36).substring(2, 9)}`;
-    const channel = supabase
-      .channel(channelId)
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'marketing_notifications' },
-        (payload) => {
-          setLatestNotif(payload.new);
-        }
-      )
-      .subscribe();
+    // Listen to real-time inserts com canal único e tratamento de exceção
+    let channel: any = null;
+    try {
+      const channelId = `home-active-offer-${Math.random().toString(36).substring(2, 9)}`;
+      channel = supabase
+        .channel(channelId)
+        .on(
+          'postgres_changes',
+          { event: 'INSERT', schema: 'public', table: 'marketing_notifications' },
+          (payload) => {
+            setLatestNotif(payload.new);
+          }
+        )
+        .subscribe();
+    } catch (e) {
+      console.warn('[ActiveOfferHighlight] Realtime subscription bypassed:', e);
+    }
 
     return () => {
-      supabase.removeChannel(channel);
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
     };
   }, []);
 

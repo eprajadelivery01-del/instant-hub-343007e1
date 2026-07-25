@@ -61,27 +61,34 @@ export function ClientNotificationsPopover() {
   useEffect(() => {
     fetchNotifications();
 
-    // Realtime listener for new marketing notifications com canal único por instância
-    const channelId = `client-notif-popover-${Math.random().toString(36).substring(2, 9)}`;
-    const channel = supabase
-      .channel(channelId)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'marketing_notifications'
-        },
-        (payload) => {
-          const newNotif = payload.new as MarketingNotifItem;
-          setNotifications((prev) => [newNotif, ...prev]);
-          setUnreadCount((prev) => prev + 1);
-        }
-      )
-      .subscribe();
+    // Realtime listener para novas notificações com tratamento de erro e canal único por instância
+    let channel: any = null;
+    try {
+      const channelId = `client-notif-popover-${Math.random().toString(36).substring(2, 9)}`;
+      channel = supabase
+        .channel(channelId)
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'marketing_notifications'
+          },
+          (payload) => {
+            const newNotif = payload.new as MarketingNotifItem;
+            setNotifications((prev) => [newNotif, ...prev]);
+            setUnreadCount((prev) => prev + 1);
+          }
+        )
+        .subscribe();
+    } catch (err) {
+      console.warn('[ClientNotificationsPopover] Realtime subscription bypassed:', err);
+    }
 
     return () => {
-      supabase.removeChannel(channel);
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
     };
   }, []);
 
