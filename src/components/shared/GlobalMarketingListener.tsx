@@ -51,15 +51,19 @@ export function GlobalMarketingListener() {
         (payload) => {
           const newNotif = payload.new;
 
-          // Send receipt to admins
-          supabase.channel('marketing-receipts').send({
-            type: 'broadcast',
-            event: 'notification_received',
-            payload: {
-              user_email: user?.email || 'Visitante',
-              notification_title: newNotif.title,
-            },
-          });
+          // Send receipt to admins (apenas se o usuário estiver autenticado e capturando falhas silenciosamente)
+          if (user) {
+            try {
+              supabase.channel('marketing-receipts').send({
+                type: 'broadcast',
+                event: 'notification_received',
+                payload: {
+                  user_email: user.email || 'Visitante',
+                  notification_title: newNotif.title,
+                },
+              }).catch(() => {});
+            } catch (e) {}
+          }
 
           // Play Audio & Vibrate
           try {

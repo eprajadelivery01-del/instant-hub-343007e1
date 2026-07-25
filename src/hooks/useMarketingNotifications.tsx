@@ -35,17 +35,19 @@ export function useMarketingNotifications() {
           const newNotif = payload.new as MarketingNotification;
           
           // Send broadcast receipt back to Admin Panel
-          try {
-            supabase.channel('marketing-receipts').send({
-              type: 'broadcast',
-              event: 'notification_received',
-              payload: {
-                user_email: user.email,
-                notification_title: newNotif.title
-              }
-            });
-          } catch (e) {
-            console.error("Failed to send receipt", e);
+          if (user) {
+            try {
+              supabase.channel('marketing-receipts').send({
+                type: 'broadcast',
+                event: 'notification_received',
+                payload: {
+                  user_email: user.email,
+                  notification_title: newNotif.title
+                }
+              }).catch(() => {});
+            } catch (e) {
+              console.error("Failed to send receipt", e);
+            }
           }
           
           // Show toast
