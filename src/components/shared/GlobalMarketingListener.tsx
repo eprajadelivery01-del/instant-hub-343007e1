@@ -3,6 +3,8 @@ import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { Copy, X } from 'lucide-react';
+import { Capacitor } from '@capacitor/core';
+import { LocalNotifications } from '@capacitor/local-notifications';
 
 const NOTIFICATION_AUDIO_URL = 'https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3';
 
@@ -11,7 +13,12 @@ export function GlobalMarketingListener() {
   const swRegRef = useRef<ServiceWorkerRegistration | null>(null);
 
   useEffect(() => {
-    // 1. Register Service Worker & Request Notification Permission
+    // Solcita permissão de notificações nativas no Android / iOS
+    if (Capacitor.isNativePlatform()) {
+      LocalNotifications.requestPermissions().catch(() => {});
+    }
+
+    // 1. Register Service Worker & Request Web Notification Permission
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js')
         .then((reg) => {
@@ -125,32 +132,52 @@ export function GlobalMarketingListener() {
 }
 
 function triggerNativeNotification(notif: any, swRegistration: ServiceWorkerRegistration | null) {
-  if (!('Notification' in window) || Notification.permission !== 'granted') {
-    return;
+  // Notificação no centro de notificações nativas do celular (Android / iOS)
+  if (Capacitor.isNativePlatform()) {
+    try {
+      LocalNotifications.schedule({
+        notifications: [
+          {
+            title: `${notif.emoji ? notif.emoji + ' ' : ''}${notif.title || 'Novo Alerta É Pra Já!'}`,
+            body: notif.message || (notif.coupon_code ? `Use o cupom: ${notif.coupon_code}` : 'Confira a nova promoção no app!'),
+            id: Math.floor(Math.random() * 100000),
+            schedule: { at: new Date(Date.now() + 100) },
+            extra: {
+              coupon: notif.coupon_code
+            }
+          }
+        ]
+      }).catch(() => {});
+    } catch (e) {
+      console.error('[Notification] Erro ao disparar notificação nativa:', e);
+    }
   }
 
-  const title = `${notif.emoji ? notif.emoji + ' ' : ''}${notif.title || 'Novo Alerta É Pra Já!'}`;
-  const options = {
-    body: notif.message || (notif.coupon_code ? `Use o cupom: ${notif.coupon_code}` : 'Confira a nova promoção no app!'),
-    icon: '/icon-192x192.png',
-    badge: '/icon-192x192.png',
-    image: notif.image_url || undefined,
-    tag: `epraja-marketing-${notif.id || Date.now()}`,
-    data: {
-      url: '/marketplace/coupons',
-      coupon: notif.coupon_code
-    }
-  };
+  // Notificação do sistema via Navegador Web / Service Worker
+  if ('Notification' in window && Notification.permission === 'granted') {
+    const title = `${notif.emoji ? notif.emoji + ' ' : ''}${notif.title || 'Novo Alerta É Pra Já!'}`;
+    const options = {
+      body: notif.message || (notif.coupon_code ? `Use o cupom: ${notif.coupon_code}` : 'Confira a nova promoção no app!'),
+      icon: '/icon-192x192.png',
+      badge: '/icon-192x192.png',
+      image: notif.image_url || undefined,
+      tag: `epraja-marketing-${notif.id || Date.now()}`,
+      data: {
+        url: '/marketplace/coupons',
+        coupon: notif.coupon_code
+      }
+    };
 
-  if (swRegistration && swRegistration.showNotification) {
-    swRegistration.showNotification(title, options).catch(() => {
+    if (swRegistration && swRegistration.showNotification) {
+      swRegistration.showNotification(title, options).catch(() => {
+        try {
+          new Notification(title, options);
+        } catch (e) {}
+      });
+    } else {
       try {
         new Notification(title, options);
       } catch (e) {}
-    });
-  } else {
-    try {
-      new Notification(title, options);
-    } catch (e) {}
+    }
   }
 }
