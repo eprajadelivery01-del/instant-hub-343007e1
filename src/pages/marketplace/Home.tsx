@@ -40,6 +40,8 @@ type MarketplaceCompany = Company & { products: Product[]; rating: number; isPre
 const COMPANY_LIST_COLUMNS =
   'id, name, description, category, rating, is_open, active, is_active, delivery_fee, delivery_regions_pricing, show_in_marketplace, city, state, banner_url, cover_url, logo_url, business_hours, prep_time_min, prep_time_max, created_at';
 
+import { NotificationBanner } from '@/components/shared/NotificationBanner';
+
 export default function Home() {
   const [companies, setCompanies] = useState<MarketplaceCompany[]>([]);
   const [loading, setLoading] = useState(true);
@@ -182,6 +184,7 @@ export default function Home() {
 
   return (
     <MarketplaceLayout>
+      <NotificationBanner />
       <SafeAreaHeader as="div" extraTopRem={0.25} className="border-b border-border bg-background">
         <div className="mx-auto flex max-w-7xl flex-col gap-5 px-4 pb-4 sm:px-6">
           <div className="flex items-center justify-between gap-4 md:hidden">
