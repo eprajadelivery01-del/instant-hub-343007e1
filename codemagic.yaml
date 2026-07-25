@@ -41,8 +41,14 @@ workflows:
       - name: Increment build number
         script: |
           cd ios/App
-          LATEST_BUILD_NUMBER=$(app-store-connect get-latest-testflight-build-number "$BUNDLE_ID")
-          agvtool new-version -all $(($LATEST_BUILD_NUMBER + 1))
+          LATEST_BUILD=$(app-store-connect get-latest-testflight-build-number "$BUNDLE_ID" || echo "")
+          if [ -n "$LATEST_BUILD" ] && [ "$LATEST_BUILD" -ge 1 ]; then
+            TARGET_BUILD=$(($LATEST_BUILD + 1))
+          else
+            TARGET_BUILD=${BUILD_NUMBER:-29}
+          fi
+          echo "Disparando build número: $TARGET_BUILD"
+          agvtool new-version -all $TARGET_BUILD
 
       - name: Build iOS IPA
         script: |
