@@ -147,7 +147,7 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
       </SheetTrigger>
 
       <SheetContent side="right" className="w-full sm:max-w-md p-0 border-l border-border bg-background">
-        <div className="flex flex-col h-full pt-6">
+        <div className="flex flex-col h-full pt-[calc(env(safe-area-inset-top,0px)+0.5rem)] sm:pt-0">
           {/* Header */}
           <div className="flex items-center justify-between p-5 border-b border-border bg-card/50">
             <div className="flex items-center gap-2.5">
