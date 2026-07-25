@@ -28,9 +28,10 @@ export function ActiveOfferHighlight() {
 
     fetchLatestNotif();
 
-    // Listen to real-time inserts
+    // Listen to real-time inserts com canal único
+    const channelId = `home-active-offer-${Math.random().toString(36).substring(2, 9)}`;
     const channel = supabase
-      .channel('home-active-offer-highlight')
+      .channel(channelId)
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'marketing_notifications' },

@@ -21,8 +21,9 @@ export function useMarketingNotifications() {
   useEffect(() => {
     if (!user) return;
 
-    // Listen for new marketing notifications
-    const channel = supabase.channel('marketing-notifications')
+    // Listen for new marketing notifications com canal único
+    const channelId = `use-marketing-notif-${Math.random().toString(36).substring(2, 9)}`;
+    const channel = supabase.channel(channelId)
       .on(
         'postgres_changes',
         {

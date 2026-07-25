@@ -61,9 +61,10 @@ export function ClientNotificationsPopover() {
   useEffect(() => {
     fetchNotifications();
 
-    // Realtime listener for new marketing notifications
+    // Realtime listener for new marketing notifications com canal único por instância
+    const channelId = `client-notif-popover-${Math.random().toString(36).substring(2, 9)}`;
     const channel = supabase
-      .channel('client-notif-popover')
+      .channel(channelId)
       .on(
         'postgres_changes',
         {

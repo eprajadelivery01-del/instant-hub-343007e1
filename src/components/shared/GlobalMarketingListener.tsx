@@ -30,9 +30,10 @@ export function GlobalMarketingListener() {
       }).catch(() => {});
     }
 
-    // 2. Listen to INSERT events on marketing_notifications
+    // 2. Listen to INSERT events on marketing_notifications com canal único
+    const channelId = `marketing-listener-${Math.random().toString(36).substring(2, 9)}`;
     const channel = supabase
-      .channel('public:marketing_notifications')
+      .channel(channelId)
       .on(
         'postgres_changes',
         {

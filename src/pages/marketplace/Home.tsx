@@ -61,14 +61,28 @@ export default function Home() {
   const fetchCompanies = async () => {
     try {
       setErrorMsg(null);
-      // Busca dados das lojas e também seus produtos ativos (campos enxutos) para exibir não preview da Home
-      const { data, error } = await supabase
+      // Busca dados das lojas e seus produtos
+      let { data, error } = await supabase
         .from('companies')
         .select(`${COMPANY_LIST_COLUMNS}, products(id, name, description, price, image_url, category, active)`)
         .eq('show_in_marketplace', true)
         .limit(4, { foreignTable: 'products' });
 
-      if (error) throw error;
+      // Fallback em caso de restrição de permissão de colunas em 'products' ou RLS para anônimos
+      if (error && (error.code === '42501' || error.message?.includes('permission denied'))) {
+        console.warn('[Home] Permissão restrita para consulta detalhada, tentando fallback básico de empresas...');
+        const fallbackRes = await supabase
+          .from('companies')
+          .select('id, name, description, category, rating, is_open, active, is_active, delivery_fee, city, state, banner_url, cover_url, logo_url')
+          .eq('show_in_marketplace', true);
+        
+        data = fallbackRes.data as any;
+        error = fallbackRes.error;
+      }
+
+      if (error) {
+        console.warn('[Home] Aviso ao buscar empresas:', error.message);
+      }
 
       const rows = (data ?? []) as unknown as Company[];
 
