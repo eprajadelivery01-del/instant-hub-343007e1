@@ -72,7 +72,7 @@ export default function Home() {
         console.warn('[Home] Permissão restrita para consulta detalhada, tentando fallback básico de empresas...');
         const fallbackRes = await supabase
           .from('companies')
-          .select('id, name, description, category, rating, is_open, active, is_active, delivery_fee, city, state, banner_url, cover_url, logo_url')
+          .select('id, name, description, category, rating, is_open, active, is_active, delivery_fee, city, state, banner_url, cover_url, logo_url, business_hours, prep_time_min, prep_time_max')
           .eq('show_in_marketplace', true);
         
         data = fallbackRes.data as any;

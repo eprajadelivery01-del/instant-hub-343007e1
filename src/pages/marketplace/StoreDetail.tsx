@@ -97,7 +97,7 @@ export default function StoreDetail() {
           console.warn('[StoreDetail] Erro ao buscar empresa com colunas completas, tentando fallback básico:', companyRes.error);
           const fallbackCompany = await supabase
             .from('companies')
-            .select('id, name, description, category, rating, is_open, active, is_active, delivery_fee, show_in_marketplace, city, state, banner_url, cover_url, logo_url')
+            .select('id, name, description, category, rating, is_open, active, is_active, delivery_fee, show_in_marketplace, city, state, banner_url, cover_url, logo_url, business_hours, prep_time_min, prep_time_max')
             .eq('id', id!)
             .maybeSingle();
           companyData = fallbackCompany.data;
