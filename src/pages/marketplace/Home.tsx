@@ -38,7 +38,7 @@ const categories = [
 type MarketplaceCompany = Company & { products: Product[]; rating: number; isPremium?: boolean };
 
 const COMPANY_LIST_COLUMNS =
-  'id, name, description, category, rating, is_open, active, is_active, delivery_fee, delivery_regions_pricing, show_in_marketplace, city, state, banner_url, cover_url, logo_url, business_hours, prep_time_min, prep_time_max, created_at';
+  'id, name, description, category, rating, is_open, active, is_active, delivery_fee, show_in_marketplace, city, state, banner_url, cover_url, logo_url, business_hours, prep_time_min, prep_time_max, created_at';
 
 import { NotificationBanner } from '@/components/shared/NotificationBanner';
 import { ClientNotificationsPopover } from '@/components/marketplace/ClientNotificationsPopover';
@@ -69,7 +69,6 @@ export default function Home() {
 
       // Fallback em caso de restrição de permissão de colunas em 'products' ou RLS para anônimos
       if (error && (error.code === '42501' || error.message?.includes('permission denied'))) {
-        console.warn('[Home] Permissão restrita para consulta detalhada, tentando fallback básico de empresas...');
         const fallbackRes = await supabase
           .from('companies')
           .select('id, name, description, category, rating, is_open, active, is_active, delivery_fee, city, state, banner_url, cover_url, logo_url, business_hours, prep_time_min, prep_time_max')
@@ -80,7 +79,7 @@ export default function Home() {
       }
 
       if (error) {
-        console.warn('[Home] Aviso ao buscar empresas:', error.message);
+        console.warn('[Home] Aviso de busca em empresas:', error.message);
       }
 
       const rows = (data ?? []) as unknown as Company[];
@@ -146,7 +145,7 @@ export default function Home() {
       setCompanies(processed);
       setLoading(false);
     } catch (err: any) {
-      console.error('Error fetching companies:', err);
+      console.warn('Aviso ao carregar lojas:', err);
       setErrorMsg(err?.message || 'Não foi possível carregar as lojas.');
       toast.error('Erro ao carregar lojas');
       setLoading(false);
