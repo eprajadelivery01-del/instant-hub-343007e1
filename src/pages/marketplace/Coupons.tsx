@@ -73,7 +73,7 @@ export default function Coupons() {
               />
             </div>
             <button 
-              onClick={() => toast.info('Em breve seráá possível vincular cupons ocultos!')}
+              onClick={() => toast.info('Em breve será possível vincular cupons ocultos!')}
               className="h-11 px-6 rounded-xl bg-primary text-primary-foreground text-xs font-black uppercase tracking-wider shrink-0 transition-transform active:scale-95"
             >
               Adicionar
@@ -83,7 +83,7 @@ export default function Coupons() {
 
         {/* List */}
         <div>
-          <h2 className="text-lg font-black tracking-tight text-foreground mb-4">Disponíveis para vocêê</h2>
+          <h2 className="text-lg font-black tracking-tight text-foreground mb-4">Disponíveis para você</h2>
 
           {loading ? (
             <div className="space-y-4">
@@ -97,7 +97,7 @@ export default function Coupons() {
                 <Ticket className="h-10 w-10 text-muted-foreground/50 opacity-40" />
               </div>
               <h3 className="text-xl font-black text-foreground">Nenhum cupom ativo</h3>
-              <p className="text-sm font-medium text-muted-foreground mt-2">Aguarde nãovas promoções do É Pra Já para aproveitar descontos incríveis.</p>
+              <p className="text-sm font-medium text-muted-foreground mt-2">Aguarde novas promoções do É Pra Já para aproveitar descontos incríveis.</p>
             </div>
           ) : (
             <div className="space-y-4">

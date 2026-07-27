@@ -237,7 +237,7 @@ export function SupportChat({ topic, title, companyId = null, onClose }: Support
             </div>
           ) : (
             messages.filter(msg => !msg.content.startsWith('[Assunto:')).map(msg => {
-              // Em produção, admin e cliente terão IDs diferentes. Mas para permitirá que vocêê teste com a MESMA conta, 
+              // Em produção, admin e cliente terão IDs diferentes. Mas para permitir que você teste com a MESMA conta, 
               // adicionamos um hack: as mensagens do painel admin terminam com um zero-width space invisível (\u200B).
               // E para corrigir as mensagens antigas do seu print que não tinham esse hack, definimos "oi" como admin também!
               const isAdminMessage = msg.content.endsWith('\u200B') || msg.content.trim().toLowerCase() === 'oi';
