@@ -52,7 +52,7 @@ BEGIN
             'Esta é a descrição da ' || store_names[i] || '. Melhores ofertas e entrega rápida.',
             '11888888' || i,
             'Rua das Flores, ' || i * 10,
-            'Diamantinão'
+            'Diamantino'
         );
     END LOOP;
 

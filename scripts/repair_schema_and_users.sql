@@ -237,7 +237,7 @@ BEGIN
     DELETE FROM auth.users WHERE email LIKE '%@nexuspro.test';
 
     -- Cidade
-    INSERT INTO public.cities (name, latitude, longitude) VALUES ('Diamantinão', -14.4087, -56.4462)
+    INSERT INTO public.cities (name, latitude, longitude) VALUES ('Diamantino', -14.4087, -56.4462)
     ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name RETURNING id INTO city_id;
 
     -- CLIENTE TESTE
@@ -270,7 +270,7 @@ BEGIN
         
         -- Empresa
         INSERT INTO public.companies (id, name, email, user_id, description, category, city, city_id, active, is_active, rating)
-        VALUES (comp_id, store_names[i], 'loja' || i || '@nexuspro.test', comp_user_id, 'Melhor loja de ' || store_categories[i] || ' da região.', store_categories[i], 'Diamantinão', city_id, true, true, 4.0 + (random() * 1.0));
+        VALUES (comp_id, store_names[i], 'loja' || i || '@nexuspro.test', comp_user_id, 'Melhor loja de ' || store_categories[i] || ' da região.', store_categories[i], 'Diamantino', city_id, true, true, 4.0 + (random() * 1.0));
 
         -- Produtos para esta empresa
         INSERT INTO public.products (company_id, name, price, description, category, active, is_active)
