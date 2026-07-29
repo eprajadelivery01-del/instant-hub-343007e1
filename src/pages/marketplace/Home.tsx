@@ -542,12 +542,12 @@ export default function Home() {
                 partnershipType === 'merchant' ? 'bg-foreground' : 'bg-primary'
               )}>
                 <h4 className="text-xl font-black leading-tight">
-                  {partnershipType === 'merchant' ? 'Cresça o seu negócio' : 'Trabalhe com autonãomia'}
+                  {partnershipType === 'merchant' ? 'Cresça o seu negócio' : 'Trabalhe com autonomia'}
                 </h4>
                 <p className="mt-2 max-w-xs text-xs leading-relaxed opacity-80">
                   {partnershipType === 'merchant'
-                    ? 'Venda mais em Diamantinão com uma vitrine premium e experiência superior.'
-                    : 'Tenha liberdade para rodar quando quiserá e ganhar por entrega realizada.'}
+                    ? 'Venda mais em Diamantino com uma vitrine premium e experiência superior.'
+                    : 'Tenha liberdade para rodar quando quiser e ganhar por entrega realizada.'}
                 </p>
               </div>
 
@@ -555,7 +555,7 @@ export default function Home() {
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label className="ml-2 text-[10px] font-black uppercase text-muted-foreground">Nome Completo</Label>
-                    <Input placeholder="Seu nãome" className="h-14 rounded-2xl border-border/70 bg-background px-6 font-bold" />
+                    <Input placeholder="Seu nome" className="h-14 rounded-2xl border-border/70 bg-background px-6 font-bold" />
                   </div>
                   <div className="space-y-2">
                     <Label className="ml-2 text-[10px] font-black uppercase text-muted-foreground">Seu WhatsApp</Label>

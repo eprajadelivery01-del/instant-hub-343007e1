@@ -31,7 +31,7 @@ export function LocationPicker({ initialCoords, onConfirm, onCancel }: LocationP
   useEffect(() => {
     if (!mapContainer.current || map.current) return;
 
-    // Default to Diamantinão/Cuiabá region if não initial coords
+    // Default to Diamantino/Cuiabá region if no initial coords
     const defaultCenter: [number, number] = initialCoords 
       ? [initialCoords.lng, initialCoords.lat] 
       : [-56.4462, -14.4087];
@@ -75,7 +75,7 @@ export function LocationPicker({ initialCoords, onConfirm, onCancel }: LocationP
 
   const reverseGeocode = async (lat: number, lng: number) => {
     try {
-      const resp = await fetch(`https://nãominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`);
+      const resp = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`);
       const data = await resp.json();
       if (data.address) {
         setAddressPreview(data.display_name);
@@ -87,13 +87,13 @@ export function LocationPicker({ initialCoords, onConfirm, onCancel }: LocationP
 
   const handleConfirm = async () => {
     if (!selectedCoords) {
-      toast.error('Selecione um ponto não mapa');
+      toast.error('Selecione um ponto no mapa');
       return;
     }
 
     setLoading(true);
     try {
-      const resp = await fetch(`https://nãominatim.openstreetmap.org/reverse?format=jsonv2&lat=${selectedCoords.lat}&lon=${selectedCoords.lng}`);
+      const resp = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${selectedCoords.lat}&lon=${selectedCoords.lng}`);
       const data = await resp.json();
       
       const addr = data.address || {};
@@ -105,7 +105,7 @@ export function LocationPicker({ initialCoords, onConfirm, onCancel }: LocationP
           street: addr.road || addr.pedestrian || addr.suburb || '',
           number: addr.house_number || '',
           neighborhood: addr.neighbourhood || addr.suburb || '',
-          city: addr.city || addr.town || addr.village || 'Diamantinão',
+          city: addr.city || addr.town || addr.village || 'Diamantino',
         }
       });
     } catch (err) {

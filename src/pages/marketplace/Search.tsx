@@ -26,9 +26,9 @@ export default function Search() {
     const delayDebounceFn = setTimeout(async () => {
       if (search.length > 2) {
         setLoading(true);
-        // Busca empresas com nãome correspondente OU produtos com nãome/descricao correspondente
+        // Busca empresas com nome correspondente OU produtos com nome/descricao correspondente
         // Para simplificar e garantir que pegue os produtos, vamos buscar todas as lojas ativas
-        // e filtrar os produtos não frontend, similar à Home.
+        // e filtrar os produtos no frontend, similar à Home.
         const { data } = await supabase
           .from("companies")
           .select("*, products(*)")

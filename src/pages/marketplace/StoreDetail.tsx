@@ -427,7 +427,7 @@ export default function StoreDetail() {
             <div className="flex flex-col pr-4">
               <h1 className="text-2xl font-extrabold text-foreground tracking-tight">{company.name}</h1>
               <div className="flex items-center gap-2 mt-1.5 text-xs font-semibold text-muted-foreground">
-                <span className="text-primary">{company.city || 'Diamantinão'}</span>
+                <span className="text-primary">{company.city || 'Diamantino'}</span>
                 <span className="h-1 w-1 rounded-full bg-border" />
                 <span>{storeCategory}</span>
                 {company.business_hours && (

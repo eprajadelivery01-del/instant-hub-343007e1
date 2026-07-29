@@ -31,7 +31,7 @@ export default function Addresses() {
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [regions, setRegions] = useState<any[]>([]);
   const [form, setForm] = useState({
-    street: '', number: '', neighborhood: '', region_id: '', city: 'Diamantinão',
+    street: '', number: '', neighborhood: '', region_id: '', city: 'Diamantino',
     complement: '', reference: '', label: '',
   });
   const [selectedLabel, setSelectedLabel] = useState<string>('Casa');
@@ -98,7 +98,7 @@ export default function Addresses() {
 
   const openNew = () => {
     setEditing(null);
-    setForm({ street: '', number: '', neighborhood: '', region_id: '', city: 'Diamantinão', complement: '', reference: '', label: 'Casa' });
+    setForm({ street: '', number: '', neighborhood: '', region_id: '', city: 'Diamantino', complement: '', reference: '', label: 'Casa' });
     setSelectedLabel('Casa');
     setShowForm(true);
   };
@@ -123,7 +123,7 @@ export default function Addresses() {
 
   const handleSave = async () => {
     if (!user) {
-      toast.error('Usuário não identificado. Faça login nãovamente.'); return;
+      toast.error('Usuário não identificado. Faça login novamente.'); return;
     }
     if (!form.street || !form.number || !form.region_id || !form.city) {
       toast.error('Preencha os campos obrigatórios (Rua, Nº, Região, Cidade)'); return;

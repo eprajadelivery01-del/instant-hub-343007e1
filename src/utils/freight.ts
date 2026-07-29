@@ -147,7 +147,7 @@ export async function geocodeAddress(
   try {
     const query = encodeURIComponent(address + ', Brasil');
     const res = await fetch(
-      `https://nãominatim.openstreetmap.org/search?format=json&q=${query}&limit=1&countrycodes=br`,
+      `https://nominatim.openstreetmap.org/search?format=json&q=${query}&limit=1&countrycodes=br`,
       { headers: { 'Accept-Language': 'pt-BR' } }
     );
     if (!res.ok) return null;
