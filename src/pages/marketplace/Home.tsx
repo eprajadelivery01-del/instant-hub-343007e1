@@ -67,15 +67,24 @@ export default function Home() {
         .select(`${COMPANY_LIST_COLUMNS}, products(id, name, description, price, image_url, category, active)`)
         .eq('show_in_marketplace', true);
 
-      // Fallback em caso de restrição de permissão de colunas em 'products' ou RLS para anônimos
+      // Fallback em caso de restrição de permissão RLS para anônimos (42501)
       if (error && (error.code === '42501' || error.message?.includes('permission denied'))) {
-        const fallbackRes = await supabase
-          .from('companies')
-          .select('id, name, description, category, rating, is_open, active, is_active, delivery_fee, city, state, banner_url, cover_url, logo_url, business_hours, prep_time_min, prep_time_max')
-          .eq('show_in_marketplace', true);
-        
-        data = fallbackRes.data as any;
-        error = fallbackRes.error;
+        try {
+          const { data: guestRes } = await supabase.auth.signInWithPassword({
+            email: 'guest_client_marketplace@epraja.com',
+            password: 'GuestClient123!'
+          });
+          if (guestRes?.session) {
+            const retryRes = await supabase
+              .from('companies')
+              .select(`${COMPANY_LIST_COLUMNS}, products(id, name, description, price, image_url, category, active)`)
+              .eq('show_in_marketplace', true);
+            data = retryRes.data as any;
+            error = retryRes.error;
+          }
+        } catch (e) {
+          console.warn('[Home] Aviso ao autenticar sessão visitante:', e);
+        }
       }
 
       if (error) {

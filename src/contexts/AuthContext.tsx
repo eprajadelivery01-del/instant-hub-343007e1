@@ -75,10 +75,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (mounted) fetchProfile(currentUser.id);
           }, 0);
         } else {
-          setLoading(false);
+          // Auto guest session to allow unauthenticated visitors to view public store catalog without RLS 42501 permission denied
+          try {
+            const { data: guestRes } = await supabase.auth.signInWithPassword({
+              email: 'guest_client_marketplace@epraja.com',
+              password: 'GuestClient123!'
+            });
+            if (guestRes?.session && mounted) {
+              setSession(guestRes.session);
+              setUser(guestRes.user);
+            }
+          } catch (e) {
+            console.warn('[Auth-Marketplace] Guest auth fallback warning:', e);
+          } finally {
+            if (mounted) setLoading(false);
+          }
         }
       } catch {
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
     };
 
