@@ -10,13 +10,9 @@ export interface PrecachedStoreData {
   products: Product[];
 }
 
-// Memory cache for sub-millisecond retrieval
 let memoryCompanies: Company[] | null = null;
 let memoryProductsByStore: Record<string, Product[]> = {};
 
-/**
- * Initializes memory cache from localStorage on app launch.
- */
 export function loadPrecacheFromStorage() {
   try {
     const cachedCompRaw = localStorage.getItem(STORAGE_KEY_COMPANIES);
@@ -33,9 +29,6 @@ export function loadPrecacheFromStorage() {
   }
 }
 
-/**
- * Retrieves cached companies instantly (0ms response).
- */
 export function getCachedCompanies(): Company[] | undefined {
   if (memoryCompanies && memoryCompanies.length > 0) {
     return memoryCompanies;
@@ -50,32 +43,30 @@ export function getCachedCompanies(): Company[] | undefined {
   return undefined;
 }
 
-/**
- * Retrieves cached store and its products instantly (0ms response).
- */
 export function getCachedStoreData(storeId: string | undefined): PrecachedStoreData | undefined {
   if (!storeId) return undefined;
 
   const companies = getCachedCompanies();
   const company = companies?.find(c => c.id === storeId || c.user_id === storeId) || null;
-  const products = memoryProductsByStore[storeId] || [];
+  if (!company) return undefined;
 
-  if (company || products.length > 0) {
-    return { company, products };
-  }
-  return undefined;
+  const actualId = company.id;
+  const actualUserId = company.user_id;
+
+  const products = (
+    memoryProductsByStore[storeId] ||
+    (actualId ? memoryProductsByStore[actualId] : undefined) ||
+    (actualUserId ? memoryProductsByStore[actualUserId] : undefined) ||
+    []
+  );
+
+  return { company, products };
 }
 
-/**
- * Background async pre-fetcher that runs on app startup.
- * Fetches all stores & active products and saves them into persistent storage.
- */
 export async function startBackgroundPrecacheSync(): Promise<void> {
-  // Load local storage first
   loadPrecacheFromStorage();
 
   try {
-    // 1. Fetch all active marketplace companies
     const { data: companies, error: compErr } = await supabase
       .from('companies')
       .select('id, name, description, category, rating, is_open, active, is_active, delivery_fee, delivery_regions_pricing, show_in_marketplace, city, state, banner_url, cover_url, logo_url, business_hours, prep_time_min, prep_time_max, created_at, user_id')
@@ -87,7 +78,6 @@ export async function startBackgroundPrecacheSync(): Promise<void> {
       localStorage.setItem(STORAGE_KEY_COMPANIES, JSON.stringify(companies));
     }
 
-    // 2. Fetch all active products
     const { data: products, error: prodErr } = await supabase
       .from('products')
       .select('*')
@@ -115,5 +105,4 @@ export async function startBackgroundPrecacheSync(): Promise<void> {
   }
 }
 
-// Initial load on file import
 loadPrecacheFromStorage();
