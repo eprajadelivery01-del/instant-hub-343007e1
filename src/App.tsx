@@ -42,10 +42,13 @@ const RouteFallback = () => (
   </div>
 );
 
+import { startBackgroundPrecacheSync } from "@/lib/offlinePrecache";
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 60 * 1000,
+      staleTime: 5 * 60 * 1000,
+      gcTime: 24 * 60 * 60 * 1000,
       retry: 1,
     },
   },
@@ -53,8 +56,10 @@ const queryClient = new QueryClient({
 
 const App = () => {
   useEffect(() => {
-    // Hide native splash screen if running inside Capacitor (não-op on web).
-    // Use a dynamic, variable specifier so the web build doesn't try to bundle it.
+    // Inicia o pré-carregamento contínuo de lojas e produtos no celular
+    startBackgroundPrecacheSync().catch(() => {});
+
+    // Hide native splash screen if running inside Capacitor
     setTimeout(() => {
       const mod = "@capacitor/splash-screen";
       (new Function("m", "return import(m)") as (m: string) => Promise<any>)(mod)

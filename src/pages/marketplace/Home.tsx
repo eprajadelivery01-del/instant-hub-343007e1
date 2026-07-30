@@ -43,10 +43,17 @@ const COMPANY_LIST_COLUMNS =
 import { NotificationBanner } from '@/components/shared/NotificationBanner';
 import { ClientNotificationsPopover } from '@/components/marketplace/ClientNotificationsPopover';
 import { ActiveOfferHighlight } from '@/components/marketplace/ActiveOfferHighlight';
+import { getCachedCompanies } from '@/lib/offlinePrecache';
 
 export default function Home() {
-  const [companies, setCompanies] = useState<MarketplaceCompany[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [companies, setCompanies] = useState<MarketplaceCompany[]>(() => {
+    const cached = getCachedCompanies();
+    return (cached as any[]) || [];
+  });
+  const [loading, setLoading] = useState(() => {
+    const cached = getCachedCompanies();
+    return !cached || cached.length === 0;
+  });
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('');

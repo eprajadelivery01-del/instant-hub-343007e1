@@ -20,6 +20,8 @@ import { StoreCouponsSheet } from '@/components/marketplace/StoreCouponsSheet';
 import { useActiveCoupons } from '@/services/coupons';
 import { SafeAreaHeader, safeAreaTopValue } from '@/components/shared/SafeAreaHeader';
 
+import { getCachedStoreData } from '@/lib/offlinePrecache';
+
 export default function StoreDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -75,12 +77,12 @@ export default function StoreDetail() {
     return () => clearInterval(timer);
   }, []);
 
-  // Same queryKey used by the route data prefetcher (see routeDataPrefetchers.ts)
-  // so a successful hover/pointer-down prefetch makes the page render instantly.
+  // Uses local pre-cached data as initialData for instant 0ms rendering
   const { data: storeData, isLoading: loading, isError: productsError, refetch: refetchStore, isFetching: refetchingStore } = useQuery({
     queryKey: ['store', id],
     enabled: !!id,
-    staleTime: 30_000,
+    staleTime: 5 * 60 * 1000,
+    initialData: () => getCachedStoreData(id),
     queryFn: async () => {
       let companyData: any = null;
       let productsData: any[] = [];
