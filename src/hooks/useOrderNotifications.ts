@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { Capacitor } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
+import { PushNotifications } from '@capacitor/push-notifications';
 
 const statusMessages: Record<string, { title: string; description: string; icon: string }> = {
   confirmed: {
@@ -48,6 +49,54 @@ export function useOrderNotifications() {
       LocalNotifications.requestPermissions().catch(() => {});
     }
   }, []);
+
+  // Configurar Push Notifications se for plataforma nativa (Android/iOS)
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform() || !user) return;
+
+    let regListener: any = null;
+    let errListener: any = null;
+    let pushListener: any = null;
+
+    PushNotifications.requestPermissions().then((result) => {
+      if (result.receive === "granted") {
+        PushNotifications.register().catch(e => 
+          console.warn("[Push] Falha ao registrar push (safe):", e)
+        );
+      }
+    }).catch(e => console.warn("[Push] Falha ao pedir permissões de push:", e));
+
+    PushNotifications.addListener("registration", (token) => {
+      console.log("[Push] Token FCM do cliente registrado:", token.value);
+      // Salva o fcm_token do cliente na tabela 'customers'
+      supabase
+        .from("customers")
+        .update({ fcm_token: token.value })
+        .eq("user_id", user.id)
+        .then(({ error }) => {
+          if (error) console.error("[Push] Erro ao persistir fcm_token do cliente:", error);
+          else console.log("[Push] fcm_token do cliente persistido com sucesso para user:", user.id);
+        });
+    }).then(listener => { regListener = listener; });
+
+    PushNotifications.addListener("registrationError", (error: any) => {
+      console.error("[Push] Erro no registro de Push do cliente:", error);
+    }).then(listener => { errListener = listener; });
+
+    PushNotifications.addListener("pushNotificationReceived", (notification) => {
+      console.log("[Push] Notificação push do cliente recebida em foreground:", notification);
+      toast(notification.title || "Atualização de Pedido", {
+        description: notification.body,
+        duration: 8000
+      });
+    }).then(listener => { pushListener = listener; });
+
+    return () => {
+      if (regListener) regListener.remove();
+      if (errListener) errListener.remove();
+      if (pushListener) pushListener.remove();
+    };
+  }, [user]);
 
   useEffect(() => {
     if (!user || subscribedRef.current) return;
