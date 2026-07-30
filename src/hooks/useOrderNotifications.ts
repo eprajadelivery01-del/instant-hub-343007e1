@@ -2,6 +2,8 @@ import { useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { Capacitor } from '@capacitor/core';
+import { LocalNotifications } from '@capacitor/local-notifications';
 
 const statusMessages: Record<string, { title: string; description: string; icon: string }> = {
   confirmed: {
@@ -40,6 +42,13 @@ export function useOrderNotifications() {
   const { user } = useAuth();
   const subscribedRef = useRef(false);
 
+  // Request permissions for mobile notifications
+  useEffect(() => {
+    if (Capacitor.isNativePlatform()) {
+      LocalNotifications.requestPermissions().catch(() => {});
+    }
+  }, []);
+
   useEffect(() => {
     if (!user || subscribedRef.current) return;
     subscribedRef.current = true;
@@ -73,6 +82,27 @@ export function useOrderNotifications() {
                   },
                 },
               });
+
+              // Show native local notification on mobile
+              if (Capacitor.isNativePlatform()) {
+                try {
+                  LocalNotifications.schedule({
+                    notifications: [
+                      {
+                        title: msg.title,
+                        body: msg.description,
+                        id: Math.floor(Math.random() * 100000),
+                        schedule: { at: new Date(Date.now() + 100) },
+                        extra: {
+                          orderId: payload.new.id
+                        }
+                      }
+                    ]
+                  }).catch(() => {});
+                } catch (e) {
+                  console.warn("Failed to show native order notification", e);
+                }
+              }
             }
           }
         }
