@@ -2,6 +2,8 @@ import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { Capacitor } from '@capacitor/core';
+import { LocalNotifications } from '@capacitor/local-notifications';
 
 export type MarketingNotification = {
   id: string;
@@ -17,6 +19,13 @@ export function useMarketingNotifications() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [activeNotification, setActiveNotification] = useState<MarketingNotification | null>(null);
+
+  // Request permissions for mobile notifications
+  useEffect(() => {
+    if (Capacitor.isNativePlatform()) {
+      LocalNotifications.requestPermissions().catch(() => {});
+    }
+  }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -64,6 +73,27 @@ export function useMarketingNotifications() {
             ),
             duration: 8000
           });
+
+          // Show native device notification on mobile
+          if (Capacitor.isNativePlatform()) {
+            try {
+              LocalNotifications.schedule({
+                notifications: [
+                  {
+                    title: `${newNotif.emoji || '🔔'} ${newNotif.title}`,
+                    body: newNotif.message,
+                    id: Math.floor(Math.random() * 100000),
+                    schedule: { at: new Date(Date.now() + 100) },
+                    extra: {
+                      tag: `marketing-${newNotif.id}`
+                    }
+                  }
+                ]
+              }).catch(() => {});
+            } catch (e) {
+              console.warn("Failed to show local mobile notification", e);
+            }
+          }
 
           // Show Web Notification if enabled
           if ('Notification' in window && Notification.permission === 'granted') {
