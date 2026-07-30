@@ -85,7 +85,7 @@ function mapServerError(msg: string, code?: string | null, details?: any): Mappe
 
 export default function Checkout() {
   const navigate = useNavigate();
-  const { user, profile, refreshProfile } = useAuth();
+  const { user, profile, isGuest, refreshProfile } = useAuth();
   const { items, company, clearCart, appliedCoupon, discountAmount, subtotal } = useCart();
   const { isLocked, acquireLock, releaseLock, generateIdempotencyKey, resetIdempotencyKey } = useOrderLock();
   
@@ -259,10 +259,6 @@ export default function Checkout() {
   }, [selectedAddress, addresses, company?.delivery_fee]);
 
   // Recalculate total manually because cartTotal might not update instantly when we are at Checkout
-  const finalTotal = Math.max(0, subtotal - discountAmount) + (fulfillmentMode === 'pickup' ? 0 : (deliveryFee || 0));
-
-  const { user, profile, isGuest, refreshProfile } = useAuth();
-
   const handleOpenReview = async () => {
     if (!user || isGuest) {
       toast.info('Entre na sua conta para finalizar o pedido', {
