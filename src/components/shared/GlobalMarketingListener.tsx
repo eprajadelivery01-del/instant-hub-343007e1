@@ -235,7 +235,12 @@ export function GlobalMarketingListener() {
             myOrderIds = JSON.parse(localStorage.getItem('@epraja_recent_orders') || '[]');
           } catch {}
 
-          const isMyDelivery = delivery.order_id && myOrderIds.includes(delivery.order_id);
+          const isMyDelivery =
+            (delivery.order_id && myOrderIds.includes(delivery.order_id)) ||
+            (user && (delivery.customer_id === user.id || delivery.user_id === user.id));
+
+          console.log('[Realtime Delivery Update]', { deliveryId: delivery.id, status: delivery.status, isMyDelivery, userId: user?.id });
+
           if (!isMyDelivery) return;
 
           const newStatus = delivery.status;

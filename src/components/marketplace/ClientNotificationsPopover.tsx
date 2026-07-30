@@ -206,7 +206,10 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
               myOrderIds = JSON.parse(localStorage.getItem('@epraja_recent_orders') || '[]');
             } catch {}
 
-            const isMyDelivery = del.order_id && myOrderIds.includes(del.order_id);
+            const isMyDelivery =
+              (del.order_id && myOrderIds.includes(del.order_id)) ||
+              (user && (del.customer_id === user.id || del.user_id === user.id));
+
             if (isMyDelivery && del.status) {
               const cfg = ORDER_STATUS_CONFIG[del.status];
               if (cfg) {
