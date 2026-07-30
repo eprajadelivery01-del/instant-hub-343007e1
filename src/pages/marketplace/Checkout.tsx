@@ -443,7 +443,13 @@ export default function Checkout() {
       const orderId = data?.order_id || data?.id;
       if (!orderId) throw new Error('Falha ao obter ID do pedido.');
 
-
+      try {
+        const recent = JSON.parse(localStorage.getItem('@epraja_recent_orders') || '[]');
+        if (!recent.includes(orderId)) {
+          recent.push(orderId);
+          localStorage.setItem('@epraja_recent_orders', JSON.stringify(recent));
+        }
+      } catch (e) {}
 
       clearCart();
       resetIdempotencyKey();

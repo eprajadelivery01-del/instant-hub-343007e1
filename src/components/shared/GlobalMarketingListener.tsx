@@ -185,7 +185,17 @@ export function GlobalMarketingListener() {
         { event: 'UPDATE', schema: 'public', table: 'orders' },
         (payload) => {
           const order = payload.new as any;
-          if (user && order.customer_id !== user.id && order.user_id !== user.id) return;
+          
+          let myOrderIds: string[] = [];
+          try {
+            myOrderIds = JSON.parse(localStorage.getItem('@epraja_recent_orders') || '[]');
+          } catch {}
+
+          const isMyOrder = 
+            (user && (order.customer_id === user.id || order.user_id === user.id)) ||
+            myOrderIds.includes(order.id);
+
+          if (!isMyOrder) return;
 
           const newStatus = order.status;
           const oldStatus = payload.old?.status;
@@ -203,7 +213,7 @@ export function GlobalMarketingListener() {
 
               toast.info(msg.title, {
                 description: msg.description,
-                duration: 8000,
+                duration: 10000,
               });
             }
           }
