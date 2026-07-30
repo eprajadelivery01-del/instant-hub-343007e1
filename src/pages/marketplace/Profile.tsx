@@ -1,4 +1,3 @@
-// @ts-nãocheck
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
@@ -11,33 +10,19 @@ import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { SupportChat } from '@/components/chat/SupportChat';
 import { cn } from '@/lib/utils';
 import {
-  LogOut, MapPin, ChevronRight, Camera, Loader2,
+  LogOut, MapPin, ChevronRight, Loader2,
   Bike, FileText, ShieldCheck, Moon, Sun,
-  Wallet, HelpCircle, X, Check, Phone,
+  Wallet, HelpCircle, X, Check,
   Package, Clock, CheckCircle2, XCircle, Truck, Ticket, Copy,
-  Crown, Sparkles, ShoppingBag, Settings2, Star, Heart,
-  ArrowUpRight, Plus, Trophy, Cog
+  ShoppingBag, ArrowUpRight, Plus, Trophy, Cog, User as UserIcon, LogIn
 } from 'lucide-react';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger
 } from "@/components/ui/alert-dialog";
 
-const STATUS_MAP: Record<string, { label: string; color: string; icon: React.ElementType }> = {
-  pending:    { label: 'Aguardando',  color: 'text-yellow-500 bg-yellow-500/10',  icon: Clock },
-  confirmed:  { label: 'Confirmado',  color: 'text-blue-500 bg-blue-500/10',      icon: CheckCircle2 },
-  preparing:  { label: 'Preparando',  color: 'text-orange-500 bg-orange-500/10',  icon: Package },
-  ready:      { label: 'Pronto',      color: 'text-purple-500 bg-purple-500/10',  icon: CheckCircle2 },
-  delivering: { label: 'A caminho',   color: 'text-primary bg-primary/10',        icon: Truck },
-  delivered:  { label: 'Entregue',    color: 'text-green-500 bg-green-500/10',    icon: CheckCircle2 },
-  completed:  { label: 'Concluído',   color: 'text-green-500 bg-green-500/10',    icon: CheckCircle2 },
-  cancelled:  { label: 'Cancelado',   color: 'text-red-500 bg-red-500/10',        icon: XCircle },
-};
-
 export default function Profile() {
-  const { user, profile, signOut, refreshProfile } = useAuth();
+  const { user, profile, isGuest, signOut, refreshProfile } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const { selectedAddress } = useAddress();
   const navigate = useNavigate();
@@ -50,7 +35,7 @@ export default function Profile() {
   const [uploading, setUploading] = useState(false);
   const [supportType, setSupportType] = useState<'support' | 'driver_application' | null>(null);
   const [orders, setOrders] = useState<any[]>([]);
-  const [loadingOrders, setLoadingOrders] = useState(true);
+  const [loadingOrders, setLoadingOrders] = useState(false);
   const [showCoupons, setShowCoupons] = useState(false);
   const [coupons, setCoupons] = useState<any[]>([]);
   const [loadingCoupons, setLoadingCoupons] = useState(false);
@@ -61,10 +46,10 @@ export default function Profile() {
   }, [profile]);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || isGuest) return;
     fetchOrders();
     fetchCoupons(false);
-  }, [user]);
+  }, [user, isGuest]);
 
   const fetchCoupons = async (show = true) => {
     if (show && coupons.length > 0) { setShowCoupons(true); return; }
@@ -77,7 +62,6 @@ export default function Profile() {
         
       let valid = (data || []).filter(c => !c.expires_at || new Date(c.expires_at) > new Date());
       
-      // Busca manualmente as empresas para evitar o Erro 400 (Bad Request) causado pela falta de Foreign Key
       const companyIds = valid.map(c => c.company_id).filter(Boolean);
       if (companyIds.length > 0) {
         const { data: companiesData } = await supabase
@@ -114,6 +98,7 @@ export default function Profile() {
   };
 
   const fetchOrders = async () => {
+    if (!user?.id) return;
     setLoadingOrders(true);
     try {
       const { data } = await supabase
@@ -142,7 +127,7 @@ export default function Profile() {
         .from('avatars')
         .upload(fileName, file, { 
           cacheControl: '3600',
-          upserát: true 
+          upsert: true 
         });
 
       if (uploadError) throw uploadError;
@@ -162,7 +147,7 @@ export default function Profile() {
       toast.success('Foto atualizada com sucesso!');
     } catch (err: any) { 
       console.error('Photo upload error:', err);
-      toast.error('Falha não upload: ' + (err.message || 'Erro de permissão ou conexão')); 
+      toast.error('Falha no upload: ' + (err.message || 'Erro de permissão ou conexão')); 
     }
     finally { setUploading(false); }
   };
@@ -172,8 +157,6 @@ export default function Profile() {
     setSaving(true);
     try {
       await supabase.from('profiles').update({ full_name: fullName, phone }).eq('id', user.id);
-      
-      // Delay to ensure DB replication/trigger finish before refetching
       await new Promise(resolve => setTimeout(resolve, 500));
       await refreshProfile();
       
@@ -183,12 +166,168 @@ export default function Profile() {
     finally { setSaving(false); }
   };
 
-  if (!user) { navigate('/marketplace/login'); return null; }
+  // =========================================================================
+  // VISTA DO CLIENTE VISITANTE (SEM CADASTRO / UNAUTHENTICATED VISITOR)
+  // =========================================================================
+  if (!user || isGuest) {
+    return (
+      <MarketplaceLayout>
+        <div className="min-h-screen pb-40 bg-background text-foreground font-sans">
+          <div className="max-w-md mx-auto px-4 pt-6 space-y-4">
+            
+            {/* HERO VISITANTE */}
+            <div className="rounded-3xl bg-card border border-border p-6 flex flex-col items-center text-center shadow-sm">
+              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center border border-primary/20 mb-4">
+                <UserIcon className="h-10 w-10 text-primary" />
+              </div>
+              <h1 className="text-2xl font-display font-bold tracking-tight">Olá, visitante!</h1>
+              <p className="text-xs text-muted-foreground mt-1 max-w-[280px]">
+                Entre ou cadastre-se para fazer pedidos, salvar seus endereços e aproveitar cupons de desconto.
+              </p>
+              <button
+                onClick={() => navigate('/marketplace/login')}
+                className="w-full mt-5 h-13 py-3.5 px-6 rounded-2xl gradient-primary text-white font-display font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-primary/25 active:scale-98 transition-transform"
+              >
+                <LogIn className="h-5 w-5" /> Entrar ou Cadastrar-se
+              </button>
+            </div>
 
+            {/* SEÇÃO — AJUDA & LEGAL */}
+            <div>
+              <h2 className="text-[10px] font-medium uppercase tracking-[0.25em] text-muted-foreground/70 px-2 mb-2">Opções Gerais</h2>
+              <div className="rounded-3xl bg-card border border-border overflow-hidden divide-y divide-border">
+                {[
+                  { icon: MapPin, label: 'Endereços', subtitle: 'Escolha a cidade para entrega', onClick: () => navigate('/marketplace/addresses') },
+                  { icon: ShoppingBag, label: 'Meus Pedidos', subtitle: 'Faça login para ver seu histórico', onClick: () => navigate('/marketplace/login') },
+                  { icon: Ticket, label: 'Cupons de Desconto', subtitle: 'Veja as promoções disponíveis', onClick: () => fetchCoupons(true) },
+                  { icon: theme === 'dark' ? Sun : Moon, label: 'Aparência', subtitle: theme === 'dark' ? 'Modo escuro' : 'Modo claro', onClick: () => toggleTheme(), isThemeToggle: true },
+                  { icon: HelpCircle, label: 'Central de Ajuda', subtitle: 'Fale com o suporte', onClick: () => setSupportType('support') },
+                  { icon: FileText, label: 'Termos de Uso', subtitle: 'Regras da plataforma', onClick: () => navigate('/marketplace/terms') },
+                  { icon: ShieldCheck, label: 'Privacidade', subtitle: 'Segurança dos dados', onClick: () => navigate('/marketplace/privacy') },
+                ].map((item: any) => (
+                  <button
+                    key={item.label}
+                    onClick={item.onClick}
+                    className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-muted/60 transition-colors active:bg-muted"
+                  >
+                    <div className="w-9 h-9 rounded-xl bg-muted flex items-center justify-center shrink-0">
+                      <item.icon className="h-[16px] w-[16px] text-foreground/75" />
+                    </div>
+                    <div className="flex-1 min-w-0 text-left">
+                      <p className="text-[14px] font-display font-semibold tracking-tight">{item.label}</p>
+                      <p className="text-[11px] text-muted-foreground mt-0.5 truncate">{item.subtitle}</p>
+                    </div>
+                    {item.isThemeToggle ? (
+                      <div className={cn(
+                        "relative w-11 h-6 rounded-full transition-colors",
+                        theme === 'dark' ? 'bg-primary' : 'bg-muted-foreground/30'
+                      )}>
+                        <div className={cn(
+                          "absolute top-0.5 h-5 w-5 rounded-full bg-background shadow transition-transform",
+                          theme === 'dark' ? 'translate-x-5' : 'translate-x-0.5'
+                        )} />
+                      </div>
+                    ) : (
+                      <ChevronRight className="h-4 w-4 text-muted-foreground/50" />
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* CTA Entregador */}
+            <button
+              onClick={() => setSupportType('driver_application')}
+              className="w-full mt-2 relative overflow-hidden rounded-3xl p-5 text-left active:scale-[0.99] transition-transform border border-white/5 text-white"
+              style={{ background: 'linear-gradient(135deg, #2d2d2d 0%, #1a1a1a 100%)' }}
+            >
+              <div className="absolute -right-4 -bottom-4 opacity-[0.07]">
+                <Bike className="h-32 w-32 text-white" />
+              </div>
+              <div className="relative flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-primary flex items-center justify-center shrink-0 shadow-lg shadow-primary/30">
+                  <Bike className="h-5 w-5 text-white" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-primary-foreground/90">Oportunidade</p>
+                  <p className="font-display text-base font-bold tracking-tight mt-0.5">Seja um entregador</p>
+                  <p className="text-[11px] text-white/60 mt-0.5">Ganhos extras e liberdade total</p>
+                </div>
+                <ChevronRight className="h-5 w-5 text-white/60" />
+              </div>
+            </button>
+
+            {/* Footer */}
+            <div className="py-8 flex flex-col items-center opacity-20">
+              <p className="text-[10px] font-display font-bold tracking-[1em] text-foreground ml-3">BONASOFT</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Coupons List Sheet */}
+        <Sheet open={showCoupons} onOpenChange={setShowCoupons}>
+          <SheetContent side="bottom" hideClose className="h-[85vh] rounded-t-[3rem] border-none p-0 shadow-2xl">
+            <SheetTitle className="sr-only">Meus Cupons</SheetTitle>
+            <div className="h-full flex flex-col bg-background">
+              <div className="px-8 pt-8 pb-6 flex items-center justify-between border-b border-border shrink-0">
+                <div>
+                  <p className="text-[10px] text-primary font-black uppercase tracking-widest mb-1">Clube É Pra Já</p>
+                  <h3 className="text-2xl font-black text-foreground tracking-tight">Cupons Disponíveis</h3>
+                </div>
+                <button onClick={() => setShowCoupons(false)} className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+                  <X className="h-6 w-6 text-muted-foreground" />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                {loadingCoupons ? (
+                  <div className="py-20 flex items-center justify-center">
+                    <Loader2 className="h-10 w-10 animate-spin text-primary" />
+                  </div>
+                ) : coupons.length === 0 ? (
+                  <div className="py-24 flex flex-col items-center gap-4 text-center">
+                    <div className="h-20 w-20 rounded-full bg-muted flex items-center justify-center opacity-20">
+                      <Ticket className="h-10 w-10 text-foreground" />
+                    </div>
+                    <p className="font-black text-lg text-foreground/40 tracking-tight">Nenhum cupom ativo no momento</p>
+                  </div>
+                ) : (
+                  coupons.map((coupon) => (
+                    <div key={coupon.id} className="relative overflow-hidden rounded-[2rem] bg-card border border-border shadow-sm group">
+                      <div className="p-5 flex gap-5 items-center">
+                        <div className="w-16 h-16 shrink-0 rounded-2xl bg-primary/10 flex flex-col items-center justify-center gap-0.5 border border-primary/5">
+                          <Ticket className="h-6 w-6 text-primary" />
+                          <span className="text-[8px] font-black text-primary uppercase tracking-widest">VIP</span>
+                        </div>
+
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xl font-black text-foreground leading-tight tracking-tight">
+                            {coupon.discount_type === 'percentage'
+                              ? `${coupon.discount_value}% OFF`
+                              : `R$ ${Number(coupon.discount_value).toFixed(2).replace('.', ',')} OFF`}
+                          </p>
+                          <p className="text-[11px] font-bold text-primary uppercase tracking-wider mt-1">
+                            {coupon.companies?.name || 'Válido em toda a plataforma'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </SheetContent>
+        </Sheet>
+      </MarketplaceLayout>
+    );
+  }
+
+  // =========================================================================
+  // VISTA DO CLIENTE AUTENTICADO (LOGGED-IN CUSTOMER)
+  // =========================================================================
   const displayName = profile?.full_name || user.email?.split('@')[0] || 'Usuário';
   const initial = displayName.charAt(0).toUpperCase();
 
-  // Derived: tier & featured coupon
   const ordersCount = orders.length;
   const tier = ordersCount >= 15
     ? { name: 'Ouro', next: null, progress: 100, color: 'from-yellow-400 to-orange-500' }
@@ -205,7 +344,7 @@ export default function Profile() {
       <div className="min-h-screen pb-40 bg-background text-foreground font-sans">
         <div className="max-w-md mx-auto px-4 pt-6 space-y-3">
 
-          {/* HERO compacto — uma linha */}
+          {/* HERO AUTENTICADO */}
           <div className="flex items-center gap-3 pb-2">
             <div className="relative shrink-0">
               <button
@@ -321,7 +460,7 @@ export default function Profile() {
             </div>
           </button>
 
-          {/* BENTO ROW 2 — Pedidos + Favoritos */}
+          {/* BENTO ROW 2 — Pedidos + Cupons */}
           <div className="grid grid-cols-2 gap-3">
             <button
               onClick={() => navigate('/marketplace/orders')}
@@ -371,25 +510,6 @@ export default function Profile() {
             </div>
             <ChevronRight className="h-4 w-4 text-muted-foreground/70" />
           </button>
-
-          {/* AÇÕES RÁPIDAS — grid 4 */}
-          <div className="grid grid-cols-4 gap-2.5 pt-1">
-            {[
-              { icon: ShoppingBag, label: 'Pedidos', onClick: () => navigate('/marketplace/orders') },
-              { icon: Ticket, label: 'Cupons', onClick: () => fetchCoupons(true) },
-              { icon: HelpCircle, label: 'Ajuda', onClick: () => setSupportType('support') },
-              { icon: theme === 'dark' ? Sun : Moon, label: theme === 'dark' ? 'Claro' : 'Escuro', onClick: () => toggleTheme() },
-            ].map((q) => (
-              <button
-                key={q.label}
-                onClick={q.onClick}
-                className="rounded-2xl bg-card border border-border p-3 flex flex-col items-center gap-2 active:scale-95 transition-transform"
-              >
-                <q.icon className="h-5 w-5 text-foreground/80" />
-                <span className="text-[10px] font-medium text-muted-foreground">{q.label}</span>
-              </button>
-            ))}
-          </div>
 
           {/* SECTION — Conta */}
           <div className="pt-4">
@@ -457,7 +577,7 @@ export default function Profile() {
             </div>
           </div>
 
-          {/* CTA Entregador — full bleed */}
+          {/* CTA Entregador */}
           <button
             onClick={() => setSupportType('driver_application')}
             className="w-full mt-4 relative overflow-hidden rounded-3xl p-5 text-left active:scale-[0.99] transition-transform border border-white/5 text-white"
@@ -487,41 +607,6 @@ export default function Profile() {
             >
               <LogOut className="h-4 w-4" /> Sair da conta
             </button>
-
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <button className="w-full text-[10px] text-muted-foreground/50 hover:text-red-400 transition-colors py-3 font-medium uppercase tracking-[0.25em]">
-                  Excluir minha conta
-                </button>
-              </AlertDialogTrigger>
-              <AlertDialogContent className="rounded-3xl border-none p-8">
-                <AlertDialogHeader>
-                  <AlertDialogTitle className="text-xl font-display font-bold">Excluir sua conta?</AlertDialogTitle>
-                  <AlertDialogDescription className="text-sm font-medium leading-relaxed">
-                    Esta ação é permanente e todos os seus dados de pedidos e cupons seráão perdidos para sempre.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter className="flex-col gap-3 mt-6">
-                  <AlertDialogAction
-                    onClick={async () => {
-                      const { error } = await supabase.rpc('delete_my_account');
-                      if (error) {
-                        toast.error('Erro ao excluir conta: ' + error.message);
-                      } else {
-                        await signOut();
-                        navigate('/marketplace/login');
-                      }
-                    }}
-                    className="bg-destructive hover:bg-destructive/90 h-14 rounded-2xl text-white font-bold"
-                  >
-                    Sim, excluir definitivamente
-                  </AlertDialogAction>
-                  <AlertDialogCancel className="h-14 rounded-2xl border-none bg-muted text-foreground font-bold">
-                    Manter minha conta
-                  </AlertDialogCancel>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
           </div>
 
           {/* Footer */}
@@ -555,7 +640,7 @@ export default function Profile() {
             </div>
             <div className="flex-1 overflow-y-auto p-8 space-y-6">
               {[
-                { label: 'Nome completo', value: fullName, onChange: setFullName, placeholder: 'Como quer será chamado?' },
+                { label: 'Nome completo', value: fullName, onChange: setFullName, placeholder: 'Como quer ser chamado?' },
                 { label: 'WhatsApp', value: phone, onChange: setPhone, placeholder: '(00) 00000-0000' },
               ].map(f => (
                 <div key={f.label} className="space-y-2">
@@ -624,8 +709,7 @@ export default function Profile() {
                   <div className="h-20 w-20 rounded-full bg-muted flex items-center justify-center opacity-20">
                     <Ticket className="h-10 w-10 text-foreground" />
                   </div>
-                  <p className="font-black text-lg text-foreground/40 tracking-tight">Nenhum cupom ativo não momento</p>
-                  <p className="text-xs text-muted-foreground/60 max-w-[200px]">Fique de olho em nãossas redes para nãovas promoções!</p>
+                  <p className="font-black text-lg text-foreground/40 tracking-tight">Nenhum cupom ativo no momento</p>
                 </div>
               ) : (
                 coupons.map((coupon) => (
@@ -645,37 +729,8 @@ export default function Profile() {
                         <p className="text-[11px] font-bold text-primary uppercase tracking-wider mt-1">
                           {coupon.companies?.name || 'Válido em toda a plataforma'}
                         </p>
-                        <div className="flex items-center gap-4 mt-3 flex-wrap">
-                          <span className="inline-flex items-center gap-2 px-2.5 py-1 rounded-lg bg-muted text-[10px] font-black uppercase tracking-widest text-primary border border-primary/10">
-                            {coupon.code}
-                          </span>
-                          {coupon.expires_at && (
-                            <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground/60 uppercase">
-                              <Clock className="h-3 w-3" />
-                              Expira {new Date(coupon.expires_at).toLocaleDateString('pt-BR')}
-                            </span>
-                          )}
-                        </div>
                       </div>
                     </div>
-
-                    <div className="bg-muted/30 border-t border-dashed border-border px-6 py-3 flex items-center justify-between">
-                      <span className="text-[10px] font-bold text-muted-foreground/50 uppercase tracking-wider">
-                        {coupon.min_order_value > 0
-                          ? `Pedido mínimo R$ ${Number(coupon.min_order_value).toFixed(2).replace('.', ',')}`
-                          : 'Sem valor mínimo'}
-                      </span>
-                      <button
-                        onClick={() => handleCopyCode(coupon.code)}
-                        className="flex items-center gap-1.5 text-xs font-black text-primary hover:scale-105 active:scale-95 transition-all uppercase tracking-widest"
-                      >
-                        <Copy className="h-4 w-4" /> Copiar Código
-                      </button>
-                    </div>
-
-                    {/* Ticket cutouts */}
-                    <div className="absolute top-[88px] -left-3 h-6 w-6 rounded-full bg-background border border-border/50" />
-                    <div className="absolute top-[88px] -right-3 h-6 w-6 rounded-full bg-background border border-border/50" />
                   </div>
                 ))
               )}

@@ -3,10 +3,13 @@ import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { Profile } from '@/types/database';
 
+const GUEST_EMAIL = 'guest_client_marketplace@epraja.com';
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   profile: Profile | null;
+  isGuest: boolean;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, fullName: string, phone: string) => Promise<void>;
@@ -20,6 +23,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [isGuest, setIsGuest] = useState<boolean>(true);
   const [loading, setLoading] = useState(true);
   const fetchingRef = useRef<string | null>(null);
 
@@ -28,10 +32,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     fetchingRef.current = userId;
 
     try {
-      if (import.meta.env.DEV) {
-        console.log('[Auth-Marketplace] Loading profile');
-      }
-
       const timeout = new Promise((_, reject) =>
         setTimeout(() => reject(new Error('Timeout')), 10000)
       );
@@ -66,30 +66,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!mounted) return;
 
         const currentUser = session?.user;
-        setSession(session);
-        setUser(currentUser ?? null);
+        const guestUser = currentUser?.email === GUEST_EMAIL;
 
-        if (currentUser) {
+        setSession(session);
+        if (currentUser && !guestUser) {
+          setUser(currentUser);
+          setIsGuest(false);
           setLoading(false);
           setTimeout(() => {
             if (mounted) fetchProfile(currentUser.id);
           }, 0);
         } else {
-          // Auto guest session to allow unauthenticated visitors to view public store catalog without RLS 42501 permission denied
-          try {
-            const { data: guestRes } = await supabase.auth.signInWithPassword({
-              email: 'guest_client_marketplace@epraja.com',
-              password: 'GuestClient123!'
-            });
-            if (guestRes?.session && mounted) {
-              setSession(guestRes.session);
-              setUser(guestRes.user);
+          setUser(null);
+          setIsGuest(true);
+          setProfile(null);
+          
+          if (!session) {
+            // Autenticação em segundo plano para o leitor público de dados Supabase (evita RLS 42501)
+            try {
+              const { data: guestRes } = await supabase.auth.signInWithPassword({
+                email: GUEST_EMAIL,
+                password: 'GuestClient123!'
+              });
+              if (guestRes?.session && mounted) {
+                setSession(guestRes.session);
+              }
+            } catch (e) {
+              console.warn('[Auth-Marketplace] Guest auth fallback warning:', e);
             }
-          } catch (e) {
-            console.warn('[Auth-Marketplace] Guest auth fallback warning:', e);
-          } finally {
-            if (mounted) setLoading(false);
           }
+          if (mounted) setLoading(false);
         }
       } catch {
         if (mounted) setLoading(false);
@@ -101,23 +107,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const authListener = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (!mounted) return;
-        if (import.meta.env.DEV) {
-          console.log(`[Auth-Marketplace] Auth event: ${event}`);
-        }
 
-        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
-          const currentUser = session?.user;
+        const currentUser = session?.user;
+        const guestUser = currentUser?.email === GUEST_EMAIL;
+
+        if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') && currentUser && !guestUser) {
           setSession(session);
-          setUser(currentUser ?? null);
+          setUser(currentUser);
+          setIsGuest(false);
           setLoading(false);
-          if (currentUser) {
-            setTimeout(() => {
-              if (mounted) fetchProfile(currentUser.id);
-            }, 0);
-          }
-        } else if (event === 'SIGNED_OUT') {
-          setSession(null);
+          setTimeout(() => {
+            if (mounted) fetchProfile(currentUser.id);
+          }, 0);
+        } else if (guestUser || !currentUser || event === 'SIGNED_OUT') {
+          setSession(session ?? null);
           setUser(null);
+          setIsGuest(true);
           setProfile(null);
           setLoading(false);
         }
@@ -145,11 +150,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     if (error) throw error;
 
-    // IMPORTANTE: profile + user_roles são criados automaticamente pelo trigger
-    // public.handle_new_user() (SECURITY DEFINER) em auth.users — ver
-    // scripts/handle_new_user_trigger.sql.
-    // Nunca escrever `role` a partir do client (risco de role escalation).
-    // Atualizamos apenas campos não privilegiados após o signup.
     if (data.user) {
       await supabase.from('profiles').update({
         full_name: fullName,
@@ -165,18 +165,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(null);
       setSession(null);
       setProfile(null);
+      setIsGuest(true);
       localStorage.clear();
       sessionStorage.clear();
-      window.location.href = '/marketplace/login';
+      window.location.href = '/marketplace';
     }
   };
 
   const refreshProfile = async () => {
-    if (user) await fetchProfile(user.id);
+    if (user && !isGuest) await fetchProfile(user.id);
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, profile, loading, signIn, signUp, signOut, refreshProfile }}>
+    <AuthContext.Provider value={{ user, session, profile, isGuest, loading, signIn, signUp, signOut, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );

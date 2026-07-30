@@ -261,7 +261,16 @@ export default function Checkout() {
   // Recalculate total manually because cartTotal might not update instantly when we are at Checkout
   const finalTotal = Math.max(0, subtotal - discountAmount) + (fulfillmentMode === 'pickup' ? 0 : (deliveryFee || 0));
 
+  const { user, profile, isGuest, refreshProfile } = useAuth();
+
   const handleOpenReview = async () => {
+    if (!user || isGuest) {
+      toast.info('Entre na sua conta para finalizar o pedido', {
+        description: 'É rápido! Faça login ou crie sua conta para concluir a compra.'
+      });
+      navigate('/marketplace/login');
+      return;
+    }
     const numericPhoneInput = phoneInput.replace(/\D/g, '');
     if (!profile?.phone || profile.phone.replace(/\D/g, '').length < 10) {
       if (numericPhoneInput.length < 10 || numericPhoneInput.length > 11) {
