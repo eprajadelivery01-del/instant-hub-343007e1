@@ -141,6 +141,7 @@ export function useOrderNotifications() {
                         title: msg.title,
                         body: msg.description,
                         id: Math.floor(Math.random() * 100000),
+                        channelId: 'default',
                         schedule: { at: new Date(Date.now() + 100) },
                         extra: {
                           orderId: payload.new.id
