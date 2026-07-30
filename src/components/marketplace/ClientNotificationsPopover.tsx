@@ -47,10 +47,14 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
     try {
       setLoading(true);
 
-      // 1. Busca notificações de marketing e cupons
+      const FORTY_EIGHT_HOURS_MS = 48 * 60 * 60 * 1000;
+      const twoDaysAgoISO = new Date(Date.now() - FORTY_EIGHT_HOURS_MS).toISOString();
+
+      // 1. Busca notificações de marketing e cupons dos últimos 2 dias (48 horas)
       const { data: mData } = await supabase
         .from('marketing_notifications')
         .select('*')
+        .gte('created_at', twoDaysAgoISO)
         .order('created_at', { ascending: false })
         .limit(20);
 
@@ -59,7 +63,7 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
         type: 'marketing'
       }));
 
-      // 2. Busca atualizações de pedidos do cliente (por user_id ou IDs salvos localmente)
+      // 2. Busca atualizações de pedidos do cliente dos últimos 2 dias (48 horas)
       let myOrderIds: string[] = [];
       try {
         myOrderIds = JSON.parse(localStorage.getItem('@epraja_recent_orders') || '[]');
@@ -70,7 +74,8 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
       try {
         let orderQuery = supabase
           .from('orders')
-          .select('id, status, updated_at, created_at, company_id, companies(name)');
+          .select('id, status, updated_at, created_at, company_id, companies(name)')
+          .gte('updated_at', twoDaysAgoISO);
 
         if (user?.id) {
           if (myOrderIds.length > 0) {
@@ -105,10 +110,14 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
         console.warn('[ClientNotificationsPopover] Erro ao carregar pedidos para notificação:', e);
       }
 
-      // Combina e ordena por data mais recente
-      const combined = [...orderItems, ...marketingItems].sort(
-        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      );
+      // Combina, filtra estritamente por 48 horas e ordena por data mais recente
+      const now = Date.now();
+      const combined = [...orderItems, ...marketingItems]
+        .filter(n => {
+          const itemTime = new Date(n.created_at).getTime();
+          return !isNaN(itemTime) && (now - itemTime) <= FORTY_EIGHT_HOURS_MS;
+        })
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
       setNotifications(combined);
 
