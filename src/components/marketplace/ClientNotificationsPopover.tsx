@@ -27,6 +27,9 @@ const ORDER_STATUS_CONFIG: Record<string, { title: string; desc: string; emoji: 
   ready: { title: '📦 Pedido Pronto!', desc: 'Seu pedido está pronto e aguardando o entregador.', emoji: '📦' },
   delivering: { title: '🛵 Saiu para Entrega!', desc: 'O entregador está a caminho do seu endereço!', emoji: '🛵' },
   in_route: { title: '🛵 Saiu para Entrega!', desc: 'O entregador está a caminho do seu endereço!', emoji: '🛵' },
+  collecting: { title: '🛵 Entregador a Caminho!', desc: 'O entregador foi atribuído e está a caminho da loja.', emoji: '🛵' },
+  accepted: { title: '🛵 Entregador Aceitou!', desc: 'O entregador aceitou o pedido e irá coletar em breve.', emoji: '🛵' },
+  in_transit: { title: '🛵 Saiu para Entrega!', desc: 'O entregador está a caminho do seu endereço!', emoji: '🛵' },
   delivered: { title: '🎉 Pedido Entregue!', desc: 'Seu pedido foi entregue com sucesso. Bom apetite!', emoji: '🎉' },
   cancelled: { title: '❌ Pedido Cancelado', desc: 'Infelizmente o pedido foi cancelado.', emoji: '❌' },
 };
@@ -186,6 +189,35 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
                   created_at: new Date().toISOString(),
                   type: 'order_status',
                   order_id: ord.id
+                };
+                setNotifications((prev) => [newItem, ...prev]);
+                setUnreadCount((prev) => prev + 1);
+              }
+            }
+          }
+        )
+        .on(
+          'postgres_changes',
+          { event: 'UPDATE', schema: 'public', table: 'deliveries' },
+          (payload) => {
+            const del = payload.new as any;
+            let myOrderIds: string[] = [];
+            try {
+              myOrderIds = JSON.parse(localStorage.getItem('@epraja_recent_orders') || '[]');
+            } catch {}
+
+            const isMyDelivery = del.order_id && myOrderIds.includes(del.order_id);
+            if (isMyDelivery && del.status) {
+              const cfg = ORDER_STATUS_CONFIG[del.status];
+              if (cfg) {
+                const newItem: MarketingNotifItem = {
+                  id: `del-notif-rt-${del.id}-${del.status}-${Date.now()}`,
+                  title: cfg.title,
+                  message: `${cfg.desc} (Pedido #${del.order_id.slice(0, 8)})`,
+                  emoji: cfg.emoji,
+                  created_at: new Date().toISOString(),
+                  type: 'order_status',
+                  order_id: del.order_id
                 };
                 setNotifications((prev) => [newItem, ...prev]);
                 setUnreadCount((prev) => prev + 1);

@@ -14,6 +14,10 @@ const statusMessages: Record<string, { title: string; description: string; icon:
   preparing: { title: '👨‍🍳 Preparando seu pedido', description: 'A loja começou a preparar seu pedido.', icon: '👨‍🍳' },
   ready: { title: '📦 Pedido pronto!', description: 'Seu pedido está pronto e aguardando o entregador.', icon: '📦' },
   delivering: { title: '🛵 Saiu para entrega!', description: 'O entregador está a caminho do seu endereço.', icon: '🛵' },
+  in_route: { title: '🛵 Saiu para entrega!', description: 'O entregador está a caminho do seu endereço.', icon: '🛵' },
+  collecting: { title: '🛵 Entregador a caminho da loja!', description: 'O entregador foi atribuído e está indo coletar seu pedido.', icon: '🛵' },
+  accepted: { title: '🛵 Entregador aceitou a entrega!', description: 'O entregador aceitou seu pedido e irá coletar em breve.', icon: '🛵' },
+  in_transit: { title: '🛵 Saiu para entrega!', description: 'O entregador está a caminho do seu endereço.', icon: '🛵' },
   delivered: { title: '🎉 Pedido entregue!', description: 'Seu pedido foi entregue. Bom apetite!', icon: '🎉' },
   cancelled: { title: '❌ Pedido cancelado', description: 'Seu pedido foi cancelado.', icon: '❌' },
 };
@@ -198,6 +202,43 @@ export function GlobalMarketingListener() {
           if (!isMyOrder) return;
 
           const newStatus = order.status;
+          const oldStatus = payload.old?.status;
+
+          if (newStatus && newStatus !== oldStatus) {
+            const msg = statusMessages[newStatus];
+            if (msg) {
+              playNotificationAudio();
+
+              triggerNativeNotification({
+                title: msg.title,
+                message: msg.description,
+                emoji: msg.icon
+              }, swRegRef.current);
+
+              toast.info(msg.title, {
+                description: msg.description,
+                duration: 10000,
+              });
+            }
+          }
+        }
+      )
+      // D) Atualizações nas Entregas dos Entregadores na tabela 'deliveries'
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'deliveries' },
+        (payload) => {
+          const delivery = payload.new as any;
+          
+          let myOrderIds: string[] = [];
+          try {
+            myOrderIds = JSON.parse(localStorage.getItem('@epraja_recent_orders') || '[]');
+          } catch {}
+
+          const isMyDelivery = delivery.order_id && myOrderIds.includes(delivery.order_id);
+          if (!isMyDelivery) return;
+
+          const newStatus = delivery.status;
           const oldStatus = payload.old?.status;
 
           if (newStatus && newStatus !== oldStatus) {
