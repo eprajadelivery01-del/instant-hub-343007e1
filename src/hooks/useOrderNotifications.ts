@@ -8,11 +8,6 @@ import { PushNotifications } from '@capacitor/push-notifications';
 import { getMarketplaceStatus } from '@/utils/orderStatusResolver';
 
 const statusMessages: Record<string, { title: string; description: string; icon: string }> = {
-  pending: {
-    title: '📥 Novo pedido recebido!',
-    description: 'Seu pedido foi recebido e aguarda aprovação da loja.',
-    icon: '📥',
-  },
   confirmed: {
     title: '✅ Pedido confirmado!',
     description: 'A loja aceitou seu pedido e já vai iniciar o preparo.',
@@ -160,6 +155,7 @@ export function useOrderNotifications() {
 
         if (!ord) return;
         if (ord.customer_id !== user.id && ord.user_id !== user.id) return;
+        if (ord.status === 'pending') return; // NUNCA dispara toast/notificacao para status pending
 
         const computed = getMarketplaceStatus(ord);
         toast(computed.title, {

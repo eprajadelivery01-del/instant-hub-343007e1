@@ -10,12 +10,15 @@ export interface ComputedOrderStatus {
 
 /**
  * FUNÇÃO ÚNICA E CENTRALIZADA DE RESOLUÇÃO DE STATUS DO MARKETPLACE
- * REGRA ESTREITA E RIGOROSA DE STATUS:
- * 1. Pedido confirmado
- * 2. Preparando seu pedido
- * 3. 📦 Seu pedido está pronto! (Seu pedido foi preparado e está aguardando a saída para entrega.)
+ * REGRA ESTREITA E RIGOROSA DE STATUS PERMITIDOS:
+ * 1. ✅ Pedido confirmado
+ * 2. 👨‍🍳 Preparando seu pedido
+ * 3. 📦 Seu pedido está pronto!
  * 4. 🚚 Saiu para entrega (Apenas após o lojista clicar em "Chamar Entregador")
- * 5. Pedido entregue
+ * 5. 🎉 Pedido entregue
+ * 6. ❌ Pedido cancelado
+ *
+ * STATUS "pending" / "Aguardando confirmação" E NOTIFICAÇÃO DE "SOLICITADO" SÃO REMOVIDOS.
  */
 export function getMarketplaceStatus(orderOrPayload: any): ComputedOrderStatus {
   let deliveryObj = null;
@@ -34,7 +37,7 @@ export function getMarketplaceStatus(orderOrPayload: any): ComputedOrderStatus {
   }
 
   const deliveryStatus = deliveryObj?.status;
-  const orderStatus = orderOrPayload?.status || orderOrPayload?.order?.status || 'pending';
+  const orderStatus = orderOrPayload?.status || orderOrPayload?.order?.status || 'confirmed';
   const deliveryRequested = orderOrPayload?.delivery_requested || orderOrPayload?.order?.delivery_requested;
 
   // 1. Pedido Entregue / Concluído / Cancelado -> Histórico
@@ -66,8 +69,6 @@ export function getMarketplaceStatus(orderOrPayload: any): ComputedOrderStatus {
 
   // 2. 🚚 SAIU PARA ENTREGA:
   // APARECE APENAS E TÃO SOMENTE APÓS O LOJISTA CLICAR EM "CHAMAR ENTREGADOR"
-  // (orders.status === 'delivering' / 'in_route', ou deliveryRequested === true, ou delivery.status === 'in_route' / 'in_transit' / 'delivering')
-  // IGNORA TOTALMENTE 'accepted', 'collecting', 'broadcasted', 'pending', 'draft' da tabela deliveries
   if (
     deliveryRequested ||
     ['delivering', 'in_route'].includes(orderStatus) ||
@@ -84,7 +85,7 @@ export function getMarketplaceStatus(orderOrPayload: any): ComputedOrderStatus {
     };
   }
 
-  // 3. Status normais do pedido
+  // 3. Status permitidos do pedido
   if (orderStatus === 'ready') {
     return {
       statusKey: 'ready',
@@ -109,25 +110,14 @@ export function getMarketplaceStatus(orderOrPayload: any): ComputedOrderStatus {
     };
   }
 
-  if (orderStatus === 'confirmed') {
-    return {
-      statusKey: 'confirmed',
-      label: 'Pedido confirmado',
-      title: 'Pedido confirmado',
-      description: 'A loja confirmou o seu pedido.',
-      isFinished: false,
-      color: 'bg-primary',
-      stepRank: 1,
-    };
-  }
-
+  // Mapeamento padrão (pending e confirmed são exibidos como Pedido confirmado)
   return {
-    statusKey: 'pending',
-    label: 'Aguardando confirmação',
-    title: 'Seu pedido foi solicitado',
-    description: 'Aguardando a loja aceitar seu pedido.',
+    statusKey: 'confirmed',
+    label: 'Pedido confirmado',
+    title: 'Pedido confirmado',
+    description: 'A loja confirmou o seu pedido.',
     isFinished: false,
-    color: 'bg-warning',
-    stepRank: 0,
+    color: 'bg-primary',
+    stepRank: 1,
   };
 }

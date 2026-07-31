@@ -58,10 +58,14 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
       if (!raw) return [];
       const parsed: MarketingNotifItem[] = JSON.parse(raw);
       const now = Date.now();
-      // Remove notificações com mais de 48 horas
+      // Remove notificações com mais de 48 horas e notificação de pedido "solicitado" / "pending"
       return parsed.filter(n => {
         const t = new Date(n.created_at).getTime();
-        return !isNaN(t) && (now - t) <= FORTY_EIGHT_HOURS_MS;
+        const isPending =
+          n.id.includes('-pending') ||
+          (n.title && n.title.toLowerCase().includes('solicitado')) ||
+          (n.message && (n.message.toLowerCase().includes('solicitado') || n.message.toLowerCase().includes('aguardando confirmação')));
+        return !isNaN(t) && (now - t) <= FORTY_EIGHT_HOURS_MS && !isPending;
       });
     } catch {
       return [];
@@ -69,6 +73,14 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
   };
 
   const persistNotification = (item: MarketingNotifItem) => {
+    // Nunca persiste notificação do status 'pending' / solicitado
+    if (
+      item.id.includes('-pending') ||
+      (item.title && item.title.toLowerCase().includes('solicitado')) ||
+      (item.message && (item.message.toLowerCase().includes('solicitado') || item.message.toLowerCase().includes('aguardando confirmação')))
+    ) {
+      return;
+    }
     const existing = loadPersistedNotifications();
     // Evita duplicação exata pelo ID
     if (existing.some(n => n.id === item.id)) return;
@@ -79,9 +91,14 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
   };
 
   const persistMultipleNotifications = (items: MarketingNotifItem[]) => {
+    const validItems = items.filter(item => !(
+      item.id.includes('-pending') ||
+      (item.title && item.title.toLowerCase().includes('solicitado')) ||
+      (item.message && (item.message.toLowerCase().includes('solicitado') || item.message.toLowerCase().includes('aguardando confirmação')))
+    ));
     const existing = loadPersistedNotifications();
     const existingIds = new Set(existing.map(n => n.id));
-    const newItems = items.filter(n => !existingIds.has(n.id));
+    const newItems = validItems.filter(n => !existingIds.has(n.id));
     if (newItems.length === 0) return;
     const updated = [...newItems, ...existing]
       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
@@ -111,8 +128,7 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
       // Persiste marketing no localStorage para não perder ao recarregar
       persistMultipleNotifications(marketingItems);
 
-      // 2. Busca pedidos recentes do cliente para gerar notificações do status ATUAL
-      //    (o histórico de status anteriores já está preservado no localStorage)
+      // 2. Busca pedidos recentes do cliente para gerar notificações dos status permitidos
       let myOrderIds: string[] = [];
       try {
         myOrderIds = JSON.parse(localStorage.getItem('@epraja_recent_orders') || '[]');
@@ -139,13 +155,16 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
         if (oData && oData.length > 0) {
           const newOrderNotifs: MarketingNotifItem[] = [];
           oData.forEach((ord: any) => {
+            if (ord.status === 'pending') return; // NUNCA GERA NOTIFICAÇÃO PARA PENDING
             const computed = getMarketplaceStatus(ord);
+            if (computed.statusKey === 'pending') return;
+
             const companyName = ord.companies?.name ? ` em ${ord.companies.name}` : '';
             const notifItem: MarketingNotifItem = {
               id: `order-notif-${ord.id}-${computed.statusKey}`,
               title: computed.title,
               message: `${computed.label} (Pedido #${ord.id.slice(0, 8)}${companyName})`,
-              emoji: computed.statusKey === 'delivered' ? '🎉' : computed.statusKey === 'delivering' ? '🚚' : computed.statusKey === 'ready' ? '📦' : computed.statusKey === 'preparing' ? '👨‍🍳' : computed.statusKey === 'confirmed' ? '✅' : '📥',
+              emoji: computed.statusKey === 'delivered' ? '🎉' : computed.statusKey === 'delivering' ? '🚚' : computed.statusKey === 'ready' ? '📦' : computed.statusKey === 'preparing' ? '👨‍🍳' : computed.statusKey === 'confirmed' ? '✅' : '📦',
               created_at: ord.updated_at || ord.created_at,
               type: 'order_status',
               order_id: ord.id
