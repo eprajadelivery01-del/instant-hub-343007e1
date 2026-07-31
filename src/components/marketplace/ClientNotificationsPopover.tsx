@@ -175,7 +175,12 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
             } catch {}
 
             const isMyOrder =
-              (user && (ord.customer_id === user.id || ord.user_id === user.id)) ||
+              (user && (
+                ord.customer_id === user.id || 
+                ord.user_id === user.id || 
+                ord.client_id === user.id || 
+                ord.buyer_id === user.id
+              )) ||
               myOrderIds.includes(ord.id);
 
             if (isMyOrder && ord.status) {

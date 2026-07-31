@@ -196,17 +196,35 @@ export function GlobalMarketingListener() {
           } catch {}
 
           const isMyOrder = 
-            (user && (order.customer_id === user.id || order.user_id === user.id)) ||
+            (user && (
+              order.customer_id === user.id || 
+              order.user_id === user.id || 
+              order.client_id === user.id ||
+              order.buyer_id === user.id
+            )) ||
             myOrderIds.includes(order.id);
+
+          console.log("[Realtime Order Update]", {
+            event: "UPDATE",
+            orderId: order.id,
+            status: order.status,
+            customer_id: order.customer_id,
+            user_id: order.user_id,
+            userId: user?.id,
+            isMyOrder
+          });
 
           if (!isMyOrder) return;
 
           const newStatus = order.status;
           const oldStatus = payload.old?.status;
 
+          console.log("STATUS RECEBIDO:", newStatus);
+
           if (newStatus && newStatus !== oldStatus) {
             const msg = statusMessages[newStatus];
             if (msg) {
+              console.log("REALTIME RECEBIDO - DISPARANDO NOTIFICAÇÃO:", msg);
               playNotificationAudio();
 
               triggerNativeNotification({
