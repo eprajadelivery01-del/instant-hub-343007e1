@@ -408,7 +408,7 @@ export default function OrderDetail() {
                 <MessageCircle className="h-4 w-4" /> Chat com a loja
               </button>
               
-              {(currentOrderStatus === 'pending' || currentOrderStatus === 'preparing' || currentOrderStatus === 'ready') && (
+              {(computedStatus.statusKey === 'pending' || computedStatus.statusKey === 'preparing' || computedStatus.statusKey === 'ready') && (
                 <button 
                   className="text-muted-foreground font-medium text-[14px] flex items-center justify-center gap-2 mx-auto hover:text-destructive transition-colors"
                   onClick={handleCancelOrder}
