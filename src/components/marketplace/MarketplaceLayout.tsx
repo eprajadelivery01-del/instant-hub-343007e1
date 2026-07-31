@@ -136,7 +136,7 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
   const fixedUi = (
     <>
       {!hideNav && (
-        <nav className="fixed inset-x-0 bottom-0 z-[80] w-full border-t border-border bg-background marketplace-bottom-nav">
+        <nav className="fixed inset-x-0 bottom-0 z-[80] w-full border-t border-border bg-background marketplace-bottom-nav pb-[env(safe-area-inset-bottom,0px)]">
           <div className="flex h-16 items-center justify-around px-2">
             {navItems.map((item) => {
               const isHome = item.path === '/marketplace';
