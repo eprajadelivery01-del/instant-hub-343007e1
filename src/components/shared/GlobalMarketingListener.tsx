@@ -82,6 +82,16 @@ export function GlobalMarketingListener() {
   useEffect(() => {
     if (!Capacitor.isNativePlatform() || !user) return;
 
+    PushNotifications.createChannel({
+      id: 'marketplace_orders',
+      name: 'Atualizações de Pedidos',
+      description: 'Notificações nativas do Marketplace para o cliente',
+      importance: 5,
+      visibility: 1,
+      sound: 'default',
+      vibration: true,
+    }).catch(() => {});
+
     PushNotifications.requestPermissions().then((result) => {
       if (result.receive === 'granted') {
         PushNotifications.register().catch(() => {});
@@ -107,7 +117,7 @@ export function GlobalMarketingListener() {
             title: notification.title || '🔔 É Pra Já!',
             body: notification.body || 'Você recebeu um novo alerta.',
             id: Math.floor(Math.random() * 100000),
-            channelId: 'default',
+            channelId: 'marketplace_orders',
             schedule: { at: new Date(Date.now() + 100) },
           }],
         }).catch(() => {});

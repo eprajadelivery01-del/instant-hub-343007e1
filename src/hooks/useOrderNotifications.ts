@@ -7,29 +7,49 @@ import { LocalNotifications } from '@capacitor/local-notifications';
 import { PushNotifications } from '@capacitor/push-notifications';
 
 const statusMessages: Record<string, { title: string; description: string; icon: string }> = {
+  pending: {
+    title: '📥 Novo pedido recebido!',
+    description: 'Seu pedido foi recebido e aguarda aprovação da loja.',
+    icon: '📥',
+  },
   confirmed: {
     title: '✅ Pedido confirmado!',
-    description: 'A loja aceitou seu pedido.',
+    description: 'A loja aceitou seu pedido e já vai iniciar o preparo.',
     icon: '✅',
   },
   preparing: {
     title: '👨‍🍳 Preparando seu pedido',
-    description: 'A loja começou a preparar seu pedido.',
+    description: 'A loja começou a preparar os itens do seu pedido.',
     icon: '👨‍🍳',
   },
   ready: {
     title: '📦 Pedido pronto!',
-    description: 'Seu pedido está pronto e aguardando o entregador.',
+    description: 'Seu pedido está pronto e aguardando a saída para entrega.',
     icon: '📦',
+  },
+  accepted: {
+    title: '🏍️ Entregador a caminho!',
+    description: 'Um entregador aceitou seu pedido e está indo à loja.',
+    icon: '🏍️',
+  },
+  collecting: {
+    title: '🏬 Entregador na loja!',
+    description: 'O entregador chegou à loja e está retirando seu pedido.',
+    icon: '🏬',
+  },
+  in_route: {
+    title: '🛵 Saiu para entrega!',
+    description: 'O entregador está a caminho do seu endereço com seu pedido.',
+    icon: '🛵',
   },
   delivering: {
     title: '🛵 Saiu para entrega!',
-    description: 'O entregador está a caminho do seu endereço.',
+    description: 'O entregador está a caminho do seu endereço com seu pedido.',
     icon: '🛵',
   },
   delivered: {
     title: '🎉 Pedido entregue!',
-    description: 'Seu pedido foi entregue. Bom apetite!',
+    description: 'Seu pedido foi entregue com sucesso. Aproveite!',
     icon: '🎉',
   },
   cancelled: {
@@ -50,13 +70,25 @@ export function useOrderNotifications() {
     }
   }, []);
 
-  // Configurar Push Notifications se for plataforma nativa (Android/iOS)
+  // Configurar Push Notifications e Canal nativo se for plataforma nativa (Android/iOS)
   useEffect(() => {
     if (!Capacitor.isNativePlatform() || !user) return;
 
     let regListener: any = null;
     let errListener: any = null;
     let pushListener: any = null;
+
+    PushNotifications.createChannel({
+      id: 'marketplace_orders',
+      name: 'Atualizações de Pedidos',
+      description: 'Notificações nativas do Marketplace para o cliente',
+      importance: 5,
+      visibility: 1,
+      sound: 'default',
+      vibration: true,
+    }).then(() => {
+      console.log('[Push] Canal nativo marketplace_orders criado com sucesso!');
+    }).catch(e => console.warn('[Push] Erro ao criar canal marketplace_orders:', e));
 
     PushNotifications.requestPermissions().then((result) => {
       if (result.receive === "granted") {
@@ -74,7 +106,7 @@ export function useOrderNotifications() {
           supabase.from("profiles").update({ fcm_token: token.value }).eq("id", user.id),
           supabase.from("users").update({ fcm_token: token.value }).eq("id", user.id),
         ]).then(() => {
-          console.log("[Push] fcm_token do cliente persistido com sucesso para user:", user.id);
+          console.log("[Push] fcm_token do cliente persistido nas tabelas customers, profiles e users para user:", user.id);
         }).catch(err => console.error("[Push] Erro ao persistir fcm_token do cliente:", err));
       }
     }).then(listener => { regListener = listener; });
@@ -84,11 +116,23 @@ export function useOrderNotifications() {
     }).then(listener => { errListener = listener; });
 
     PushNotifications.addListener("pushNotificationReceived", (notification) => {
-      console.log("[Push] Notificação push do cliente recebida em foreground:", notification);
-      toast(notification.title || "Atualização de Pedido", {
-        description: notification.body,
-        duration: 8000
-      });
+      console.log("[Push] Notificação push do cliente recebida:", notification);
+      const title = notification.title || "Atualização de Pedido";
+      const body = notification.body || "";
+      toast(title, { description: body, duration: 8000 });
+
+      if (Capacitor.isNativePlatform()) {
+        LocalNotifications.schedule({
+          notifications: [{
+            id: Math.floor(Math.random() * 100000),
+            title: title,
+            body: body,
+            channelId: 'marketplace_orders',
+            sound: 'default',
+            schedule: { at: new Date(Date.now() + 100) }
+          }]
+        }).catch(err => console.error('[Push] Erro ao disparar notificação nativa:', err));
+      }
     }).then(listener => { pushListener = listener; });
 
     return () => {
