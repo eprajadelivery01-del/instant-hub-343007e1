@@ -212,11 +212,18 @@ export type StoreStatusInput = {
 
 export function isStoreOpenNow(company: StoreStatusInput): boolean {
   if (!company) return false;
-  const isManuallyOpen = company.is_open === true;
+  
+  // Se a empresa estiver desativada, fica fechada
   const isActive = company.active !== false && company.is_active !== false;
+  if (!isActive) return false;
 
-  if (!isManuallyOpen || !isActive) return false;
+  // Se o lojista desativou a loja manualmente, ela fica fechada
+  if (company.is_open === false) return false;
 
+  // Se o lojista abriu a loja manualmente (is_open === true), a loja está ABERTA!
+  if (company.is_open === true) return true;
+
+  // Caso is_open seja null/undefined, reavalia pelo horário
   return isStoreOpenBySchedule(company.business_hours, new Date(), company.timezone);
 }
 
