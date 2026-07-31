@@ -35,6 +35,55 @@ const statusColors: Record<string, string> = {
   cancelled: 'bg-destructive',
 };
 
+export function getComputedOrderStatus(order: any) {
+  const deliveryObj = Array.isArray(order?.deliveries) ? order.deliveries[0] : order?.deliveries;
+  const deliveryStatus = deliveryObj?.status;
+  const orderStatus = order?.status;
+
+  // 1. Finalizado / Entregue / Cancelado (Mover para Histórico)
+  if (
+    ['delivered', 'completed'].includes(deliveryStatus) ||
+    ['delivered', 'completed', 'cancelled'].includes(orderStatus)
+  ) {
+    if (orderStatus === 'cancelled') {
+      return { statusKey: 'cancelled', label: 'Cancelado', isFinished: true, color: 'bg-destructive' };
+    }
+    return { statusKey: 'delivered', label: 'Entregue', isFinished: true, color: 'bg-green-500' };
+  }
+
+  // 2. Em Rota / Saiu para entrega
+  if (['in_route', 'in_transit'].includes(deliveryStatus) || ['delivering', 'in_route'].includes(orderStatus)) {
+    return { statusKey: 'delivering', label: 'Saiu para entrega', isFinished: false, color: 'bg-primary animate-pulse' };
+  }
+
+  // 3. Entregador na Loja (Coletando)
+  if (deliveryStatus === 'collecting') {
+    return { statusKey: 'collecting', label: 'Entregador na loja', isFinished: false, color: 'bg-yellow-500 animate-pulse' };
+  }
+
+  // 4. Entregador a caminho da loja
+  if (['accepted', 'broadcasted'].includes(deliveryStatus)) {
+    return { statusKey: 'accepted', label: 'Entregador a caminho da loja', isFinished: false, color: 'bg-yellow-500' };
+  }
+
+  // 5. Pronto para retirada (Lojista aprontou e aguarda motoboy)
+  if (orderStatus === 'ready') {
+    return { statusKey: 'ready', label: 'Pronto para retirada', isFinished: false, color: 'bg-green-500' };
+  }
+
+  // 6. Preparando
+  if (orderStatus === 'preparing') {
+    return { statusKey: 'preparing', label: 'Preparando', isFinished: false, color: 'bg-primary' };
+  }
+
+  // 7. Confirmado
+  if (orderStatus === 'confirmed') {
+    return { statusKey: 'confirmed', label: 'Confirmado', isFinished: false, color: 'bg-primary' };
+  }
+
+  return { statusKey: 'pending', label: 'Aguardando confirmação', isFinished: false, color: 'bg-warning' };
+}
+
 export default function Orders() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -67,32 +116,18 @@ export default function Orders() {
     };
     fetchOrders();
 
-    // Realtime: escuta inserts e updates dos pedidos do cliente
+    // Realtime: escuta inserts e updates tanto dos pedidos quanto das entregas
     const channel = supabase
-      .channel(`customer-orders-${user.id}`)
+      .channel(`customer-orders-realtime-${user.id}`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'orders' },
-        (payload) => {
-          const nextOrder = (payload.new || payload.old) as
-            | (Partial<Order> & { id?: string; user_id?: string })
-            | undefined;
-          if (!nextOrder) return;
-          const isMine =
-            nextOrder.customer_id === user.id || nextOrder.user_id === user.id;
-          if (!isMine) return;
-
-          if (payload.eventType === 'UPDATE') {
-            setOrders((prev) =>
-              prev.map((o) =>
-                o.id === nextOrder.id ? { ...o, ...(payload.new as Order) } : o,
-              ),
-            );
-          } else {
-            // INSERT ou DELETE: refazer fetch para manter ordem e relations
-            fetchOrders();
-          }
-        },
+        () => fetchOrders()
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'deliveries' },
+        () => fetchOrders()
       )
       .subscribe();
 
@@ -104,20 +139,19 @@ export default function Orders() {
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     
-    // First filter by tab
+    // Filtragem por aba (Ativos vs Histórico) usando getComputedOrderStatus
     const tabFiltered = orders.filter(o => {
-      const deliveryStatus = (o as any).deliveries?.[0]?.status;
-      const isFinished = ['delivered', 'completed', 'cancelled'].includes(o.status) || 
-                         ['delivered', 'completed'].includes(deliveryStatus);
-      return activeTab === 'active' ? !isFinished : isFinished;
+      const computed = getComputedOrderStatus(o);
+      return activeTab === 'active' ? !computed.isFinished : computed.isFinished;
     });
 
     if (!q) return tabFiltered;
     return tabFiltered.filter((o) => {
+      const computed = getComputedOrderStatus(o);
       const name = o.company?.name?.toLowerCase() || '';
-      const status = (statusLabels[o.status] || o.status || '').toLowerCase();
+      const statusText = computed.label.toLowerCase();
       const idShort = o.id.slice(0, 8).toLowerCase();
-      return name.includes(q) || status.includes(q) || idShort.includes(q);
+      return name.includes(q) || statusText.includes(q) || idShort.includes(q);
     });
   }, [orders, search, activeTab]);
 
@@ -204,17 +238,14 @@ export default function Orders() {
                       </h4>
                       <div className="flex items-center gap-1.5 mt-0.5">
                         {(() => {
-                          const deliveryStatus = (order as any).deliveries?.[0]?.status;
-                          const currentStatus = (deliveryStatus === 'completed' || deliveryStatus === 'delivered') ? 'delivered' : order.status;
+                          const computed = getComputedOrderStatus(order);
                           return (
                             <>
                               <span
-                                className={`h-1.5 w-1.5 rounded-full ${
-                                  statusColors[currentStatus] || 'bg-muted-foreground'
-                                }`}
+                                className={`h-1.5 w-1.5 rounded-full ${computed.color}`}
                               />
                               <span className="text-xs text-muted-foreground">
-                                {statusLabels[currentStatus] || currentStatus}
+                                {computed.label}
                               </span>
                             </>
                           );
