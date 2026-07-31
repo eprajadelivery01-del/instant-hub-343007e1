@@ -248,7 +248,10 @@ export default function OrderDetail() {
           
           {/* Card Principal: Tracking */}
           <div className="bg-background rounded-3xl p-5 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] border border-border">
-            <h2 className="text-xl font-bold text-foreground mb-4 pr-4">{title}</h2>
+            <h2 className="text-xl font-bold text-foreground mb-1 pr-4">{title}</h2>
+            {computedStatus.description && (
+              <p className="text-sm text-muted-foreground mb-4 leading-snug">{computedStatus.description}</p>
+            )}
             
             {/* Barra de Progresso Verde Segmentada */}
             <div className="flex gap-1 mb-5">
@@ -321,10 +324,12 @@ export default function OrderDetail() {
                 </p>
               </div>
             </div>
-            <div className="bg-muted/50 p-3 rounded-xl border border-border flex items-center justify-between">
-              <span className="text-xs font-medium text-muted-foreground">Esta entrega é feita pela loja e não poderá ser rastreada</span>
-              <div className="h-4 w-4 rounded-full bg-secondary text-muted-foreground flex items-center justify-center text-[10px] font-bold">?</div>
-            </div>
+            {computedStatus.statusKey === 'delivering' && (
+              <div className="bg-muted/50 p-3 rounded-xl border border-border flex items-center justify-between">
+                <span className="text-xs font-medium text-muted-foreground">Esta entrega é feita pela loja e não poderá ser rastreada</span>
+                <div className="h-4 w-4 rounded-full bg-secondary text-muted-foreground flex items-center justify-center text-[10px] font-bold">?</div>
+              </div>
+            )}
           </div>
 
           {/* Detalhes do Pedido */}
