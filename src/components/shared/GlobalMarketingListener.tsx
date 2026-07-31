@@ -89,13 +89,13 @@ export function GlobalMarketingListener() {
     }).catch(() => {});
 
     PushNotifications.addListener('registration', (token) => {
-      console.log('[Push] Token FCM do Marketplace:', token.value);
+      console.log("TOKEN FCM:", token.value);
       if (user?.id) {
-        supabase
-          .from('customers')
-          .update({ fcm_token: token.value })
-          .eq('user_id', user.id)
-          .then(() => {});
+        Promise.all([
+          supabase.from('customers').update({ fcm_token: token.value }).or(`user_id.eq.${user.id},id.eq.${user.id}`),
+          supabase.from('profiles').update({ fcm_token: token.value }).eq('id', user.id),
+          supabase.from('users').update({ fcm_token: token.value }).eq('id', user.id),
+        ]).catch(() => {});
       }
     });
 

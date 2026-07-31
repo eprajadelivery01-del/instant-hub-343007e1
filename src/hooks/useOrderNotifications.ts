@@ -67,16 +67,16 @@ export function useOrderNotifications() {
     }).catch(e => console.warn("[Push] Falha ao pedir permissões de push:", e));
 
     PushNotifications.addListener("registration", (token) => {
-      console.log("[Push] Token FCM do cliente registrado:", token.value);
-      // Salva o fcm_token do cliente na tabela 'customers'
-      supabase
-        .from("customers")
-        .update({ fcm_token: token.value })
-        .eq("user_id", user.id)
-        .then(({ error }) => {
-          if (error) console.error("[Push] Erro ao persistir fcm_token do cliente:", error);
-          else console.log("[Push] fcm_token do cliente persistido com sucesso para user:", user.id);
-        });
+      console.log("TOKEN FCM:", token.value);
+      if (user?.id) {
+        Promise.all([
+          supabase.from("customers").update({ fcm_token: token.value }).or(`user_id.eq.${user.id},id.eq.${user.id}`),
+          supabase.from("profiles").update({ fcm_token: token.value }).eq("id", user.id),
+          supabase.from("users").update({ fcm_token: token.value }).eq("id", user.id),
+        ]).then(() => {
+          console.log("[Push] fcm_token do cliente persistido com sucesso para user:", user.id);
+        }).catch(err => console.error("[Push] Erro ao persistir fcm_token do cliente:", err));
+      }
     }).then(listener => { regListener = listener; });
 
     PushNotifications.addListener("registrationError", (error: any) => {
