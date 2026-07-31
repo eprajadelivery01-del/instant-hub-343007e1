@@ -33,58 +33,7 @@ const statusColors: Record<string, string> = {
   delivered: 'bg-green-500',
   completed: 'bg-green-500',
   cancelled: 'bg-destructive',
-};
-
-export function getComputedOrderStatus(order: any) {
-  let deliveryObj = null;
-  if (Array.isArray(order?.deliveries) && order.deliveries.length > 0) {
-    const sorted = [...order.deliveries].sort((a, b) => {
-      const timeA = new Date(a.updated_at || a.created_at || 0).getTime();
-      const timeB = new Date(b.updated_at || b.created_at || 0).getTime();
-      return timeB - timeA;
-    });
-    deliveryObj = sorted[0];
-  } else {
-    deliveryObj = order?.deliveries;
-  }
-  const deliveryStatus = deliveryObj?.status;
-  const orderStatus = order?.status;
-
-  // 1. Pedido Entregue / Concluído -> Histórico
-  if (
-    ['delivered', 'completed'].includes(deliveryStatus) ||
-    ['delivered', 'completed', 'cancelled'].includes(orderStatus)
-  ) {
-    if (orderStatus === 'cancelled') {
-      return { statusKey: 'cancelled', label: 'Pedido cancelado', isFinished: true, color: 'bg-destructive' };
-    }
-    return { statusKey: 'delivered', label: 'Pedido entregue', isFinished: true, color: 'bg-green-500' };
-  }
-
-  // 2. 🚚 SE EXISTIR QUALQUER REGISTRO ATIVO NA TABELA deliveries -> "Saiu para entrega"
-  if (deliveryStatus && !['cancelled'].includes(deliveryStatus)) {
-    return { statusKey: 'delivering', label: 'Saiu para entrega', isFinished: false, color: 'bg-primary animate-pulse' };
-  }
-
-  // 3. Fallbacks de status da tabela orders
-  if (['delivering', 'in_route'].includes(orderStatus)) {
-    return { statusKey: 'delivering', label: 'Saiu para entrega', isFinished: false, color: 'bg-primary animate-pulse' };
-  }
-
-  if (orderStatus === 'ready') {
-    return { statusKey: 'ready', label: 'Pedido pronto', isFinished: false, color: 'bg-green-500' };
-  }
-
-  if (orderStatus === 'preparing') {
-    return { statusKey: 'preparing', label: 'Preparando seu pedido', isFinished: false, color: 'bg-primary' };
-  }
-
-  if (orderStatus === 'confirmed') {
-    return { statusKey: 'confirmed', label: 'Pedido confirmado', isFinished: false, color: 'bg-primary' };
-  }
-
-  return { statusKey: 'pending', label: 'Aguardando confirmação', isFinished: false, color: 'bg-warning' };
-}
+import { getMarketplaceStatus } from '@/utils/orderStatusResolver';
 
 export default function Orders() {
   const { user } = useAuth();
@@ -141,15 +90,15 @@ export default function Orders() {
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     
-    // Filtragem por aba (Ativos vs Histórico) usando getComputedOrderStatus
+    // Filtragem por aba (Ativos vs Histórico) usando getMarketplaceStatus
     const tabFiltered = orders.filter(o => {
-      const computed = getComputedOrderStatus(o);
+      const computed = getMarketplaceStatus(o);
       return activeTab === 'active' ? !computed.isFinished : computed.isFinished;
     });
 
     if (!q) return tabFiltered;
     return tabFiltered.filter((o) => {
-      const computed = getComputedOrderStatus(o);
+      const computed = getMarketplaceStatus(o);
       const name = o.company?.name?.toLowerCase() || '';
       const statusText = computed.label.toLowerCase();
       const idShort = o.id.slice(0, 8).toLowerCase();
@@ -240,7 +189,7 @@ export default function Orders() {
                       </h4>
                       <div className="flex items-center gap-1.5 mt-0.5">
                         {(() => {
-                          const computed = getComputedOrderStatus(order);
+                          const computed = getMarketplaceStatus(order);
                           return (
                             <>
                               <span

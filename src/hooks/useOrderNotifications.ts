@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { Capacitor } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { PushNotifications } from '@capacitor/push-notifications';
+import { getMarketplaceStatus } from '@/utils/orderStatusResolver';
 
 const statusMessages: Record<string, { title: string; description: string; icon: string }> = {
   pending: {
@@ -149,59 +150,46 @@ export function useOrderNotifications() {
     if (!user || subscribedRef.current) return;
     subscribedRef.current = true;
 
+    const handleOrderNotification = async (orderId: string) => {
+      try {
+        const { data: ord } = await supabase
+          .from('orders')
+          .select('*, company:companies(*), deliveries(*)')
+          .eq('id', orderId)
+          .single();
+
+        if (!ord) return;
+        if (ord.customer_id !== user.id && ord.user_id !== user.id) return;
+
+        const computed = getMarketplaceStatus(ord);
+        toast(computed.title, {
+          description: `${computed.label} (Pedido #${ord.id.slice(0, 8)})`,
+          duration: 5000,
+          action: {
+            label: 'Ver pedido',
+            onClick: () => {
+              window.location.href = `/marketplace/orders/${ord.id}`;
+            },
+          },
+        });
+      } catch (err) {
+        console.warn("[useOrderNotifications] Erro ao disparar toast de notificação:", err);
+      }
+    };
+
     const channel = supabase
       .channel(`order-notifications-${user.id}`)
       .on(
         'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'orders',
-        },
+        { event: 'UPDATE', schema: 'public', table: 'orders' },
+        (payload) => handleOrderNotification(payload.new.id)
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'deliveries' },
         (payload) => {
-          const order = payload.new as any;
-          if (order.customer_id !== user.id && order.user_id !== user.id) return;
-          
-          const newStatus = payload.new.status as string;
-          const oldStatus = payload.old?.status as string | undefined;
-
-          if (newStatus && newStatus !== oldStatus) {
-            const msg = statusMessages[newStatus];
-            if (msg) {
-              toast(msg.title, {
-                description: msg.description,
-                duration: 5000,
-                action: {
-                  label: 'Ver pedido',
-                  onClick: () => {
-                    window.location.href = `/marketplace/orders/${payload.new.id}`;
-                  },
-                },
-              });
-
-              // Show native local notification on mobile
-              if (Capacitor.isNativePlatform()) {
-                try {
-                  LocalNotifications.schedule({
-                    notifications: [
-                      {
-                        title: msg.title,
-                        body: msg.description,
-                        id: Math.floor(Math.random() * 100000),
-                        channelId: 'default',
-                        schedule: { at: new Date(Date.now() + 100) },
-                        extra: {
-                          orderId: payload.new.id
-                        }
-                      }
-                    ]
-                  }).catch(() => {});
-                } catch (e) {
-                  console.warn("Failed to show native order notification", e);
-                }
-              }
-            }
-          }
+          const orderId = payload.new?.order_id || payload.old?.order_id;
+          if (orderId) handleOrderNotification(orderId);
         }
       )
       .subscribe();

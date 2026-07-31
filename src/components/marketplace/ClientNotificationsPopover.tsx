@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
+import { getMarketplaceStatus } from '@/utils/orderStatusResolver';
 
 export type MarketingNotifItem = {
   id: string;
@@ -78,7 +79,7 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
       try {
         let orderQuery = supabase
           .from('orders')
-          .select('id, status, updated_at, created_at, company_id, companies(name)')
+          .select('id, status, updated_at, created_at, company_id, companies(name), deliveries(*)')
           .gte('updated_at', twoDaysAgoISO);
 
         if (user?.id) {
@@ -95,19 +96,17 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
 
         if (oData && oData.length > 0) {
           oData.forEach((ord: any) => {
-            const cfg = ORDER_STATUS_CONFIG[ord.status];
-            if (cfg) {
-              const companyName = ord.companies?.name ? ` em ${ord.companies.name}` : '';
-              orderItems.push({
-                id: `order-notif-${ord.id}-${ord.status}`,
-                title: cfg.title,
-                message: `${cfg.desc} (Pedido #${ord.id.slice(0, 8)}${companyName})`,
-                emoji: cfg.emoji,
-                created_at: ord.updated_at || ord.created_at,
-                type: 'order_status',
-                order_id: ord.id
-              });
-            }
+            const computed = getMarketplaceStatus(ord);
+            const companyName = ord.companies?.name ? ` em ${ord.companies.name}` : '';
+            orderItems.push({
+              id: `order-notif-${ord.id}-${computed.statusKey}`,
+              title: computed.title,
+              message: `${computed.label} (Pedido #${ord.id.slice(0, 8)}${companyName})`,
+              emoji: computed.statusKey === 'delivered' ? '🎉' : computed.statusKey === 'delivering' ? '🚚' : computed.statusKey === 'ready' ? '📦' : computed.statusKey === 'preparing' ? '👨‍🍳' : '✅',
+              created_at: ord.updated_at || ord.created_at,
+              type: 'order_status',
+              order_id: ord.id
+            });
           });
         }
       } catch (e) {

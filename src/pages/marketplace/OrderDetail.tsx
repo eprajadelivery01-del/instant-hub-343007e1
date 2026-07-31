@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, MessageCircle, MapPin, Banknote, Smartphone, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { OrderStoreChat } from '@/components/marketplace/OrderStoreChat';
+import { getMarketplaceStatus } from '@/utils/orderStatusResolver';
 
 const statusSteps = ['pending', 'confirmed', 'preparing', 'ready', 'delivering', 'delivered'];
 
@@ -200,29 +201,9 @@ export default function OrderDetail() {
     );
   }
 
-  const currentOrderStatus =
-    (delivery?.status === 'completed' || delivery?.status === 'delivered') ? 'delivered' :
-    (delivery?.status === 'in_route' || delivery?.status === 'in_transit' || delivery?.status === 'collecting' || delivery?.status === 'accepted') ? 'in_route' :
-    order.status || 'pending';
-  const isCompleted = currentOrderStatus === 'delivered' || currentOrderStatus === 'completed';
-  
-  // Mapeamos status similares para os mesmos steps lógicos para a UI não se confundir
-  const normalizedStatus = 
-    currentOrderStatus === 'in_route' || currentOrderStatus === 'in_transit' || currentOrderStatus === 'collecting' ? 'delivering' :
-    currentOrderStatus === 'completed' ? 'delivered' :
-    currentOrderStatus === 'accepted' ? 'confirmed' :
-    currentOrderStatus;
-
-  const currentStepIndex = statusSteps.indexOf(normalizedStatus);
-
-  // Derivações textuais corretas por status
-  let title = "Seu pedido foi solicitado";
-  if (normalizedStatus === 'confirmed') title = "O lojista está confirmando o pedido";
-  if (normalizedStatus === 'preparing') title = "Seu pedido está sendo preparado";
-  if (normalizedStatus === 'ready') title = "Seu pedido está pronto para entrega!";
-  if (normalizedStatus === 'delivering') title = "O entregador está a caminho";
-  if (normalizedStatus === 'delivered') title = "Seu pedido foi entregue";
-  if (normalizedStatus === 'cancelled') title = "Pedido Cancelado";
+  const computedStatus = getMarketplaceStatus({ order, delivery, deliveries: delivery ? [delivery] : [] });
+  const title = computedStatus.title;
+  const currentStepIndex = computedStatus.stepRank;
 
   // Gera código aleatório (mock) com base no ID
   const deliveryCode = id ? parseInt(id.replace(/[^0-9]/g, '').substring(0, 4)) || 6656 : 6656;
