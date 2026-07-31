@@ -88,6 +88,9 @@ export function useOrderNotifications() {
       vibration: true,
     }).then(() => {
       console.log('[Push] Canal nativo marketplace_orders criado com sucesso!');
+      PushNotifications.listChannels().then(channels => {
+        console.log('[Push] CANAIS EXISTENTES NO DISPOSITIVO:', JSON.stringify(channels));
+      }).catch(e => console.warn('[Push] Erro ao listar canais:', e));
     }).catch(e => console.warn('[Push] Erro ao criar canal marketplace_orders:', e));
 
     PushNotifications.requestPermissions().then((result) => {
