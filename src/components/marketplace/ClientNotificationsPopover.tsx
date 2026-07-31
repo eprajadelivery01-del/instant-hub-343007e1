@@ -40,6 +40,7 @@ interface ClientNotificationsPopoverProps {
 
 export function ClientNotificationsPopover({ className }: ClientNotificationsPopoverProps) {
   const { user } = useAuth();
+  const userOrderIdsRef = useRef<Set<string>>(new Set());
   const [notifications, setNotifications] = useState<MarketingNotifItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -212,8 +213,8 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
             } catch {}
 
             const isMyDelivery =
-              (del.order_id && myOrderIds.includes(del.order_id)) ||
-              (user && (del.customer_id === user.id || del.user_id === user.id));
+              Boolean(del.order_id) &&
+              (myOrderIds.includes(del.order_id) || userOrderIdsRef.current.has(del.order_id));
 
             if (isMyDelivery && del.status) {
               const cfg = ORDER_STATUS_CONFIG[del.status];

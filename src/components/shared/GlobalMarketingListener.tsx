@@ -24,7 +24,26 @@ const statusMessages: Record<string, { title: string; description: string; icon:
 
 export function GlobalMarketingListener() {
   const { user } = useAuth();
-  const swRegRef = useRef<ServiceWorkerRegistration | null>(null);
+  const userOrderIdsRef = useRef<Set<string>>(new Set());
+
+  // Sincroniza automaticamente todos os IDs de pedidos do usuário logado no localStorage e na Ref
+  useEffect(() => {
+    if (!user?.id) return;
+    supabase
+      .from('orders')
+      .select('id')
+      .or(`customer_id.eq.${user.id},user_id.eq.${user.id}`)
+      .then(({ data }) => {
+        if (data) {
+          data.forEach(o => userOrderIdsRef.current.add(o.id));
+          try {
+            const recent = JSON.parse(localStorage.getItem('@epraja_recent_orders') || '[]');
+            const merged = Array.from(new Set([...recent, ...data.map(o => o.id)]));
+            localStorage.setItem('@epraja_recent_orders', JSON.stringify(merged));
+          } catch {}
+        }
+      });
+  }, [user?.id]);
 
   // 1. Configura canal de notificações do Android com som padrão e alta prioridade
   useEffect(() => {
@@ -254,8 +273,8 @@ export function GlobalMarketingListener() {
           } catch {}
 
           const isMyDelivery =
-            (delivery.order_id && myOrderIds.includes(delivery.order_id)) ||
-            (user && (delivery.customer_id === user.id || delivery.user_id === user.id));
+            Boolean(delivery.order_id) &&
+            (myOrderIds.includes(delivery.order_id) || userOrderIdsRef.current.has(delivery.order_id));
 
           console.log('[Realtime Delivery Update]', { deliveryId: delivery.id, status: delivery.status, isMyDelivery, userId: user?.id });
 
