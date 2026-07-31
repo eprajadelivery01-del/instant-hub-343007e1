@@ -9,17 +9,18 @@ export interface ComputedOrderStatus {
 
 /**
  * FUNÇÃO ÚNICA E CENTRALIZADA DE RESOLUÇÃO DE STATUS DO MARKETPLACE
- * Obrigatória em todas as telas:
- * - Meus Pedidos (Orders.tsx)
- * - Detalhes do Pedido (OrderDetail.tsx)
- * - Central de Notificações (ClientNotificationsPopover.tsx)
- * - Push Notifications (useOrderNotifications.ts)
- * - Histórico (Orders.tsx)
+ * REGRA EXPLICITA:
+ * IGNORA COMPLETAMENTE: 'accepted', 'collecting', 'broadcasted', 'pending', 'draft' da tabela deliveries.
+ * O cliente vê APENAS:
+ * 1. Pedido confirmado
+ * 2. Preparando seu pedido
+ * 3. Pedido pronto
+ * 4. Saiu para entrega (apenas se orders.status in ('delivering', 'in_route') ou delivery_requested || delivery.status in ('in_route', 'in_transit', 'delivering'))
+ * 5. Pedido entregue
  */
 export function getMarketplaceStatus(orderOrPayload: any): ComputedOrderStatus {
   let deliveryObj = null;
 
-  // Extrai delivery relation seja de array ou objeto único
   if (Array.isArray(orderOrPayload?.deliveries) && orderOrPayload.deliveries.length > 0) {
     const sorted = [...orderOrPayload.deliveries].sort((a, b) => {
       const timeA = new Date(a.updated_at || a.created_at || 0).getTime();
@@ -35,6 +36,7 @@ export function getMarketplaceStatus(orderOrPayload: any): ComputedOrderStatus {
 
   const deliveryStatus = deliveryObj?.status;
   const orderStatus = orderOrPayload?.status || orderOrPayload?.order?.status || 'pending';
+  const deliveryRequested = orderOrPayload?.delivery_requested || orderOrPayload?.order?.delivery_requested;
 
   // 1. Pedido Entregue / Concluído / Cancelado -> Histórico
   if (
@@ -61,35 +63,32 @@ export function getMarketplaceStatus(orderOrPayload: any): ComputedOrderStatus {
     };
   }
 
-  // 2. 🚚 SE EXISTIR QUALQUER REGISTRO ATIVO NA TABELA deliveries -> "Saiu para entrega"
-  if (deliveryStatus && !['cancelled'].includes(deliveryStatus)) {
+  // 2. 🚚 SAIU PARA ENTREGA:
+  // Apenas se a loja/sistema colocar orders.status = 'delivering' / 'in_route',
+  // ou se delivery_requested for verdadeiro,
+  // ou se a corrida estiver de fato em trânsito ('in_route', 'in_transit', 'delivering')
+  // IGNORA 'accepted', 'collecting', 'broadcasted', 'pending', 'draft'
+  if (
+    deliveryRequested ||
+    ['delivering', 'in_route'].includes(orderStatus) ||
+    ['in_route', 'in_transit', 'delivering'].includes(deliveryStatus)
+  ) {
     return {
       statusKey: 'delivering',
       label: 'Saiu para entrega',
-      title: 'O entregador está a caminho com seu pedido!',
+      title: 'Saiu para entrega',
       isFinished: false,
       color: 'bg-primary animate-pulse',
       stepRank: 4,
     };
   }
 
-  // 3. Fallbacks com base na tabela orders
-  if (['delivering', 'in_route'].includes(orderStatus)) {
-    return {
-      statusKey: 'delivering',
-      label: 'Saiu para entrega',
-      title: 'O entregador está a caminho com seu pedido!',
-      isFinished: false,
-      color: 'bg-primary animate-pulse',
-      stepRank: 4,
-    };
-  }
-
+  // 3. Status normais da loja
   if (orderStatus === 'ready') {
     return {
       statusKey: 'ready',
       label: 'Pedido pronto',
-      title: 'Seu pedido está pronto para entrega!',
+      title: 'Seu pedido está pronto',
       isFinished: false,
       color: 'bg-green-500',
       stepRank: 3,
@@ -111,7 +110,7 @@ export function getMarketplaceStatus(orderOrPayload: any): ComputedOrderStatus {
     return {
       statusKey: 'confirmed',
       label: 'Pedido confirmado',
-      title: 'O lojista confirmou o seu pedido',
+      title: 'Pedido confirmado',
       isFinished: false,
       color: 'bg-primary',
       stepRank: 1,
