@@ -223,27 +223,19 @@ export function GlobalMarketingListener() {
             )) ||
             myOrderIds.includes(order.id);
 
-          console.log("[Realtime Order Update]", {
-            event: "UPDATE",
-            orderId: order.id,
-            status: order.status,
-            customer_id: order.customer_id,
-            user_id: order.user_id,
-            userId: user?.id,
-            isMyOrder
-          });
+          console.log("[TESTE] REALTIME ORDER UPDATE:", order.id, "STATUS:", order.status, "IS_MY_ORDER:", isMyOrder);
 
           if (!isMyOrder) return;
 
           const newStatus = order.status;
           const oldStatus = payload.old?.status;
 
-          console.log("STATUS RECEBIDO:", newStatus);
+          console.log("[TESTE] STATUS ATUAL:", newStatus);
 
           if (newStatus && newStatus !== oldStatus) {
             const msg = statusMessages[newStatus];
             if (msg) {
-              console.log("REALTIME RECEBIDO - DISPARANDO NOTIFICAÇÃO:", msg);
+              console.log("[TESTE] PUSH RECEBIDO - NOTIFICAÇÃO SALVA E TOAST EXIBIDO:", msg);
               playNotificationAudio();
 
               triggerNativeNotification({
@@ -276,19 +268,19 @@ export function GlobalMarketingListener() {
             Boolean(delivery.order_id) &&
             (myOrderIds.includes(delivery.order_id) || userOrderIdsRef.current.has(delivery.order_id));
 
-          console.log('[Realtime Delivery Update]', { deliveryId: delivery.id, status: delivery.status, isMyDelivery, userId: user?.id });
+          console.log('[TESTE] REALTIME DELIVERY UPDATE:', { deliveryId: delivery.id, orderId: delivery.order_id, status: delivery.status, isMyDelivery });
 
           if (!isMyDelivery) return;
 
           const newStatus = delivery.status;
           const oldStatus = payload.old?.status;
 
-          console.log("DELIVERY STATUS:", newStatus);
+          console.log("[TESTE] DELIVERY STATUS:", newStatus);
 
           if (newStatus && newStatus !== oldStatus) {
             const msg = statusMessages[newStatus];
             if (msg) {
-              console.log("PUSH ENVIADO PARA O CLIENTE (Delivery status):", msg);
+              console.log("[TESTE] PUSH ENVIADO PARA O CLIENTE (Delivery status):", msg);
               playNotificationAudio();
 
               triggerNativeNotification({
