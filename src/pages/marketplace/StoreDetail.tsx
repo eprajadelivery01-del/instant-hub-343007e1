@@ -233,11 +233,17 @@ export default function StoreDetail() {
     checkDeliveryFee();
   }, [user?.id, company?.id, company?.delivery_fee, company?.delivery_regions_pricing]);
 
-  const categories = useMemo(() => {
-    const cats = [...new Set(products.map((product) => product.category))];
-    const hasFeatured = products.some(p => p.is_featured);
-    return hasFeatured ? ['Destaques', ...cats] : cats;
+  const featuredProductsList = useMemo(() => {
+    const featured = products.filter(p => p.is_featured);
+    if (featured.length > 0) return featured;
+    return products.slice(0, 3);
   }, [products]);
+
+  const categories = useMemo(() => {
+    const cats = [...new Set(products.map((product) => product.category))].filter(Boolean);
+    return products.length > 0 ? ['Destaques', ...cats] : cats;
+  }, [products]);
+
   const filteredProducts = useMemo(
     () => products.filter((product) =>
       (product.name ?? '').toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -621,7 +627,9 @@ export default function StoreDetail() {
             )}
             {categories.map((category) => {
             const categoryProducts = category === 'Destaques' 
-              ? filteredProducts.filter(p => p.is_featured)
+              ? (searchQuery 
+                  ? featuredProductsList.filter(p => (p.name ?? '').toLowerCase().includes(searchQuery.toLowerCase()) || (p.description ?? '').toLowerCase().includes(searchQuery.toLowerCase()))
+                  : featuredProductsList)
               : filteredProducts.filter((product) => product.category === category);
             if (categoryProducts.length === 0 && searchQuery) return null;
 
