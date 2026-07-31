@@ -67,7 +67,7 @@ export function useOrderNotifications() {
     }).catch(e => console.warn("[Push] Falha ao pedir permissões de push:", e));
 
     PushNotifications.addListener("registration", (token) => {
-      console.log("TOKEN FCM:", token.value);
+      console.log("[Firebase] FCM Token obtido:", token.value);
       if (user?.id) {
         Promise.all([
           supabase.from("customers").update({ fcm_token: token.value }).or(`user_id.eq.${user.id},id.eq.${user.id}`),

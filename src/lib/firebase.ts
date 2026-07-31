@@ -11,7 +11,7 @@ const firebaseConfig = {
 };
 
 export const app = initializeApp(firebaseConfig);
-console.log("[Firebase] FirebaseApp inicializado para o projeto:", firebaseConfig.projectId);
+console.log("[Firebase] Firebase App inicializado para o projeto:", firebaseConfig.projectId);
 
 export let analytics: any = null;
 
@@ -19,12 +19,15 @@ if (typeof window !== "undefined") {
   isSupported().then((supported) => {
     if (supported) {
       analytics = getAnalytics(app);
+      console.log("[Firebase] Analytics ativo");
+      
       logEvent(analytics, "app_open");
+      console.log("[Firebase] Evento app_open enviado");
+
       logEvent(analytics, "screen_view", { screen_name: "Marketplace_Home" });
-      logEvent(analytics, "notification_test");
-      console.log("[Firebase Analytics] Eventos inicializados e reportando ao painel em tempo real!");
+      console.log("[Firebase] Evento screen_view enviado");
     }
   }).catch((err) => {
-    console.warn("[Firebase Analytics] Analytics não suportado neste ambiente:", err);
+    console.warn("[Firebase] Falha ao verificar suporte a Analytics:", err);
   });
 }
