@@ -2,6 +2,7 @@ import React, { Component, ErrorInfo, ReactNode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
+import "@/lib/firebase";
 import { initializeGlobalErrorHandlers, reportErrorToTelegram } from "@/services/logger";
 import { toast as sonnerToast } from "sonner";
 
