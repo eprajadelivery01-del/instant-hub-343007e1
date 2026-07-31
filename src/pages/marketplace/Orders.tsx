@@ -50,44 +50,37 @@ export function getComputedOrderStatus(order: any) {
   const deliveryStatus = deliveryObj?.status;
   const orderStatus = order?.status;
 
-  // 🔴 REGRA DE SOBREPOSIÇÃO: SE deliveries.status EXISTIR, ELE TEM PRIORIDADE ABSOLUTA
-  if (deliveryStatus) {
-    if (['delivered', 'completed'].includes(deliveryStatus)) {
-      return { statusKey: 'delivered', label: 'Pedido entregue', isFinished: true, color: 'bg-green-500' };
-    }
-    if (['in_route', 'in_transit', 'delivering'].includes(deliveryStatus)) {
-      return { statusKey: 'in_route', label: 'Saiu para entrega', isFinished: false, color: 'bg-primary animate-pulse' };
-    }
-    if (deliveryStatus === 'collecting') {
-      return { statusKey: 'collecting', label: 'Entregador na loja', isFinished: false, color: 'bg-yellow-500 animate-pulse' };
-    }
-    if (['accepted', 'broadcasted'].includes(deliveryStatus)) {
-      return { statusKey: 'accepted', label: 'Entregador aceitou', isFinished: false, color: 'bg-yellow-500' };
-    }
-  }
-
-  // 🟡 FALLBACK: AVALIA orders.status SE NÃO HOUVER DELIVERY OU delivery.status ATIVO
-  if (['delivered', 'completed', 'cancelled'].includes(orderStatus)) {
+  // 1. Pedido Entregue / Concluído -> Histórico
+  if (
+    ['delivered', 'completed'].includes(deliveryStatus) ||
+    ['delivered', 'completed', 'cancelled'].includes(orderStatus)
+  ) {
     if (orderStatus === 'cancelled') {
-      return { statusKey: 'cancelled', label: 'Cancelado', isFinished: true, color: 'bg-destructive' };
+      return { statusKey: 'cancelled', label: 'Pedido cancelado', isFinished: true, color: 'bg-destructive' };
     }
     return { statusKey: 'delivered', label: 'Pedido entregue', isFinished: true, color: 'bg-green-500' };
   }
 
+  // 2. 🚚 SE EXISTIR QUALQUER REGISTRO ATIVO NA TABELA deliveries -> "Saiu para entrega"
+  if (deliveryStatus && !['cancelled'].includes(deliveryStatus)) {
+    return { statusKey: 'delivering', label: 'Saiu para entrega', isFinished: false, color: 'bg-primary animate-pulse' };
+  }
+
+  // 3. Fallbacks de status da tabela orders
   if (['delivering', 'in_route'].includes(orderStatus)) {
-    return { statusKey: 'in_route', label: 'Saiu para entrega', isFinished: false, color: 'bg-primary animate-pulse' };
+    return { statusKey: 'delivering', label: 'Saiu para entrega', isFinished: false, color: 'bg-primary animate-pulse' };
   }
 
   if (orderStatus === 'ready') {
-    return { statusKey: 'ready', label: 'Pronto para retirada', isFinished: false, color: 'bg-green-500' };
+    return { statusKey: 'ready', label: 'Pedido pronto', isFinished: false, color: 'bg-green-500' };
   }
 
   if (orderStatus === 'preparing') {
-    return { statusKey: 'preparing', label: 'Preparando', isFinished: false, color: 'bg-primary' };
+    return { statusKey: 'preparing', label: 'Preparando seu pedido', isFinished: false, color: 'bg-primary' };
   }
 
   if (orderStatus === 'confirmed') {
-    return { statusKey: 'confirmed', label: 'Confirmado', isFinished: false, color: 'bg-primary' };
+    return { statusKey: 'confirmed', label: 'Pedido confirmado', isFinished: false, color: 'bg-primary' };
   }
 
   return { statusKey: 'pending', label: 'Aguardando confirmação', isFinished: false, color: 'bg-warning' };
