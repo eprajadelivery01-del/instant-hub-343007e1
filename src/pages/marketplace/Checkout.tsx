@@ -225,10 +225,10 @@ export default function Checkout() {
               }
            }
            
-           // 3. Se não tem tabela e nem preço personalizado, puxa o preço genérico da região
+           // 3. Se não tem tabela e nem preço personalizado, puxa o preço genérico da região (priorizando price)
            const { data: destRegion } = await supabase.from('regions').select('delivery_fee, price').eq('id', destRegionId).single();
            if (destRegion) {
-              const rPrice = Number(destRegion.delivery_fee || destRegion.price || 0);
+              const rPrice = Number((destRegion.price && Number(destRegion.price) > 0) ? destRegion.price : (destRegion.delivery_fee || 0));
               if (rPrice > 0) {
                  setDeliveryFee(rPrice);
                  setLoadingFee(false);
@@ -237,15 +237,15 @@ export default function Checkout() {
            }
         }
 
-        // Lógica de fallback para taxa padrão da loja (se configurou entrega fixa)
-        if (dbCompany?.delivery_mode === 'fixed_fee' && dbCompany?.delivery_fee != null) {
+        // Lógica de fallback para taxa padrão da loja (se configurou entrega fixa com taxa > 0)
+        if (dbCompany?.delivery_mode === 'fixed_fee' && dbCompany?.delivery_fee != null && Number(dbCompany.delivery_fee) > 0) {
           setDeliveryFee(Number(dbCompany.delivery_fee));
           setLoadingFee(false);
           return;
         }
 
-        // Último caso: Se a loja tem delivery_fee explícito no banco, usa. Senão, mantém null ("Consultar").
-        if (dbCompany?.delivery_fee != null && Number(dbCompany.delivery_fee) >= 0) {
+        // Se a loja tem taxa base explícita no banco maior que 0, usa. Senão, mantém null ("Consultar").
+        if (dbCompany?.delivery_fee != null && Number(dbCompany.delivery_fee) > 0) {
           setDeliveryFee(Number(dbCompany.delivery_fee));
         } else {
           setDeliveryFee(null);
