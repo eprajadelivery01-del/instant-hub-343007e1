@@ -160,11 +160,12 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
             if (computed.statusKey === 'pending') return;
 
             const companyName = ord.companies?.name ? ` em ${ord.companies.name}` : '';
+            const emoji = computed.statusKey === 'delivered' ? '🎉' : computed.statusKey === 'delivering' ? '🚚' : computed.statusKey === 'ready' ? '📦' : computed.statusKey === 'preparing' ? '👨‍🍳' : computed.statusKey === 'confirmed' ? '✅' : '❌';
             const notifItem: MarketingNotifItem = {
               id: `order-notif-${ord.id}-${computed.statusKey}`,
-              title: computed.title,
-              message: `${computed.label} (Pedido #${ord.id.slice(0, 8)}${companyName})`,
-              emoji: computed.statusKey === 'delivered' ? '🎉' : computed.statusKey === 'delivering' ? '🚚' : computed.statusKey === 'ready' ? '📦' : computed.statusKey === 'preparing' ? '👨‍🍳' : computed.statusKey === 'confirmed' ? '✅' : '📦',
+              title: `${emoji} ${computed.title.replace(/^(📦|🚚|🎉|✅|👨‍🍳|❌)\s*/, '')}`,
+              message: `${computed.description} (Pedido #${ord.id.slice(0, 8)}${companyName})`,
+              emoji: emoji,
               created_at: ord.updated_at || ord.created_at,
               type: 'order_status',
               order_id: ord.id
@@ -220,15 +221,15 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
         )
         .subscribe();
 
-      // Ouve alterações nos pedidos do cliente em tempo real
+      // Ouve alterações nos pedidos do cliente em tempo real usando getMarketplaceStatus
       const oChannelId = `client-orders-popover-${Math.random().toString(36).substring(2, 9)}`;
       oChannel = supabase
         .channel(oChannelId)
         .on(
           'postgres_changes',
           { event: 'UPDATE', schema: 'public', table: 'orders' },
-          (payload) => {
-            const ord = payload.new as any;
+          async (payload) => {
+            const rawOrd = payload.new as any;
             let myOrderIds: string[] = [];
             try {
               myOrderIds = JSON.parse(localStorage.getItem('@epraja_recent_orders') || '[]');
@@ -236,24 +237,34 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
 
             const isMyOrder =
               (user && (
-                ord.customer_id === user.id || 
-                ord.user_id === user.id || 
-                ord.client_id === user.id || 
-                ord.buyer_id === user.id
+                rawOrd.customer_id === user.id || 
+                rawOrd.user_id === user.id || 
+                rawOrd.client_id === user.id || 
+                rawOrd.buyer_id === user.id
               )) ||
-              myOrderIds.includes(ord.id);
+              myOrderIds.includes(rawOrd.id);
 
-            if (isMyOrder && ord.status) {
-              const cfg = ORDER_STATUS_CONFIG[ord.status];
-              if (cfg) {
+            if (isMyOrder && rawOrd.status && rawOrd.status !== 'pending') {
+              const { data: ord } = await supabase
+                .from('orders')
+                .select('*, companies(name), deliveries(*)')
+                .eq('id', rawOrd.id)
+                .single();
+
+              const targetOrd = ord || rawOrd;
+              const computed = getMarketplaceStatus(targetOrd);
+
+              if (computed.statusKey !== 'pending') {
+                const companyName = targetOrd.companies?.name ? ` em ${targetOrd.companies.name}` : '';
+                const emoji = computed.statusKey === 'delivered' ? '🎉' : computed.statusKey === 'delivering' ? '🚚' : computed.statusKey === 'ready' ? '📦' : computed.statusKey === 'preparing' ? '👨‍🍳' : computed.statusKey === 'confirmed' ? '✅' : '❌';
                 const newItem: MarketingNotifItem = {
-                  id: `order-notif-rt-${ord.id}-${ord.status}-${Date.now()}`,
-                  title: cfg.title,
-                  message: `${cfg.desc} (Pedido #${ord.id.slice(0, 8)})`,
-                  emoji: cfg.emoji,
+                  id: `order-notif-rt-${targetOrd.id}-${computed.statusKey}-${Date.now()}`,
+                  title: `${emoji} ${computed.title.replace(/^(📦|🚚|🎉|✅|👨‍🍳|❌)\s*/, '')}`,
+                  message: `${computed.description} (Pedido #${targetOrd.id.slice(0, 8)}${companyName})`,
+                  emoji: emoji,
                   created_at: new Date().toISOString(),
                   type: 'order_status',
-                  order_id: ord.id
+                  order_id: targetOrd.id
                 };
                 persistNotification(newItem);
                 setNotifications((prev) => [newItem, ...prev]);
@@ -265,7 +276,7 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
         .on(
           'postgres_changes',
           { event: 'UPDATE', schema: 'public', table: 'deliveries' },
-          (payload) => {
+          async (payload) => {
             const del = payload.new as any;
             let myOrderIds: string[] = [];
             try {
@@ -277,20 +288,30 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
               (myOrderIds.includes(del.order_id) || userOrderIdsRef.current.has(del.order_id));
 
             if (isMyDelivery && del.status) {
-              const cfg = ORDER_STATUS_CONFIG[del.status];
-              if (cfg) {
-                const newItem: MarketingNotifItem = {
-                  id: `del-notif-rt-${del.id}-${del.status}-${Date.now()}`,
-                  title: cfg.title,
-                  message: `${cfg.desc} (Pedido #${del.order_id.slice(0, 8)})`,
-                  emoji: cfg.emoji,
-                  created_at: new Date().toISOString(),
-                  type: 'order_status',
-                  order_id: del.order_id
-                };
-                persistNotification(newItem);
-                setNotifications((prev) => [newItem, ...prev]);
-                setUnreadCount((prev) => prev + 1);
+              const { data: targetOrd } = await supabase
+                .from('orders')
+                .select('*, companies(name), deliveries(*)')
+                .eq('id', del.order_id)
+                .single();
+
+              if (targetOrd) {
+                const computed = getMarketplaceStatus(targetOrd);
+                if (computed.statusKey !== 'pending') {
+                  const companyName = targetOrd.companies?.name ? ` em ${targetOrd.companies.name}` : '';
+                  const emoji = computed.statusKey === 'delivered' ? '🎉' : computed.statusKey === 'delivering' ? '🚚' : computed.statusKey === 'ready' ? '📦' : computed.statusKey === 'preparing' ? '👨‍🍳' : computed.statusKey === 'confirmed' ? '✅' : '❌';
+                  const newItem: MarketingNotifItem = {
+                    id: `del-notif-rt-${del.id}-${computed.statusKey}-${Date.now()}`,
+                    title: `${emoji} ${computed.title.replace(/^(📦|🚚|🎉|✅|👨‍🍳|❌)\s*/, '')}`,
+                    message: `${computed.description} (Pedido #${targetOrd.id.slice(0, 8)}${companyName})`,
+                    emoji: emoji,
+                    created_at: new Date().toISOString(),
+                    type: 'order_status',
+                    order_id: targetOrd.id
+                  };
+                  persistNotification(newItem);
+                  setNotifications((prev) => [newItem, ...prev]);
+                  setUnreadCount((prev) => prev + 1);
+                }
               }
             }
           }
