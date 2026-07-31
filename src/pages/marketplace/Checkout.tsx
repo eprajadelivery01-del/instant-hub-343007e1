@@ -164,7 +164,7 @@ export default function Checkout() {
         
         let destRegionId = (addr as any).region_id;
 
-        // Se o endereço NÃO tiver region_id (ex: GPS), descobrir via polígonãos
+        // Se o endereço NÃO tiver region_id (ex: GPS), descobrir via polígonos
         if (!destRegionId && addr.latitude && addr.longitude) {
            const result = await calculateDeliveryFee(addr.latitude, addr.longitude, supabase, []);
            if (result.regionId) destRegionId = result.regionId;
@@ -175,6 +175,23 @@ export default function Checkout() {
              setLoadingFee(false);
              return;
            }
+        }
+
+        // Se ainda não tiver region_id, tentar casar pelo nome do bairro ou cidade nas regiões do banco
+        if (!destRegionId && (addr.neighborhood || addr.city)) {
+          const searchName = (addr.neighborhood || addr.city || '').trim().toLowerCase();
+          const { data: allRegions } = await supabase.from('regions').select('id, name');
+          if (allRegions && allRegions.length > 0) {
+            const matched = allRegions.find(r => 
+              searchName.includes(r.name.toLowerCase()) || r.name.toLowerCase().includes(searchName)
+            );
+            if (matched) destRegionId = matched.id;
+          }
+        }
+
+        // Se ainda não tiver region_id, usar a região padrão da própria loja
+        if (!destRegionId && dbCompany?.region_id) {
+          destRegionId = dbCompany.region_id;
         }
 
         if (destRegionId) {
