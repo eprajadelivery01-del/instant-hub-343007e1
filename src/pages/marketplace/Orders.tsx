@@ -36,7 +36,17 @@ const statusColors: Record<string, string> = {
 };
 
 export function getComputedOrderStatus(order: any) {
-  const deliveryObj = Array.isArray(order?.deliveries) ? order.deliveries[0] : order?.deliveries;
+  let deliveryObj = null;
+  if (Array.isArray(order?.deliveries) && order.deliveries.length > 0) {
+    const sorted = [...order.deliveries].sort((a, b) => {
+      const timeA = new Date(a.updated_at || a.created_at || 0).getTime();
+      const timeB = new Date(b.updated_at || b.created_at || 0).getTime();
+      return timeB - timeA;
+    });
+    deliveryObj = sorted[0];
+  } else {
+    deliveryObj = order?.deliveries;
+  }
   const deliveryStatus = deliveryObj?.status;
   const orderStatus = order?.status;
 
