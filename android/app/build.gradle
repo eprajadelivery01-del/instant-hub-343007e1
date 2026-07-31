@@ -82,9 +82,9 @@ tasks.whenTaskAdded { task ->
                     from "${buildDir}/outputs/apk/debug/"
                     into fixedOutputDir
                     include "**/*.apk"
-                    rename { "epraja-DEBUG.apk" }
+                    rename { "epraja-marketplace.apk" }
                 }
-                println "✅ APK DE TESTE copiado para: ${fixedOutputDir}/epraja-DEBUG.apk"
+                println "✅ APK MARKETPLACE copiado para: ${fixedOutputDir}/epraja-marketplace.apk"
             } else if (task.name == 'assembleRelease') {
                 copy {
                     from "${buildDir}/outputs/apk/release/"
