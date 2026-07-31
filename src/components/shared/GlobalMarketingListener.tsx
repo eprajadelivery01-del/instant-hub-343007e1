@@ -264,9 +264,12 @@ export function GlobalMarketingListener() {
           const newStatus = delivery.status;
           const oldStatus = payload.old?.status;
 
+          console.log("DELIVERY STATUS:", newStatus);
+
           if (newStatus && newStatus !== oldStatus) {
             const msg = statusMessages[newStatus];
             if (msg) {
+              console.log("PUSH ENVIADO PARA O CLIENTE (Delivery status):", msg);
               playNotificationAudio();
 
               triggerNativeNotification({
