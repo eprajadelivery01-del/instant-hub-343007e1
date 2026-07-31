@@ -135,22 +135,34 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
       } catch {}
 
       try {
-        let orderQuery = supabase
-          .from('orders')
-          .select('id, status, updated_at, created_at, company_id, companies(name), deliveries(*)')
-          .gte('updated_at', twoDaysAgoISO);
+        let oData: any[] = [];
 
-        if (user?.id) {
-          if (myOrderIds.length > 0) {
-            orderQuery = orderQuery.or(`customer_id.eq.${user.id},user_id.eq.${user.id},id.in.(${myOrderIds.join(',')})`);
-          } else {
-            orderQuery = orderQuery.or(`customer_id.eq.${user.id},user_id.eq.${user.id}`);
-          }
-        } else if (myOrderIds.length > 0) {
-          orderQuery = orderQuery.in('id', myOrderIds);
+        // 2a. Se houver IDs salvos no localStorage, busca diretamente por esses IDs
+        if (myOrderIds.length > 0) {
+          const { data: byIds } = await supabase
+            .from('orders')
+            .select('id, status, updated_at, created_at, company_id, companies(name), deliveries(*)')
+            .in('id', myOrderIds)
+            .order('created_at', { ascending: false });
+          if (byIds) oData.push(...byIds);
         }
 
-        const { data: oData } = await orderQuery.order('updated_at', { ascending: false }).limit(10);
+        // 2b. Se o usuário estiver logado, busca também pelos IDs de cliente/user
+        if (user?.id) {
+          const { data: byUser } = await supabase
+            .from('orders')
+            .select('id, status, updated_at, created_at, company_id, companies(name), deliveries(*)')
+            .or(`customer_id.eq.${user.id},user_id.eq.${user.id}`)
+            .order('created_at', { ascending: false })
+            .limit(15);
+          if (byUser) {
+            byUser.forEach(o => {
+              if (!oData.some(existing => existing.id === o.id)) {
+                oData.push(o);
+              }
+            });
+          }
+        }
 
         if (oData && oData.length > 0) {
           const newOrderNotifs: MarketingNotifItem[] = [];
@@ -227,22 +239,24 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
         .channel(oChannelId)
         .on(
           'postgres_changes',
-          { event: 'UPDATE', schema: 'public', table: 'orders' },
+          { event: '*', schema: 'public', table: 'orders' },
           async (payload) => {
-            const rawOrd = payload.new as any;
+            const rawOrd = (payload.new || payload.old) as any;
+            if (!rawOrd || !rawOrd.id) return;
+
             let myOrderIds: string[] = [];
             try {
               myOrderIds = JSON.parse(localStorage.getItem('@epraja_recent_orders') || '[]');
             } catch {}
 
             const isMyOrder =
+              myOrderIds.includes(rawOrd.id) ||
               (user && (
                 rawOrd.customer_id === user.id || 
                 rawOrd.user_id === user.id || 
                 rawOrd.client_id === user.id || 
                 rawOrd.buyer_id === user.id
-              )) ||
-              myOrderIds.includes(rawOrd.id);
+              ));
 
             if (isMyOrder && rawOrd.status && rawOrd.status !== 'pending') {
               const { data: ord } = await supabase
@@ -267,7 +281,7 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
                   order_id: targetOrd.id
                 };
                 persistNotification(newItem);
-                setNotifications((prev) => [newItem, ...prev]);
+                setNotifications((prev) => [newItem, ...prev.filter(n => n.id !== newItem.id)]);
                 setUnreadCount((prev) => prev + 1);
               }
             }
@@ -275,9 +289,11 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
         )
         .on(
           'postgres_changes',
-          { event: 'UPDATE', schema: 'public', table: 'deliveries' },
+          { event: '*', schema: 'public', table: 'deliveries' },
           async (payload) => {
-            const del = payload.new as any;
+            const del = (payload.new || payload.old) as any;
+            if (!del || !del.order_id) return;
+
             let myOrderIds: string[] = [];
             try {
               myOrderIds = JSON.parse(localStorage.getItem('@epraja_recent_orders') || '[]');
@@ -309,7 +325,7 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
                     order_id: targetOrd.id
                   };
                   persistNotification(newItem);
-                  setNotifications((prev) => [newItem, ...prev]);
+                  setNotifications((prev) => [newItem, ...prev.filter(n => n.id !== newItem.id)]);
                   setUnreadCount((prev) => prev + 1);
                 }
               }
