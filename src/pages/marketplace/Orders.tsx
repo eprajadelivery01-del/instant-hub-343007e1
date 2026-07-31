@@ -33,6 +33,8 @@ const statusColors: Record<string, string> = {
   delivered: 'bg-green-500',
   completed: 'bg-green-500',
   cancelled: 'bg-destructive',
+};
+
 import { getMarketplaceStatus } from '@/utils/orderStatusResolver';
 
 export default function Orders() {
