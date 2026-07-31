@@ -48,11 +48,51 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
 
+  const STORAGE_KEY = '@epraja_notification_history';
+  const FORTY_EIGHT_HOURS_MS = 48 * 60 * 60 * 1000;
+
+  // --- Helpers para persistir histórico de notificações no localStorage ---
+  const loadPersistedNotifications = (): MarketingNotifItem[] => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return [];
+      const parsed: MarketingNotifItem[] = JSON.parse(raw);
+      const now = Date.now();
+      // Remove notificações com mais de 48 horas
+      return parsed.filter(n => {
+        const t = new Date(n.created_at).getTime();
+        return !isNaN(t) && (now - t) <= FORTY_EIGHT_HOURS_MS;
+      });
+    } catch {
+      return [];
+    }
+  };
+
+  const persistNotification = (item: MarketingNotifItem) => {
+    const existing = loadPersistedNotifications();
+    // Evita duplicação exata pelo ID
+    if (existing.some(n => n.id === item.id)) return;
+    const updated = [item, ...existing]
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      .slice(0, 100); // Limita a 100 entradas
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+  };
+
+  const persistMultipleNotifications = (items: MarketingNotifItem[]) => {
+    const existing = loadPersistedNotifications();
+    const existingIds = new Set(existing.map(n => n.id));
+    const newItems = items.filter(n => !existingIds.has(n.id));
+    if (newItems.length === 0) return;
+    const updated = [...newItems, ...existing]
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      .slice(0, 100);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+  };
+
   const fetchNotifications = async () => {
     try {
       setLoading(true);
 
-      const FORTY_EIGHT_HOURS_MS = 48 * 60 * 60 * 1000;
       const twoDaysAgoISO = new Date(Date.now() - FORTY_EIGHT_HOURS_MS).toISOString();
 
       // 1. Busca notificações de marketing e cupons dos últimos 2 dias (48 horas)
@@ -68,13 +108,15 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
         type: 'marketing'
       }));
 
-      // 2. Busca atualizações de pedidos do cliente dos últimos 2 dias (48 horas)
+      // Persiste marketing no localStorage para não perder ao recarregar
+      persistMultipleNotifications(marketingItems);
+
+      // 2. Busca pedidos recentes do cliente para gerar notificações do status ATUAL
+      //    (o histórico de status anteriores já está preservado no localStorage)
       let myOrderIds: string[] = [];
       try {
         myOrderIds = JSON.parse(localStorage.getItem('@epraja_recent_orders') || '[]');
       } catch {}
-
-      let orderItems: MarketingNotifItem[] = [];
 
       try {
         let orderQuery = supabase
@@ -95,41 +137,39 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
         const { data: oData } = await orderQuery.order('updated_at', { ascending: false }).limit(10);
 
         if (oData && oData.length > 0) {
+          const newOrderNotifs: MarketingNotifItem[] = [];
           oData.forEach((ord: any) => {
             const computed = getMarketplaceStatus(ord);
             const companyName = ord.companies?.name ? ` em ${ord.companies.name}` : '';
-            orderItems.push({
+            const notifItem: MarketingNotifItem = {
               id: `order-notif-${ord.id}-${computed.statusKey}`,
               title: computed.title,
               message: `${computed.label} (Pedido #${ord.id.slice(0, 8)}${companyName})`,
-              emoji: computed.statusKey === 'delivered' ? '🎉' : computed.statusKey === 'delivering' ? '🚚' : computed.statusKey === 'ready' ? '📦' : computed.statusKey === 'preparing' ? '👨‍🍳' : '✅',
+              emoji: computed.statusKey === 'delivered' ? '🎉' : computed.statusKey === 'delivering' ? '🚚' : computed.statusKey === 'ready' ? '📦' : computed.statusKey === 'preparing' ? '👨‍🍳' : computed.statusKey === 'confirmed' ? '✅' : '📥',
               created_at: ord.updated_at || ord.created_at,
               type: 'order_status',
               order_id: ord.id
-            });
+            };
+            newOrderNotifs.push(notifItem);
           });
+          // Persiste status atuais dos pedidos (sem substituir os históricos)
+          persistMultipleNotifications(newOrderNotifs);
         }
       } catch (e) {
         console.warn('[ClientNotificationsPopover] Erro ao carregar pedidos para notificação:', e);
       }
 
-      // Combina, filtra estritamente por 48 horas e ordena por data mais recente
-      const now = Date.now();
-      const combined = [...orderItems, ...marketingItems]
-        .filter(n => {
-          const itemTime = new Date(n.created_at).getTime();
-          return !isNaN(itemTime) && (now - itemTime) <= FORTY_EIGHT_HOURS_MS;
-        })
-        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      // 3. Carrega TUDO do localStorage (histórico completo preservado + novas)
+      const allPersisted = loadPersistedNotifications();
 
-      setNotifications(combined);
+      setNotifications(allPersisted);
 
       // Checa contagem de não lidos
       const lastRead = localStorage.getItem('epraja_last_read_notif_time');
       if (!lastRead) {
-        setUnreadCount(combined.length);
+        setUnreadCount(allPersisted.length);
       } else {
-        const unread = combined.filter((n) => new Date(n.created_at) > new Date(lastRead)).length;
+        const unread = allPersisted.filter((n) => new Date(n.created_at) > new Date(lastRead)).length;
         setUnreadCount(unread);
       }
     } catch (e) {
@@ -154,7 +194,8 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
           { event: 'INSERT', schema: 'public', table: 'marketing_notifications' },
           (payload) => {
             const newNotif = { ...(payload.new as any), type: 'marketing' } as MarketingNotifItem;
-            setNotifications((prev) => [newNotif, ...prev]);
+            persistNotification(newNotif);
+            setNotifications((prev) => [newNotif, ...prev.filter(n => n.id !== newNotif.id)]);
             setUnreadCount((prev) => prev + 1);
           }
         )
@@ -195,6 +236,7 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
                   type: 'order_status',
                   order_id: ord.id
                 };
+                persistNotification(newItem);
                 setNotifications((prev) => [newItem, ...prev]);
                 setUnreadCount((prev) => prev + 1);
               }
@@ -227,6 +269,7 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
                   type: 'order_status',
                   order_id: del.order_id
                 };
+                persistNotification(newItem);
                 setNotifications((prev) => [newItem, ...prev]);
                 setUnreadCount((prev) => prev + 1);
               }
