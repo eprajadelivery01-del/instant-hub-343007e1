@@ -40,43 +40,42 @@ export function getComputedOrderStatus(order: any) {
   const deliveryStatus = deliveryObj?.status;
   const orderStatus = order?.status;
 
-  // 1. Finalizado / Entregue / Cancelado (Mover para Histórico)
-  if (
-    ['delivered', 'completed'].includes(deliveryStatus) ||
-    ['delivered', 'completed', 'cancelled'].includes(orderStatus)
-  ) {
+  // 🔴 REGRA DE SOBREPOSIÇÃO: SE deliveries.status EXISTIR, ELE TEM PRIORIDADE ABSOLUTA
+  if (deliveryStatus) {
+    if (['delivered', 'completed'].includes(deliveryStatus)) {
+      return { statusKey: 'delivered', label: 'Pedido entregue', isFinished: true, color: 'bg-green-500' };
+    }
+    if (['in_route', 'in_transit', 'delivering'].includes(deliveryStatus)) {
+      return { statusKey: 'in_route', label: 'Saiu para entrega', isFinished: false, color: 'bg-primary animate-pulse' };
+    }
+    if (deliveryStatus === 'collecting') {
+      return { statusKey: 'collecting', label: 'Entregador na loja', isFinished: false, color: 'bg-yellow-500 animate-pulse' };
+    }
+    if (['accepted', 'broadcasted'].includes(deliveryStatus)) {
+      return { statusKey: 'accepted', label: 'Entregador aceitou', isFinished: false, color: 'bg-yellow-500' };
+    }
+  }
+
+  // 🟡 FALLBACK: AVALIA orders.status SE NÃO HOUVER DELIVERY OU delivery.status ATIVO
+  if (['delivered', 'completed', 'cancelled'].includes(orderStatus)) {
     if (orderStatus === 'cancelled') {
       return { statusKey: 'cancelled', label: 'Cancelado', isFinished: true, color: 'bg-destructive' };
     }
-    return { statusKey: 'delivered', label: 'Entregue', isFinished: true, color: 'bg-green-500' };
+    return { statusKey: 'delivered', label: 'Pedido entregue', isFinished: true, color: 'bg-green-500' };
   }
 
-  // 2. Em Rota / Saiu para entrega
-  if (['in_route', 'in_transit'].includes(deliveryStatus) || ['delivering', 'in_route'].includes(orderStatus)) {
-    return { statusKey: 'delivering', label: 'Saiu para entrega', isFinished: false, color: 'bg-primary animate-pulse' };
+  if (['delivering', 'in_route'].includes(orderStatus)) {
+    return { statusKey: 'in_route', label: 'Saiu para entrega', isFinished: false, color: 'bg-primary animate-pulse' };
   }
 
-  // 3. Entregador na Loja (Coletando)
-  if (deliveryStatus === 'collecting') {
-    return { statusKey: 'collecting', label: 'Entregador na loja', isFinished: false, color: 'bg-yellow-500 animate-pulse' };
-  }
-
-  // 4. Entregador a caminho da loja
-  if (['accepted', 'broadcasted'].includes(deliveryStatus)) {
-    return { statusKey: 'accepted', label: 'Entregador a caminho da loja', isFinished: false, color: 'bg-yellow-500' };
-  }
-
-  // 5. Pronto para retirada (Lojista aprontou e aguarda motoboy)
   if (orderStatus === 'ready') {
     return { statusKey: 'ready', label: 'Pronto para retirada', isFinished: false, color: 'bg-green-500' };
   }
 
-  // 6. Preparando
   if (orderStatus === 'preparing') {
     return { statusKey: 'preparing', label: 'Preparando', isFinished: false, color: 'bg-primary' };
   }
 
-  // 7. Confirmado
   if (orderStatus === 'confirmed') {
     return { statusKey: 'confirmed', label: 'Confirmado', isFinished: false, color: 'bg-primary' };
   }
@@ -101,7 +100,7 @@ export default function Orders() {
       try {
         const { data, error } = await supabase
           .from('orders')
-          .select('*, company:companies(*), deliveries(status)')
+          .select('*, company:companies(*), deliveries(*)')
           .or(`customer_id.eq.${user.id},user_id.eq.${user.id}`)
           .order('created_at', { ascending: false });
 
