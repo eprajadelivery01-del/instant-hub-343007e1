@@ -566,10 +566,8 @@ export default function Checkout() {
                     <Loader2 className="h-4 w-4 animate-spin text-primary" />
                   ) : unavailable ? (
                     <span className="text-destructive font-bold text-xs">Indisponível</span>
-                  ) : deliveryFee !== null && deliveryFee > 0 ? (
+                  ) : deliveryFee !== null && deliveryFee >= 0 ? (
                     <span className="font-bold text-sm">R$ {deliveryFee.toFixed(2).replace('.', ',')}</span>
-                  ) : deliveryFee === 0 ? (
-                    <span className="text-[#00A868] font-bold text-sm">Grátis</span>
                   ) : (
                     <span className="text-muted-foreground font-medium text-xs">Consultar</span>
                   )}
@@ -701,19 +699,9 @@ export default function Checkout() {
       {/* Sticky footer Checkout */}
       <div className="fixed bottom-0 left-0 right-0 border-t border-border bg-card p-4 safe-area-bottom shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-40">
         <div className="mx-auto max-w-lg space-y-2">
-          {deliveryFee !== null && deliveryFee > 0 ? (
-             <p className="text-[13px] text-muted-foreground font-medium mb-2 px-1">
-              Total com entrega
-             </p>
-          ) : deliveryFee === 0 ? (
-            <p className="text-[13px] text-muted-foreground font-medium mb-2 px-1">
-              Total com <span className="text-foreground font-bold">entrega grátis</span>
-            </p>
-          ) : (
-             <p className="text-[13px] text-muted-foreground font-medium mb-2 px-1">
-              Total a pagar <span className="text-xs text-muted-foreground">(+ taxa de entrega)</span>
-             </p>
-          )}
+          <p className="text-[13px] text-muted-foreground font-medium mb-2 px-1">
+            Total a pagar {deliveryFee === null && <span className="text-xs text-muted-foreground">(+ taxa de entrega)</span>}
+          </p>
           
           <div className="flex items-center gap-4">
             <div className="flex-1">

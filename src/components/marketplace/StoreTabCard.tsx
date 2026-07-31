@@ -108,11 +108,11 @@ export function StoreTabCard({ company }: StoreTabCardProps) {
                 const min = Math.min(...prices);
                 const max = Math.max(...prices);
                 if (min === max) {
-                  return min === 0 ? 'Entrega grátis' : `Entrega R$ ${min.toFixed(2).replace('.', ',')}`;
+                  return `Entrega R$ ${min.toFixed(2).replace('.', ',')}`;
                 }
                 return `R$ ${min.toFixed(2).replace('.', ',')} a ${max.toFixed(2).replace('.', ',')}`;
               } else if (prices.length === 1) {
-                return prices[0] === 0 ? 'Entrega grátis' : `Entrega R$ ${prices[0].toFixed(2).replace('.', ',')}`;
+                return `Entrega R$ ${prices[0].toFixed(2).replace('.', ',')}`;
               }
               return 'Consultar frete';
             })()}
