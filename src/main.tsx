@@ -95,9 +95,14 @@ class GlobalErrorBoundary extends Component<{children: ReactNode}, {hasError: bo
           <h2 style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '10px' }}>Ocorreu um Erro no App</h2>
           <pre style={{ fontSize: '11px', whiteSpace: 'pre-wrap', fontFamily: 'monospace' }}>{this.state.error?.message}</pre>
           <pre style={{ fontSize: '9px', marginTop: '10px', whiteSpace: 'pre-wrap', fontFamily: 'monospace' }}>{this.state.error?.stack}</pre>
+          
+          <div style={{ padding: '14px', background: '#fff3cd', color: '#856404', borderRadius: '8px', border: '1px solid #ffeeba', fontWeight: 'bold', margin: '16px 0', fontSize: '14px', display: 'flex', itemsCenter: 'center', gap: '8px' }}>
+            ⚠️ TIRE UM PRINT OU COPIE A TELA E ENVIE PARA A BONASOFT.
+          </div>
+
           <button 
             onClick={() => { localStorage.clear(); window.location.reload(); }}
-            style={{ marginTop: '20px', padding: '10px 20px', background: 'black', color: 'white', borderRadius: '8px' }}
+            style={{ marginTop: '10px', padding: '12px 24px', background: 'black', color: 'white', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}
           >
             Limpar Dados e Reiniciar
           </button>

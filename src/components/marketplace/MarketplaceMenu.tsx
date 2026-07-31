@@ -17,9 +17,12 @@ class ErrorBoundary extends React.Component<{children: React.ReactNode}, {hasErr
     if (this.state.hasError) {
       return (
         <div className="p-8 text-red-500 bg-white h-full overflow-auto">
-          <h2 className="font-bold text-xl mb-4">Erro no Menu</h2>
+          <h2 className="font-bold text-xl mb-2">Erro no Menu</h2>
           <pre className="text-xs whitespace-pre-wrap">{this.state.error?.message}</pre>
-          <pre className="text-xs mt-4 whitespace-pre-wrap">{this.state.error?.stack}</pre>
+          <pre className="text-xs mt-2 whitespace-pre-wrap">{this.state.error?.stack}</pre>
+          <div className="p-3 my-4 bg-amber-100 text-amber-900 font-bold rounded-lg text-xs border border-amber-300">
+            ⚠️ TIRE UM PRINT OU COPIE A TELA E ENVIE PARA A BONASOFT.
+          </div>
         </div>
       );
     }
