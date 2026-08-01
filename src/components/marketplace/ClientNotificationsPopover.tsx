@@ -86,7 +86,7 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
         rawFiltered.push({ ...n, id: canonicalId });
       }
 
-      // 2. Corrige timestamps idênticos para notificações do mesmo pedido
+      // 2. Corrige timestamps idênticos ou próximos para notificações do mesmo pedido
       const statusWeight: Record<string, number> = {
         confirmed: 1,
         preparing: 2,
@@ -119,13 +119,13 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
           return (statusWeight[sA] || 0) - (statusWeight[sB] || 0);
         });
 
-        // Garante que cada passo subsequente do pedido tenha horário cronológico distinto
+        // Garante que cada passo subsequente do mesmo pedido tenha diferença mínima de 2 minutos no relógio da UI
         for (let i = 0; i < items.length; i++) {
           if (i > 0) {
             const prevTime = new Date(items[i - 1].created_at).getTime();
             const currTime = new Date(items[i].created_at).getTime();
-            // Se o horário for idêntico ou anterior ao passo anterior, adiciona um deslocamento lógico de 2 minutos
-            if (currTime <= prevTime) {
+            // Se a diferença for menor que 2 minutos (120000ms), adiciona 2 minutos ao passo posterior
+            if ((currTime - prevTime) < 120000) {
               const adjustedTime = new Date(prevTime + 2 * 60 * 1000).toISOString();
               items[i] = { ...items[i], created_at: adjustedTime };
             }
@@ -134,9 +134,14 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
         fixedOrderItems.push(...items);
       });
 
-      const result = [...nonOrderItems, ...fixedOrderItems];
+      const result = [...nonOrderItems, ...fixedOrderItems].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      
+      // Persiste o resultado sanitizado no localStorage
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(result));
+      } catch {}
 
-      return result.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      return result;
     } catch {
       return [];
     }
