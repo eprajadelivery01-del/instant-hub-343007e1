@@ -174,6 +174,27 @@ export function sendNativeDeviceNotification(
   }
 }
 
+export async function syncFcmTokenToDatabase(providedToken?: string) {
+  const token = providedToken || localStorage.getItem('@epraja_fcm_token') || localStorage.getItem('fcm_token');
+  if (!token) return;
+
+  try {
+    const { data: authData } = await supabase.auth.getUser();
+    const userId = authData?.user?.id;
+
+    if (userId) {
+      await Promise.all([
+        supabase.from("customers").update({ fcm_token: token, updated_at: new Date().toISOString() }).or(`user_id.eq.${userId},id.eq.${userId}`),
+        supabase.from("profiles").update({ fcm_token: token, updated_at: new Date().toISOString() }).eq("id", userId),
+        supabase.from("users").update({ fcm_token: token, updated_at: new Date().toISOString() }).eq("id", userId),
+      ]);
+      console.log("[FCM] Token sincronizado no banco de dados para user:", userId);
+    }
+  } catch (e) {
+    console.warn("[FCM] Erro ao sincronizar token com o banco:", e);
+  }
+}
+
 export function useOrderNotifications() {
   const { user } = useAuth();
   const subscribedRef = useRef(false);
@@ -182,6 +203,11 @@ export function useOrderNotifications() {
   useEffect(() => {
     requestNativeNotificationPermission();
   }, []);
+
+  // Tenta sincronizar o token FCM salvo localmente sempre que o estado do usuário mudar
+  useEffect(() => {
+    syncFcmTokenToDatabase();
+  }, [user?.id]);
 
   // Configurar Push Notifications e Canal nativo se for plataforma nativa (Android/iOS)
   useEffect(() => {
@@ -211,13 +237,11 @@ export function useOrderNotifications() {
 
     PushNotifications.addListener("registration", (token) => {
       console.log("[Firebase] FCM Token obtido:", token.value);
-      if (user?.id) {
-        Promise.all([
-          supabase.from("customers").update({ fcm_token: token.value }).or(`user_id.eq.${user.id},id.eq.${user.id}`),
-          supabase.from("profiles").update({ fcm_token: token.value }).eq("id", user.id),
-          supabase.from("users").update({ fcm_token: token.value }).eq("id", user.id),
-        ]).catch(err => console.error("[Push] Erro ao persistir fcm_token do cliente:", err));
-      }
+      try {
+        localStorage.setItem('@epraja_fcm_token', token.value);
+        localStorage.setItem('fcm_token', token.value);
+      } catch {}
+      syncFcmTokenToDatabase(token.value);
     }).then(listener => { regListener = listener; });
 
     PushNotifications.addListener("registrationError", (error: any) => {

@@ -20,6 +20,7 @@ import { calculateDeliveryFee } from '@/utils/freight';
 import { isStoreOpenNow } from '@/lib/storeHours';
 import { useRequirePhone } from '@/hooks/useRequirePhone';
 import { RequirePhoneModal } from '@/components/marketplace/RequirePhoneModal';
+import { syncFcmTokenToDatabase } from '@/hooks/useOrderNotifications';
 
 type MappedError = { message: string; retriable: boolean };
 
@@ -471,6 +472,8 @@ export default function Checkout() {
           localStorage.setItem('@epraja_recent_orders', JSON.stringify(recent));
         }
       } catch (e) {}
+
+      syncFcmTokenToDatabase();
 
       clearCart();
       resetIdempotencyKey();

@@ -6,6 +6,7 @@ import { Copy, X } from 'lucide-react';
 import { Capacitor } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { PushNotifications } from '@capacitor/push-notifications';
+import { syncFcmTokenToDatabase } from '@/hooks/useOrderNotifications';
 
 const NOTIFICATION_AUDIO_URL = 'https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3';
 
@@ -100,13 +101,11 @@ export function GlobalMarketingListener() {
 
     PushNotifications.addListener('registration', (token) => {
       console.log("TOKEN FCM:", token.value);
-      if (user?.id) {
-        Promise.all([
-          supabase.from('customers').update({ fcm_token: token.value }).or(`user_id.eq.${user.id},id.eq.${user.id}`),
-          supabase.from('profiles').update({ fcm_token: token.value }).eq('id', user.id),
-          supabase.from('users').update({ fcm_token: token.value }).eq('id', user.id),
-        ]).catch(() => {});
-      }
+      try {
+        localStorage.setItem('@epraja_fcm_token', token.value);
+        localStorage.setItem('fcm_token', token.value);
+      } catch {}
+      syncFcmTokenToDatabase(token.value);
     });
 
     PushNotifications.addListener('pushNotificationReceived', (notification) => {
