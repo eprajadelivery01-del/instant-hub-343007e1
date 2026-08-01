@@ -81,7 +81,7 @@ export function GlobalMarketingListener() {
 
   // 2. Configura Push Notifications (FCM) no dispositivo móvel
   useEffect(() => {
-    if (!Capacitor.isNativePlatform() || !user) return;
+    if (!Capacitor.isNativePlatform()) return;
 
     PushNotifications.createChannel({
       id: 'marketplace_orders',
