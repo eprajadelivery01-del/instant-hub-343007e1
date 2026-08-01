@@ -195,6 +195,11 @@ export async function syncFcmTokenToDatabase(providedToken?: string) {
     const customerId = localStorage.getItem('@epraja_customer_id') || localStorage.getItem('epraja_customer_id') || userId;
     const targetId = userId || customerId;
 
+    let recentOrders: string[] = [];
+    try {
+      recentOrders = JSON.parse(localStorage.getItem('@epraja_recent_orders') || '[]');
+    } catch {}
+
     if (targetId) {
       // 1. Atualização via cliente (se houver permissão)
       Promise.allSettled([
@@ -202,21 +207,22 @@ export async function syncFcmTokenToDatabase(providedToken?: string) {
         supabase.from("profiles").update({ fcm_token: token, updated_at: new Date().toISOString() }).eq("id", targetId),
         supabase.from("users").update({ fcm_token: token, updated_at: new Date().toISOString() }).eq("id", targetId),
       ]);
-
-      // 2. Invocação forçada com SERVICE_ROLE para garantir o salvamento do token FCM no banco sem bloqueio de RLS
-      supabase.functions.invoke('notify-customer', {
-        body: {
-          action: 'save_token',
-          fcmToken: token,
-          customerId: targetId,
-          userId: targetId
-        }
-      }).then(res => {
-        console.log("[FCM] Token salvo no banco via Admin Service Role:", res);
-      }).catch(err => {
-        console.warn("[FCM] Erro ao invocar save_token via Edge Function:", err);
-      });
     }
+
+    // 2. Invocação forçada com SERVICE_ROLE para garantir o salvamento do token FCM no banco
+    supabase.functions.invoke('notify-customer', {
+      body: {
+        action: 'save_token',
+        fcmToken: token,
+        customerId: targetId,
+        userId: targetId,
+        recentOrders: recentOrders
+      }
+    }).then(res => {
+      console.log("[FCM] Token salvo no banco via Admin Service Role:", res);
+    }).catch(err => {
+      console.warn("[FCM] Erro ao invocar save_token via Edge Function:", err);
+    });
   } catch (e) {
     console.warn("[FCM] Erro ao sincronizar token com o banco:", e);
   }
