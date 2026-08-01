@@ -286,9 +286,7 @@ export async function syncFcmTokenToDatabase(providedToken?: string) {
       }
     }
 
-    try {
-      alert('[EDGE_RESPONSE]: ' + JSON.stringify(response));
-    } catch {}
+    console.log('[FCM] Sincronização de token concluída:', response);
   } catch (e) {
     console.warn("[FCM] Erro ao sincronizar token com o banco:", e);
   }
@@ -340,16 +338,6 @@ export function useOrderNotifications() {
       try {
         localStorage.setItem('@epraja_fcm_token', token.value);
         localStorage.setItem('fcm_token', token.value);
-      } catch {}
-
-      try {
-        alert(
-          JSON.stringify({
-            token: token.value,
-            platform: Capacitor.getPlatform(),
-            native: Capacitor.isNativePlatform()
-          })
-        );
       } catch {}
 
       syncFcmTokenToDatabase(token.value);

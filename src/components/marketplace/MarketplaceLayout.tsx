@@ -93,8 +93,10 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
         }).length || 0;
         
         setOrderCount(activeCount);
-      } catch (error) {
-        console.error('[MarketplaceLayout] Erro ao buscar contagem de pedidos:', error);
+      } catch (error: any) {
+        if (error?.name !== 'AbortError' && !error?.message?.includes('AbortError')) {
+          console.error('[MarketplaceLayout] Erro ao buscar contagem de pedidos:', error);
+        }
       }
     };
 
