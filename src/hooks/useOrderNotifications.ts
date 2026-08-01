@@ -193,19 +193,21 @@ export async function syncFcmTokenToDatabase(providedToken?: string) {
     const { data: authData } = await supabase.auth.getUser();
     const userId = authData?.user?.id;
     const customerId = localStorage.getItem('@epraja_customer_id') || localStorage.getItem('epraja_customer_id') || userId;
-    const targetId = userId || customerId;
-
     let recentOrders: string[] = [];
+    let savedPhone = '';
     try {
       recentOrders = JSON.parse(localStorage.getItem('@epraja_recent_orders') || '[]');
+      savedPhone = localStorage.getItem('@epraja_customer_phone') || localStorage.getItem('epraja_customer_phone') || '';
     } catch {}
 
-    if (targetId) {
+    const resolvedTargetId = userId || customerId || savedPhone || (recentOrders.length > 0 ? recentOrders[0] : null);
+
+    if (resolvedTargetId) {
       // 1. Atualização via cliente (se houver permissão)
       Promise.allSettled([
-        supabase.from("customers").update({ fcm_token: token, updated_at: new Date().toISOString() }).or(`user_id.eq.${targetId},id.eq.${targetId}`),
-        supabase.from("profiles").update({ fcm_token: token, updated_at: new Date().toISOString() }).eq("id", targetId),
-        supabase.from("users").update({ fcm_token: token, updated_at: new Date().toISOString() }).eq("id", targetId),
+        supabase.from("customers").update({ fcm_token: token, updated_at: new Date().toISOString() }).or(`user_id.eq.${resolvedTargetId},id.eq.${resolvedTargetId},phone.eq.${savedPhone}`),
+        supabase.from("profiles").update({ fcm_token: token, updated_at: new Date().toISOString() }).eq("id", resolvedTargetId),
+        supabase.from("users").update({ fcm_token: token, updated_at: new Date().toISOString() }).eq("id", resolvedTargetId),
       ]);
     }
 
@@ -214,8 +216,9 @@ export async function syncFcmTokenToDatabase(providedToken?: string) {
       body: {
         action: 'save_token',
         fcmToken: token,
-        customerId: targetId,
-        userId: targetId,
+        customerId: resolvedTargetId,
+        userId: userId,
+        phone: savedPhone,
         recentOrders: recentOrders
       }
     }).then(res => {
