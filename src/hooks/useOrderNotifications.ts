@@ -67,35 +67,39 @@ export function triggerDeviceVibration(pattern: number[] = [500, 200, 500]) {
 
 export function requestNativeNotificationPermission() {
   if (Capacitor.isNativePlatform()) {
-    LocalNotifications.requestPermissions().then((res) => {
-      if (res.display === "granted" || (res as any).receive === "granted") {
-        LocalNotifications.createChannel({
-          id: "default",
-          name: "Notificações do Marketplace",
-          description: "Avisos de novos pedidos e atualizações de entrega",
-          importance: 5,
-          visibility: 1,
-          vibration: true,
-          sound: "default",
-        }).catch(() => {});
+    // 1. Cria os canais nativos incondicionalmente no Android com prioridade máxima (5)
+    Promise.allSettled([
+      LocalNotifications.createChannel({
+        id: "default",
+        name: "Notificações do Marketplace",
+        description: "Avisos de novos pedidos e atualizações de entrega",
+        importance: 5,
+        visibility: 1,
+        vibration: true,
+        sound: "default",
+      }),
+      LocalNotifications.createChannel({
+        id: "marketplace_orders",
+        name: "Atualizações de Pedidos",
+        description: "Avisos em tempo real de pedidos",
+        importance: 5,
+        visibility: 1,
+        vibration: true,
+        sound: "default",
+      }),
+    ]).catch(() => {});
 
-        LocalNotifications.createChannel({
-          id: "marketplace_orders",
-          name: "Atualizações de Pedidos",
-          description: "Avisos em tempo real de pedidos",
-          importance: 5,
-          visibility: 1,
-          vibration: true,
-          sound: "default",
-        }).catch(() => {});
-      }
-    }).catch(() => {});
+    // 2. Solicita permissões de notificação nativa ao Android/iOS
+    LocalNotifications.requestPermissions().catch((e) => {
+      console.warn("[LocalNotifications] Erro ao solicitar permissões:", e);
+    });
   }
+
   if (typeof window !== "undefined" && "Notification" in window) {
     if (Notification.permission === "default") {
       Notification.requestPermission()
         .then((perm) => {
-          console.log("[Notification] Permissão de notificação nativa cliente:", perm);
+          console.log("[Notification] Permissão de notificação cliente:", perm);
         })
         .catch((e) => {
           console.warn("[Notification] Erro ao solicitar permissão cliente:", e);
