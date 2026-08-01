@@ -277,15 +277,16 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
 
       // 3. Carrega TUDO do localStorage (histórico completo preservado com horários cronológicos)
       const allPersisted = loadPersistedNotifications();
-
       setNotifications(allPersisted);
 
-      const lastRead = localStorage.getItem('epraja_last_read_notif_time');
-      if (!lastRead) {
-        setUnreadCount(allPersisted.length);
-      } else {
-        const unread = allPersisted.filter((n) => new Date(n.created_at) > new Date(lastRead)).length;
+      // Calcula contagem de não lidos baseado em IDs lidos salvos
+      try {
+        const rawRead = localStorage.getItem('@epraja_read_notification_ids');
+        const readIds = new Set<string>(rawRead ? JSON.parse(rawRead) : []);
+        const unread = allPersisted.filter(n => !readIds.has(n.id)).length;
         setUnreadCount(unread);
+      } catch {
+        setUnreadCount(allPersisted.length);
       }
     } catch (e) {
       console.error('[ClientNotificationsPopover] Exception:', e);
@@ -432,7 +433,14 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
     setIsOpen(open);
     if (open) {
       setUnreadCount(0);
-      localStorage.setItem('epraja_last_read_notif_time', new Date().toISOString());
+      try {
+        const rawRead = localStorage.getItem('@epraja_read_notification_ids');
+        const readIds = new Set<string>(rawRead ? JSON.parse(rawRead) : []);
+        notifications.forEach(n => readIds.add(n.id));
+        localStorage.setItem('@epraja_read_notification_ids', JSON.stringify([...readIds]));
+      } catch (e) {
+        console.warn('[ClientNotificationsPopover] Erro ao salvar IDs lidos:', e);
+      }
     }
   };
 
@@ -471,7 +479,7 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
         >
           <Bell className="h-5 w-5" />
           {unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 flex h-5 min-w-[20px] px-1 items-center justify-center rounded-full bg-primary text-[10px] font-black text-white shadow-md animate-pulse">
+            <span className="absolute -top-1 -right-1 z-20 flex h-5 min-w-[20px] px-1.5 items-center justify-center rounded-full bg-red-600 text-[11px] font-black text-white shadow-lg ring-2 ring-background animate-pulse">
               {unreadCount > 99 ? '99+' : unreadCount}
             </span>
           )}
