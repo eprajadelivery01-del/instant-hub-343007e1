@@ -245,7 +245,7 @@ export async function syncFcmTokenToDatabase(providedToken?: string) {
     }
 
     // 2. Invocação forçada com SERVICE_ROLE para garantir o salvamento do token FCM no banco
-    supabase.functions.invoke('notify-customer', {
+    const response = await supabase.functions.invoke('notify-customer', {
       body: {
         action: 'save_token',
         fcmToken: token,
@@ -254,11 +254,12 @@ export async function syncFcmTokenToDatabase(providedToken?: string) {
         phone: savedPhone,
         recentOrders: recentOrders
       }
-    }).then(res => {
-      console.log("[FCM] Token salvo no banco via Admin Service Role:", res);
-    }).catch(err => {
-      console.warn("[FCM] Erro ao invocar save_token via Edge Function:", err);
     });
+
+    console.log('[EDGE_RESPONSE]', response);
+    try {
+      alert('[EDGE_RESPONSE]: ' + JSON.stringify(response));
+    } catch {}
   } catch (e) {
     console.warn("[FCM] Erro ao sincronizar token com o banco:", e);
   }
