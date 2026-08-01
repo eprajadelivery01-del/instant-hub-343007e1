@@ -108,42 +108,51 @@ export function requestNativeNotificationPermission() {
   }
 }
 
-export function sendNativeDeviceNotification(
+export async function sendNativeDeviceNotification(
   title: string,
   options?: { body?: string; tag?: string; icon?: string }
 ) {
   // 1. Aciona vibração no dispositivo
   triggerDeviceVibration();
 
-  // 2. Aciona Notificação Nativa do Celular (Android / iOS) - EXIBIÇÃO IMEDIATA NA CENTRAL DO DISPOSITIVO
+  // 2. Aciona Notificação Nativa do Celular (Android / iOS) - SOLICITA PERMISSÃO SE NECESSÁRIO E EXIBE NA CENTRAL DO DISPOSITIVO
   if (Capacitor.isNativePlatform()) {
-    const notifId = Math.floor(Math.random() * 899999) + 100000;
     try {
-      LocalNotifications.schedule({
+      const perm = await LocalNotifications.checkPermissions();
+      if (perm.display !== "granted") {
+        const req = await LocalNotifications.requestPermissions();
+        if (req.display !== "granted") {
+          console.warn("[LocalNotifications] Permissão de notificação negada pelo usuário no Android.");
+        }
+      }
+
+      await LocalNotifications.createChannel({
+        id: "default",
+        name: "Notificações do Marketplace",
+        description: "Avisos de novos pedidos e atualizações de entrega",
+        importance: 5,
+        visibility: 1,
+        vibration: true,
+        sound: "default",
+      }).catch(() => {});
+
+      const notifId = Math.floor(Math.random() * 899999) + 100000;
+
+      await LocalNotifications.schedule({
         notifications: [
           {
             title: title || "Atualização de Pedido!",
             body: options?.body || "Acesse o app para acompanhar seu pedido",
             id: notifId,
             channelId: "default",
+            actionTypeId: "",
             extra: {
               tag: options?.tag || "epraja-marketplace-order"
             }
           }
         ]
-      }).catch((e) => {
-        console.warn("[LocalNotifications] Erro no canal default, tentando marketplace_orders:", e);
-        LocalNotifications.schedule({
-          notifications: [
-            {
-              title: title || "Atualização de Pedido!",
-              body: options?.body || "Acesse o app para acompanhar seu pedido",
-              id: notifId + 1,
-              channelId: "marketplace_orders",
-            }
-          ]
-        }).catch((err) => console.warn("[LocalNotifications] Erro nativo secundário:", err));
       });
+      console.log("[LocalNotifications] Notificação nativa enviada com sucesso no Android!");
     } catch (e) {
       console.warn("[LocalNotifications] Erro nativo cliente:", e);
     }
