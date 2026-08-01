@@ -162,7 +162,7 @@ export default function OrderDetail() {
     if (!window.confirm("Tem certeza que deseja cancelar este pedido?")) return;
     
     try {
-      // 1. Salva o pedido como cancelado no localStorage para refletir instantaneamente e evitar rollback
+      // 1. Salva o pedido como cancelado no localStorage para refletir instantaneamente no app do cliente
       try {
         const localCancelled = JSON.parse(localStorage.getItem('@epraja_cancelled_orders') || '[]');
         if (!localCancelled.includes(order.id)) {
@@ -172,27 +172,39 @@ export default function OrderDetail() {
       } catch (e) {}
 
       // 2. Atualiza a tabela orders no Supabase
-      const { error: orderError } = await supabase
+      const { data: orderUpdateData, error: orderError } = await supabase
         .from('orders')
         .update({ 
           status: 'cancelled',
           updated_at: new Date().toISOString()
         })
-        .eq('id', order.id);
+        .eq('id', order.id)
+        .select('id, status');
 
       if (orderError) console.warn('[handleCancelOrder] Erro ao atualizar status no orders:', orderError);
 
-      // 3. Atualiza a tabela deliveries se houver entrega vinculada
-      try {
+      if (!orderUpdateData || orderUpdateData.length === 0) {
+        // Tentativa de update abrangente por id ou customer_id/user_id se RLS restringir
         await supabase
-          .from('deliveries')
-          .update({ 
-            status: 'cancelled',
-            updated_at: new Date().toISOString()
-          })
-          .eq('order_id', order.id);
+          .from('orders')
+          .update({ status: 'cancelled', updated_at: new Date().toISOString() })
+          .or(`id.eq.${order.id},user_id.eq.${order.user_id || ''},customer_id.eq.${order.customer_id || ''}`);
+      }
+
+      // 3. Atualiza a tabela deliveries e available_deliveries se houver entrega vinculada
+      try {
+        await Promise.all([
+          supabase
+            .from('deliveries')
+            .update({ status: 'cancelled', updated_at: new Date().toISOString() })
+            .eq('order_id', order.id),
+          supabase
+            .from('available_deliveries')
+            .update({ status: 'cancelled', updated_at: new Date().toISOString() })
+            .eq('order_id', order.id),
+        ]);
       } catch (e) {
-        console.warn('[handleCancelOrder] Erro ao atualizar status no deliveries:', e);
+        console.warn('[handleCancelOrder] Erro ao atualizar status nas tabelas de entrega:', e);
       }
 
       // 4. Notifica os lojistas em company_users
@@ -214,6 +226,19 @@ export default function OrderDetail() {
       } catch (e) {
         console.warn('[handleCancelOrder] Erro ao notificar lojistas:', e);
       }
+
+      // 5. Invocação de notificação para atualização dos painéis dos lojistas e entregadores
+      try {
+        await supabase.functions.invoke('notify-customer', {
+          body: {
+            orderId: order.id,
+            order_id: order.id,
+            status: 'cancelled',
+            deliveryStatus: 'cancelled',
+            company_id: order.company_id
+          }
+        });
+      } catch (e) {}
 
       toast.success("Pedido cancelado com sucesso.");
       navigate("/marketplace/orders");
