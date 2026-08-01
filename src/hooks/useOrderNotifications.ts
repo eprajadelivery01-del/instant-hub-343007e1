@@ -67,30 +67,63 @@ export function triggerDeviceVibration(pattern: number[] = [500, 200, 500]) {
 
 export function requestNativeNotificationPermission() {
   if (Capacitor.isNativePlatform()) {
-    LocalNotifications.requestPermissions().then((res) => {
-      if (res.display === "granted") {
-        LocalNotifications.createChannel({
-          id: "marketplace_orders",
-          name: "Atualizações de Pedidos",
-          description: "Notificações nativas do Marketplace para o cliente",
-          importance: 5,
-          visibility: 1,
-          sound: "default",
-          vibration: true,
-        }).catch(() => {});
+    // 1. Registra tipos de ação e cria canais nativos incondicionalmente
+    LocalNotifications.registerActionTypes({ types: [] }).catch(() => {});
 
-        LocalNotifications.createChannel({
-          id: "default",
-          name: "Notificações Padrão",
-          description: "Notificações gerais do app",
-          importance: 5,
-          visibility: 1,
-          sound: "default",
-          vibration: true,
-        }).catch(() => {});
+    LocalNotifications.createChannel({
+      id: "marketplace_orders",
+      name: "Atualizações de Pedidos",
+      description: "Notificações nativas do Marketplace para o cliente",
+      importance: 5,
+      visibility: 1,
+      sound: "default",
+      vibration: true,
+    }).catch((e) => console.warn("[LocalNotifications] Erro canal marketplace_orders:", e));
+
+    LocalNotifications.createChannel({
+      id: "default",
+      name: "Notificações Padrão",
+      description: "Notificações gerais do app",
+      importance: 5,
+      visibility: 1,
+      sound: "default",
+      vibration: true,
+    }).catch((e) => console.warn("[LocalNotifications] Erro canal default:", e));
+
+    // 2. Solicita permissões nativas ao Android / iOS
+    LocalNotifications.requestPermissions().then(async (res) => {
+      console.log(
+        "[NATIVE NOTIFICATION PERMISSIONS]",
+        Capacitor.getPlatform(),
+        Capacitor.isNativePlatform(),
+        res
+      );
+
+      try {
+        const pending = await LocalNotifications.getPending();
+        console.log("[NATIVE NOTIFICATION PENDING]", pending);
+      } catch (e) {}
+
+      // Agenda notificação de teste direto 3s após permissão para validar a barra do Android
+      try {
+        LocalNotifications.schedule({
+          notifications: [
+            {
+              id: 999999,
+              title: "🔔 É Pra Já Marketplace",
+              body: "Notificações nativas ativas no seu dispositivo!",
+              schedule: { at: new Date(Date.now() + 3000) },
+              channelId: "marketplace_orders",
+              sound: "default"
+            }
+          ]
+        }).catch((err) => console.warn("[LocalNotifications] Erro ao agendar notificação de teste:", err));
+      } catch (err) {
+        console.warn("[LocalNotifications] Exceção ao agendar teste:", err);
       }
-    }).catch(() => {});
+    }).catch((e) => console.warn("[LocalNotifications] Erro ao solicitar permissão nativa:", e));
   }
+
   if (typeof window !== "undefined" && "Notification" in window) {
     if (Notification.permission === "default") {
       Notification.requestPermission().catch(() => {});
@@ -104,38 +137,63 @@ export function sendNativeDeviceNotification(
 ) {
   triggerDeviceVibration();
 
+  console.log(
+    "[NATIVE NOTIFICATION TRIGGERED]",
+    Capacitor.getPlatform(),
+    Capacitor.isNativePlatform(),
+    title,
+    options
+  );
+
   // 1. Notificação Nativa do Celular (Android / iOS)
   if (Capacitor.isNativePlatform()) {
     try {
+      const notifId = Math.floor(Math.random() * 899999) + 100000;
       LocalNotifications.schedule({
         notifications: [
           {
             title: title || "Atualização de Pedido",
             body: options?.body || "Acesse o app para acompanhar seu pedido.",
-            id: Math.floor(Math.random() * 100000),
+            id: notifId,
             schedule: { at: new Date(Date.now() + 100) },
             channelId: "marketplace_orders",
+            sound: "default",
             extra: {
               tag: options?.tag || "epraja-marketplace-order"
             }
           }
         ]
-      }).catch(() => {
-        // Fallback para o canal default se marketplace_orders falhar
+      }).then(() => {
+        console.log("[LocalNotifications] Agendado com sucesso! ID:", notifId);
+      }).catch((err1) => {
+        console.warn("[LocalNotifications] Falha no canal marketplace_orders, tentando default:", err1);
         LocalNotifications.schedule({
           notifications: [
             {
               title: title || "Atualização de Pedido",
               body: options?.body || "Acesse o app para acompanhar seu pedido.",
-              id: Math.floor(Math.random() * 100000),
+              id: Math.floor(Math.random() * 899999) + 100000,
               schedule: { at: new Date(Date.now() + 100) },
               channelId: "default",
+              sound: "default",
             }
           ]
-        }).catch((e) => console.warn("[LocalNotifications] Erro ao agendar notificação nativa cliente:", e));
+        }).catch((err2) => {
+          console.warn("[LocalNotifications] Falha no canal default, tentando sem canal:", err2);
+          LocalNotifications.schedule({
+            notifications: [
+              {
+                title: title || "Atualização de Pedido",
+                body: options?.body || "Acesse o app para acompanhar seu pedido.",
+                id: Math.floor(Math.random() * 899999) + 100000,
+                schedule: { at: new Date(Date.now() + 100) },
+              }
+            ]
+          }).catch((e) => console.error("[LocalNotifications] Erro final ao agendar notificação nativa:", e));
+        });
       });
     } catch (e) {
-      console.warn("[LocalNotifications] Erro nativo cliente:", e);
+      console.error("[LocalNotifications] Exceção ao disparar notificação nativa:", e);
     }
   }
 
