@@ -45,7 +45,7 @@ export function getMarketplaceStatus(orderOrPayload: any): ComputedOrderStatus {
     ['delivered', 'completed'].includes(deliveryStatus) ||
     ['delivered', 'completed', 'cancelled'].includes(orderStatus)
   ) {
-    if (orderStatus === 'cancelled') {
+    if (orderStatus === 'cancelled' || deliveryStatus === 'cancelled') {
       return {
         statusKey: 'cancelled',
         label: 'Pedido cancelado',
@@ -68,11 +68,12 @@ export function getMarketplaceStatus(orderOrPayload: any): ComputedOrderStatus {
   }
 
   // 2. 🚚 SAIU PARA ENTREGA:
-  // APARECE APENAS E TÃO SOMENTE APÓS O LOJISTA CLICAR EM "CHAMAR ENTREGADOR"
+  // APARECE QUANDO O ENTREGADOR ACEITAR A CORRIDA, TIVER MOTORISTA ATRIBUÍDO, ESTIVER EM ROTA OU CHAMADO PELO LOJISTA
   if (
     deliveryRequested ||
-    ['delivering', 'in_route'].includes(orderStatus) ||
-    ['in_route', 'in_transit', 'delivering'].includes(deliveryStatus)
+    ['delivering', 'in_route', 'in_transit'].includes(orderStatus) ||
+    ['accepted', 'collecting', 'in_transit', 'in_route', 'delivering'].includes(deliveryStatus) ||
+    Boolean(deliveryObj?.driver_id)
   ) {
     return {
       statusKey: 'delivering',

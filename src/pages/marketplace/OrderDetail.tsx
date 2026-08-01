@@ -72,8 +72,9 @@ export default function OrderDetail() {
   useEffect(() => {
     if (!id) return;
     const orderChannel = supabase.channel(`order-${id}`)
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders', filter: `id=eq.${id}` },
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders', filter: `id=eq.${id}` },
         (p) => {
+          if (!p.new) return;
           queryClient.setQueryData(['order', id], (old: any) =>
             old ? { ...old, order: { ...old.order, ...p.new } } : old
           );
@@ -96,7 +97,7 @@ export default function OrderDetail() {
               delivered: 6,
             };
 
-            const newStatus = p.new.status as string;
+            const newStatus = (p.new as any).status as string;
             const newRank = STATUS_HIERARCHY[newStatus] || 0;
             const shouldNotify = newStatus === 'cancelled' || newRank > maxStatusRankRef.current;
 
@@ -114,8 +115,9 @@ export default function OrderDetail() {
             }
           }
         })
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'deliveries', filter: `order_id=eq.${id}` },
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'deliveries', filter: `order_id=eq.${id}` },
         (p) => {
+          if (!p.new) return;
           queryClient.setQueryData(['order', id], (old: any) =>
             old ? { ...old, delivery: { ...(old.delivery ?? {}), ...p.new } } : old
           );
