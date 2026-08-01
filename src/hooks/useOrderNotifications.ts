@@ -73,18 +73,20 @@ export function requestNativeNotificationPermission() {
           id: "default",
           name: "Notificações do Marketplace",
           description: "Avisos de novos pedidos e atualizações de entrega",
-          importance: 4,
+          importance: 5,
           visibility: 1,
           vibration: true,
+          sound: "default",
         }).catch(() => {});
 
         LocalNotifications.createChannel({
           id: "marketplace_orders",
           name: "Atualizações de Pedidos",
           description: "Avisos em tempo real de pedidos",
-          importance: 4,
+          importance: 5,
           visibility: 1,
           vibration: true,
+          sound: "default",
         }).catch(() => {});
       }
     }).catch(() => {});
