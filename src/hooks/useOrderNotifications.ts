@@ -115,16 +115,16 @@ export function sendNativeDeviceNotification(
   // 1. Aciona vibração no dispositivo
   triggerDeviceVibration();
 
-  // 2. Aciona Notificação Nativa do Celular (Android / iOS) - IDÊNTICO AO APP DO LOJISTA
+  // 2. Aciona Notificação Nativa do Celular (Android / iOS) - EXIBIÇÃO IMEDIATA NA CENTRAL DO DISPOSITIVO
   if (Capacitor.isNativePlatform()) {
+    const notifId = Math.floor(Math.random() * 899999) + 100000;
     try {
       LocalNotifications.schedule({
         notifications: [
           {
             title: title || "Atualização de Pedido!",
             body: options?.body || "Acesse o app para acompanhar seu pedido",
-            id: Math.floor(Math.random() * 100000),
-            schedule: { at: new Date(Date.now() + 100) },
+            id: notifId,
             channelId: "default",
             extra: {
               tag: options?.tag || "epraja-marketplace-order"
@@ -132,18 +132,17 @@ export function sendNativeDeviceNotification(
           }
         ]
       }).catch((e) => {
-        console.warn("[LocalNotifications] Erro ao agendar notificação nativa no canal default:", e);
+        console.warn("[LocalNotifications] Erro no canal default, tentando marketplace_orders:", e);
         LocalNotifications.schedule({
           notifications: [
             {
               title: title || "Atualização de Pedido!",
               body: options?.body || "Acesse o app para acompanhar seu pedido",
-              id: Math.floor(Math.random() * 100000),
-              schedule: { at: new Date(Date.now() + 100) },
+              id: notifId + 1,
               channelId: "marketplace_orders",
             }
           ]
-        }).catch((err) => console.warn("[LocalNotifications] Erro ao agendar notificação nativa secundária:", err));
+        }).catch((err) => console.warn("[LocalNotifications] Erro nativo secundário:", err));
       });
     } catch (e) {
       console.warn("[LocalNotifications] Erro nativo cliente:", e);
