@@ -78,6 +78,16 @@ export function requestNativeNotificationPermission() {
           sound: "default",
           vibration: true,
         }).catch(() => {});
+
+        LocalNotifications.createChannel({
+          id: "default",
+          name: "Notificações Padrão",
+          description: "Notificações gerais do app",
+          importance: 5,
+          visibility: 1,
+          sound: "default",
+          vibration: true,
+        }).catch(() => {});
       }
     }).catch(() => {});
   }
@@ -110,8 +120,19 @@ export function sendNativeDeviceNotification(
             }
           }
         ]
-      }).catch((e) => {
-        console.warn("[LocalNotifications] Erro ao agendar notificação nativa no cliente:", e);
+      }).catch(() => {
+        // Fallback para o canal default se marketplace_orders falhar
+        LocalNotifications.schedule({
+          notifications: [
+            {
+              title: title || "Atualização de Pedido",
+              body: options?.body || "Acesse o app para acompanhar seu pedido.",
+              id: Math.floor(Math.random() * 100000),
+              schedule: { at: new Date(Date.now() + 100) },
+              channelId: "default",
+            }
+          ]
+        }).catch((e) => console.warn("[LocalNotifications] Erro ao agendar notificação nativa cliente:", e));
       });
     } catch (e) {
       console.warn("[LocalNotifications] Erro nativo cliente:", e);
@@ -164,7 +185,7 @@ export function useOrderNotifications() {
 
   // Configurar Push Notifications e Canal nativo se for plataforma nativa (Android/iOS)
   useEffect(() => {
-    if (!Capacitor.isNativePlatform() || !user) return;
+    if (!Capacitor.isNativePlatform()) return;
 
     let regListener: any = null;
     let errListener: any = null;
@@ -178,12 +199,7 @@ export function useOrderNotifications() {
       visibility: 1,
       sound: 'default',
       vibration: true,
-    }).then(() => {
-      console.log('[Push] Canal nativo marketplace_orders criado com sucesso!');
-      PushNotifications.listChannels().then(channels => {
-        console.log('[Push] CANAIS EXISTENTES NO DISPOSITIVO:', JSON.stringify(channels));
-      }).catch(e => console.warn('[Push] Erro ao listar canais:', e));
-    }).catch(e => console.warn('[Push] Erro ao criar canal marketplace_orders:', e));
+    }).catch(() => {});
 
     PushNotifications.requestPermissions().then((result) => {
       if (result.receive === "granted") {
@@ -200,9 +216,7 @@ export function useOrderNotifications() {
           supabase.from("customers").update({ fcm_token: token.value }).or(`user_id.eq.${user.id},id.eq.${user.id}`),
           supabase.from("profiles").update({ fcm_token: token.value }).eq("id", user.id),
           supabase.from("users").update({ fcm_token: token.value }).eq("id", user.id),
-        ]).then(() => {
-          console.log("[Push] fcm_token do cliente persistido nas tabelas customers, profiles e users para user:", user.id);
-        }).catch(err => console.error("[Push] Erro ao persistir fcm_token do cliente:", err));
+        ]).catch(err => console.error("[Push] Erro ao persistir fcm_token do cliente:", err));
       }
     }).then(listener => { regListener = listener; });
 
@@ -224,11 +238,30 @@ export function useOrderNotifications() {
       if (errListener) errListener.remove();
       if (pushListener) pushListener.remove();
     };
-  }, [user]);
+  }, [user?.id]);
 
   useEffect(() => {
-    if (!user || subscribedRef.current) return;
+    if (subscribedRef.current) return;
     subscribedRef.current = true;
+
+    const isMyOrder = (ord: any): boolean => {
+      if (!ord || !ord.id) return false;
+      let myOrderIds: string[] = [];
+      try {
+        myOrderIds = JSON.parse(localStorage.getItem('@epraja_recent_orders') || '[]');
+      } catch {}
+
+      if (myOrderIds.includes(ord.id)) return true;
+
+      if (user && (
+        ord.customer_id === user.id ||
+        ord.user_id === user.id ||
+        ord.client_id === user.id ||
+        ord.buyer_id === user.id
+      )) return true;
+
+      return false;
+    };
 
     const handleOrderNotification = async (orderId: string) => {
       try {
@@ -239,7 +272,7 @@ export function useOrderNotifications() {
           .single();
 
         if (!ord) return;
-        if (ord.customer_id !== user.id && ord.user_id !== user.id) return;
+        if (!isMyOrder(ord)) return;
         if (ord.status === 'pending') return; // NUNCA dispara toast/notificacao para status pending
 
         const computed = getMarketplaceStatus(ord);
@@ -264,8 +297,9 @@ export function useOrderNotifications() {
       }
     };
 
+    const channelId = `order-notifications-${user?.id || 'guest'}-${Math.random().toString(36).substring(2, 7)}`;
     const channel = supabase
-      .channel(`order-notifications-${user.id}`)
+      .channel(channelId)
       .on(
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'orders' },
@@ -285,5 +319,5 @@ export function useOrderNotifications() {
       subscribedRef.current = false;
       supabase.removeChannel(channel);
     };
-  }, [user]);
+  }, [user?.id]);
 }
