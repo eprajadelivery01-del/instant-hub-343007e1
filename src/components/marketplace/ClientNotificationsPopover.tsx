@@ -58,15 +58,35 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
       if (!raw) return [];
       const parsed: MarketingNotifItem[] = JSON.parse(raw);
       const now = Date.now();
-      // Remove notificações com mais de 48 horas e notificação de pedido "solicitado" / "pending"
-      return parsed.filter(n => {
+      
+      const seenCanonicalIds = new Set<string>();
+      const result: MarketingNotifItem[] = [];
+
+      // Filtra e normaliza itens legados (que continham -rt- ou timestamps no ID)
+      for (const n of parsed) {
         const t = new Date(n.created_at).getTime();
         const isPending =
           n.id.includes('-pending') ||
           (n.title && n.title.toLowerCase().includes('solicitado')) ||
           (n.message && (n.message.toLowerCase().includes('solicitado') || n.message.toLowerCase().includes('aguardando confirmação')));
-        return !isNaN(t) && (now - t) <= FORTY_EIGHT_HOURS_MS && !isPending;
-      });
+        
+        if (isNaN(t) || (now - t) > FORTY_EIGHT_HOURS_MS || isPending) continue;
+
+        // Normaliza ID legado para chave canônica única por pedido e status
+        let canonicalId = n.id;
+        if (n.order_id && n.type === 'order_status') {
+          const statusMatch = n.id.match(/(preparing|ready|delivering|delivered|confirmed|cancelled)/);
+          if (statusMatch) {
+            canonicalId = `order-notif-${n.order_id}-${statusMatch[1]}`;
+          }
+        }
+
+        if (seenCanonicalIds.has(canonicalId)) continue;
+        seenCanonicalIds.add(canonicalId);
+        result.push({ ...n, id: canonicalId });
+      }
+
+      return result.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
     } catch {
       return [];
     }
@@ -82,11 +102,11 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
       return;
     }
     const existing = loadPersistedNotifications();
-    // Evita duplicação exata pelo ID
+    // Evita duplicação exata pelo ID canônico (preserva timestamp original)
     if (existing.some(n => n.id === item.id)) return;
     const updated = [item, ...existing]
       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-      .slice(0, 100); // Limita a 100 entradas
+      .slice(0, 100);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
   };
 
@@ -173,6 +193,8 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
 
             const companyName = ord.companies?.name ? ` em ${ord.companies.name}` : '';
             const emoji = computed.statusKey === 'delivered' ? '🎉' : computed.statusKey === 'delivering' ? '🚚' : computed.statusKey === 'ready' ? '📦' : computed.statusKey === 'preparing' ? '👨‍🍳' : computed.statusKey === 'confirmed' ? '✅' : '❌';
+            
+            // Garante timestamp preciso: usa updated_at se disponível, senão created_at
             const notifItem: MarketingNotifItem = {
               id: `order-notif-${ord.id}-${computed.statusKey}`,
               title: `${emoji} ${computed.title.replace(/^(📦|🚚|🎉|✅|👨‍🍳|❌)\s*/, '')}`,
@@ -184,14 +206,14 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
             };
             newOrderNotifs.push(notifItem);
           });
-          // Persiste status atuais dos pedidos (sem substituir os históricos)
+          // Persiste status atuais dos pedidos (sem substituir os históricos existentes)
           persistMultipleNotifications(newOrderNotifs);
         }
       } catch (e) {
         console.warn('[ClientNotificationsPopover] Erro ao carregar pedidos para notificação:', e);
       }
 
-      // 3. Carrega TUDO do localStorage (histórico completo preservado + novas)
+      // 3. Carrega TUDO do localStorage (histórico completo preservado com horários originais)
       const allPersisted = loadPersistedNotifications();
 
       setNotifications(allPersisted);
@@ -272,7 +294,7 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
                 const companyName = targetOrd.companies?.name ? ` em ${targetOrd.companies.name}` : '';
                 const emoji = computed.statusKey === 'delivered' ? '🎉' : computed.statusKey === 'delivering' ? '🚚' : computed.statusKey === 'ready' ? '📦' : computed.statusKey === 'preparing' ? '👨‍🍳' : computed.statusKey === 'confirmed' ? '✅' : '❌';
                 const newItem: MarketingNotifItem = {
-                  id: `order-notif-rt-${targetOrd.id}-${computed.statusKey}-${Date.now()}`,
+                  id: `order-notif-${targetOrd.id}-${computed.statusKey}`,
                   title: `${emoji} ${computed.title.replace(/^(📦|🚚|🎉|✅|👨‍🍳|❌)\s*/, '')}`,
                   message: `${computed.description} (Pedido #${targetOrd.id.slice(0, 8)}${companyName})`,
                   emoji: emoji,
@@ -281,7 +303,8 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
                   order_id: targetOrd.id
                 };
                 persistNotification(newItem);
-                setNotifications((prev) => [newItem, ...prev.filter(n => n.id !== newItem.id)]);
+                const currentHistory = loadPersistedNotifications();
+                setNotifications(currentHistory);
                 setUnreadCount((prev) => prev + 1);
               }
             }
@@ -316,7 +339,7 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
                   const companyName = targetOrd.companies?.name ? ` em ${targetOrd.companies.name}` : '';
                   const emoji = computed.statusKey === 'delivered' ? '🎉' : computed.statusKey === 'delivering' ? '🚚' : computed.statusKey === 'ready' ? '📦' : computed.statusKey === 'preparing' ? '👨‍🍳' : computed.statusKey === 'confirmed' ? '✅' : '❌';
                   const newItem: MarketingNotifItem = {
-                    id: `del-notif-rt-${del.id}-${computed.statusKey}-${Date.now()}`,
+                    id: `order-notif-${targetOrd.id}-${computed.statusKey}`,
                     title: `${emoji} ${computed.title.replace(/^(📦|🚚|🎉|✅|👨‍🍳|❌)\s*/, '')}`,
                     message: `${computed.description} (Pedido #${targetOrd.id.slice(0, 8)}${companyName})`,
                     emoji: emoji,
@@ -325,7 +348,8 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
                     order_id: targetOrd.id
                   };
                   persistNotification(newItem);
-                  setNotifications((prev) => [newItem, ...prev.filter(n => n.id !== newItem.id)]);
+                  const currentHistory = loadPersistedNotifications();
+                  setNotifications(currentHistory);
                   setUnreadCount((prev) => prev + 1);
                 }
               }
