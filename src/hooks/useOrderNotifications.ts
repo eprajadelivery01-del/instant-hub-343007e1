@@ -55,15 +55,111 @@ const statusMessages: Record<string, { title: string; description: string; icon:
   },
 };
 
+let activeNativeNotif: Notification | null = null;
+
+export function triggerDeviceVibration(pattern: number[] = [500, 200, 500]) {
+  if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+    try {
+      navigator.vibrate(pattern);
+    } catch {}
+  }
+}
+
+export function requestNativeNotificationPermission() {
+  if (Capacitor.isNativePlatform()) {
+    LocalNotifications.requestPermissions().then((res) => {
+      if (res.display === "granted") {
+        LocalNotifications.createChannel({
+          id: "marketplace_orders",
+          name: "Atualizações de Pedidos",
+          description: "Notificações nativas do Marketplace para o cliente",
+          importance: 5,
+          visibility: 1,
+          sound: "default",
+          vibration: true,
+        }).catch(() => {});
+      }
+    }).catch(() => {});
+  }
+  if (typeof window !== "undefined" && "Notification" in window) {
+    if (Notification.permission === "default") {
+      Notification.requestPermission().catch(() => {});
+    }
+  }
+}
+
+export function sendNativeDeviceNotification(
+  title: string,
+  options?: { body?: string; tag?: string; icon?: string }
+) {
+  triggerDeviceVibration();
+
+  // 1. Notificação Nativa do Celular (Android / iOS)
+  if (Capacitor.isNativePlatform()) {
+    try {
+      LocalNotifications.schedule({
+        notifications: [
+          {
+            title: title || "Atualização de Pedido",
+            body: options?.body || "Acesse o app para acompanhar seu pedido.",
+            id: Math.floor(Math.random() * 100000),
+            schedule: { at: new Date(Date.now() + 100) },
+            channelId: "marketplace_orders",
+            extra: {
+              tag: options?.tag || "epraja-marketplace-order"
+            }
+          }
+        ]
+      }).catch((e) => {
+        console.warn("[LocalNotifications] Erro ao agendar notificação nativa no cliente:", e);
+      });
+    } catch (e) {
+      console.warn("[LocalNotifications] Erro nativo cliente:", e);
+    }
+  }
+
+  // 2. Notificação Nativa do Navegador (Desktop / Mobile Browser / PWA)
+  if (typeof window !== "undefined" && "Notification" in window) {
+    if (Notification.permission === "granted") {
+      try {
+        if (activeNativeNotif) {
+          activeNativeNotif.close();
+        }
+        activeNativeNotif = new Notification(title, {
+          body: options?.body || "Acesse o app para acompanhar seu pedido.",
+          icon: options?.icon || "/favicon.ico",
+          badge: "/favicon.ico",
+          tag: options?.tag || "epraja-marketplace-order",
+          requireInteraction: true,
+        });
+
+        activeNativeNotif.onclick = () => {
+          try {
+            window.focus();
+          } catch {}
+          activeNativeNotif?.close();
+          activeNativeNotif = null;
+        };
+      } catch (e) {
+        console.warn("[Notification] Erro ao criar notificação do navegador:", e);
+      }
+    } else if (Notification.permission === "default") {
+      Notification.requestPermission().then((perm) => {
+        if (perm === "granted") {
+          sendNativeDeviceNotification(title, options);
+        }
+      });
+    }
+  }
+}
+
 export function useOrderNotifications() {
   const { user } = useAuth();
   const subscribedRef = useRef(false);
 
   // Request permissions for mobile notifications
   useEffect(() => {
-    if (Capacitor.isNativePlatform()) {
-      LocalNotifications.requestPermissions().catch(() => {});
-    }
+    requestNativeNotificationPermission();
   }, []);
 
   // Configurar Push Notifications e Canal nativo se for plataforma nativa (Android/iOS)
@@ -120,18 +216,7 @@ export function useOrderNotifications() {
       const body = notification.body || "";
       toast(title, { description: body, duration: 8000 });
 
-      if (Capacitor.isNativePlatform()) {
-        LocalNotifications.schedule({
-          notifications: [{
-            id: Math.floor(Math.random() * 100000),
-            title: title,
-            body: body,
-            channelId: 'marketplace_orders',
-            sound: 'default',
-            schedule: { at: new Date(Date.now() + 100) }
-          }]
-        }).catch(err => console.error('[Push] Erro ao disparar notificação nativa:', err));
-      }
+      sendNativeDeviceNotification(title, { body, tag: "fcm-push" });
     }).then(listener => { pushListener = listener; });
 
     return () => {
@@ -167,6 +252,12 @@ export function useOrderNotifications() {
               window.location.href = `/marketplace/orders/${ord.id}`;
             },
           },
+        });
+
+        // DISPARA A NOTIFICAÇÃO NATIVA DA CENTRAL DO DISPOSITIVO (ANDROID/IOS/WEB)!
+        sendNativeDeviceNotification(computed.title, {
+          body: `${computed.label} (Pedido #${ord.id.slice(0, 8)})`,
+          tag: `order-${ord.id}-${computed.statusKey}`
         });
       } catch (err) {
         console.warn("[useOrderNotifications] Erro ao disparar toast de notificação:", err);
