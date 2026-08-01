@@ -1,4 +1,3 @@
-// VERSION: 2026-05-21-ORDER-TRACKER
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -11,6 +10,7 @@ import { ArrowLeft, MessageCircle, MapPin, Banknote, Smartphone, AlertCircle } f
 import { toast } from 'sonner';
 import { OrderStoreChat } from '@/components/marketplace/OrderStoreChat';
 import { getMarketplaceStatus } from '@/utils/orderStatusResolver';
+import { useCancelOrder } from '@/hooks/useCancelOrder';
 
 const statusSteps = ['pending', 'confirmed', 'preparing', 'ready', 'delivering', 'delivered'];
 
@@ -19,6 +19,7 @@ export default function OrderDetail() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { cancelOrder, loading: isCancelling } = useCancelOrder();
   
   const [showStoreChat, setShowStoreChat] = useState(false);
   const [notifEnabled, setNotifEnabled] = useState<boolean>(() => {
@@ -161,90 +162,9 @@ export default function OrderDetail() {
     if (!order) return;
     if (!window.confirm("Tem certeza que deseja cancelar este pedido?")) return;
     
-    try {
-      // 1. Salva o pedido como cancelado no localStorage para refletir instantaneamente no app do cliente
-      try {
-        const localCancelled = JSON.parse(localStorage.getItem('@epraja_cancelled_orders') || '[]');
-        if (!localCancelled.includes(order.id)) {
-          localCancelled.push(order.id);
-          localStorage.setItem('@epraja_cancelled_orders', JSON.stringify(localCancelled));
-        }
-      } catch (e) {}
-
-      // 2. Atualiza a tabela orders no Supabase
-      const { data: orderUpdateData, error: orderError } = await supabase
-        .from('orders')
-        .update({ 
-          status: 'cancelled',
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', order.id)
-        .select('id, status');
-
-      if (orderError) console.warn('[handleCancelOrder] Erro ao atualizar status no orders:', orderError);
-
-      if (!orderUpdateData || orderUpdateData.length === 0) {
-        // Tentativa de update abrangente por id ou customer_id/user_id se RLS restringir
-        await supabase
-          .from('orders')
-          .update({ status: 'cancelled', updated_at: new Date().toISOString() })
-          .or(`id.eq.${order.id},user_id.eq.${order.user_id || ''},customer_id.eq.${order.customer_id || ''}`);
-      }
-
-      // 3. Atualiza a tabela deliveries e available_deliveries se houver entrega vinculada
-      try {
-        await Promise.all([
-          supabase
-            .from('deliveries')
-            .update({ status: 'cancelled', updated_at: new Date().toISOString() })
-            .eq('order_id', order.id),
-          supabase
-            .from('available_deliveries')
-            .update({ status: 'cancelled', updated_at: new Date().toISOString() })
-            .eq('order_id', order.id),
-        ]);
-      } catch (e) {
-        console.warn('[handleCancelOrder] Erro ao atualizar status nas tabelas de entrega:', e);
-      }
-
-      // 4. Notifica os lojistas em company_users
-      try {
-        const { data: companyUsers } = await supabase
-          .from('company_users')
-          .select('user_id')
-          .eq('company_id', order.company_id);
-          
-        if (companyUsers && companyUsers.length > 0) {
-          const notifications = companyUsers.map(cu => ({
-            user_id: cu.user_id,
-            title: "Pedido Cancelado pelo Cliente",
-            message: `O cliente cancelou o pedido #${order.id.split('-')[0].toUpperCase()}.`,
-            type: "order_cancelled"
-          }));
-          await supabase.from('notifications').insert(notifications);
-        }
-      } catch (e) {
-        console.warn('[handleCancelOrder] Erro ao notificar lojistas:', e);
-      }
-
-      // 5. Invocação de notificação para atualização dos painéis dos lojistas e entregadores
-      try {
-        await supabase.functions.invoke('notify-customer', {
-          body: {
-            orderId: order.id,
-            order_id: order.id,
-            status: 'cancelled',
-            deliveryStatus: 'cancelled',
-            company_id: order.company_id
-          }
-        });
-      } catch (e) {}
-
-      toast.success("Pedido cancelado com sucesso.");
+    const success = await cancelOrder(order.id, order.company_id);
+    if (success) {
       navigate("/marketplace/orders");
-    } catch (err) {
-      console.error(err);
-      toast.error("Erro ao cancelar pedido.");
     }
   };
 
