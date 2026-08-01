@@ -245,7 +245,7 @@ export async function syncFcmTokenToDatabase(providedToken?: string) {
     }
 
     // 2. Invocação forçada com SERVICE_ROLE para garantir o salvamento do token FCM no banco
-    const response = await supabase.functions.invoke('notify-customer', {
+    let response = await supabase.functions.invoke('notify-customer', {
       body: {
         action: 'save_token',
         fcmToken: token,
@@ -257,6 +257,35 @@ export async function syncFcmTokenToDatabase(providedToken?: string) {
     });
 
     console.log('[EDGE_RESPONSE]', response);
+
+    // Fallback de HTTP direto caso a SDK do Supabase retorne FunctionsFetchError no WebView do Android
+    if (response.error || !response.data) {
+      try {
+        const apiKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3OiOiJzdXBhYmFzZSIsInJlZiI6Im5wdGt4bHJocmxzc2RzZXZwZ3FlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNDE4MTQsImV4cCI6MjA5MDYxNzgxNH0.t8Cu-yFnSqOURT4GXCZ_mBghpxucT89nRBFlBNA1vZs";
+        const directRes = await fetch("https://nptkxlrhrlssdsevpgqe.supabase.co/functions/v1/notify-customer", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "apikey": apiKey,
+            "Authorization": `Bearer ${apiKey}`
+          },
+          body: JSON.stringify({
+            action: 'save_token',
+            fcmToken: token,
+            customerId: resolvedTargetId,
+            userId: userId,
+            phone: savedPhone,
+            recentOrders: recentOrders
+          })
+        });
+        const directData = await directRes.json();
+        console.log('[DIRECT_FETCH_RESPONSE]', directData);
+        response = { data: directData, error: null };
+      } catch (errDirect) {
+        console.warn('[DIRECT_FETCH_ERROR]', errDirect);
+      }
+    }
+
     try {
       alert('[EDGE_RESPONSE]: ' + JSON.stringify(response));
     } catch {}
