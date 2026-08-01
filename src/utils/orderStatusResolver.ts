@@ -57,7 +57,7 @@ export function getMarketplaceStatus(orderOrPayload: any): ComputedOrderStatus {
   }
 
   const deliveryStatus = deliveryObj?.status;
-  const orderStatus = orderOrPayload?.status || orderOrPayload?.order?.status || 'confirmed';
+  const orderStatus = orderOrPayload?.status || orderOrPayload?.order?.status || 'pending';
   const deliveryRequested = orderOrPayload?.delivery_requested || orderOrPayload?.order?.delivery_requested;
 
   // 1. Pedido Entregue / Concluído / Cancelado -> Histórico
@@ -131,14 +131,26 @@ export function getMarketplaceStatus(orderOrPayload: any): ComputedOrderStatus {
     };
   }
 
-  // Mapeamento padrão (pending e confirmed são exibidos como Pedido confirmado)
+  if (orderStatus === 'confirmed') {
+    return {
+      statusKey: 'confirmed',
+      label: 'Pedido confirmado',
+      title: 'Pedido confirmado',
+      description: 'A loja confirmou o seu pedido.',
+      isFinished: false,
+      color: 'bg-primary',
+      stepRank: 1,
+    };
+  }
+
+  // Mapeamento padrão para pedidos novos pendentes de aceite do lojista
   return {
-    statusKey: 'confirmed',
-    label: 'Pedido confirmado',
-    title: 'Pedido confirmado',
-    description: 'A loja confirmou o seu pedido.',
+    statusKey: 'pending',
+    label: 'Aguardando confirmação',
+    title: 'Aguardando a loja aceitar',
+    description: 'Seu pedido foi recebido e está aguardando a confirmação do restaurante.',
     isFinished: false,
-    color: 'bg-primary',
-    stepRank: 1,
+    color: 'bg-amber-500',
+    stepRank: 0,
   };
 }
