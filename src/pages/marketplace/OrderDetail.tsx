@@ -162,27 +162,57 @@ export default function OrderDetail() {
     if (!window.confirm("Tem certeza que deseja cancelar este pedido?")) return;
     
     try {
-      const { error } = await supabase
+      // 1. Salva o pedido como cancelado no localStorage para refletir instantaneamente e evitar rollback
+      try {
+        const localCancelled = JSON.parse(localStorage.getItem('@epraja_cancelled_orders') || '[]');
+        if (!localCancelled.includes(order.id)) {
+          localCancelled.push(order.id);
+          localStorage.setItem('@epraja_cancelled_orders', JSON.stringify(localCancelled));
+        }
+      } catch (e) {}
+
+      // 2. Atualiza a tabela orders no Supabase
+      const { error: orderError } = await supabase
         .from('orders')
-        .update({ status: 'cancelled' })
+        .update({ 
+          status: 'cancelled',
+          updated_at: new Date().toISOString()
+        })
         .eq('id', order.id);
 
-      if (error) throw error;
+      if (orderError) console.warn('[handleCancelOrder] Erro ao atualizar status no orders:', orderError);
 
-      // Notify the store
-      const { data: companyUsers } = await supabase
-        .from('company_users')
-        .select('user_id')
-        .eq('company_id', order.company_id);
-        
-      if (companyUsers && companyUsers.length > 0) {
-        const notifications = companyUsers.map(cu => ({
-          user_id: cu.user_id,
-          title: "Pedido Cancelado pelo Cliente",
-          message: `O cliente cancelou o pedido #${order.id.split('-')[0].toUpperCase()}.`,
-          type: "order_cancelled"
-        }));
-        await supabase.from('notifications').insert(notifications);
+      // 3. Atualiza a tabela deliveries se houver entrega vinculada
+      try {
+        await supabase
+          .from('deliveries')
+          .update({ 
+            status: 'cancelled',
+            updated_at: new Date().toISOString()
+          })
+          .eq('order_id', order.id);
+      } catch (e) {
+        console.warn('[handleCancelOrder] Erro ao atualizar status no deliveries:', e);
+      }
+
+      // 4. Notifica os lojistas em company_users
+      try {
+        const { data: companyUsers } = await supabase
+          .from('company_users')
+          .select('user_id')
+          .eq('company_id', order.company_id);
+          
+        if (companyUsers && companyUsers.length > 0) {
+          const notifications = companyUsers.map(cu => ({
+            user_id: cu.user_id,
+            title: "Pedido Cancelado pelo Cliente",
+            message: `O cliente cancelou o pedido #${order.id.split('-')[0].toUpperCase()}.`,
+            type: "order_cancelled"
+          }));
+          await supabase.from('notifications').insert(notifications);
+        }
+      } catch (e) {
+        console.warn('[handleCancelOrder] Erro ao notificar lojistas:', e);
       }
 
       toast.success("Pedido cancelado com sucesso.");

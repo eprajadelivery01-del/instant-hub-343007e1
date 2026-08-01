@@ -21,6 +21,26 @@ export interface ComputedOrderStatus {
  * STATUS "pending" / "Aguardando confirmação" E NOTIFICAÇÃO DE "SOLICITADO" SÃO REMOVIDOS.
  */
 export function getMarketplaceStatus(orderOrPayload: any): ComputedOrderStatus {
+  const orderId = orderOrPayload?.id || orderOrPayload?.order?.id;
+
+  // 0. Verifica se o pedido foi cancelado pelo cliente localmente
+  if (orderId) {
+    try {
+      const localCancelled: string[] = JSON.parse(localStorage.getItem('@epraja_cancelled_orders') || '[]');
+      if (localCancelled.includes(orderId)) {
+        return {
+          statusKey: 'cancelled',
+          label: 'Pedido cancelado',
+          title: 'Pedido Cancelado',
+          description: 'Seu pedido foi cancelado.',
+          isFinished: true,
+          color: 'bg-destructive',
+          stepRank: 0,
+        };
+      }
+    } catch {}
+  }
+
   let deliveryObj = null;
 
   if (Array.isArray(orderOrPayload?.deliveries) && orderOrPayload.deliveries.length > 0) {
