@@ -60,9 +60,9 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
       const now = Date.now();
       
       const seenCanonicalIds = new Set<string>();
-      const result: MarketingNotifItem[] = [];
+      const rawFiltered: MarketingNotifItem[] = [];
 
-      // Filtra e normaliza itens legados (que continham -rt- ou timestamps no ID)
+      // 1. Normaliza IDs legados (que continham -rt- ou timestamps no ID)
       for (const n of parsed) {
         const t = new Date(n.created_at).getTime();
         const isPending =
@@ -83,8 +83,58 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
 
         if (seenCanonicalIds.has(canonicalId)) continue;
         seenCanonicalIds.add(canonicalId);
-        result.push({ ...n, id: canonicalId });
+        rawFiltered.push({ ...n, id: canonicalId });
       }
+
+      // 2. Corrige timestamps idênticos para notificações do mesmo pedido
+      const statusWeight: Record<string, number> = {
+        confirmed: 1,
+        preparing: 2,
+        ready: 3,
+        delivering: 4,
+        in_route: 4,
+        delivered: 5,
+        cancelled: 6
+      };
+
+      const orderByOrder: Record<string, MarketingNotifItem[]> = {};
+      const nonOrderItems: MarketingNotifItem[] = [];
+
+      rawFiltered.forEach(item => {
+        if (item.order_id && item.type === 'order_status') {
+          if (!orderByOrder[item.order_id]) orderByOrder[item.order_id] = [];
+          orderByOrder[item.order_id].push(item);
+        } else {
+          nonOrderItems.push(item);
+        }
+      });
+
+      const fixedOrderItems: MarketingNotifItem[] = [];
+
+      Object.values(orderByOrder).forEach(items => {
+        // Ordena do menor status para o maior status (preparing -> ready -> delivering -> delivered)
+        items.sort((a, b) => {
+          const sA = a.id.split('-').pop() || '';
+          const sB = b.id.split('-').pop() || '';
+          return (statusWeight[sA] || 0) - (statusWeight[sB] || 0);
+        });
+
+        // Garante que cada passo subsequente do pedido tenha horário cronológico distinto
+        for (let i = 0; i < items.length; i++) {
+          if (i > 0) {
+            const prevTime = new Date(items[i - 1].created_at).getTime();
+            const currTime = new Date(items[i].created_at).getTime();
+            // Se o horário for idêntico ou anterior ao passo anterior, adiciona um deslocamento lógico de 2 minutos
+            if (currTime <= prevTime) {
+              const adjustedTime = new Date(prevTime + 2 * 60 * 1000).toISOString();
+              items[i] = { ...items[i], created_at: adjustedTime };
+            }
+          }
+        }
+        fixedOrderItems.push(...items);
+      });
+
+      const result = [...nonOrderItems, ...fixedOrderItems];
 
       return result.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
     } catch {
@@ -102,7 +152,6 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
       return;
     }
     const existing = loadPersistedNotifications();
-    // Evita duplicação exata pelo ID canônico (preserva timestamp original)
     if (existing.some(n => n.id === item.id)) return;
     const updated = [item, ...existing]
       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
@@ -145,7 +194,6 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
         type: 'marketing'
       }));
 
-      // Persiste marketing no localStorage para não perder ao recarregar
       persistMultipleNotifications(marketingItems);
 
       // 2. Busca pedidos recentes do cliente para gerar notificações dos status permitidos
@@ -157,7 +205,6 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
       try {
         let oData: any[] = [];
 
-        // 2a. Se houver IDs salvos no localStorage, busca diretamente por esses IDs
         if (myOrderIds.length > 0) {
           const { data: byIds } = await supabase
             .from('orders')
@@ -167,7 +214,6 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
           if (byIds) oData.push(...byIds);
         }
 
-        // 2b. Se o usuário estiver logado, busca também pelos IDs de cliente/user
         if (user?.id) {
           const { data: byUser } = await supabase
             .from('orders')
@@ -187,38 +233,48 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
         if (oData && oData.length > 0) {
           const newOrderNotifs: MarketingNotifItem[] = [];
           oData.forEach((ord: any) => {
-            if (ord.status === 'pending') return; // NUNCA GERA NOTIFICAÇÃO PARA PENDING
+            if (ord.status === 'pending') return;
             const computed = getMarketplaceStatus(ord);
             if (computed.statusKey === 'pending') return;
 
             const companyName = ord.companies?.name ? ` em ${ord.companies.name}` : '';
             const emoji = computed.statusKey === 'delivered' ? '🎉' : computed.statusKey === 'delivering' ? '🚚' : computed.statusKey === 'ready' ? '📦' : computed.statusKey === 'preparing' ? '👨‍🍳' : computed.statusKey === 'confirmed' ? '✅' : '❌';
             
-            // Garante timestamp preciso: usa updated_at se disponível, senão created_at
+            // Extrai timestamp real da entrega ou do pedido
+            const del = Array.isArray(ord.deliveries) ? ord.deliveries[0] : ord.deliveries;
+            let exactTimestamp = ord.created_at;
+            if (computed.statusKey === 'delivered' && del?.updated_at) {
+              exactTimestamp = del.updated_at;
+            } else if ((computed.statusKey === 'delivering' || computed.statusKey === 'in_route') && (del?.updated_at || del?.created_at)) {
+              exactTimestamp = del.updated_at || del.created_at;
+            } else if (computed.statusKey === 'ready' && (del?.created_at || ord.updated_at)) {
+              exactTimestamp = del?.created_at || ord.updated_at;
+            } else if (ord.updated_at) {
+              exactTimestamp = ord.updated_at;
+            }
+
             const notifItem: MarketingNotifItem = {
               id: `order-notif-${ord.id}-${computed.statusKey}`,
               title: `${emoji} ${computed.title.replace(/^(📦|🚚|🎉|✅|👨‍🍳|❌)\s*/, '')}`,
               message: `${computed.description} (Pedido #${ord.id.slice(0, 8)}${companyName})`,
               emoji: emoji,
-              created_at: ord.updated_at || ord.created_at,
+              created_at: exactTimestamp,
               type: 'order_status',
               order_id: ord.id
             };
             newOrderNotifs.push(notifItem);
           });
-          // Persiste status atuais dos pedidos (sem substituir os históricos existentes)
           persistMultipleNotifications(newOrderNotifs);
         }
       } catch (e) {
         console.warn('[ClientNotificationsPopover] Erro ao carregar pedidos para notificação:', e);
       }
 
-      // 3. Carrega TUDO do localStorage (histórico completo preservado com horários originais)
+      // 3. Carrega TUDO do localStorage (histórico completo preservado com horários cronológicos)
       const allPersisted = loadPersistedNotifications();
 
       setNotifications(allPersisted);
 
-      // Checa contagem de não lidos
       const lastRead = localStorage.getItem('epraja_last_read_notif_time');
       if (!lastRead) {
         setUnreadCount(allPersisted.length);
