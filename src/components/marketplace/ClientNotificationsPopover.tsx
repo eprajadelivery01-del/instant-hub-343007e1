@@ -458,7 +458,11 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
 
   const formatDate = (isoString: string) => {
     try {
-      const date = new Date(isoString);
+      let date = new Date(isoString);
+      const now = new Date();
+      if (date > now) {
+        date = now; // NUNCA exibe horário no futuro em relação ao celular do cliente
+      }
       return new Intl.DateTimeFormat('pt-BR', {
         day: '2-digit',
         month: '2-digit',
