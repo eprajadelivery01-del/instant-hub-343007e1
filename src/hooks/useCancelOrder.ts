@@ -21,13 +21,13 @@ export function useCancelOrder() {
         console.warn('[useCancelOrder] Erro ao salvar no localStorage:', e);
       }
 
-      const nowISO = new Date().toISOString();
+      const cleanId = String(orderId).replace('#', '').trim();
 
       // 2. Atualiza tabelas orders, deliveries e available_deliveries no Supabase
       await Promise.allSettled([
-        supabase.from('orders').update({ status: 'cancelled', updated_at: nowISO }).eq('id', orderId),
-        supabase.from('deliveries').update({ status: 'cancelled', updated_at: nowISO }).eq('order_id', orderId),
-        supabase.from('available_deliveries').update({ status: 'cancelled', updated_at: nowISO }).eq('order_id', orderId),
+        supabase.from('orders').update({ status: 'cancelled', updated_at: nowISO }).or(`id.eq.${cleanId},id.ilike.${cleanId}%`),
+        supabase.from('deliveries').update({ status: 'cancelled', updated_at: nowISO }).or(`order_id.eq.${cleanId},order_id.ilike.${cleanId}%`),
+        supabase.from('available_deliveries').update({ status: 'cancelled', updated_at: nowISO }).or(`order_id.eq.${cleanId},order_id.ilike.${cleanId}%`),
       ]);
 
       // 3. Se possuir companyId, notifica os lojistas na tabela notifications
