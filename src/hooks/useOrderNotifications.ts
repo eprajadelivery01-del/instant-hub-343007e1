@@ -115,6 +115,13 @@ export async function sendNativeDeviceNotification(
   // 1. Aciona vibração no dispositivo
   triggerDeviceVibration();
 
+  console.log('[SEND_NATIVE_NOTIFICATION]', {
+    title,
+    body: options?.body,
+    platform: Capacitor.getPlatform(),
+    native: Capacitor.isNativePlatform()
+  });
+
   // 2. Aciona Notificação Nativa do Celular (Android / iOS) - SOLICITA PERMISSÃO SE NECESSÁRIO E EXIBE NA CENTRAL DO DISPOSITIVO
   if (Capacitor.isNativePlatform()) {
     try {
@@ -136,15 +143,25 @@ export async function sendNativeDeviceNotification(
         sound: "default",
       }).catch(() => {});
 
+      await LocalNotifications.createChannel({
+        id: "marketplace_orders",
+        name: "Atualizações de Pedidos",
+        description: "Avisos em tempo real de pedidos",
+        importance: 5,
+        visibility: 1,
+        vibration: true,
+        sound: "default",
+      }).catch(() => {});
+
       const notifId = Math.floor(Math.random() * 899999) + 100000;
 
-      await LocalNotifications.schedule({
+      const result = await LocalNotifications.schedule({
         notifications: [
           {
             title: title || "Atualização de Pedido!",
             body: options?.body || "Acesse o app para acompanhar seu pedido",
             id: notifId,
-            channelId: "default",
+            channelId: "marketplace_orders",
             actionTypeId: "",
             extra: {
               tag: options?.tag || "epraja-marketplace-order"
@@ -152,7 +169,8 @@ export async function sendNativeDeviceNotification(
           }
         ]
       });
-      console.log("[LocalNotifications] Notificação nativa enviada com sucesso no Android!");
+
+      console.log('[LOCAL_NOTIFICATION_RESULT]', result);
     } catch (e) {
       console.warn("[LocalNotifications] Erro nativo cliente:", e);
     }
@@ -209,6 +227,13 @@ export async function syncFcmTokenToDatabase(providedToken?: string) {
     } catch {}
 
     const resolvedTargetId = userId || customerId || savedPhone || (recentOrders.length > 0 ? recentOrders[0] : null);
+
+    console.log('[SYNC_FCM_START]', {
+      token,
+      userId,
+      customerId,
+      resolvedTargetId
+    });
 
     if (resolvedTargetId) {
       // 1. Atualização via cliente (se houver permissão)
@@ -280,11 +305,23 @@ export function useOrderNotifications() {
     }).catch(e => console.warn("[Push] Falha ao pedir permissões de push:", e));
 
     PushNotifications.addListener("registration", (token) => {
-      console.log("[Firebase] FCM Token obtido:", token.value);
+      console.log("[FCM_TOKEN_RECEIVED]", token.value);
+
       try {
         localStorage.setItem('@epraja_fcm_token', token.value);
         localStorage.setItem('fcm_token', token.value);
       } catch {}
+
+      try {
+        alert(
+          JSON.stringify({
+            token: token.value,
+            platform: Capacitor.getPlatform(),
+            native: Capacitor.isNativePlatform()
+          })
+        );
+      } catch {}
+
       syncFcmTokenToDatabase(token.value);
     }).then(listener => { regListener = listener; });
 
