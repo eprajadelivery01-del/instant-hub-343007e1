@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { Bell, Copy, Check, Ticket, Sparkles, X, Gift, Package, Clock, ShoppingBag } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -48,6 +49,17 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
   const [unreadCount, setUnreadCount] = useState(0);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
+  const location = useLocation();
+
+  useEffect(() => {
+    setIsOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    const handleClose = () => setIsOpen(false);
+    window.addEventListener('close-notifications-sheet', handleClose);
+    return () => window.removeEventListener('close-notifications-sheet', handleClose);
+  }, []);
 
   const STORAGE_KEY = '@epraja_notification_history';
   const FORTY_EIGHT_HOURS_MS = 48 * 60 * 60 * 1000;
