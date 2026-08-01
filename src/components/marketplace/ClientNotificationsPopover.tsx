@@ -459,25 +459,9 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
   const formatDate = (isoString: string) => {
     try {
       if (!isoString) return '';
-      let normalized = isoString;
-      if (!normalized.endsWith('Z') && !/[+-]\d{2}:\d{2}$/.test(normalized)) {
-        normalized = normalized.replace(' ', 'T') + 'Z';
-      }
-      let date = new Date(normalized);
-      if (isNaN(date.getTime())) {
-        date = new Date(isoString);
-      }
-      const now = new Date();
-      if (date > now) {
-        date = now; // NUNCA exibe horário no futuro em relação ao celular do cliente
-      }
-      return new Intl.DateTimeFormat('pt-BR', {
-        day: '2-digit',
-        month: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false
-      }).format(date);
+      const date = new Date(isoString);
+      if (isNaN(date.getTime())) return '';
+      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     } catch (e) {
       return '';
     }
