@@ -51,18 +51,31 @@ export function useRequirePhone() {
 
     setIsSubmittingPhone(true);
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .upsert({
-          id: user.id,
-          user_id: user.id,
-          phone: phoneInput,
-          full_name: profile?.full_name || user.user_metadata?.full_name || 'Cliente',
-          role: profile?.role || 'customer'
-        });
+      await Promise.allSettled([
+        supabase
+          .from('profiles')
+          .upsert({
+            id: user.id,
+            user_id: user.id,
+            phone: phoneInput,
+            full_name: profile?.full_name || user.user_metadata?.full_name || 'Cliente',
+            role: profile?.role || 'customer'
+          }),
+        supabase
+          .from('customers')
+          .update({ phone: phoneInput, updated_at: new Date().toISOString() })
+          .or(`user_id.eq.${user.id},id.eq.${user.id}`),
+        supabase
+          .from('users')
+          .update({ phone: phoneInput, updated_at: new Date().toISOString() })
+          .eq('id', user.id)
+      ]);
 
-      if (error) throw error;
-      
+      try {
+        localStorage.setItem('@epraja_customer_phone', phoneInput);
+        localStorage.setItem('epraja_customer_phone', phoneInput);
+      } catch {}
+
       await refreshProfile();
       toast.success('Telefone salvo com sucesso!');
       setShowPhoneModal(false);

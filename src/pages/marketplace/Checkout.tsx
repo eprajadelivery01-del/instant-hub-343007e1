@@ -378,6 +378,7 @@ export default function Checkout() {
         address_id: fulfillmentMode === 'pickup' ? null : selectedAddress,
         payment_method: paymentMethod,
         coupon_code: appliedCoupon?.code ?? null,
+        customer_phone: profile?.phone || (user.user_metadata as any)?.phone || localStorage.getItem('@epraja_customer_phone') || localStorage.getItem('epraja_customer_phone') || null,
         notes: fulfillmentMode === 'pickup' ? `[RETIRADA NO LOCAL] ${orderNotes || ''}`.trim() : orderNotes,
         needs_change: paymentMethod === 'money' && needsChange,
         change_for: changeFor ? Number(changeFor) : null,
