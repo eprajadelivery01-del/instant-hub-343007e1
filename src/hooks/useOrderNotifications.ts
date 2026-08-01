@@ -186,14 +186,30 @@ export async function syncFcmTokenToDatabase(providedToken?: string) {
   try {
     const { data: authData } = await supabase.auth.getUser();
     const userId = authData?.user?.id;
+    const customerId = localStorage.getItem('@epraja_customer_id') || localStorage.getItem('epraja_customer_id') || userId;
+    const targetId = userId || customerId;
 
-    if (userId) {
-      await Promise.all([
-        supabase.from("customers").update({ fcm_token: token, updated_at: new Date().toISOString() }).or(`user_id.eq.${userId},id.eq.${userId}`),
-        supabase.from("profiles").update({ fcm_token: token, updated_at: new Date().toISOString() }).eq("id", userId),
-        supabase.from("users").update({ fcm_token: token, updated_at: new Date().toISOString() }).eq("id", userId),
+    if (targetId) {
+      // 1. Atualização via cliente (se houver permissão)
+      Promise.allSettled([
+        supabase.from("customers").update({ fcm_token: token, updated_at: new Date().toISOString() }).or(`user_id.eq.${targetId},id.eq.${targetId}`),
+        supabase.from("profiles").update({ fcm_token: token, updated_at: new Date().toISOString() }).eq("id", targetId),
+        supabase.from("users").update({ fcm_token: token, updated_at: new Date().toISOString() }).eq("id", targetId),
       ]);
-      console.log("[FCM] Token sincronizado no banco de dados para user:", userId);
+
+      // 2. Invocação forçada com SERVICE_ROLE para garantir o salvamento do token FCM no banco sem bloqueio de RLS
+      supabase.functions.invoke('notify-customer', {
+        body: {
+          action: 'save_token',
+          fcmToken: token,
+          customerId: targetId,
+          userId: targetId
+        }
+      }).then(res => {
+        console.log("[FCM] Token salvo no banco via Admin Service Role:", res);
+      }).catch(err => {
+        console.warn("[FCM] Erro ao invocar save_token via Edge Function:", err);
+      });
     }
   } catch (e) {
     console.warn("[FCM] Erro ao sincronizar token com o banco:", e);
