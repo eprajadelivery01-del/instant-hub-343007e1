@@ -167,27 +167,84 @@ async function sendToToken(
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
-  const json = (payload: unknown, status = 200) =>
-    new Response(JSON.stringify(payload), {
+  const reqId = crypto.randomUUID().slice(0, 8);
+  const startedAt = Date.now();
+
+  const json = (payload: Record<string, unknown>, status = 200) => {
+    console.log(`[send-push:${reqId}] respondendo status=${status} em ${Date.now() - startedAt}ms`);
+    return new Response(JSON.stringify({ requestId: reqId, ...payload }), {
       status,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
+  };
 
   try {
+    const body = await req.json().catch(() => ({} as any));
+    const action = String(body.action ?? "send");
+    console.log(`[send-push:${reqId}] action=${action}`, JSON.stringify({
+      orderId: body.orderId ?? null,
+      userId: body.userId ?? null,
+      customerId: body.customerId ?? null,
+      hasToken: Boolean(body.token || body.fcmToken),
+    }));
+
+    const supabase = createClient(SUPABASE_URL, SERVICE_ROLE);
+
+    // ---------- REGISTRO / ATUALIZAÇÃO DO TOKEN FCM ----------
+    if (action === "register_token" || action === "save_token") {
+      const fcmToken = String(body.token ?? body.fcmToken ?? "").trim();
+      if (!fcmToken) return json({ error: "token ausente" }, 400);
+
+      const userId = body.userId ? String(body.userId) : null;
+      const customerId = body.customerId ? String(body.customerId) : null;
+      const phone = body.phone ? String(body.phone) : null;
+      const platform = body.platform ? String(body.platform) : "unknown";
+      const now = new Date().toISOString();
+      const outcome: Record<string, string> = {};
+
+      const up = await supabase
+        .from("device_tokens")
+        .upsert(
+          { token: fcmToken, user_id: userId, customer_id: customerId, phone, platform, updated_at: now },
+          { onConflict: "token" },
+        );
+      outcome.device_tokens = up.error ? `erro: ${up.error.message}` : "ok";
+
+      if (userId) {
+        const p = await supabase.from("profiles").update({ fcm_token: fcmToken, updated_at: now }).eq("id", userId);
+        outcome.profiles = p.error ? `erro: ${p.error.message}` : "ok";
+        const c = await supabase.from("customers").update({ fcm_token: fcmToken, updated_at: now }).eq("user_id", userId);
+        outcome.customers = c.error ? `erro: ${c.error.message}` : "ok";
+      } else if (customerId) {
+        const c = await supabase.from("customers").update({ fcm_token: fcmToken, updated_at: now }).eq("id", customerId);
+        outcome.customers = c.error ? `erro: ${c.error.message}` : "ok";
+      } else if (phone) {
+        const c = await supabase.from("customers").update({ fcm_token: fcmToken, updated_at: now }).eq("phone", phone);
+        outcome.customers = c.error ? `erro: ${c.error.message}` : "ok";
+      }
+
+      console.log(`[send-push:${reqId}] registro do token:`, JSON.stringify(outcome));
+      return json({ registered: true, outcome });
+    }
+
+    // ---------- ENVIO ----------
     if (!SA_RAW) {
+      console.error(`[send-push:${reqId}] FIREBASE_SERVICE_ACCOUNT_JSON ausente`);
       return json({ error: "FIREBASE_SERVICE_ACCOUNT_JSON não configurado" }, 500);
     }
-    const sa = JSON.parse(SA_RAW) as ServiceAccount;
+    let sa: ServiceAccount;
+    try {
+      sa = JSON.parse(SA_RAW) as ServiceAccount;
+    } catch {
+      return json({ error: "FIREBASE_SERVICE_ACCOUNT_JSON inválido (não é um JSON)" }, 500);
+    }
 
-    const body = await req.json().catch(() => ({}));
     const title: string = String(body.title ?? "É Pra Já").slice(0, 120);
     const message: string = String(body.body ?? body.message ?? "Você tem uma nova atualização.").slice(0, 400);
     const extra: Record<string, string> = {};
     if (body.orderId) extra.orderId = String(body.orderId);
     if (body.status) extra.status = String(body.status);
     if (body.url) extra.url = String(body.url);
-
-    const supabase = createClient(SUPABASE_URL, SERVICE_ROLE);
 
     // Resolve os tokens de destino
     let tokens: string[] = Array.isArray(body.tokens)
@@ -201,51 +258,79 @@ Deno.serve(async (req) => {
       let customerId: string | null = body.customerId ? String(body.customerId) : null;
 
       if (!userId && !customerId && body.orderId) {
-        const { data: order } = await supabase
+        const { data: order, error } = await supabase
           .from("orders")
           .select("customer_id, user_id")
           .eq("id", String(body.orderId))
           .maybeSingle();
+        if (error) console.error(`[send-push:${reqId}] erro ao buscar pedido:`, error.message);
         customerId = (order as any)?.customer_id ?? null;
         userId = (order as any)?.user_id ?? null;
+        console.log(`[send-push:${reqId}] pedido resolvido -> customerId=${customerId} userId=${userId}`);
       }
 
       const found = new Set<string>();
+      const collect = (rows: any[] | null, field: string, source: string) => {
+        (rows ?? []).forEach((r) => r?.[field] && found.add(r[field]));
+        console.log(`[send-push:${reqId}] ${source}: ${rows?.length ?? 0} linha(s)`);
+      };
+
       if (customerId) {
-        const { data } = await supabase
-          .from("customers")
-          .select("fcm_token")
-          .or(`id.eq.${customerId},user_id.eq.${customerId}`);
-        (data ?? []).forEach((r: any) => r?.fcm_token && found.add(r.fcm_token));
+        const { data, error } = await supabase.from("device_tokens").select("token").eq("customer_id", customerId);
+        if (error) console.error(`[send-push:${reqId}] device_tokens(customer): ${error.message}`);
+        collect(data as any[], "token", "device_tokens(customer)");
+        const c = await supabase.from("customers").select("fcm_token").or(`id.eq.${customerId},user_id.eq.${customerId}`);
+        if (c.error) console.error(`[send-push:${reqId}] customers: ${c.error.message}`);
+        collect(c.data as any[], "fcm_token", "customers");
       }
       if (userId) {
-        const { data } = await supabase
-          .from("profiles")
-          .select("fcm_token")
-          .eq("id", userId);
-        (data ?? []).forEach((r: any) => r?.fcm_token && found.add(r.fcm_token));
-        const { data: c2 } = await supabase
-          .from("customers")
-          .select("fcm_token")
-          .eq("user_id", userId);
-        (c2 ?? []).forEach((r: any) => r?.fcm_token && found.add(r.fcm_token));
+        const { data, error } = await supabase.from("device_tokens").select("token").eq("user_id", userId);
+        if (error) console.error(`[send-push:${reqId}] device_tokens(user): ${error.message}`);
+        collect(data as any[], "token", "device_tokens(user)");
+        const p = await supabase.from("profiles").select("fcm_token").eq("id", userId);
+        if (p.error) console.error(`[send-push:${reqId}] profiles: ${p.error.message}`);
+        collect(p.data as any[], "fcm_token", "profiles");
+        const c2 = await supabase.from("customers").select("fcm_token").eq("user_id", userId);
+        if (c2.error) console.error(`[send-push:${reqId}] customers(user): ${c2.error.message}`);
+        collect(c2.data as any[], "fcm_token", "customers(user)");
       }
       tokens = Array.from(found);
     }
 
+    console.log(`[send-push:${reqId}] ${tokens.length} token(s) alvo`);
     if (tokens.length === 0) {
-      return json({ sent: 0, warning: "Nenhum token FCM encontrado para o destinatário" });
+      return json({ sent: 0, total: 0, warning: "Nenhum token FCM encontrado para o destinatário" });
     }
 
     const accessToken = await getAccessToken(sa);
     const results = await Promise.all(
-      tokens.map((t) => sendToToken(sa, accessToken, t, title, message, extra)),
+      tokens.map((t) => sendToToken(reqId, sa, accessToken, t, title, message, extra)),
     );
     const sent = results.filter((r) => r.ok).length;
 
-    return json({ sent, total: tokens.length, results });
+    // Limpa tokens inválidos para não reenviar no futuro
+    const invalidTokens = results.filter((r) => r.invalid).map((r) => r.token);
+    if (invalidTokens.length > 0) {
+      console.log(`[send-push:${reqId}] removendo ${invalidTokens.length} token(s) inválido(s)`);
+      await supabase.from("device_tokens").delete().in("token", invalidTokens);
+    }
+
+    console.log(`[send-push:${reqId}] enviados ${sent}/${tokens.length}`);
+    return json({
+      sent,
+      total: tokens.length,
+      invalid: invalidTokens.length,
+      results: results.map((r) => ({
+        ok: r.ok,
+        status: r.status,
+        attempts: r.attempts,
+        invalid: r.invalid ?? false,
+        token: `${r.token.slice(0, 12)}…`,
+        error: r.error ?? (r.ok ? undefined : JSON.stringify(r.response).slice(0, 300)),
+      })),
+    });
   } catch (e) {
-    console.error("[send-push] erro:", e);
+    console.error(`[send-push:${reqId}] erro fatal:`, e);
     return json({ error: String((e as Error)?.message ?? e) }, 500);
   }
 });
