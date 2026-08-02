@@ -77,6 +77,35 @@ async function getAccessToken(sa: ServiceAccount): Promise<string> {
 const RETRY_DELAYS_MS = [400, 1200, 3000];
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+// Classificação dos erros do FCM HTTP v1
+// https://firebase.google.com/docs/reference/fcm/rest/v1/ErrorCode
+type Outcome = "success" | "invalid" | "transient" | "auth" | "quota" | "config";
+
+function classifyFcm(httpStatus: number, json: any): { outcome: Outcome; code: string; message: string } {
+  const err = json?.error ?? {};
+  const details: any[] = Array.isArray(err.details) ? err.details : [];
+  const fcmDetail = details.find((d) => String(d?.["@type"] ?? "").includes("FcmError"));
+  const code = String(fcmDetail?.errorCode ?? err.status ?? (httpStatus ? `HTTP_${httpStatus}` : "NETWORK"));
+  const message = String(err.message ?? "");
+
+  // Token definitivamente inválido -> apagar
+  if (
+    code === "UNREGISTERED" ||
+    code === "NOT_FOUND" ||
+    httpStatus === 404 ||
+    (code === "INVALID_ARGUMENT" && /not a valid FCM|registration token|Invalid registration/i.test(message))
+  ) {
+    return { outcome: "invalid", code: code === "HTTP_404" ? "UNREGISTERED" : code, message };
+  }
+  // Projeto/credencial errados para este token
+  if (code === "SENDER_ID_MISMATCH" || httpStatus === 403) return { outcome: "config", code, message };
+  if (code === "THIRD_PARTY_AUTH_ERROR" || code === "UNAUTHENTICATED" || httpStatus === 401) {
+    return { outcome: "auth", code, message };
+  }
+  if (code === "QUOTA_EXCEEDED" || httpStatus === 429) return { outcome: "quota", code, message };
+  return { outcome: "transient", code, message };
+}
+
 type SendResult = {
   ok: boolean;
   status: number;
@@ -84,6 +113,8 @@ type SendResult = {
   token: string;
   error?: string;
   invalid?: boolean;
+  outcome?: Outcome;
+  code?: string;
   response?: unknown;
 };
 
@@ -138,21 +169,34 @@ async function sendToToken(
       );
       const json = await res.json().catch(() => ({}));
       const ms = Date.now() - started;
-      const errStatus = (json as any)?.error?.status ?? null;
-      const invalid = res.status === 404 || errStatus === "NOT_FOUND" || errStatus === "UNREGISTERED" ||
-        (res.status === 400 && String((json as any)?.error?.message ?? "").includes("not a valid FCM"));
+      const cls = res.ok
+        ? { outcome: "success" as Outcome, code: "OK", message: "" }
+        : classifyFcm(res.status, json);
+      const invalid = cls.outcome === "invalid";
 
       console.log(
-        `[send-push:${reqId}] attempt=${attempt} status=${res.status} ms=${ms} token=${token.slice(0, 12)}… invalid=${invalid}`,
+        `[send-push:${reqId}] attempt=${attempt} status=${res.status} ms=${ms} token=${token.slice(0, 12)}… outcome=${cls.outcome} code=${cls.code}`,
         res.ok ? "" : JSON.stringify(json).slice(0, 500),
       );
 
-      last = { ok: res.ok, status: res.status, attempts: attempt, token, invalid, response: json };
-      if (res.ok || invalid || !isRetryable(res.status)) return last;
+      last = {
+        ok: res.ok,
+        status: res.status,
+        attempts: attempt,
+        token,
+        invalid,
+        outcome: cls.outcome,
+        code: cls.code,
+        error: res.ok ? undefined : cls.message,
+        response: json,
+      };
+      if (res.ok || invalid || cls.outcome === "config" || cls.outcome === "auth" || !isRetryable(res.status)) {
+        return last;
+      }
     } catch (e) {
       const msg = String((e as Error)?.message ?? e);
       console.error(`[send-push:${reqId}] attempt=${attempt} network error: ${msg}`);
-      last = { ok: false, status: 0, attempts: attempt, token, error: msg };
+      last = { ok: false, status: 0, attempts: attempt, token, error: msg, outcome: "transient", code: "NETWORK" };
     }
 
     const delay = RETRY_DELAYS_MS[attempt - 1];
