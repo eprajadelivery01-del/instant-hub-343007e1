@@ -6,6 +6,7 @@ import { Capacitor } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { PushNotifications } from '@capacitor/push-notifications';
 import { getMarketplaceStatus } from '@/utils/orderStatusResolver';
+import { callSendPush } from '@/lib/sendPush';
 
 const statusMessages: Record<string, { title: string; description: string; icon: string }> = {
   confirmed: {
@@ -246,17 +247,18 @@ export async function syncFcmTokenToDatabase(providedToken?: string) {
 
     // 2. Registro canônico do token na Edge Function send-push (service role, upsert em device_tokens)
     try {
-      const reg = await supabase.functions.invoke('send-push', {
-        body: {
-          action: 'register_token',
-          token,
-          userId: userId ?? null,
-          customerId: customerId ?? null,
-          phone: savedPhone || null,
-          platform: Capacitor.getPlatform(),
-        },
+      const reg = await callSendPush({
+        action: 'register_token',
+        token,
+        userId: userId ?? null,
+        customerId: customerId ?? null,
+        phone: savedPhone || null,
+        platform: Capacitor.getPlatform(),
       });
-      console.log('[FCM] register_token (send-push):', reg.data ?? reg.error);
+      console.log('[FCM] register_token (send-push):', reg);
+      if (reg.stale) {
+        console.warn('[FCM] Edge Function send-push publicada está desatualizada — refaça o deploy.');
+      }
     } catch (errReg) {
       console.warn('[FCM] Falha ao registrar token via send-push:', errReg);
     }
