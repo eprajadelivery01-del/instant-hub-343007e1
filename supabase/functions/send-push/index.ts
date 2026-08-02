@@ -74,45 +74,94 @@ async function getAccessToken(sa: ServiceAccount): Promise<string> {
   return cachedToken.value;
 }
 
+const RETRY_DELAYS_MS = [400, 1200, 3000];
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+type SendResult = {
+  ok: boolean;
+  status: number;
+  attempts: number;
+  token: string;
+  error?: string;
+  invalid?: boolean;
+  response?: unknown;
+};
+
+function isRetryable(status: number) {
+  return status === 429 || status === 500 || status === 502 || status === 503 || status === 504;
+}
+
 async function sendToToken(
+  reqId: string,
   sa: ServiceAccount,
   accessToken: string,
   token: string,
   title: string,
   body: string,
   data: Record<string, string>,
-) {
-  const res = await fetch(
-    `https://fcm.googleapis.com/v1/projects/${sa.project_id}/messages:send`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        message: {
-          token,
-          notification: { title, body },
-          data,
-          android: {
-            priority: "HIGH",
-            notification: {
-              channel_id: "marketplace_orders",
-              sound: "default",
-              default_vibrate_timings: true,
-            },
-          },
-          apns: {
-            headers: { "apns-priority": "10" },
-            payload: { aps: { sound: "default", badge: 1 } },
-          },
+): Promise<SendResult> {
+  const payload = {
+    message: {
+      token,
+      notification: { title, body },
+      data,
+      android: {
+        priority: "HIGH",
+        notification: {
+          channel_id: "marketplace_orders",
+          sound: "default",
+          default_vibrate_timings: true,
         },
-      }),
+      },
+      apns: {
+        headers: { "apns-priority": "10" },
+        payload: { aps: { sound: "default", badge: 1 } },
+      },
     },
-  );
-  const json = await res.json().catch(() => ({}));
-  return { ok: res.ok, status: res.status, response: json };
+  };
+
+  let last: SendResult = { ok: false, status: 0, attempts: 0, token };
+
+  for (let attempt = 1; attempt <= RETRY_DELAYS_MS.length + 1; attempt++) {
+    const started = Date.now();
+    try {
+      const res = await fetch(
+        `https://fcm.googleapis.com/v1/projects/${sa.project_id}/messages:send`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        },
+      );
+      const json = await res.json().catch(() => ({}));
+      const ms = Date.now() - started;
+      const errStatus = (json as any)?.error?.status ?? null;
+      const invalid = res.status === 404 || errStatus === "NOT_FOUND" || errStatus === "UNREGISTERED" ||
+        (res.status === 400 && String((json as any)?.error?.message ?? "").includes("not a valid FCM"));
+
+      console.log(
+        `[send-push:${reqId}] attempt=${attempt} status=${res.status} ms=${ms} token=${token.slice(0, 12)}… invalid=${invalid}`,
+        res.ok ? "" : JSON.stringify(json).slice(0, 500),
+      );
+
+      last = { ok: res.ok, status: res.status, attempts: attempt, token, invalid, response: json };
+      if (res.ok || invalid || !isRetryable(res.status)) return last;
+    } catch (e) {
+      const msg = String((e as Error)?.message ?? e);
+      console.error(`[send-push:${reqId}] attempt=${attempt} network error: ${msg}`);
+      last = { ok: false, status: 0, attempts: attempt, token, error: msg };
+    }
+
+    const delay = RETRY_DELAYS_MS[attempt - 1];
+    if (delay === undefined) break;
+    console.log(`[send-push:${reqId}] retry em ${delay}ms (tentativa ${attempt + 1})`);
+    await sleep(delay);
+  }
+
+  return last;
 }
 
 Deno.serve(async (req) => {
