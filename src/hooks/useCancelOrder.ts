@@ -22,6 +22,7 @@ export function useCancelOrder() {
       }
 
       const cleanId = String(orderId).replace('#', '').trim();
+      const nowISO = new Date().toISOString();
 
       // 2. Atualiza tabelas orders, deliveries e available_deliveries no Supabase
       await Promise.allSettled([

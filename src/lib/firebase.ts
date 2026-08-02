@@ -24,7 +24,7 @@ if (typeof window !== "undefined") {
       logEvent(analytics, "app_open");
       console.log("[Firebase] Evento app_open enviado");
 
-      logEvent(analytics, "screen_view", { screen_name: "Marketplace_Home" });
+      logEvent(analytics, "screen_view" as any, { screen_name: "Marketplace_Home" } as any);
       console.log("[Firebase] Evento screen_view enviado");
     }
   }).catch((err) => {

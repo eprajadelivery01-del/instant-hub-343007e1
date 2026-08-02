@@ -432,7 +432,7 @@ export function useOrderNotifications() {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'deliveries' },
         (payload) => {
-          const orderId = payload.new?.order_id || payload.old?.order_id;
+          const orderId = (payload.new as any)?.order_id || (payload.old as any)?.order_id;
           if (orderId) handleOrderNotification(orderId);
         }
       )

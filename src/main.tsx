@@ -97,7 +97,7 @@ class GlobalErrorBoundary extends Component<{children: ReactNode}, {hasError: bo
           <pre style={{ fontSize: '11px', whiteSpace: 'pre-wrap', fontFamily: 'monospace' }}>{this.state.error?.message}</pre>
           <pre style={{ fontSize: '9px', marginTop: '10px', whiteSpace: 'pre-wrap', fontFamily: 'monospace' }}>{this.state.error?.stack}</pre>
           
-          <div style={{ padding: '14px', background: '#fff3cd', color: '#856404', borderRadius: '8px', border: '1px solid #ffeeba', fontWeight: 'bold', margin: '16px 0', fontSize: '14px', display: 'flex', itemsCenter: 'center', gap: '8px' }}>
+          <div style={{ padding: '14px', background: '#fff3cd', color: '#856404', borderRadius: '8px', border: '1px solid #ffeeba', fontWeight: 'bold', margin: '16px 0', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
             ⚠️ TIRE UM PRINT OU COPIE A TELA E ENVIE PARA A BONASOFT.
           </div>
 
