@@ -77,6 +77,35 @@ async function getAccessToken(sa: ServiceAccount): Promise<string> {
 const RETRY_DELAYS_MS = [400, 1200, 3000];
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+// Classificação dos erros do FCM HTTP v1
+// https://firebase.google.com/docs/reference/fcm/rest/v1/ErrorCode
+type Outcome = "success" | "invalid" | "transient" | "auth" | "quota" | "config";
+
+function classifyFcm(httpStatus: number, json: any): { outcome: Outcome; code: string; message: string } {
+  const err = json?.error ?? {};
+  const details: any[] = Array.isArray(err.details) ? err.details : [];
+  const fcmDetail = details.find((d) => String(d?.["@type"] ?? "").includes("FcmError"));
+  const code = String(fcmDetail?.errorCode ?? err.status ?? (httpStatus ? `HTTP_${httpStatus}` : "NETWORK"));
+  const message = String(err.message ?? "");
+
+  // Token definitivamente inválido -> apagar
+  if (
+    code === "UNREGISTERED" ||
+    code === "NOT_FOUND" ||
+    httpStatus === 404 ||
+    (code === "INVALID_ARGUMENT" && /not a valid FCM|registration token|Invalid registration/i.test(message))
+  ) {
+    return { outcome: "invalid", code: code === "HTTP_404" ? "UNREGISTERED" : code, message };
+  }
+  // Projeto/credencial errados para este token
+  if (code === "SENDER_ID_MISMATCH" || httpStatus === 403) return { outcome: "config", code, message };
+  if (code === "THIRD_PARTY_AUTH_ERROR" || code === "UNAUTHENTICATED" || httpStatus === 401) {
+    return { outcome: "auth", code, message };
+  }
+  if (code === "QUOTA_EXCEEDED" || httpStatus === 429) return { outcome: "quota", code, message };
+  return { outcome: "transient", code, message };
+}
+
 type SendResult = {
   ok: boolean;
   status: number;
@@ -84,6 +113,8 @@ type SendResult = {
   token: string;
   error?: string;
   invalid?: boolean;
+  outcome?: Outcome;
+  code?: string;
   response?: unknown;
 };
 
@@ -138,21 +169,34 @@ async function sendToToken(
       );
       const json = await res.json().catch(() => ({}));
       const ms = Date.now() - started;
-      const errStatus = (json as any)?.error?.status ?? null;
-      const invalid = res.status === 404 || errStatus === "NOT_FOUND" || errStatus === "UNREGISTERED" ||
-        (res.status === 400 && String((json as any)?.error?.message ?? "").includes("not a valid FCM"));
+      const cls = res.ok
+        ? { outcome: "success" as Outcome, code: "OK", message: "" }
+        : classifyFcm(res.status, json);
+      const invalid = cls.outcome === "invalid";
 
       console.log(
-        `[send-push:${reqId}] attempt=${attempt} status=${res.status} ms=${ms} token=${token.slice(0, 12)}… invalid=${invalid}`,
+        `[send-push:${reqId}] attempt=${attempt} status=${res.status} ms=${ms} token=${token.slice(0, 12)}… outcome=${cls.outcome} code=${cls.code}`,
         res.ok ? "" : JSON.stringify(json).slice(0, 500),
       );
 
-      last = { ok: res.ok, status: res.status, attempts: attempt, token, invalid, response: json };
-      if (res.ok || invalid || !isRetryable(res.status)) return last;
+      last = {
+        ok: res.ok,
+        status: res.status,
+        attempts: attempt,
+        token,
+        invalid,
+        outcome: cls.outcome,
+        code: cls.code,
+        error: res.ok ? undefined : cls.message,
+        response: json,
+      };
+      if (res.ok || invalid || cls.outcome === "config" || cls.outcome === "auth" || !isRetryable(res.status)) {
+        return last;
+      }
     } catch (e) {
       const msg = String((e as Error)?.message ?? e);
       console.error(`[send-push:${reqId}] attempt=${attempt} network error: ${msg}`);
-      last = { ok: false, status: 0, attempts: attempt, token, error: msg };
+      last = { ok: false, status: 0, attempts: attempt, token, error: msg, outcome: "transient", code: "NETWORK" };
     }
 
     const delay = RETRY_DELAYS_MS[attempt - 1];
@@ -190,6 +234,28 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL, SERVICE_ROLE);
 
+    // Seleciona tokens ignorando os que estão em quarentena.
+    // Se as colunas do ciclo de vida ainda não existirem, cai para a consulta simples.
+    const selectTokens = async (column: string, value: string) => {
+      const active = await supabase
+        .from("device_tokens").select("token").eq(column, value).is("disabled_at", null);
+      if (!active.error) return active;
+      console.warn(`[send-push:${reqId}] filtro disabled_at indisponível (${active.error.message}); usando fallback`);
+      return await supabase.from("device_tokens").select("token").eq(column, value);
+    };
+
+    // ---------- LIMPEZA / ROTAÇÃO MANUAL ----------
+    if (action === "cleanup") {
+      const staleDays = Number(body.staleDays ?? 270);
+      const { data, error } = await supabase.rpc("cleanup_device_tokens", { _stale_days: staleDays });
+      if (error) {
+        console.error(`[send-push:${reqId}] cleanup falhou: ${error.message}`);
+        return json({ error: `cleanup falhou: ${error.message}`, hint: "Rode scripts/device_tokens_lifecycle.sql" }, 500);
+      }
+      console.log(`[send-push:${reqId}] cleanup:`, JSON.stringify(data));
+      return json({ cleanup: data });
+    }
+
     // ---------- REGISTRO / ATUALIZAÇÃO DO TOKEN FCM ----------
     if (action === "register_token" || action === "save_token") {
       const fcmToken = String(body.token ?? body.fcmToken ?? "").trim();
@@ -209,6 +275,19 @@ Deno.serve(async (req) => {
           { onConflict: "token" },
         );
       outcome.device_tokens = up.error ? `erro: ${up.error.message}` : "ok";
+
+      // Reativa o token (sai da quarentena) sempre que o app o registra novamente
+      const reset = await supabase
+        .from("device_tokens")
+        .update({ disabled_at: null, disabled_reason: null, failure_count: 0, last_error_code: null })
+        .eq("token", fcmToken);
+      outcome.reset = reset.error ? `ignorado: ${reset.error.message}` : "ok";
+
+      // Rotação: remove tokens antigos do mesmo dispositivo/usuário
+      if (body.previousToken && String(body.previousToken) !== fcmToken) {
+        const del = await supabase.from("device_tokens").delete().eq("token", String(body.previousToken));
+        outcome.rotated = del.error ? `erro: ${del.error.message}` : "ok";
+      }
 
       if (userId) {
         const p = await supabase.from("profiles").update({ fcm_token: fcmToken, updated_at: now }).eq("id", userId);
@@ -276,7 +355,7 @@ Deno.serve(async (req) => {
       };
 
       if (customerId) {
-        const { data, error } = await supabase.from("device_tokens").select("token").eq("customer_id", customerId);
+        const { data, error } = await selectTokens("customer_id", customerId);
         if (error) console.error(`[send-push:${reqId}] device_tokens(customer): ${error.message}`);
         collect(data as any[], "token", "device_tokens(customer)");
         const c = await supabase.from("customers").select("fcm_token").or(`id.eq.${customerId},user_id.eq.${customerId}`);
@@ -284,7 +363,7 @@ Deno.serve(async (req) => {
         collect(c.data as any[], "fcm_token", "customers");
       }
       if (userId) {
-        const { data, error } = await supabase.from("device_tokens").select("token").eq("user_id", userId);
+        const { data, error } = await selectTokens("user_id", userId);
         if (error) console.error(`[send-push:${reqId}] device_tokens(user): ${error.message}`);
         collect(data as any[], "token", "device_tokens(user)");
         const p = await supabase.from("profiles").select("fcm_token").eq("id", userId);
@@ -308,11 +387,36 @@ Deno.serve(async (req) => {
     );
     const sent = results.filter((r) => r.ok).length;
 
-    // Limpa tokens inválidos para não reenviar no futuro
+    // ---------- SAÚDE DOS TOKENS: sucesso, quarentena e remoção ----------
     const invalidTokens = results.filter((r) => r.invalid).map((r) => r.token);
-    if (invalidTokens.length > 0) {
-      console.log(`[send-push:${reqId}] removendo ${invalidTokens.length} token(s) inválido(s)`);
+    let rpcAvailable = true;
+    for (const r of results) {
+      const outcome: Outcome = r.ok ? "success" : (r.outcome ?? "transient");
+      if (!rpcAvailable) break;
+      const { error } = await supabase.rpc("record_push_result", {
+        _token: r.token,
+        _outcome: outcome,
+        _error_code: r.code ?? null,
+        _error_message: r.error ?? null,
+      });
+      if (error) {
+        rpcAvailable = false;
+        console.warn(`[send-push:${reqId}] record_push_result indisponível (${error.message}); usando limpeza simples`);
+      }
+    }
+    if (!rpcAvailable && invalidTokens.length > 0) {
       await supabase.from("device_tokens").delete().in("token", invalidTokens);
+    }
+    if (invalidTokens.length > 0) {
+      console.log(`[send-push:${reqId}] ${invalidTokens.length} token(s) inválido(s) removido(s)`);
+    }
+    // Credencial/projeto errados afetam TODOS os envios: destaque nos logs
+    const misconfig = results.find((r) => r.outcome === "config" || r.outcome === "auth");
+    if (misconfig) {
+      console.error(
+        `[send-push:${reqId}] problema de credencial FCM (${misconfig.code}): ${misconfig.error ?? ""}`,
+      );
+      cachedToken = null; // força novo OAuth na próxima chamada
     }
 
     console.log(`[send-push:${reqId}] enviados ${sent}/${tokens.length}`);
@@ -320,11 +424,14 @@ Deno.serve(async (req) => {
       sent,
       total: tokens.length,
       invalid: invalidTokens.length,
+      misconfigured: misconfig ? misconfig.code : null,
       results: results.map((r) => ({
         ok: r.ok,
         status: r.status,
         attempts: r.attempts,
         invalid: r.invalid ?? false,
+        outcome: r.ok ? "success" : (r.outcome ?? "transient"),
+        code: r.code ?? null,
         token: `${r.token.slice(0, 12)}…`,
         error: r.error ?? (r.ok ? undefined : JSON.stringify(r.response).slice(0, 300)),
       })),
