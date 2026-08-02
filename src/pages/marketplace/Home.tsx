@@ -247,9 +247,6 @@ export default function Home() {
   return (
     <MarketplaceLayout>
       <NotificationBanner />
-      <div className="mx-auto flex max-w-7xl justify-end px-4 pt-2 sm:px-6">
-        <PushTestButton />
-      </div>
       <SafeAreaHeader as="div" extraTopRem={0.85} className="border-b border-border bg-background">
         <div className="mx-auto flex max-w-7xl flex-col gap-5 px-4 pb-4 sm:px-6">
           <div className="flex items-center justify-between gap-3 md:hidden">
