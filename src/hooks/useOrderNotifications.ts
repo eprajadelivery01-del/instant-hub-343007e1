@@ -227,14 +227,36 @@ export async function syncFcmTokenToDatabase(providedToken?: string) {
       savedPhone = localStorage.getItem('@epraja_customer_phone') || localStorage.getItem('epraja_customer_phone') || '';
     } catch {}
 
-    const resolvedTargetId = userId || customerId || savedPhone || (recentOrders.length > 0 ? recentOrders[0] : null);
+    let guestDeviceId = localStorage.getItem('@epraja_guest_device_id');
+    if (!guestDeviceId) {
+      guestDeviceId = 'guest_' + (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2));
+      try { localStorage.setItem('@epraja_guest_device_id', guestDeviceId); } catch {}
+    }
+
+    const resolvedTargetId = userId || customerId || savedPhone || (recentOrders.length > 0 ? recentOrders[0] : guestDeviceId);
 
     console.log('[SYNC_FCM_START]', {
       token,
       userId,
       customerId,
+      guestDeviceId,
       resolvedTargetId
     });
+
+    // REGISTRO OBRIGATÓRIO PARA USUÁRIOS LOGADOS E DESLOGADOS (GUEST)
+    try {
+      await callSendPush({
+        action: 'register_token',
+        token,
+        userId: userId ?? null,
+        customerId: customerId ?? null,
+        deviceId: guestDeviceId,
+        phone: savedPhone || null,
+        platform: Capacitor.getPlatform(),
+      });
+    } catch (errReg) {
+      console.warn('[FCM] Falha ao registrar token em device_tokens via send-push:', errReg);
+    }
 
     if (resolvedTargetId) {
       // 1. Atualização via cliente (se houver permissão)

@@ -1,36 +1,58 @@
-const SEND_PUSH_URL = 'https://nptkxlrhrlssdsevpgqe.supabase.co/functions/v1/send-push';
+const SUPABASE_URL = 'https://nptkxlrhrlssdsevpgqe.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3OiOiJzdXBhYmFzZSIsInJlZiI6Im5wdGt4bHJocmxzc2RzZXZwZ3FlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNDE4MTQsImV4cCI6MjA5MDYxNzgxNH0.t8Cu-yFnSqOURT4GXCZ_mBghpxucT89nRBFlBNA1vZs';
 
 export type SendPushResult = {
   ok: boolean;
   status: number;
   data: any;
-  /** true quando a função publicada no Supabase ainda é a versão antiga */
   stale: boolean;
   error?: string;
 };
 
 /**
- * Chama a Edge Function `send-push` usando um "simple request" (Content-Type
- * text/plain), o que evita o preflight OPTIONS. O WebView do Android falhava
- * com "Failed to send a request to the Edge Function" porque a versão publicada
- * da função não responde ao preflight.
- */
+  * Envia notificações push para qualquer dispositivo (logado ou deslogado/visitante).
+  * Inclui apikey e Authorization obrigatórios para o Gateway do Supabase.
+  */
 export async function callSendPush(body: Record<string, unknown>): Promise<SendPushResult> {
+  const headers = {
+    'Content-Type': 'application/json',
+    'apikey': SUPABASE_ANON_KEY,
+    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+  };
+
+  // 1. Tenta chamar a Edge Function send-push
   try {
-    const res = await fetch(SEND_PUSH_URL, {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/send-push`, {
       method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+      headers,
       body: JSON.stringify(body),
     });
-    const text = await res.text();
-    let data: any = text;
-    try {
-      data = JSON.parse(text);
-    } catch {}
 
-    const stale = typeof data === 'string' && data.includes('Not an insert event');
+    if (res.ok) {
+      const data = await res.json().catch(() => ({}));
+      return { ok: true, status: res.status, data, stale: false };
+    }
+  } catch (e) {
+    console.warn('[sendPush] Falha ao chamar send-push, tentando fallback notify-customer:', e);
+  }
 
-    return { ok: res.ok && !stale, status: res.status, data, stale };
+  // 2. Fallback incondicional para notify-customer
+  try {
+    const fallbackRes = await fetch(`${SUPABASE_URL}/functions/v1/notify-customer`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        action: 'send_custom_push',
+        fcmToken: body.token || body.fcmToken,
+        title: body.title || '🔔 É Pra Já Marketplace',
+        body: body.body || 'Você recebeu uma nova notificação!',
+        orderId: body.orderId,
+        userId: body.userId,
+      }),
+    });
+
+    const data = await fallbackRes.json().catch(() => ({}));
+    return { ok: fallbackRes.ok, status: fallbackRes.status, data, stale: false };
   } catch (e: any) {
     return { ok: false, status: 0, data: null, stale: false, error: e?.message ?? String(e) };
   }
