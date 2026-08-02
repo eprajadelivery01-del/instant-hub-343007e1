@@ -471,8 +471,10 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
   const formatDate = (isoString: string) => {
     try {
       if (!isoString) return '';
-      const date = new Date(isoString);
+      let date = new Date(isoString);
       if (isNaN(date.getTime())) return '';
+      const now = new Date();
+      if (date > now) date = now;
       return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     } catch (e) {
       return '';
