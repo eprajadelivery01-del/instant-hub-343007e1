@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
+import { callSendPush } from '@/lib/sendPush';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,26 +10,6 @@ import { Capacitor } from '@capacitor/core';
 import { toast } from 'sonner';
 
 type Diag = { step: string; ok: boolean; detail: string };
-
-const FUNCTIONS_URL = 'https://nptkxlrhrlssdsevpgqe.supabase.co/functions/v1/send-push';
-
-/**
- * Fallback sem preflight CORS: usa Content-Type text/plain (simple request),
- * o que evita o OPTIONS que falha quando a Edge Function deployada está desatualizada.
- */
-async function invokeSendPushDirect(body: Record<string, unknown>) {
-  const res = await fetch(FUNCTIONS_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
-    body: JSON.stringify(body),
-  });
-  const text = await res.text();
-  let parsed: any = text;
-  try {
-    parsed = JSON.parse(text);
-  } catch {}
-  return { status: res.status, data: parsed };
-}
 
 /**
  * Botão de diagnóstico: dispara uma notificação de teste via Edge Function `send-push`
@@ -87,35 +67,30 @@ export function PushTestButton({ className }: { className?: string }) {
       else if (localToken) body.token = localToken;
       else if (user?.id) body.userId = user.id;
 
-      const { data, error } = await supabase.functions.invoke('send-push', { body });
+      const res = await callSendPush(body);
+      const data = res.data;
+      setRaw(JSON.stringify(res, null, 2));
 
-      if (error) {
+      if (res.stale) {
         push({
-          step: 'Edge Function (via SDK)',
+          step: 'Edge Function send-push',
           ok: false,
-          detail: `${error.message ?? String(error)} — tentando via fetch direto…`,
+          detail:
+            'A função publicada no Supabase está DESATUALIZADA (versão antiga, sem CORS e sem envio FCM). Rode: supabase functions deploy send-push --no-verify-jwt',
         });
-
-        const fallback = await invokeSendPushDirect(body);
-        setRaw(JSON.stringify({ sdkError: error.message, fallback }, null, 2));
-
-        const isStale =
-          typeof fallback.data === 'string' && fallback.data.includes('Not an insert event');
-
+        toast.error('Edge Function desatualizada no Supabase', {
+          description: 'Refaça o deploy de send-push',
+        });
+      } else if (!res.ok) {
         push({
-          step: 'Edge Function (fetch direto)',
-          ok: fallback.status >= 200 && fallback.status < 300 && !isStale,
-          detail: isStale
-            ? 'A função send-push publicada no Supabase está DESATUALIZADA (versão antiga, sem CORS e sem envio FCM). Faça o redeploy: supabase functions deploy send-push --no-verify-jwt'
-            : `HTTP ${fallback.status} · ${typeof fallback.data === 'string' ? fallback.data : JSON.stringify(fallback.data)}`,
+          step: 'Edge Function send-push',
+          ok: false,
+          detail: res.error
+            ? `Sem resposta da rede: ${res.error}`
+            : `HTTP ${res.status} · ${typeof data === 'string' ? data : JSON.stringify(data)}`,
         });
-
-        toast.error(
-          isStale ? 'Edge Function desatualizada no Supabase' : 'Falha ao chamar send-push',
-          { description: isStale ? 'Refaça o deploy de send-push' : error.message },
-        );
+        toast.error('Falha ao chamar send-push', { description: res.error ?? `HTTP ${res.status}` });
       } else {
-        setRaw(JSON.stringify(data, null, 2));
         const sent = Number((data as any)?.sent ?? 0);
         const total = Number((data as any)?.total ?? 0);
         push({
