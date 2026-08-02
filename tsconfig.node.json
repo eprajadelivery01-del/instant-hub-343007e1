@@ -10,13 +10,13 @@
     "allowImportingTsExtensions": true,
     "isolatedModules": true,
     "moduleDetection": "force",
-    "nãoEmit": true,
+    "noEmit": true,
 
     /* Linting */
     "strict": true,
-    "nãoUnusedLocals": false,
-    "nãoUnusedParameters": false,
-    "nãoFallthroughCasesInSwitch": true
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noFallthroughCasesInSwitch": true
   },
   "include": ["vite.config.ts"]
 }

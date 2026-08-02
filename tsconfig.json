@@ -1,9 +1,9 @@
 {
   "compilerOptions": {
     "allowJs": true,
-    "nãoImplicitAny": false,
-    "nãoUnusedLocals": false,
-    "nãoUnusedParameters": false,
+    "noImplicitAny": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
     "paths": {
       "@/*": [
         "./src/*"
