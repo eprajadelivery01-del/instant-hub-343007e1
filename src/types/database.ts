@@ -58,6 +58,7 @@ export interface Product {
   updated_at: string;
   sort_order?: number;
   is_featured?: boolean | null;
+  is_active?: boolean | null;
 }
 
 export interface Order {
@@ -154,6 +155,8 @@ export interface Address {
   latitude: number | null;
   longitude: number | null;
   label: string | null;
+  state?: string | null;
+  region_id?: string | null;
   created_at: string;
 }
 
