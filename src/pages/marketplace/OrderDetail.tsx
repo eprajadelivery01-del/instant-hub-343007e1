@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { Capacitor } from '@capacitor/core';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { Order, OrderItem, Delivery, Product } from '@/types/database';
@@ -259,7 +260,9 @@ export default function OrderDetail() {
               <div className="pr-4">
                 <h3 className="font-bold text-base mb-1">Ative as notificações e acompanhe seu pedido</h3>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  {('Notification' in window) && Notification.permission === 'denied'
+                  {Capacitor.isNativePlatform()
+                    ? '🔔 Notificações ativadas! Você receberá alertas em tempo real na central do celular.'
+                    : ('Notification' in window) && Notification.permission === 'denied'
                     ? 'Notificações bloqueadas. Habilite nas configurações do navegador.'
                     : !('Notification' in window)
                     ? 'Seu dispositivo não suporta notificações web.'
@@ -268,15 +271,15 @@ export default function OrderDetail() {
               </div>
               <button
                 onClick={handleToggleNotif}
-                disabled={notifLoading || !('Notification' in window) || Notification.permission === 'denied'}
+                disabled={!Capacitor.isNativePlatform() && (notifLoading || !('Notification' in window) || Notification.permission === 'denied')}
                 aria-label={notifEnabled ? 'Desativar notificações' : 'Ativar notificações'}
                 className={`relative w-12 h-6 rounded-full shrink-0 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-40 disabled:cursor-not-allowed ${
-                  notifEnabled ? 'bg-[#00A868]' : 'bg-muted'
+                  (Capacitor.isNativePlatform() || notifEnabled) ? 'bg-[#00A868]' : 'bg-muted'
                 }`}
               >
                 <span
                   className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-300 ${
-                    notifEnabled ? 'translate-x-[26px]' : 'translate-x-0.5'
+                    (Capacitor.isNativePlatform() || notifEnabled) ? 'translate-x-[26px]' : 'translate-x-0.5'
                   }`}
                 />
                 {notifLoading && (
