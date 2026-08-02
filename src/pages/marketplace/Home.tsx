@@ -43,7 +43,7 @@ const COMPANY_LIST_COLUMNS =
 import { NotificationBanner } from '@/components/shared/NotificationBanner';
 import { ClientNotificationsPopover } from '@/components/marketplace/ClientNotificationsPopover';
 import { ActiveOfferHighlight } from '@/components/marketplace/ActiveOfferHighlight';
-import { PushTestButton } from '@/components/marketplace/PushTestButton';
+
 import { getCachedCompanies } from '@/lib/offlinePrecache';
 
 export default function Home() {
