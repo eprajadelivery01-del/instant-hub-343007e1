@@ -244,6 +244,23 @@ export async function syncFcmTokenToDatabase(providedToken?: string) {
       ]);
     }
 
+    // 2. Registro canônico do token na Edge Function send-push (service role, upsert em device_tokens)
+    try {
+      const reg = await supabase.functions.invoke('send-push', {
+        body: {
+          action: 'register_token',
+          token,
+          userId: userId ?? null,
+          customerId: customerId ?? null,
+          phone: savedPhone || null,
+          platform: Capacitor.getPlatform(),
+        },
+      });
+      console.log('[FCM] register_token (send-push):', reg.data ?? reg.error);
+    } catch (errReg) {
+      console.warn('[FCM] Falha ao registrar token via send-push:', errReg);
+    }
+
     // 2. Invocação forçada com SERVICE_ROLE para garantir o salvamento do token FCM no banco
     let response = await supabase.functions.invoke('notify-customer', {
       body: {
