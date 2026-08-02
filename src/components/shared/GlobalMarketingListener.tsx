@@ -26,6 +26,7 @@ const statusMessages: Record<string, { title: string; description: string; icon:
 export function GlobalMarketingListener() {
   const { user } = useAuth();
   const userOrderIdsRef = useRef<Set<string>>(new Set());
+  const swRegRef = useRef<ServiceWorkerRegistration | null>(null);
 
   // Sincroniza automaticamente todos os IDs de pedidos do usuário logado no localStorage e na Ref
   useEffect(() => {
