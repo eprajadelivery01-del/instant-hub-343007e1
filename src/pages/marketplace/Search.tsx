@@ -11,6 +11,7 @@ import { useCart } from "@/contexts/CartContext";
 import { ProductDetailDialog } from "@/components/marketplace/ProductDetailDialog";
 import { Product, Company } from "@/types/database";
 import { isStoreOpenNow } from "@/lib/storeHours";
+import { useStoresOpenStatus } from "@/hooks/useStoreOpenStatus";
 import { SafeAreaHeader } from "@/components/shared/SafeAreaHeader";
 
 export default function Search() {
