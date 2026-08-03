@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { StoreTabCard } from '@/components/marketplace/StoreTabCard';
 import { MarketplaceMenu } from '@/components/marketplace/MarketplaceMenu';
-import { useStoreStatusSync } from '@/hooks/useStoreStatusSync';
+import { useStoresOpenStatus } from '@/hooks/useStoreOpenStatus';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MediaImage } from '@/components/shared/MediaImage';
 import { Search, Star, ChevronDown, Store, Utensils, Coffee, Pizza, Cake, Sandwich, Pill, ShoppingCart, User, PanelLeft, X, Dog, Beer, Plus, Croissant, Sparkles, Flame, Beef, Leaf, Package, IceCream, Wine, UtensilsCrossed, GlassWater, Scissors, Ruler } from 'lucide-react';
@@ -200,14 +200,15 @@ export default function Home() {
     };
   }, []);
 
-  useStoreStatusSync(companies, setCompanies);
+  // Fonte da verdade do status: horário cadastrado pelo lojista, reavaliado a cada minuto
+  const companiesWithStatus = useStoresOpenStatus(companies);
 
   const filtered = useMemo(() => {
-    return companies.filter((company) =>
+    return companiesWithStatus.filter((company) =>
       company.name.toLowerCase().includes(search.toLowerCase()) &&
       (activeCategory === '' || (company.description?.toLowerCase().includes(activeCategory.toLowerCase())) || (company.category?.toLowerCase().includes(activeCategory.toLowerCase())))
     );
-  }, [companies, search, activeCategory]);
+  }, [companiesWithStatus, search, activeCategory]);
 
   const filteredProducts = useMemo(() => {
     if (!search && !activeCategory) return [];
