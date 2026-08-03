@@ -155,11 +155,7 @@ export default function Cart() {
     const channel = supabase.channel(`company-status-${company.id}`)
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'companies', filter: `id=eq.${company.id}` }, 
         (p) => {
-          if (p.new.active === false || p.new.is_active === false) {
-             setIsStoreOpen(false);
-          } else {
-             setIsStoreOpen(p.new.is_open === true);
-          }
+          setIsStoreOpen(isStoreOpenNow(p.new as any));
         })
       .subscribe();
 
