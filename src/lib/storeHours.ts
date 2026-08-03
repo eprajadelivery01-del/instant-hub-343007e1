@@ -220,10 +220,10 @@ export function isStoreOpenNow(company: StoreStatusInput): boolean {
   // Se o lojista desativou a loja manualmente, ela fica fechada
   if (company.is_open === false) return false;
 
-  // Se o lojista abriu a loja manualmente (is_open === true), a loja está ABERTA!
-  if (company.is_open === true) return true;
-
-  // Caso is_open seja null/undefined, reavalia pelo horário
+  // O horário cadastrado pelo lojista é a fonte da verdade.
+  // `is_open === true` significa apenas "não pausada manualmente";
+  // se houver horário cadastrado, ele decide se está aberta agora.
+  // (isStoreOpenBySchedule retorna true quando não há horário válido cadastrado)
   return isStoreOpenBySchedule(company.business_hours, new Date(), company.timezone);
 }
 
