@@ -82,6 +82,10 @@ export default function Search() {
   }, [search]);
 
   const filteredProducts = React.useMemo(() => {
+    return [] as (Product & { company: Company })[];
+  }, []);
+
+  const _unused = null;
     if (!search || resultsWithStatus.length === 0) return [];
     
     const allProducts: (Product & { company: Company })[] = [];
