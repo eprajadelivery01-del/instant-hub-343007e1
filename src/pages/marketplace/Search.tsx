@@ -82,10 +82,10 @@ export default function Search() {
   }, [search]);
 
   const filteredProducts = React.useMemo(() => {
-    if (!search || results.length === 0) return [];
+    if (!search || resultsWithStatus.length === 0) return [];
     
     const allProducts: (Product & { company: Company })[] = [];
-    results.forEach(c => {
+    resultsWithStatus.forEach(c => {
       (c.products || []).forEach((p: Product) => {
         if (p.active !== false && p.is_active !== false) {
           allProducts.push({ ...p, company: c });
@@ -100,7 +100,7 @@ export default function Search() {
         (p.company.name && p.company.name.toLowerCase().includes(search.toLowerCase()))
       );
     });
-  }, [results, search]);
+  }, [resultsWithStatus, search]);
 
   const getItemQty = (productId: string) => items.find((item) => item.product.id === productId)?.quantity || 0;
 
