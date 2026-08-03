@@ -8,7 +8,8 @@ import MarketplaceLayout from '@/components/marketplace/MarketplaceLayout';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Minus, Plus, Star, Clock, Store as StoreIcon, Share2, Utensils, Search, Info, Ticket, AlertCircle, Flame, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { getPrepTimeLabel, getStoreStatusLabel, isStoreOpenNow } from '@/lib/storeHours';
+import { getPrepTimeLabel, getStoreStatusLabel } from '@/lib/storeHours';
+import { useStoreOpenStatus } from '@/hooks/useStoreOpenStatus';
 import { ProductDetailDialog } from '@/components/marketplace/ProductDetailDialog';
 import { MediaImage } from '@/components/shared/MediaImage';
 import { getCompanyBannerImage, getCompanyLogoImage, getPrimaryProductImage } from '@/lib/media';
@@ -159,8 +160,9 @@ export default function StoreDetail() {
     },
   });
 
+  const isOpenNow = useStoreOpenStatus(storeData?.company as any);
   const company: Company | null = storeData?.company
-    ? ({ ...storeData.company, is_open: isStoreOpenNow(storeData.company as any) } as Company)
+    ? ({ ...storeData.company, is_open: isOpenNow } as Company)
     : null;
   const products: Product[] = (storeData?.products as Product[]) ?? [];
 
