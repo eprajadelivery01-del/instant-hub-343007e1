@@ -34,6 +34,7 @@ const Coupons = lazyRoute("/marketplace/coupons");
 const PrivacyPolicy = lazyRoute("/marketplace/privacy");
 const TermsOfService = lazyRoute("/marketplace/terms");
 const Search = lazyRoute("/marketplace/search");
+const PushDiagnostics = lazy(() => import("./pages/marketplace/PushDiagnostics"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const RouteFallback = () => (
@@ -102,6 +103,7 @@ const App = () => {
                     <Route path="/marketplace/coupons" element={<PageTransition><RequireAuth><Coupons /></RequireAuth></PageTransition>} />
                     <Route path="/marketplace/privacy" element={<PageTransition><PrivacyPolicy /></PageTransition>} />
                     <Route path="/marketplace/terms" element={<PageTransition><TermsOfService /></PageTransition>} />
+                    <Route path="/marketplace/diagnostico-push" element={<PageTransition><PushDiagnostics /></PageTransition>} />
                     <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
                   </Routes>
                   </Suspense>

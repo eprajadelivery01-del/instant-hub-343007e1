@@ -111,7 +111,7 @@ export function requestNativeNotificationPermission() {
 
 export async function sendNativeDeviceNotification(
   title: string,
-  options?: { body?: string; tag?: string; icon?: string }
+  options?: { body?: string; tag?: string; icon?: string; orderId?: string }
 ) {
   // 1. Aciona vibração no dispositivo
   triggerDeviceVibration();
@@ -168,7 +168,9 @@ export async function sendNativeDeviceNotification(
             sound: "default",
             actionTypeId: "",
             extra: {
-              tag: options?.tag || "epraja-marketplace-order"
+              tag: options?.tag || "epraja-marketplace-order",
+              orderId: options?.orderId || null,
+              route: options?.orderId ? `/marketplace/orders/${options.orderId}` : "/marketplace/orders",
             }
           }
         ]
@@ -357,6 +359,8 @@ export function useOrderNotifications() {
     let regListener: any = null;
     let errListener: any = null;
     let pushListener: any = null;
+    let tapListener: any = null;
+    let localTapListener: any = null;
 
     PushNotifications.createChannel({
       id: 'marketplace_orders',
@@ -395,15 +399,39 @@ export function useOrderNotifications() {
       console.log("[Push] Notificação push do cliente recebida:", notification);
       const title = notification.title || "Atualização de Pedido";
       const body = notification.body || "";
+      const data: any = notification.data || {};
+      const orderId = data.orderId ? String(data.orderId) : undefined;
       toast(title, { description: body, duration: 8000 });
 
-      sendNativeDeviceNotification(title, { body, tag: "fcm-push" });
+      // Com o app em primeiro plano o Android NÃO exibe o push na central:
+      // replicamos como notificação local para garantir a bandeja.
+      sendNativeDeviceNotification(title, {
+        body,
+        tag: orderId ? `order-${orderId}` : "fcm-push",
+        orderId,
+      });
     }).then(listener => { pushListener = listener; });
+
+    // Toque na notificação da central -> abre o pedido correto
+    const openFromData = (data: any) => {
+      const route = data?.route || (data?.orderId ? `/marketplace/orders/${data.orderId}` : null);
+      if (route) window.location.href = String(route);
+    };
+
+    PushNotifications.addListener("pushNotificationActionPerformed", (action: any) => {
+      openFromData(action?.notification?.data);
+    }).then(listener => { tapListener = listener; });
+
+    LocalNotifications.addListener("localNotificationActionPerformed", (action: any) => {
+      openFromData(action?.notification?.extra);
+    }).then(listener => { localTapListener = listener; });
 
     return () => {
       if (regListener) regListener.remove();
       if (errListener) errListener.remove();
       if (pushListener) pushListener.remove();
+      if (tapListener) tapListener.remove();
+      if (localTapListener) localTapListener.remove();
     };
   }, [user?.id]);
 
