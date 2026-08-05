@@ -165,7 +165,7 @@ async function sendToToken(
     const started = Date.now();
     try {
       console.log(
-        "[FCM_PAYLOAD]",
+        "[FCM_PAYLOAD_REAL]",
         JSON.stringify(payload, null, 2)
       );
 
