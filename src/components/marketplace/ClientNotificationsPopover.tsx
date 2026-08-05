@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { getMarketplaceStatus } from '@/utils/orderStatusResolver';
 import { sendNativeDeviceNotification } from '@/hooks/useOrderNotifications';
+import { HeaderActionButton } from '@/components/shared/HeaderActionButton';
 
 export type MarketingNotifItem = {
   id: string;
@@ -484,20 +485,13 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
   return (
     <Sheet open={isOpen} onOpenChange={handleOpenChange}>
       <SheetTrigger asChild>
-        <button
-          className={cn(
-            "premium-card relative flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-muted-foreground transition-all hover:text-foreground active:scale-95",
-            className
-          )}
+        <HeaderActionButton
+          className={className}
+          badge={unreadCount > 0 ? unreadCount : undefined}
           title="Notificações e Cupons"
         >
           <Bell className="h-5 w-5" />
-          {unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 z-20 flex h-5 min-w-[20px] px-1.5 items-center justify-center rounded-full bg-red-600 text-[11px] font-black text-white shadow-lg ring-2 ring-background animate-pulse">
-              {unreadCount > 99 ? '99+' : unreadCount}
-            </span>
-          )}
-        </button>
+        </HeaderActionButton>
       </SheetTrigger>
 
       <SheetContent side="right" className="w-full sm:max-w-md p-0 border-l border-border bg-background">

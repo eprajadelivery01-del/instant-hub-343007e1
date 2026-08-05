@@ -15,6 +15,7 @@ import { MarketplaceMenu } from '@/components/marketplace/MarketplaceMenu';
 import { useStoresOpenStatus } from '@/hooks/useStoreOpenStatus';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MediaImage } from '@/components/shared/MediaImage';
+import { HeaderActionButton } from '@/components/shared/HeaderActionButton';
 import { Search, Star, ChevronDown, Store, Utensils, Coffee, Pizza, Cake, Sandwich, Pill, ShoppingCart, User, PanelLeft, X, Dog, Beer, Plus, Croissant, Sparkles, Flame, Beef, Leaf, Package, IceCream, Wine, UtensilsCrossed, GlassWater, Scissors, Ruler } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
@@ -269,20 +270,21 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="flex items-center gap-1.5 shrink-0 ml-auto">
-              <ClientNotificationsPopover className="h-10 w-10 rounded-xl" />
-              <ThemeToggle className="h-10 w-10 rounded-xl" />
-              <button
+            <div className="flex items-center gap-2 shrink-0 ml-auto">
+              <ClientNotificationsPopover />
+              <ThemeToggle />
+              <HeaderActionButton
                 onClick={() => navigate('/marketplace/profile')}
-                className="premium-card flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl"
+                title="Meu perfil"
+                className="overflow-hidden p-0"
               >
                 <MediaImage
                   src={getAvatarImage(profile)}
                   alt="Foto do perfil"
                   className="h-full w-full object-cover"
-                  fallback={<User className="h-4 w-4 text-muted-foreground/50" />}
+                  fallback={<User className="h-5 w-5 text-muted-foreground" />}
                 />
-              </button>
+              </HeaderActionButton>
             </div>
           </div>
 
