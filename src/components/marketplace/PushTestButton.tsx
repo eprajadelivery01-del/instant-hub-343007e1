@@ -7,13 +7,14 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { BellRing, Loader2 } from 'lucide-react';
 import { Capacitor } from '@capacitor/core';
+import { LocalNotifications } from '@capacitor/local-notifications';
 import { toast } from 'sonner';
 
 type Diag = { step: string; ok: boolean; detail: string };
 
 /**
- * Botão de diagnóstico: dispara uma notificação de teste via Edge Function `send-push`
- * e mostra exatamente onde o fluxo falhou (token, função, FCM).
+ * Botão de diagnóstico: dispara uma notificação de teste nativa local E via Edge Function `send-push`
+ * e mostra exatamente onde o fluxo falhou (permissão, canal, token, função, FCM).
  */
 export function PushTestButton({ className }: { className?: string }) {
   const { user } = useAuth();
@@ -39,16 +40,68 @@ export function PushTestButton({ className }: { className?: string }) {
       detail: `${Capacitor.getPlatform()} · nativo=${Capacitor.isNativePlatform()}`,
     });
 
-    push({
-      step: 'Permissão do navegador',
-      ok: typeof Notification === 'undefined' || Notification.permission === 'granted',
-      detail: typeof Notification === 'undefined' ? 'API indisponível (nativo)' : Notification.permission,
-    });
+    if (Capacitor.isNativePlatform()) {
+      try {
+        const perm = await LocalNotifications.checkPermissions();
+        push({
+          step: 'Permissão Nativa Android',
+          ok: perm.display === 'granted',
+          detail: `permissão display=${perm.display}`,
+        });
+
+        if (perm.display !== 'granted') {
+          const req = await LocalNotifications.requestPermissions();
+          push({
+            step: 'Solicitação de Permissão Nativa',
+            ok: req.display === 'granted',
+            detail: `resultado display=${req.display}`,
+          });
+        }
+
+        await LocalNotifications.createChannel({
+          id: 'marketplace_orders',
+          name: 'Atualizações de Pedidos',
+          description: 'Avisos em tempo real de pedidos',
+          importance: 5,
+          visibility: 1,
+          vibration: true,
+          sound: 'default',
+        });
+
+        const notifId = Math.floor(Math.random() * 899999) + 100000;
+        await LocalNotifications.schedule({
+          notifications: [
+            {
+              title: '🔔 Teste de Notificação na Central do Celular',
+              body: 'Se você viu este alerta no topo do celular, o disparo nativo local está 100% OK!',
+              id: notifId,
+              channelId: 'marketplace_orders',
+              smallIcon: 'ic_launcher',
+              iconColor: '#FF5722',
+              sound: 'default',
+              extra: { tag: 'diagnostic-test' },
+            },
+          ],
+        });
+
+        push({
+          step: 'Disparo Nativo Local (Central do Celular)',
+          ok: true,
+          detail: `id=${notifId} agendado diretamente no NotificationManager do Android`,
+        });
+      } catch (errLocal: any) {
+        push({
+          step: 'Disparo Nativo Local (Central do Celular)',
+          ok: false,
+          detail: `Erro: ${errLocal?.message || String(errLocal)}`,
+        });
+      }
+    }
 
     push({
       step: 'Token FCM local',
       ok: Boolean(localToken),
-      detail: localToken ? `${localToken.slice(0, 18)}…` : 'NENHUM token salvo neste dispositivo',
+      detail: localToken ? `${localToken.slice(0, 22)}…` : 'NENHUM token salvo neste dispositivo',
     });
 
     push({
@@ -59,8 +112,8 @@ export function PushTestButton({ className }: { className?: string }) {
 
     try {
       const body: Record<string, unknown> = {
-        title: '🔔 Teste É Pra Já',
-        body: 'Se você viu isso na central do celular, o push está funcionando!',
+        title: '🔔 Teste Servidor É Pra Já',
+        body: 'Se você viu isso na central do celular, a Edge Function e o FCM enviaram com sucesso!',
         url: '/marketplace/orders',
       };
       if (orderId.trim()) body.orderId = orderId.trim();
@@ -71,19 +124,9 @@ export function PushTestButton({ className }: { className?: string }) {
       const data = res.data;
       setRaw(JSON.stringify(res, null, 2));
 
-      if (res.stale) {
+      if (!res.ok) {
         push({
-          step: 'Edge Function send-push',
-          ok: false,
-          detail:
-            'A função publicada no Supabase está DESATUALIZADA (versão antiga, sem CORS e sem envio FCM). Rode: supabase functions deploy send-push --no-verify-jwt',
-        });
-        toast.error('Edge Function desatualizada no Supabase', {
-          description: 'Refaça o deploy de send-push',
-        });
-      } else if (!res.ok) {
-        push({
-          step: 'Edge Function send-push',
+          step: 'Edge Function send-push (Servidor)',
           ok: false,
           detail: res.error
             ? `Sem resposta da rede: ${res.error}`
@@ -94,17 +137,17 @@ export function PushTestButton({ className }: { className?: string }) {
         const sent = Number((data as any)?.sent ?? 0);
         const total = Number((data as any)?.total ?? 0);
         push({
-          step: 'Edge Function send-push',
+          step: 'Edge Function send-push (Servidor)',
           ok: true,
           detail: `requestId=${(data as any)?.requestId ?? '-'}`,
         });
         push({
-          step: 'Envio FCM',
+          step: 'Envio FCM Google',
           ok: sent > 0,
           detail:
             sent > 0
-              ? `${sent}/${total} dispositivo(s) notificado(s)`
-              : (data as any)?.warning ?? (data as any)?.error ?? 'Nenhum envio bem-sucedido (veja o detalhe abaixo)',
+              ? `${sent}/${total} dispositivo(s) notificado(s) via Google FCM`
+              : (data as any)?.warning ?? (data as any)?.error ?? 'Nenhum envio bem-sucedido',
         });
         if (sent > 0) toast.success(`Push enviado para ${sent} dispositivo(s)`);
         else toast.error('Nenhum push enviado', { description: (data as any)?.warning ?? 'Veja o diagnóstico' });

@@ -5,8 +5,8 @@ import { Capacitor } from '@capacitor/core';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { Order, OrderItem, Delivery, Product } from '@/types/database';
-import MarketplaceLayout from '@/components/marketplace/MarketplaceLayout';
 import { Button } from '@/components/ui/button';
+import { PushTestButton } from '@/components/marketplace/PushTestButton';
 import { ArrowLeft, MessageCircle, MapPin, Banknote, Smartphone, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { OrderStoreChat } from '@/components/marketplace/OrderStoreChat';
@@ -268,6 +268,7 @@ export default function OrderDetail() {
                     ? 'Seu dispositivo não suporta notificações web.'
                     : 'Fique sabendo na hora se houver algum problema com seu pedido.'}
                 </p>
+                <PushTestButton className="mt-3 w-full text-xs font-bold" />
               </div>
               <button
                 onClick={handleToggleNotif}

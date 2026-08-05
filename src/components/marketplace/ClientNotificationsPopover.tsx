@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { getMarketplaceStatus } from '@/utils/orderStatusResolver';
 import { sendNativeDeviceNotification } from '@/hooks/useOrderNotifications';
+import { PushTestButton } from '@/components/marketplace/PushTestButton';
 
 export type MarketingNotifItem = {
   id: string;
@@ -503,20 +504,24 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
       <SheetContent side="right" className="w-full sm:max-w-md p-0 border-l border-border bg-background">
         <div className="flex flex-col h-full pt-[calc(env(safe-area-inset-top,0px)+0.5rem)] sm:pt-0">
           {/* Header */}
-          <div className="flex items-center justify-between p-5 border-b border-border bg-card/50">
-            <div className="flex items-center gap-2.5">
-              <div className="p-2.5 bg-primary/10 rounded-xl text-primary">
-                <Sparkles className="w-5 h-5" />
-              </div>
-              <div>
-                <SheetTitle className="text-lg font-black tracking-tight text-foreground">
-                  Central de Notificações
-                </SheetTitle>
-                <p className="text-xs text-muted-foreground">
-                  Alertas de pedidos, cupons e promoções
-                </p>
+          <div className="flex flex-col gap-3 p-5 border-b border-border bg-card/50">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2.5 bg-primary/10 rounded-xl text-primary">
+                  <Sparkles className="w-5 h-5" />
+                </div>
+                <div>
+                  <SheetTitle className="text-lg font-black tracking-tight text-foreground">
+                    Central de Notificações
+                  </SheetTitle>
+                  <p className="text-xs text-muted-foreground">
+                    Alertas de pedidos, cupons e promoções
+                  </p>
+                </div>
               </div>
             </div>
+
+            <PushTestButton className="w-full h-9 text-xs font-bold bg-primary/10 text-primary hover:bg-primary/20 border-primary/20" />
           </div>
 
           {/* List of Notifications */}
