@@ -415,17 +415,32 @@ export function useOrderNotifications() {
       if (!ord || !ord.id) return false;
       let myOrderIds: string[] = [];
       try {
-        myOrderIds = JSON.parse(localStorage.getItem('@epraja_recent_orders') || '[]');
+        const k1 = JSON.parse(localStorage.getItem('@epraja_recent_orders') || '[]');
+        const k2 = JSON.parse(localStorage.getItem('epraja_recent_orders') || '[]');
+        const k3 = JSON.parse(localStorage.getItem('recent_orders') || '[]');
+        const k4 = localStorage.getItem('last_order_id');
+        const k5 = localStorage.getItem('@epraja_last_order');
+        myOrderIds = [...(Array.isArray(k1) ? k1 : []), ...(Array.isArray(k2) ? k2 : []), ...(Array.isArray(k3) ? k3 : [])];
+        if (k4) myOrderIds.push(k4);
+        if (k5) myOrderIds.push(k5);
       } catch {}
 
-      if (myOrderIds.includes(ord.id)) return true;
+      if (myOrderIds.some(id => id && String(id).trim() === String(ord.id).trim())) return true;
+
+      // Se a URL atual for a própria página do pedido
+      if (window.location.pathname.includes(ord.id)) return true;
 
       if (user && (
-        ord.customer_id === user.id ||
-        ord.user_id === user.id ||
-        ord.client_id === user.id ||
-        ord.buyer_id === user.id
+        String(ord.customer_id) === String(user.id) ||
+        String(ord.user_id) === String(user.id) ||
+        String(ord.client_id) === String(user.id) ||
+        String(ord.buyer_id) === String(user.id) ||
+        (user.email && ord.customer_email && String(ord.customer_email).toLowerCase() === String(user.email).toLowerCase())
       )) return true;
+
+      // Para convidados e visitantes
+      const savedPhone = localStorage.getItem('@epraja_customer_phone') || localStorage.getItem('customer_phone');
+      if (savedPhone && (ord.customer_phone === savedPhone || ord.phone === savedPhone)) return true;
 
       return false;
     };
