@@ -359,6 +359,8 @@ export function useOrderNotifications() {
     let regListener: any = null;
     let errListener: any = null;
     let pushListener: any = null;
+    let tapListener: any = null;
+    let localTapListener: any = null;
 
     PushNotifications.createChannel({
       id: 'marketplace_orders',
@@ -409,6 +411,20 @@ export function useOrderNotifications() {
         orderId,
       });
     }).then(listener => { pushListener = listener; });
+
+    // Toque na notificação da central -> abre o pedido correto
+    const openFromData = (data: any) => {
+      const route = data?.route || (data?.orderId ? `/marketplace/orders/${data.orderId}` : null);
+      if (route) window.location.href = String(route);
+    };
+
+    PushNotifications.addListener("pushNotificationActionPerformed", (action: any) => {
+      openFromData(action?.notification?.data);
+    }).then(listener => { tapListener = listener; });
+
+    LocalNotifications.addListener("localNotificationActionPerformed", (action: any) => {
+      openFromData(action?.notification?.extra);
+    }).then(listener => { localTapListener = listener; });
 
     return () => {
       if (regListener) regListener.remove();
