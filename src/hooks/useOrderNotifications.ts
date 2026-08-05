@@ -156,6 +156,12 @@ export async function sendNativeDeviceNotification(
 
       const notifId = Math.floor(Math.random() * 899999) + 100000;
 
+      console.log(
+          "[LOCAL_NOTIFICATION]",
+          title,
+          options
+      );
+
       const result = await LocalNotifications.schedule({
         notifications: [
           {
@@ -176,7 +182,10 @@ export async function sendNativeDeviceNotification(
         ]
       });
 
-      console.log('[LOCAL_NOTIFICATION_RESULT]', result);
+      console.log(
+          "[LOCAL_NOTIFICATION_RESULT]",
+          result
+      );
     } catch (e) {
       console.warn("[LocalNotifications] Erro nativo cliente:", e);
     }
@@ -396,6 +405,10 @@ export function useOrderNotifications() {
     }).then(listener => { errListener = listener; });
 
     PushNotifications.addListener("pushNotificationReceived", (notification) => {
+      console.log(
+          "[PUSH_RECEIVED]",
+          JSON.stringify(notification,null,2)
+      );
       console.log("[Push] Notificação push do cliente recebida:", notification);
       const title = notification.title || "Atualização de Pedido";
       const body = notification.body || "";
@@ -418,8 +431,12 @@ export function useOrderNotifications() {
       if (route) window.location.href = String(route);
     };
 
-    PushNotifications.addListener("pushNotificationActionPerformed", (action: any) => {
-      openFromData(action?.notification?.data);
+    PushNotifications.addListener("pushNotificationActionPerformed", (notification: any) => {
+      console.log(
+          "[PUSH_ACTION]",
+          JSON.stringify(notification,null,2)
+      );
+      openFromData(notification?.notification?.data);
     }).then(listener => { tapListener = listener; });
 
     LocalNotifications.addListener("localNotificationActionPerformed", (action: any) => {

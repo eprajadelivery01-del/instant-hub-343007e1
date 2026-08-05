@@ -165,7 +165,7 @@ async function sendToToken(
     const started = Date.now();
     try {
       console.log(
-        "[FCM_PAYLOAD_REAL]",
+        "[FCM_PAYLOAD]",
         JSON.stringify(payload, null, 2)
       );
 
@@ -421,8 +421,11 @@ Deno.serve(async (req) => {
     }
 
     const accessToken = await getAccessToken(sa);
+    console.log("[BODY_RECEIVED]", body);
     console.log("[TITLE]", title);
     console.log("[MESSAGE]", message);
+    console.log("[TOKENS]", tokens);
+    console.log("[EXTRA]", extra);
     const results = await Promise.all(
       tokens.map((t) => sendToToken(reqId, sa, accessToken, t, title, message, extra)),
     );
