@@ -163,6 +163,9 @@ export async function sendNativeDeviceNotification(
             body: options?.body || "Acesse o app para acompanhar seu pedido",
             id: notifId,
             channelId: "marketplace_orders",
+            smallIcon: "ic_launcher",
+            iconColor: "#FF5722",
+            sound: "default",
             actionTypeId: "",
             extra: {
               tag: options?.tag || "epraja-marketplace-order"

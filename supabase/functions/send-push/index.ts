@@ -378,6 +378,22 @@ Deno.serve(async (req) => {
         collect(c2.data as any[], "fcm_token", "customers(user)");
       }
       tokens = Array.from(found);
+
+      // Fallback de emergência caso customerId/userId não tenham retornado nenhum token
+      if (tokens.length === 0) {
+        console.warn(`[send-push:${reqId}] NENHUM token retornado pelos IDs; buscando ultimos dispositivos ativos em device_tokens...`);
+        const { data: fallbackTokens } = await supabase
+          .from("device_tokens")
+          .select("token")
+          .is("disabled_at", null)
+          .order("updated_at", { ascending: false })
+          .limit(10);
+        if (fallbackTokens && fallbackTokens.length > 0) {
+          fallbackTokens.forEach((t: any) => t?.token && found.add(t.token));
+          tokens = Array.from(found);
+          console.log(`[send-push:${reqId}] fallback ativado -> ${tokens.length} token(s) ativo(s) resgatado(s)`);
+        }
+      }
     }
 
     console.log(`[send-push:${reqId}] ${tokens.length} token(s) alvo`);
