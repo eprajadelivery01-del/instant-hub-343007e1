@@ -239,3 +239,16 @@ export function getPrepTimeLabel(company: {
   const max = company.prep_time_max ?? 45;
   return `${min}-${max} min`;
 }
+
+export function sortStoresByOpenStatus<T extends StoreStatusInput>(companies: T[] | null | undefined): T[] {
+  if (!companies || companies.length === 0) return companies ?? [];
+  return [...companies].sort((a, b) => {
+    const aOpen = isStoreOpenNow(a) === true;
+    const bOpen = isStoreOpenNow(b) === true;
+    if (aOpen && !bOpen) return -1;
+    if (!aOpen && bOpen) return 1;
+    const aRating = Number((a as any).rating) || 0;
+    const bRating = Number((b as any).rating) || 0;
+    return bRating - aRating;
+  });
+}

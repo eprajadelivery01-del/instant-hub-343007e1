@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { isStoreOpenNow, type StoreStatusInput } from '@/lib/storeHours';
+import { isStoreOpenNow, sortStoresByOpenStatus, type StoreStatusInput } from '@/lib/storeHours';
 
 /**
  * Tick compartilhado: reavalia o relógio a cada minuto (alinhado ao início
@@ -45,22 +45,22 @@ export function useStoreOpenStatus(company: StoreStatusInput | null | undefined)
 
 /**
  * Mesma regra aplicada a uma LISTA de lojas: retorna a lista com `is_open`
- * recalculado, mantendo a referência quando nada muda (evita re-render).
+ * recalculado e SEMPRE ORDENADA com lojas ABERTAS em primeiro lugar!
  */
 export function useStoresOpenStatus<T extends StoreStatusInput>(companies: T[] | null | undefined): T[] {
   const tick = useMinuteTick();
   return useMemo(() => {
     if (!companies || companies.length === 0) return companies ?? [];
-    let changed = false;
-    const next = companies.map((c) => {
+    
+    const withUpdatedStatus = companies.map((c) => {
       const open = isStoreOpenNow(c);
       if (c.is_open !== open) {
-        changed = true;
         return { ...c, is_open: open };
       }
       return c;
     });
-    return changed ? next : companies;
+
+    return sortStoresByOpenStatus(withUpdatedStatus);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [companies, tick]);
 }

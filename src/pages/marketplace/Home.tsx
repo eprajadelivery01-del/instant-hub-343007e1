@@ -128,37 +128,31 @@ export default function Home() {
         }
       }
 
-      const processed: MarketplaceCompany[] = rows
-        .filter((c) => (c as any).show_in_marketplace !== false)
-        .map((company): MarketplaceCompany => {
-          const ratingValue =
-            company.rating && Number(company.rating) > 0
-              ? Number(company.rating)
-              : 4.5 + Math.random() * 0.5;
+      const processed: MarketplaceCompany[] = sortStoresByOpenStatus(
+        rows
+          .filter((c) => (c as any).show_in_marketplace !== false)
+          .map((company): MarketplaceCompany => {
+            const ratingValue =
+              company.rating && Number(company.rating) > 0
+                ? Number(company.rating)
+                : 4.5 + Math.random() * 0.5;
 
-          const rawProds = ((company as any).products && (company as any).products.length > 0)
-            ? (company as any).products
-            : (extraProductsMap[company.id] || []);
+            const rawProds = ((company as any).products && (company as any).products.length > 0)
+              ? (company as any).products
+              : (extraProductsMap[company.id] || []);
 
-          return {
-            ...company,
-            name: company.name || 'Loja Parceira',
-            is_open: isStoreOpenNow(company as any),
-            active: company.active === true || (company as any).is_active === true,
-            products: (rawProds || [])
-              .filter((p: any) => p.active !== false)
-              .slice(0, 4), // Preview de 4 produtos na Home
-            rating: ratingValue,
-          };
-        })
-        .sort((a, b) => {
-          const aOpen = a.is_open === true;
-          const bOpen = b.is_open === true;
-          if (aOpen && !bOpen) return -1;
-          if (!aOpen && bOpen) return 1;
-          return (b.rating || 0) - (a.rating || 0);
-        })
-        .map((company, index) => ({ ...company, isPremium: index < 5 }));
+            return {
+              ...company,
+              name: company.name || 'Loja Parceira',
+              is_open: isStoreOpenNow(company as any),
+              active: company.active === true || (company as any).is_active === true,
+              products: (rawProds || [])
+                .filter((p: any) => p.active !== false)
+                .slice(0, 4), // Preview de 4 produtos na Home
+              rating: ratingValue,
+            };
+          })
+      ).map((company, index) => ({ ...company, isPremium: index < 5 }));
 
       setCompanies(processed);
       setLoading(false);
@@ -201,7 +195,7 @@ export default function Home() {
     };
   }, []);
 
-  // Fonte da verdade do status: horário cadastrado pelo lojista, reavaliado a cada minuto
+  // Fonte da verdade do status: horário cadastrado pelo lojista, reavaliado a cada minuto, SEMPRE com abertas no topo!
   const companiesWithStatus = useStoresOpenStatus(companies);
 
   const filtered = useMemo(() => {
@@ -215,7 +209,7 @@ export default function Home() {
     if (!search && !activeCategory) return [];
     
     const allProducts: (Product & { company: MarketplaceCompany })[] = [];
-    companies.forEach(c => {
+    companiesWithStatus.forEach(c => {
       (c.products || []).forEach(p => {
         if (p.active !== false && p.is_active !== false) {
           allProducts.push({ ...p, company: c });
@@ -235,14 +229,14 @@ export default function Home() {
       ) : true;
       return matchSearch && matchCategory;
     });
-  }, [companies, search, activeCategory]);
+  }, [companiesWithStatus, search, activeCategory]);
 
   const featuredCompanies = useMemo(() => 
-    companies.filter((company) => 
+    companiesWithStatus.filter((company) => 
       company.isPremium && 
       (activeCategory === '' || (company.description?.toLowerCase().includes(activeCategory.toLowerCase())) || (company.category?.toLowerCase().includes(activeCategory.toLowerCase())))
     ).slice(0, 5), 
-  [companies, activeCategory]);
+  [companiesWithStatus, activeCategory]);
 
   const getItemQty = (productId: string) => items.find((item) => item.product.id === productId)?.quantity || 0;
 
