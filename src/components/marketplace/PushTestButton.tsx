@@ -30,6 +30,7 @@ export function PushTestButton({ className }: { className?: string }) {
     setLoading(true);
     setDiags([]);
     setRaw('');
+    let localOk = false;
 
     const localToken =
       localStorage.getItem('@epraja_fcm_token') || localStorage.getItem('fcm_token') || '';
@@ -89,6 +90,7 @@ export function PushTestButton({ className }: { className?: string }) {
           ok: true,
           detail: `id=${notifId} agendado diretamente no NotificationManager do Android`,
         });
+        localOk = true;
       } catch (errLocal: any) {
         push({
           step: 'Disparo Nativo Local (Central do Celular)',
@@ -132,7 +134,16 @@ export function PushTestButton({ className }: { className?: string }) {
             ? `Sem resposta da rede: ${res.error}`
             : `HTTP ${res.status} · ${typeof data === 'string' ? data : JSON.stringify(data)}`,
         });
-        toast.error('Falha ao chamar send-push', { description: res.error ?? `HTTP ${res.status}` });
+        if (localOk) {
+          toast.warning('Notificação local enviada à central do celular', {
+            description:
+              'O envio pelo servidor (push com o app fechado) está indisponível: a Edge Function send-push precisa ser publicada no Supabase.',
+          });
+        } else {
+          toast.warning('Push pelo servidor indisponível', {
+            description: 'A Edge Function send-push ainda não está publicada no Supabase.',
+          });
+        }
       } else {
         const sent = Number((data as any)?.sent ?? 0);
         const total = Number((data as any)?.total ?? 0);
@@ -150,12 +161,17 @@ export function PushTestButton({ className }: { className?: string }) {
               : (data as any)?.warning ?? (data as any)?.error ?? 'Nenhum envio bem-sucedido',
         });
         if (sent > 0) toast.success(`Push enviado para ${sent} dispositivo(s)`);
-        else toast.error('Nenhum push enviado', { description: (data as any)?.warning ?? 'Veja o diagnóstico' });
+        else
+          toast.warning('Nenhum push enviado pelo servidor', {
+            description: (data as any)?.warning ?? 'Veja o diagnóstico abaixo',
+          });
       }
     } catch (e: any) {
       push({ step: 'Edge Function send-push', ok: false, detail: e?.message ?? String(e) });
       setRaw(String(e?.stack ?? e));
-      toast.error('Erro inesperado no teste de push');
+      toast.warning('Não foi possível contatar o servidor de push', {
+        description: localOk ? 'A notificação local foi disparada normalmente.' : undefined,
+      });
     } finally {
       setLoading(false);
     }
