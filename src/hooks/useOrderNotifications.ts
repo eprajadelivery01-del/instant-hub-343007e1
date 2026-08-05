@@ -233,13 +233,19 @@ export async function syncFcmTokenToDatabase(providedToken?: string) {
   try {
     const { data: authData } = await supabase.auth.getUser();
     const userId = authData?.user?.id;
-    const customerId = localStorage.getItem('@epraja_customer_id') || localStorage.getItem('epraja_customer_id') || userId;
+    let customerId = localStorage.getItem('@epraja_customer_id') || localStorage.getItem('epraja_customer_id');
     let recentOrders: string[] = [];
     let savedPhone = '';
     try {
       recentOrders = JSON.parse(localStorage.getItem('@epraja_recent_orders') || '[]');
       savedPhone = localStorage.getItem('@epraja_customer_phone') || localStorage.getItem('epraja_customer_phone') || '';
     } catch {}
+
+    if (userId) {
+      const { data: customer } = await supabase.from('customers').select('id').eq('user_id', userId).maybeSingle();
+      customerId = customer?.id ?? customerId;
+      if (customer?.id) localStorage.setItem('@epraja_customer_id', customer.id);
+    }
 
     let guestDeviceId = localStorage.getItem('@epraja_guest_device_id');
     if (!guestDeviceId) {
