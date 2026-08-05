@@ -62,6 +62,34 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
     return () => window.removeEventListener('close-notifications-sheet', handleClose);
   }, []);
 
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleDocumentClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      // Close the sheet if clicking outside of the sheet element and not on the trigger
+      const sheetElement = document.querySelector('[role="dialog"]');
+      const triggerElement = document.querySelector('[aria-haspopup="dialog"]');
+      
+      if (
+        sheetElement && 
+        !sheetElement.contains(target) && 
+        (!triggerElement || !triggerElement.contains(target))
+      ) {
+        setIsOpen(false);
+      }
+    };
+
+    const timer = setTimeout(() => {
+      document.addEventListener('click', handleDocumentClick);
+    }, 100);
+
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener('click', handleDocumentClick);
+    };
+  }, [isOpen]);
+
   const STORAGE_KEY = '@epraja_notification_history';
   const FORTY_EIGHT_HOURS_MS = 48 * 60 * 60 * 1000;
 
@@ -483,7 +511,7 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
   };
 
   return (
-    <Sheet open={isOpen} onOpenChange={handleOpenChange}>
+    <Sheet modal={false} open={isOpen} onOpenChange={handleOpenChange}>
       <SheetTrigger asChild>
         <HeaderActionButton
           className={className}
