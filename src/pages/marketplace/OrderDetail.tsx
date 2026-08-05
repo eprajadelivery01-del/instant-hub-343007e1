@@ -10,6 +10,7 @@ import { PushTestButton } from '@/components/marketplace/PushTestButton';
 import { ArrowLeft, MessageCircle, MapPin, Banknote, Smartphone, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { OrderStoreChat } from '@/components/marketplace/OrderStoreChat';
+import MarketplaceLayout from '@/components/marketplace/MarketplaceLayout';
 import { getMarketplaceStatus } from '@/utils/orderStatusResolver';
 import { useCancelOrder } from '@/hooks/useCancelOrder';
 
