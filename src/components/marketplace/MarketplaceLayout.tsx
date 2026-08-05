@@ -260,9 +260,9 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
               ))}
             </nav>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
               <ClientNotificationsPopover />
-              <ThemeToggle className="h-10 w-10 rounded-full shrink-0 shadow-none border-border/30 bg-background/20" />
+              <ThemeToggle />
               <Link to="/marketplace/cart" className="relative p-2 text-muted-foreground hover:text-primary transition-colors">
                 <ShoppingBag className="h-6 w-6" />
                 {itemCount > 0 && (
@@ -271,13 +271,18 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
                   </span>
                 )}
               </Link>
-              <Link to="/marketplace/profile" className="h-10 w-10 rounded-full bg-slate-100 overflow-hidden border border-border/50 transition-transform hover:scale-105 flex items-center justify-center">
-                {profile?.avatar_url ? (
-                  <img src={profile.avatar_url} className="h-full w-full object-cover" alt="Perfil" />
-                ) : (
-                  <User className="h-full w-full p-2 text-muted-foreground" />
-                )}
-              </Link>
+              <HeaderActionButton
+                onClick={() => navigate('/marketplace/profile')}
+                title="Meu perfil"
+                className="overflow-hidden p-0"
+              >
+                <MediaImage
+                  src={getAvatarImage(profile)}
+                  alt="Perfil"
+                  className="h-full w-full object-cover"
+                  fallback={<User className="h-5 w-5 text-muted-foreground" />}
+                />
+              </HeaderActionButton>
             </div>
           </div>
         </header>
