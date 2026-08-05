@@ -13,13 +13,22 @@ export type SendPushResult = {
 
 /**
  * Envia notificações push via Supabase Client SDK `supabase.functions.invoke`.
- * Evita erros de CORS/Failed to fetch em WebViews nativas no Android.
+ * Garante cabeçalho de Autorização válido (Bearer ANON_KEY) para usuários visitantes/deslogados.
  */
 export async function callSendPush(body: Record<string, unknown>): Promise<SendPushResult> {
-  // 1. Tenta via Supabase Functions Client (Método Oficial SDK)
+  const { data: sessionData } = await supabase.auth.getSession();
+  const bearerToken = sessionData?.session?.access_token || SUPABASE_ANON_KEY;
+
+  const authHeaders = {
+    'Authorization': `Bearer ${bearerToken}`,
+    'apikey': SUPABASE_ANON_KEY,
+  };
+
+  // 1. Tenta via Supabase Functions Client com autorização explícita
   try {
     const { data, error } = await supabase.functions.invoke('send-push', {
       body,
+      headers: authHeaders,
     });
 
     if (!error && data) {
@@ -43,13 +52,14 @@ export async function callSendPush(body: Record<string, unknown>): Promise<SendP
         orderId: body.orderId,
         userId: body.userId,
       },
+      headers: authHeaders,
     });
 
     if (!error && data) {
       return { ok: true, status: 200, data, stale: false };
     }
     if (error) {
-      return { ok: false, status: 400, data: null, stale: false, error: error.message || String(error) };
+      console.warn('[sendPush] Erro em notify-customer:', error.message || error);
     }
   } catch (e: any) {
     console.warn('[sendPush] Exceção ao chamar notify-customer:', e);
@@ -62,7 +72,7 @@ export async function callSendPush(body: Record<string, unknown>): Promise<SendP
       headers: {
         'Content-Type': 'application/json',
         'apikey': SUPABASE_ANON_KEY,
-        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'Authorization': `Bearer ${bearerToken}`,
       },
       body: JSON.stringify(body),
     });
