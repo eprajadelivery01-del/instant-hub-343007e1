@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { getMarketplaceStatus } from '@/utils/orderStatusResolver';
 import { sendNativeDeviceNotification } from '@/hooks/useOrderNotifications';
+import { HeaderActionButton } from '@/components/shared/HeaderActionButton';
 
 export type MarketingNotifItem = {
   id: string;
