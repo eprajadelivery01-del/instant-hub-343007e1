@@ -1,19 +1,24 @@
-import { ReactNode } from "react";
+import { ReactNode, forwardRef } from "react";
 import { useLocation } from "react-router-dom";
 
 interface PageTransitionProps {
   children: ReactNode;
 }
 
-export function PageTransition({ children }: PageTransitionProps) {
-  const { pathname } = useLocation();
+export const PageTransition = forwardRef<HTMLDivElement, PageTransitionProps>(
+  ({ children }, ref) => {
+    const { pathname } = useLocation();
 
-  return (
-    <div
-      key={pathname}
-      className="page-transition-wrapper"
-    >
-      {children}
-    </div>
-  );
-}
+    return (
+      <div
+        ref={ref}
+        key={pathname}
+        className="page-transition-wrapper"
+      >
+        {children}
+      </div>
+    );
+  }
+);
+
+PageTransition.displayName = "PageTransition";
