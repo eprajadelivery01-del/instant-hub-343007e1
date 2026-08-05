@@ -15,6 +15,7 @@ import { MarketplaceMenu } from '@/components/marketplace/MarketplaceMenu';
 import { useStoresOpenStatus } from '@/hooks/useStoreOpenStatus';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MediaImage } from '@/components/shared/MediaImage';
+import { HeaderActionButton } from '@/components/shared/HeaderActionButton';
 import { Search, Star, ChevronDown, Store, Utensils, Coffee, Pizza, Cake, Sandwich, Pill, ShoppingCart, User, PanelLeft, X, Dog, Beer, Plus, Croissant, Sparkles, Flame, Beef, Leaf, Package, IceCream, Wine, UtensilsCrossed, GlassWater, Scissors, Ruler } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
