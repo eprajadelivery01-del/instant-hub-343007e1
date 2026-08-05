@@ -234,10 +234,8 @@ export async function syncFcmTokenToDatabase(providedToken?: string) {
     const { data: authData } = await supabase.auth.getUser();
     const userId = authData?.user?.id;
     let customerId = localStorage.getItem('@epraja_customer_id') || localStorage.getItem('epraja_customer_id');
-    let recentOrders: string[] = [];
     let savedPhone = '';
     try {
-      recentOrders = JSON.parse(localStorage.getItem('@epraja_recent_orders') || '[]');
       savedPhone = localStorage.getItem('@epraja_customer_phone') || localStorage.getItem('epraja_customer_phone') || '';
     } catch {}
 
@@ -253,101 +251,27 @@ export async function syncFcmTokenToDatabase(providedToken?: string) {
       try { localStorage.setItem('@epraja_guest_device_id', guestDeviceId); } catch {}
     }
 
-    const resolvedTargetId = userId || customerId || savedPhone || (recentOrders.length > 0 ? recentOrders[0] : guestDeviceId);
-
     console.log('[SYNC_FCM_START]', {
-      token,
+      tokenPrefix: `${token.slice(0, 12)}…`,
       userId,
       customerId,
-      guestDeviceId,
-      resolvedTargetId
+      guestDeviceId
     });
 
-    // REGISTRO OBRIGATÓRIO PARA USUÁRIOS LOGADOS E DESLOGADOS (GUEST)
-    try {
-      await callSendPush({
-        action: 'register_token',
-        token,
-        userId: userId ?? null,
-        customerId: customerId ?? null,
-        deviceId: guestDeviceId,
-        phone: savedPhone || null,
-        platform: Capacitor.getPlatform(),
-      });
-    } catch (errReg) {
-      console.warn('[FCM] Falha ao registrar token em device_tokens via send-push:', errReg);
-    }
-
-    if (resolvedTargetId) {
-      // 1. Atualização via cliente (se houver permissão)
-      Promise.allSettled([
-        supabase.from("customers").update({ fcm_token: token, updated_at: new Date().toISOString() }).or(`user_id.eq.${resolvedTargetId},id.eq.${resolvedTargetId},phone.eq.${savedPhone}`),
-        supabase.from("profiles").update({ fcm_token: token, updated_at: new Date().toISOString() }).eq("id", resolvedTargetId),
-        supabase.from("users").update({ fcm_token: token, updated_at: new Date().toISOString() }).eq("id", resolvedTargetId),
-      ]);
-    }
-
-    // 2. Registro canônico do token na Edge Function send-push (service role, upsert em device_tokens)
-    try {
-      const reg = await callSendPush({
-        action: 'register_token',
-        token,
-        userId: userId ?? null,
-        customerId: customerId ?? null,
-        phone: savedPhone || null,
-        platform: Capacitor.getPlatform(),
-      });
-      console.log('[FCM] register_token (send-push):', reg);
-      if (reg.stale) {
-        console.warn('[FCM] Edge Function send-push publicada está desatualizada — refaça o deploy.');
-      }
-    } catch (errReg) {
-      console.warn('[FCM] Falha ao registrar token via send-push:', errReg);
-    }
-
-    // 2. Invocação forçada com SERVICE_ROLE para garantir o salvamento do token FCM no banco
-    let response = await supabase.functions.invoke('notify-customer', {
-      body: {
-        action: 'save_token',
-        fcmToken: token,
-        customerId: resolvedTargetId,
-        userId: userId,
-        phone: savedPhone,
-        recentOrders: recentOrders
-      }
+    const registration = await callSendPush({
+      action: 'register_token',
+      token,
+      userId: userId ?? null,
+      customerId: customerId ?? null,
+      deviceId: guestDeviceId,
+      phone: savedPhone || null,
+      platform: Capacitor.getPlatform(),
     });
-
-    console.log('[EDGE_RESPONSE]', response);
-
-    // Fallback de HTTP direto caso a SDK do Supabase retorne FunctionsFetchError no WebView do Android
-    if (response.error || !response.data) {
-      try {
-        const apiKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3OiOiJzdXBhYmFzZSIsInJlZiI6Im5wdGt4bHJocmxzc2RzZXZwZ3FlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNDE4MTQsImV4cCI6MjA5MDYxNzgxNH0.t8Cu-yFnSqOURT4GXCZ_mBghpxucT89nRBFlBNA1vZs";
-        const directRes = await fetch("https://nptkxlrhrlssdsevpgqe.supabase.co/functions/v1/notify-customer", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "apikey": apiKey,
-            "Authorization": `Bearer ${apiKey}`
-          },
-          body: JSON.stringify({
-            action: 'save_token',
-            fcmToken: token,
-            customerId: resolvedTargetId,
-            userId: userId,
-            phone: savedPhone,
-            recentOrders: recentOrders
-          })
-        });
-        const directData = await directRes.json();
-        console.log('[DIRECT_FETCH_RESPONSE]', directData);
-        response = { data: directData, error: null };
-      } catch (errDirect) {
-        console.warn('[DIRECT_FETCH_ERROR]', errDirect);
-      }
+    if (!registration.ok || !registration.data?.registered) {
+      console.warn('[FCM] Token não foi registrado no servidor:', registration.error ?? registration.data);
+      return;
     }
-
-    console.log('[FCM] Sincronização de token concluída:', response);
+    console.log('[FCM] Token registrado em device_tokens:', registration.data?.requestId);
   } catch (e) {
     console.warn("[FCM] Erro ao sincronizar token com o banco:", e);
   }
