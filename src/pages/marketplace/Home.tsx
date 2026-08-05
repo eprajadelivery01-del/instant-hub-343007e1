@@ -50,7 +50,8 @@ import { getCachedCompanies } from '@/lib/offlinePrecache';
 export default function Home() {
   const [companies, setCompanies] = useState<MarketplaceCompany[]>(() => {
     const cached = getCachedCompanies();
-    return (cached as any[]) || [];
+    if (!cached) return [];
+    return sortStoresByOpenStatus(cached as any[]) as any[];
   });
   const [loading, setLoading] = useState(() => {
     const cached = getCachedCompanies();

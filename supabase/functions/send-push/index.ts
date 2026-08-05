@@ -164,6 +164,11 @@ async function sendToToken(
   for (let attempt = 1; attempt <= RETRY_DELAYS_MS.length + 1; attempt++) {
     const started = Date.now();
     try {
+      console.log(
+        "[FCM_PAYLOAD]",
+        JSON.stringify(payload, null, 2)
+      );
+
       const res = await fetch(
         `https://fcm.googleapis.com/v1/projects/${sa.project_id}/messages:send`,
         {
@@ -176,6 +181,11 @@ async function sendToToken(
         },
       );
       const json = await res.json().catch(() => ({}));
+      
+      console.log(
+        "[FCM_RESPONSE]",
+        JSON.stringify(json, null, 2)
+      );
       const ms = Date.now() - started;
       const cls = res.ok
         ? { outcome: "success" as Outcome, code: "OK", message: "" }
@@ -336,6 +346,8 @@ Deno.serve(async (req) => {
     if (!extra.route && extra.orderId) extra.route = `/marketplace/orders/${extra.orderId}`;
     extra.click_action = "FLUTTER_NOTIFICATION_CLICK";
 
+    console.log("[EXTRA_DATA]", extra);
+
     // Resolve os tokens de destino
     let tokens: string[] = Array.isArray(body.tokens)
       ? body.tokens.filter(Boolean).map(String)
@@ -409,6 +421,8 @@ Deno.serve(async (req) => {
     }
 
     const accessToken = await getAccessToken(sa);
+    console.log("[TITLE]", title);
+    console.log("[MESSAGE]", message);
     const results = await Promise.all(
       tokens.map((t) => sendToToken(reqId, sa, accessToken, t, title, message, extra)),
     );

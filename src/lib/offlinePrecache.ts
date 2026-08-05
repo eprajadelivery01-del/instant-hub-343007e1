@@ -1,6 +1,5 @@
 import { supabase } from '@/lib/supabase';
 import { Company, Product } from '@/types/database';
-import { sortStoresByOpenStatus } from '@/lib/storeHours';
 
 const STORAGE_KEY_COMPANIES = '@epraja_cache_companies_v1';
 const STORAGE_KEY_PRODUCTS = '@epraja_cache_products_v1';
@@ -31,21 +30,17 @@ export function loadPrecacheFromStorage() {
 }
 
 export function getCachedCompanies(): Company[] | undefined {
-  let list: Company[] | undefined;
   if (memoryCompanies && memoryCompanies.length > 0) {
-    list = memoryCompanies;
-  } else {
-    try {
-      const cached = localStorage.getItem(STORAGE_KEY_COMPANIES);
-      if (cached) {
-        memoryCompanies = JSON.parse(cached);
-        list = memoryCompanies || undefined;
-      }
-    } catch {}
+    return memoryCompanies;
   }
-  if (!list) return undefined;
-  // Garante que o cache SEMPRE abra com lojas ABERTAS primeiro!
-  return sortStoresByOpenStatus(list as any) as unknown as Company[];
+  try {
+    const cached = localStorage.getItem(STORAGE_KEY_COMPANIES);
+    if (cached) {
+      memoryCompanies = JSON.parse(cached);
+      return memoryCompanies || undefined;
+    }
+  } catch {}
+  return undefined;
 }
 
 export function getCachedStoreData(storeId: string | undefined): PrecachedStoreData | undefined {
