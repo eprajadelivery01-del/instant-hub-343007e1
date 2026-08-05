@@ -10,7 +10,7 @@ export const corsHeaders = {
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const SA_RAW = Deno.env.get("FIREBASE_SERVICE_ACCOUNT_JSON") ?? "";
+const SA_RAW = Deno.env.get("FIREBASE_SERVICE_ACCOUNT_JSON") ?? Deno.env.get("FIREBASE_SERVICE_ACCOUNT") ?? "";
 
 type ServiceAccount = {
   client_email: string;
@@ -326,8 +326,8 @@ Deno.serve(async (req) => {
 
     // ---------- ENVIO ----------
     if (!SA_RAW) {
-      console.error(`[send-push:${reqId}] FIREBASE_SERVICE_ACCOUNT_JSON ausente`);
-      return json({ error: "FIREBASE_SERVICE_ACCOUNT_JSON não configurado" }, 500);
+      console.error(`[send-push:${reqId}] FIREBASE_SERVICE_ACCOUNT ou FIREBASE_SERVICE_ACCOUNT_JSON ausente`);
+      return json({ error: "FIREBASE_SERVICE_ACCOUNT não configurado nos segredos do Supabase" }, 500);
     }
     let sa: ServiceAccount;
     try {
