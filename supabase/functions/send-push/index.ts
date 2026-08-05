@@ -242,6 +242,15 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json().catch(() => ({} as any));
+
+    // Filtro de segurança absoluto: ignora mensagens manuais legadas do Lojista/Entregador
+    // para evitar duplicidade de notificações na central.
+    const notifBody = String(body.body ?? body.message ?? "");
+    if (notifBody && (notifBody.includes("foi atualizado:") || notifBody.includes("mudou para:"))) {
+      console.log(`[send-push] Bloqueando push legado manual duplicado: "${notifBody}"`);
+      return new Response(JSON.stringify({ requestId: reqId, success: true, message: "Dropped legacy manual notification" }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
     const action = String(body.action ?? "send");
     console.log(`[send-push:${reqId}] action=${action}`, JSON.stringify({
       orderId: body.orderId ?? null,

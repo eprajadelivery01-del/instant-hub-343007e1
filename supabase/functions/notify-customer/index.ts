@@ -158,6 +158,13 @@ serve(async (req) => {
     const targetOrderId = record.orderId || record.order_id || record.id;
     const newStatus = payload.deliveryStatus || payload.status || record.status || record.deliveryStatus;
 
+    // Se a chamada for um invoke manual vindo do frontend (sem o campo table preenchido),
+    // ignoramos para evitar duplicidade com a trigger oficial do banco de dados.
+    if (!payload.table) {
+      console.log(`[notify-customer] Bloqueando chamada manual legada do frontend (sem tabela) para o pedido #${targetOrderId}`);
+      return new Response(JSON.stringify({ success: true, message: 'Dropped legacy manual invocation' }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    }
+
     if (!targetOrderId) {
       return new Response(JSON.stringify({ error: 'No orderId or record found' }), { status: 400 });
     }
@@ -274,19 +281,7 @@ serve(async (req) => {
       }
     }
 
-    // Fallback de emergência: busca qualquer token FCM cadastrado na tabela de clientes
-    if (!fcmToken) {
-      const { data: allCust } = await adminClient
-        .from('customers')
-        .select('fcm_token')
-        .not('fcm_token', 'is', null)
-        .order('updated_at', { ascending: false })
-        .limit(20);
-      if (allCust && allCust.length > 0) {
-        const found = allCust.find((c: any) => c.fcm_token && c.fcm_token.length > 10);
-        if (found) fcmToken = found.fcm_token;
-      }
-    }
+
 
     if (!fcmToken) {
       console.log(`[notify-customer] Nenhum token FCM encontrado no sistema.`);
