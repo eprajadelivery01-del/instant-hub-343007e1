@@ -6,7 +6,7 @@ import { Company, Product } from '@/types/database';
 import { useAddress } from '@/contexts/AddressContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
-import { getPrepTimeLabel, isStoreOpenNow } from '@/lib/storeHours';
+import { getPrepTimeLabel, isStoreOpenNow, sortStoresByOpenStatus } from '@/lib/storeHours';
 import MarketplaceLayout from '@/components/marketplace/MarketplaceLayout';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
