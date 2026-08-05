@@ -24,31 +24,14 @@ export async function callSendPush(body: Record<string, unknown>): Promise<SendP
     'apikey': SUPABASE_ANON_KEY,
   };
 
-  // 1. Tenta via Supabase Functions Client com autorização explícita
-  try {
-    const { data, error } = await supabase.functions.invoke('send-push', {
-      body,
-      headers: authHeaders,
-    });
-
-    if (!error && data) {
-      return { ok: true, status: 200, data, stale: false };
-    }
-    if (error) {
-      console.warn('[sendPush] Erro no SDK ao chamar send-push:', error.message || error);
-    }
-  } catch (e: any) {
-    console.warn('[sendPush] Exceção ao chamar send-push via SDK:', e);
-  }
-
-  // 2. Tenta via notify-customer via Supabase Functions Client
+  // 1. Tenta via notify-customer (Edge Function 100% publicada no Supabase Cloud)
   try {
     const { data, error } = await supabase.functions.invoke('notify-customer', {
       body: {
         action: 'send_custom_push',
         fcmToken: body.token || body.fcmToken,
         title: body.title || '🔔 É Pra Já Marketplace',
-        body: body.body || 'Você recebeu uma nova notificação!',
+        body: body.body || 'Se você viu isso na central do celular, o push está funcionando!',
         orderId: body.orderId,
         userId: body.userId,
       },
@@ -63,6 +46,23 @@ export async function callSendPush(body: Record<string, unknown>): Promise<SendP
     }
   } catch (e: any) {
     console.warn('[sendPush] Exceção ao chamar notify-customer:', e);
+  }
+
+  // 2. Tenta via send-push via Supabase Functions Client
+  try {
+    const { data, error } = await supabase.functions.invoke('send-push', {
+      body,
+      headers: authHeaders,
+    });
+
+    if (!error && data) {
+      return { ok: true, status: 200, data, stale: false };
+    }
+    if (error) {
+      console.warn('[sendPush] Erro no SDK ao chamar send-push:', error.message || error);
+    }
+  } catch (e: any) {
+    console.warn('[sendPush] Exceção ao chamar send-push via SDK:', e);
   }
 
   // 3. Fallback final via fetch direto com headers sanitizados
