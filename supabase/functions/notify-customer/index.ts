@@ -313,10 +313,19 @@ serve(async (req) => {
         }
       },
       apns: {
+        headers: {
+          "apns-priority": "10",
+          "apns-push-type": "alert"
+        },
         payload: {
           aps: {
+            alert: {
+              title: msg.title,
+              body: msg.description
+            },
             sound: 'default',
-            badge: 1
+            badge: 1,
+            "mutable-content": 1
           }
         }
       },
