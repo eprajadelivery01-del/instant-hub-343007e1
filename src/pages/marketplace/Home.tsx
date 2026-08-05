@@ -154,12 +154,16 @@ export default function Home() {
           })
       ).map((company, index) => ({ ...company, isPremium: index < 5 }));
 
-      setCompanies(processed);
+      if (processed.length > 0) {
+        setCompanies(processed);
+      }
       setLoading(false);
     } catch (err: any) {
-      console.warn('Aviso ao carregar lojas:', err);
-      setErrorMsg(err?.message || 'Não foi possível carregar as lojas.');
-      toast.error('Erro ao carregar lojas');
+      console.warn('[Home] Aviso ao carregar lojas:', err);
+      // Se o estado/cache já tiver empresas, mantém silencioso e funcional
+      if (!companies || companies.length === 0) {
+        setErrorMsg(err?.message || 'Não foi possível carregar as lojas.');
+      }
       setLoading(false);
     }
   };
