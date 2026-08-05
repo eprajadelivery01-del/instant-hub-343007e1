@@ -43,7 +43,6 @@ const COMPANY_LIST_COLUMNS =
 import { NotificationBanner } from '@/components/shared/NotificationBanner';
 import { ClientNotificationsPopover } from '@/components/marketplace/ClientNotificationsPopover';
 import { ActiveOfferHighlight } from '@/components/marketplace/ActiveOfferHighlight';
-import { PushTestButton } from '@/components/marketplace/PushTestButton';
 
 import { getCachedCompanies } from '@/lib/offlinePrecache';
 
@@ -272,7 +271,6 @@ export default function Home() {
 
             <div className="flex items-center gap-1.5 shrink-0 ml-auto">
               <ClientNotificationsPopover className="h-10 w-10 rounded-xl" />
-              <PushTestButton className="h-10 px-2.5 rounded-xl border-primary/30 text-primary font-bold text-xs bg-primary/10 hover:bg-primary/20" />
               <ThemeToggle className="h-10 w-10 rounded-xl" />
               <button
                 onClick={() => navigate('/marketplace/profile')}
@@ -316,20 +314,6 @@ export default function Home() {
       </SafeAreaHeader>
 
       <div className="mx-auto max-w-7xl space-y-10 px-4 pb-32 pt-6 sm:px-6">
-        {/* Banner de Teste Diagnóstico da Central do Celular */}
-        <div className="flex items-center justify-between p-3.5 rounded-2xl bg-card border border-border shadow-sm">
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-primary/10 text-primary">
-              <Sparkles className="w-5 h-5" />
-            </div>
-            <div>
-              <p className="text-xs font-black text-foreground">Diagnóstico da Central do Celular</p>
-              <p className="text-[11px] text-muted-foreground">Dispare um teste para capturar onde a notificação está travando</p>
-            </div>
-          </div>
-          <PushTestButton className="h-9 font-bold bg-primary text-primary-foreground hover:bg-primary/90" />
-        </div>
-
         <ActiveOfferHighlight />
 
         <section className="space-y-4">

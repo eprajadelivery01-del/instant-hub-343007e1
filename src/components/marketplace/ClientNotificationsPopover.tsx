@@ -10,7 +10,6 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { getMarketplaceStatus } from '@/utils/orderStatusResolver';
 import { sendNativeDeviceNotification } from '@/hooks/useOrderNotifications';
-import { PushTestButton } from '@/components/marketplace/PushTestButton';
 
 export type MarketingNotifItem = {
   id: string;
@@ -520,8 +519,6 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
                 </div>
               </div>
             </div>
-
-            <PushTestButton className="w-full h-9 text-xs font-bold bg-primary/10 text-primary hover:bg-primary/20 border-primary/20" />
           </div>
 
           {/* List of Notifications */}
