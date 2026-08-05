@@ -111,7 +111,7 @@ export function requestNativeNotificationPermission() {
 
 export async function sendNativeDeviceNotification(
   title: string,
-  options?: { body?: string; tag?: string; icon?: string }
+  options?: { body?: string; tag?: string; icon?: string; orderId?: string }
 ) {
   // 1. Aciona vibração no dispositivo
   triggerDeviceVibration();
@@ -168,7 +168,9 @@ export async function sendNativeDeviceNotification(
             sound: "default",
             actionTypeId: "",
             extra: {
-              tag: options?.tag || "epraja-marketplace-order"
+              tag: options?.tag || "epraja-marketplace-order",
+              orderId: options?.orderId || null,
+              route: options?.orderId ? `/marketplace/orders/${options.orderId}` : "/marketplace/orders",
             }
           }
         ]
@@ -395,9 +397,17 @@ export function useOrderNotifications() {
       console.log("[Push] Notificação push do cliente recebida:", notification);
       const title = notification.title || "Atualização de Pedido";
       const body = notification.body || "";
+      const data: any = notification.data || {};
+      const orderId = data.orderId ? String(data.orderId) : undefined;
       toast(title, { description: body, duration: 8000 });
 
-      sendNativeDeviceNotification(title, { body, tag: "fcm-push" });
+      // Com o app em primeiro plano o Android NÃO exibe o push na central:
+      // replicamos como notificação local para garantir a bandeja.
+      sendNativeDeviceNotification(title, {
+        body,
+        tag: orderId ? `order-${orderId}` : "fcm-push",
+        orderId,
+      });
     }).then(listener => { pushListener = listener; });
 
     return () => {
