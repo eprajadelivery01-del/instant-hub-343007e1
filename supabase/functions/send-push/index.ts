@@ -146,11 +146,15 @@ async function sendToToken(
           channel_id: "marketplace_orders",
           sound: "default",
           default_vibrate_timings: true,
+          notification_priority: "PRIORITY_MAX",
+          visibility: "PUBLIC",
+          tag: data.orderId ? `order-${data.orderId}` : undefined,
+          click_action: "FLUTTER_NOTIFICATION_CLICK",
         },
       },
       apns: {
-        headers: { "apns-priority": "10" },
-        payload: { aps: { sound: "default", badge: 1 } },
+        headers: { "apns-priority": "10", "apns-push-type": "alert" },
+        payload: { aps: { alert: { title, body }, sound: "default", badge: 1, "mutable-content": 1 } },
       },
     },
   };
@@ -328,6 +332,9 @@ Deno.serve(async (req) => {
     if (body.orderId) extra.orderId = String(body.orderId);
     if (body.status) extra.status = String(body.status);
     if (body.url) extra.url = String(body.url);
+    if (body.route) extra.route = String(body.route);
+    if (!extra.route && extra.orderId) extra.route = `/marketplace/orders/${extra.orderId}`;
+    extra.click_action = "FLUTTER_NOTIFICATION_CLICK";
 
     // Resolve os tokens de destino
     let tokens: string[] = Array.isArray(body.tokens)
