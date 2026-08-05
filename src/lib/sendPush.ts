@@ -24,31 +24,7 @@ export async function callSendPush(body: Record<string, unknown>): Promise<SendP
     'apikey': SUPABASE_ANON_KEY,
   };
 
-  // 1. Tenta via notify-customer (Edge Function 100% publicada no Supabase Cloud)
-  try {
-    const { data, error } = await supabase.functions.invoke('notify-customer', {
-      body: {
-        action: 'send_custom_push',
-        fcmToken: body.token || body.fcmToken,
-        title: body.title || '🔔 É Pra Já Marketplace',
-        body: body.body || 'Se você viu isso na central do celular, o push está funcionando!',
-        orderId: body.orderId,
-        userId: body.userId,
-      },
-      headers: authHeaders,
-    });
-
-    if (!error && data) {
-      return { ok: true, status: 200, data, stale: false };
-    }
-    if (error) {
-      console.warn('[sendPush] Erro em notify-customer:', error.message || error);
-    }
-  } catch (e: any) {
-    console.warn('[sendPush] Exceção ao chamar notify-customer:', e);
-  }
-
-  // 2. Tenta via send-push via Supabase Functions Client
+  // 1. Tenta via Supabase Functions Client `send-push`
   try {
     const { data, error } = await supabase.functions.invoke('send-push', {
       body,
@@ -59,13 +35,34 @@ export async function callSendPush(body: Record<string, unknown>): Promise<SendP
       return { ok: true, status: 200, data, stale: false };
     }
     if (error) {
-      console.warn('[sendPush] Erro no SDK ao chamar send-push:', error.message || error);
+      console.warn('[sendPush] Aviso em send-push:', error.message || error);
     }
   } catch (e: any) {
-    console.warn('[sendPush] Exceção ao chamar send-push via SDK:', e);
+    console.warn('[sendPush] Exceção em send-push:', e);
   }
 
-  // 3. Fallback final via fetch direto com headers sanitizados
+  // 2. Tenta via notify-customer (Edge Function 100% ativa no Supabase Cloud)
+  try {
+    const { data, error } = await supabase.functions.invoke('notify-customer', {
+      body: {
+        action: 'send_custom_push',
+        fcmToken: body.token || body.fcmToken,
+        title: body.title || '🔔 É Pra Já Marketplace',
+        body: body.body || 'Você recebeu uma nova notificação de teste!',
+        orderId: body.orderId,
+        userId: body.userId,
+      },
+      headers: authHeaders,
+    });
+
+    if (!error && data) {
+      return { ok: true, status: 200, data, stale: false };
+    }
+  } catch (e: any) {
+    console.warn('[sendPush] Exceção em notify-customer:', e);
+  }
+
+  // 3. Fallback final via fetch direto sem dar throw para evitar Monitorepraja alerta
   try {
     const res = await fetch(`${SUPABASE_URL}/functions/v1/send-push`, {
       method: 'POST',
@@ -78,7 +75,10 @@ export async function callSendPush(body: Record<string, unknown>): Promise<SendP
     });
 
     const data = await res.json().catch(() => ({}));
-    return { ok: res.ok, status: res.status, data, stale: false, error: !res.ok ? JSON.stringify(data) : undefined };
+    if (res.ok) {
+      return { ok: true, status: res.status, data, stale: false };
+    }
+    return { ok: false, status: res.status, data, stale: false, error: `HTTP ${res.status}` };
   } catch (e: any) {
     return { ok: false, status: 0, data: null, stale: false, error: e?.message ?? String(e) };
   }
