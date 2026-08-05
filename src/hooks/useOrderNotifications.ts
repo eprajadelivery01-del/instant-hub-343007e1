@@ -298,6 +298,13 @@ export function useOrderNotifications() {
     let regListener: any = null;
     let errListener: any = null;
     let pushListener: any = null;
+    let pushActionListener: any = null;
+    let localActionListener: any = null;
+
+    const openOrderFromNotification = (orderId?: string) => {
+      if (!orderId) return;
+      window.location.href = `/marketplace/orders/${orderId}`;
+    };
 
     PushNotifications.createChannel({
       id: 'marketplace_orders',
@@ -336,15 +343,27 @@ export function useOrderNotifications() {
       console.log("[Push] Notificação push do cliente recebida:", notification);
       const title = notification.title || "Atualização de Pedido";
       const body = notification.body || "";
+      const orderId = notification.data?.orderId ? String(notification.data.orderId) : undefined;
+      const status = notification.data?.status ? String(notification.data.status) : 'update';
       toast(title, { description: body, duration: 8000 });
 
-      sendNativeDeviceNotification(title, { body, tag: "fcm-push" });
+      sendNativeDeviceNotification(title, { body, orderId, tag: orderId ? `order-${orderId}-${status}` : 'fcm-push' });
     }).then(listener => { pushListener = listener; });
+
+    PushNotifications.addListener('pushNotificationActionPerformed', (action) => {
+      openOrderFromNotification(action.notification.data?.orderId ? String(action.notification.data.orderId) : undefined);
+    }).then(listener => { pushActionListener = listener; });
+
+    LocalNotifications.addListener('localNotificationActionPerformed', (action) => {
+      openOrderFromNotification(action.notification.extra?.orderId ? String(action.notification.extra.orderId) : undefined);
+    }).then(listener => { localActionListener = listener; });
 
     return () => {
       if (regListener) regListener.remove();
       if (errListener) errListener.remove();
       if (pushListener) pushListener.remove();
+      if (pushActionListener) pushActionListener.remove();
+      if (localActionListener) localActionListener.remove();
     };
   }, [user?.id]);
 
@@ -413,7 +432,8 @@ export function useOrderNotifications() {
         // DISPARA A NOTIFICAÇÃO NATIVA DA CENTRAL DO DISPOSITIVO (ANDROID/IOS/WEB)!
         sendNativeDeviceNotification(computed.title, {
           body: `${computed.label} (Pedido #${ord.id.slice(0, 8)})`,
-          tag: `order-${ord.id}-${computed.statusKey}`
+          tag: `order-${ord.id}-${computed.statusKey}`,
+          orderId: ord.id
         });
       } catch (err) {
         console.warn("[useOrderNotifications] Erro ao disparar toast de notificação:", err);
