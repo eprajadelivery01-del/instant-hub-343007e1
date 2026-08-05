@@ -9,8 +9,6 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { getMarketplaceStatus } from '@/utils/orderStatusResolver';
-import { sendNativeDeviceNotification } from '@/hooks/useOrderNotifications';
-import { PushTestButton } from '@/components/marketplace/PushTestButton';
 
 export type MarketingNotifItem = {
   id: string;
@@ -379,7 +377,6 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
                   order_id: targetOrd.id
                 };
                 persistNotification(newItem);
-                sendNativeDeviceNotification(newItem.title, { body: newItem.message, tag: newItem.id });
                 const currentHistory = loadPersistedNotifications();
                 setNotifications(currentHistory);
                 setUnreadCount((prev) => prev + 1);
@@ -425,7 +422,6 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
                     order_id: targetOrd.id
                   };
                   persistNotification(newItem);
-                  sendNativeDeviceNotification(newItem.title, { body: newItem.message, tag: newItem.id });
                   const currentHistory = loadPersistedNotifications();
                   setNotifications(currentHistory);
                   setUnreadCount((prev) => prev + 1);
@@ -521,7 +517,6 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
               </div>
             </div>
 
-            <PushTestButton className="w-full h-9 text-xs font-bold bg-primary/10 text-primary hover:bg-primary/20 border-primary/20" />
           </div>
 
           {/* List of Notifications */}

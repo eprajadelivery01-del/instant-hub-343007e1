@@ -41,28 +41,7 @@ export async function callSendPush(body: Record<string, unknown>): Promise<SendP
     console.warn('[sendPush] Exceção em send-push:', e);
   }
 
-  // 2. Tenta via notify-customer (Edge Function 100% ativa no Supabase Cloud)
-  try {
-    const { data, error } = await supabase.functions.invoke('notify-customer', {
-      body: {
-        action: 'send_custom_push',
-        fcmToken: body.token || body.fcmToken,
-        title: body.title || '🔔 É Pra Já Marketplace',
-        body: body.body || 'Você recebeu uma nova notificação de teste!',
-        orderId: body.orderId,
-        userId: body.userId,
-      },
-      headers: authHeaders,
-    });
-
-    if (!error && data) {
-      return { ok: true, status: 200, data, stale: false };
-    }
-  } catch (e: any) {
-    console.warn('[sendPush] Exceção em notify-customer:', e);
-  }
-
-  // 3. Fallback final via fetch direto sem dar throw para evitar Monitorepraja alerta
+  // Fallback HTTP direto para WebViews em que o client de Functions falha.
   try {
     const res = await fetch(`${SUPABASE_URL}/functions/v1/send-push`, {
       method: 'POST',

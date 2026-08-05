@@ -57,6 +57,7 @@ const statusMessages: Record<string, { title: string; description: string; icon:
 };
 
 let activeNativeNotif: Notification | null = null;
+const recentNativeNotifications = new Map<string, number>();
 
 export function triggerDeviceVibration(pattern: number[] = [500, 200, 500]) {
   if (typeof navigator !== "undefined" && "vibrate" in navigator) {
@@ -111,8 +112,17 @@ export function requestNativeNotificationPermission() {
 
 export async function sendNativeDeviceNotification(
   title: string,
-  options?: { body?: string; tag?: string; icon?: string }
+  options?: { body?: string; tag?: string; icon?: string; orderId?: string }
 ) {
+  const dedupeKey = options?.tag || `${title}:${options?.body || ''}`;
+  const now = Date.now();
+  const previous = recentNativeNotifications.get(dedupeKey);
+  if (previous && now - previous < 15_000) return;
+  recentNativeNotifications.set(dedupeKey, now);
+  for (const [key, timestamp] of recentNativeNotifications) {
+    if (now - timestamp > 60_000) recentNativeNotifications.delete(key);
+  }
+
   // 1. Aciona vibração no dispositivo
   triggerDeviceVibration();
 
@@ -168,7 +178,8 @@ export async function sendNativeDeviceNotification(
             sound: "default",
             actionTypeId: "",
             extra: {
-              tag: options?.tag || "epraja-marketplace-order"
+               tag: options?.tag || "epraja-marketplace-order",
+               orderId: options?.orderId,
             }
           }
         ]
