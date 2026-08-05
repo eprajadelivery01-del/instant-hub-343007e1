@@ -32,27 +32,27 @@ const statusMessages: Record<string, { title: string; description: string }> = {
     description: 'Seu pedido está pronto na loja.',
   },
   accepted: {
-    title: '🚚 Saiu para entrega!',
-    description: 'Seu pedido saiu para entrega e está a caminho.',
+    title: '🛵 Entregador a caminho',
+    description: 'O entregador aceitou o pedido e está indo retirar na loja.',
   },
   collecting: {
-    title: '🚚 Saiu para entrega!',
-    description: 'Seu pedido saiu para entrega e está a caminho.',
+    title: '🛵 Entregador na loja',
+    description: 'O entregador chegou à loja e está retirando seu pedido.',
   },
   broadcasted: {
-    title: '🚚 Saiu para entrega!',
-    description: 'Seu pedido saiu para entrega e está a caminho.',
+    title: '📢 Corrida em broadcast',
+    description: 'Buscando entregadores parceiros.',
   },
   delivering: {
-    title: '🚚 Saiu para entrega!',
+    title: '🛵 Saiu para entrega!',
     description: 'Seu pedido saiu para entrega e está a caminho.',
   },
   in_route: {
-    title: '🚚 Saiu para entrega!',
+    title: '🛵 Saiu para entrega!',
     description: 'Seu pedido saiu para entrega e está a caminho.',
   },
   in_transit: {
-    title: '🚚 Saiu para entrega!',
+    title: '🛵 Saiu para entrega!',
     description: 'Seu pedido saiu para entrega e está a caminho.',
   },
   delivered: {
