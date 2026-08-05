@@ -162,6 +162,11 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: 'No orderId or record found' }), { status: 400 });
     }
 
+    if (oldRecord && oldRecord.status === record.status) {
+      console.log(`[notify-customer] Status do pedido #${targetOrderId} não mudou (${record.status}). Ignorando push duplicado.`);
+      return new Response(JSON.stringify({ success: true, message: 'Status unchanged, ignoring' }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    }
+
     if (newStatus === 'cancelled' && targetOrderId) {
       const cleanId = String(targetOrderId).replace('#', '').trim();
       console.log(`[notify-customer] FORÇANDO ATUALIZAÇÃO ADMIN DE CANCELAMENTO DO PEDIDO #${cleanId}`);

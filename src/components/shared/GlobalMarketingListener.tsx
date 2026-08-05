@@ -111,6 +111,10 @@ export function GlobalMarketingListener() {
 
     PushNotifications.addListener('pushNotificationReceived', (notification) => {
       console.log('[Push] Notificação recebida em primeiro plano:', notification);
+      // Com o app em primeiro plano o Android OS exibe automaticamente o push
+      // devido à configuração presentationOptions no capacitor.config.ts.
+      // Desativamos a duplicação local para evitar notificações em duplicidade.
+      /*
       if (Capacitor.isNativePlatform()) {
         LocalNotifications.schedule({
           notifications: [{
@@ -122,6 +126,7 @@ export function GlobalMarketingListener() {
           }],
         }).catch(() => {});
       }
+      */
     });
   }, [user?.id]);
 

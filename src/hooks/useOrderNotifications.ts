@@ -416,13 +416,16 @@ export function useOrderNotifications() {
       const orderId = data.orderId ? String(data.orderId) : undefined;
       toast(title, { description: body, duration: 8000 });
 
-      // Com o app em primeiro plano o Android NÃO exibe o push na central:
-      // replicamos como notificação local para garantir a bandeja.
+      // Com o app em primeiro plano o Android OS exibe automaticamente o push
+      // devido à configuração presentationOptions no capacitor.config.ts.
+      // Desativamos a duplicação local para evitar notificações em duplicidade.
+      /*
       sendNativeDeviceNotification(title, {
         body,
         tag: orderId ? `order-${orderId}` : "fcm-push",
         orderId,
       });
+      */
     }).then(listener => { pushListener = listener; });
 
     // Toque na notificação da central -> abre o pedido correto
