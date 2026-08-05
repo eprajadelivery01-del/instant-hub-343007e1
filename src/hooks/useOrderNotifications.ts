@@ -414,6 +414,8 @@ export function useOrderNotifications() {
       if (regListener) regListener.remove();
       if (errListener) errListener.remove();
       if (pushListener) pushListener.remove();
+      if (tapListener) tapListener.remove();
+      if (localTapListener) localTapListener.remove();
     };
   }, [user?.id]);
 
