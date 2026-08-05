@@ -162,6 +162,11 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: 'No orderId or record found' }), { status: 400 });
     }
 
+    if (['accepted', 'collecting', 'broadcasted'].includes(newStatus)) {
+      console.log(`[notify-customer] Ignorando status intermediário de entrega: ${newStatus} para o pedido #${targetOrderId}`);
+      return new Response(JSON.stringify({ success: true, message: `Ignored status: ${newStatus}` }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    }
+
     if (oldRecord && oldRecord.status === record.status) {
       console.log(`[notify-customer] Status do pedido #${targetOrderId} não mudou (${record.status}). Ignorando push duplicado.`);
       return new Response(JSON.stringify({ success: true, message: 'Status unchanged, ignoring' }), { status: 200, headers: { 'Content-Type': 'application/json' } });
