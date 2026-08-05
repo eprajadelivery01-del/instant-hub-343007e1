@@ -13,6 +13,9 @@ import { OrderRatingModal } from './OrderRatingModal';
 import { ThemeToggle } from '../shared/ThemeToggle';
 import { SmartAppBanner } from './SmartAppBanner';
 import { ClientNotificationsPopover } from './ClientNotificationsPopover';
+import { HeaderActionButton } from '../shared/HeaderActionButton';
+import { MediaImage } from '../shared/MediaImage';
+import { getAvatarImage } from '@/lib/media';
 
 const navItems = [
   { path: '/marketplace', icon: Home, label: 'Início' },
