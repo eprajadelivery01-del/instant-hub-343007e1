@@ -407,6 +407,21 @@ Deno.serve(async (req) => {
       }
       tokens = Array.from(found);
 
+      if (tokens.length === 0 && (body.isBroadcast || body.broadcast || (!userId && !customerId && !body.orderId))) {
+        console.log(`[send-push:${reqId}] MODO BROADCAST / MARKETING DETECTADO: Buscando todos os tokens ativos no sistema...`);
+        const { data: allDevTokens } = await supabase.from("device_tokens").select("token").is("disabled_at", null);
+        (allDevTokens ?? []).forEach((t: any) => t?.token && found.add(t.token));
+
+        const { data: allCustTokens } = await supabase.from("customers").select("fcm_token").not("fcm_token", "is", null);
+        (allCustTokens ?? []).forEach((c: any) => c?.fcm_token && found.add(c.fcm_token));
+
+        const { data: allProfTokens } = await supabase.from("profiles").select("fcm_token").not("fcm_token", "is", null);
+        (allProfTokens ?? []).forEach((p: any) => p?.fcm_token && found.add(p.fcm_token));
+
+        tokens = Array.from(found);
+        console.log(`[send-push:${reqId}] BROADCAST -> ${tokens.length} token(s) encontrado(s)`);
+      }
+
       // Fallback de emergência caso customerId/userId não tenham retornado nenhum token
       if (tokens.length === 0) {
         console.warn(`[send-push:${reqId}] NENHUM token retornado pelos IDs; buscando ultimos dispositivos ativos em device_tokens...`);
