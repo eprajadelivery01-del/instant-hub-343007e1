@@ -66,8 +66,29 @@ const statusMessages: Record<string, { title: string; description: string }> = {
   cancelled: {
     title: '❌ Pedido cancelado',
     description: 'Seu pedido foi cancelado.',
-  },
+  }
 };
+
+const recentPushCache = new Map<string, number>();
+
+function isDuplicatePush(orderId: string, status: string): boolean {
+  const key = `${orderId}_${status}`;
+  const now = Date.now();
+  const lastTime = recentPushCache.get(key);
+  
+  if (recentPushCache.size > 500) {
+    for (const [k, v] of recentPushCache.entries()) {
+      if (now - v > 120000) recentPushCache.delete(k);
+    }
+  }
+
+  if (lastTime && (now - lastTime < 45000)) {
+    return true;
+  }
+  
+  recentPushCache.set(key, now);
+  return false;
+}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -177,6 +198,14 @@ serve(async (req) => {
     if (oldRecord && oldRecord.status === record.status) {
       console.log(`[notify-customer] Status do pedido #${targetOrderId} não mudou (${record.status}). Ignorando push duplicado.`);
       return new Response(JSON.stringify({ success: true, message: 'Status unchanged, ignoring' }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    }
+
+    // Normalização de chave de status para deduplicação (ex: in_route / delivering -> in_transit)
+    const normStatus = (newStatus === 'in_route' || newStatus === 'delivering') ? 'in_transit' : newStatus;
+    
+    if (isDuplicatePush(String(targetOrderId), normStatus)) {
+      console.log(`[notify-customer] DEDUPLICAÇÃO ATIVA: Notificação do status '${normStatus}' para o pedido #${targetOrderId} já foi enviada recentemente. Dropando.`);
+      return new Response(JSON.stringify({ success: true, message: `Deduplicated push for status ${normStatus}` }), { status: 200, headers: { 'Content-Type': 'application/json' } });
     }
 
     if (newStatus === 'cancelled' && targetOrderId) {
