@@ -190,8 +190,9 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: 'No orderId or record found' }), { status: 400 });
     }
 
-    if (['accepted', 'collecting', 'broadcasted'].includes(newStatus)) {
-      console.log(`[notify-customer] Ignorando status intermediário de entrega: ${newStatus} para o pedido #${targetOrderId}`);
+    const ALLOWED_STATUSES = ['preparing', 'ready', 'in_transit', 'in_route', 'delivering', 'delivered', 'completed', 'cancelled'];
+    if (!ALLOWED_STATUSES.includes(newStatus)) {
+      console.log(`[notify-customer] Status '${newStatus}' não está na lista de enviáveis. Ignorando push para o pedido #${targetOrderId}`);
       return new Response(JSON.stringify({ success: true, message: `Ignored status: ${newStatus}` }), { status: 200, headers: { 'Content-Type': 'application/json' } });
     }
 
