@@ -208,6 +208,40 @@ serve(async (req) => {
       return new Response(JSON.stringify({ success: true, message: `Deduplicated push for status ${normStatus}` }), { status: 200, headers: { 'Content-Type': 'application/json' } });
     }
 
+    const STATUS_RANK: Record<string, number> = {
+      pending: 1,
+      confirmed: 2,
+      preparing: 3,
+      ready: 4,
+      accepted: 4,
+      collecting: 4,
+      in_transit: 5,
+      in_route: 5,
+      delivering: 5,
+      delivered: 6,
+      completed: 6,
+      cancelled: 99
+    };
+
+    // Bloqueio de Notificação Retrocedida (Out-of-Order):
+    // Se o pedido já está num status mais avançado no banco, ignora notificações antigas (ex: 'confirmed' quando já está 'ready' ou 'in_transit').
+    if (targetOrderId && newStatus !== 'cancelled') {
+      try {
+        const cleanId = String(targetOrderId).replace('#', '').trim();
+        const { data: dbOrder } = await adminClient.from('orders').select('status').or(`id.eq.${cleanId},id.ilike.${cleanId}%`).maybeSingle();
+        if (dbOrder && dbOrder.status) {
+          const currentRank = STATUS_RANK[dbOrder.status] || 0;
+          const incomingRank = STATUS_RANK[newStatus] || 0;
+          if (incomingRank > 0 && currentRank > 0 && incomingRank < currentRank) {
+            console.log(`[notify-customer] BLOQUEIO RETROCEDIDO: Notificação '${newStatus}' (rank ${incomingRank}) é menor que o status atual no banco '${dbOrder.status}' (rank ${currentRank}) do pedido #${cleanId}. Dropando.`);
+            return new Response(JSON.stringify({ success: true, message: `Dropped backward status push (${newStatus} < ${dbOrder.status})` }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+          }
+        }
+      } catch (errRank) {
+        console.warn(`[notify-customer] Erro ao checar rank de status:`, errRank);
+      }
+    }
+
     if (newStatus === 'cancelled' && targetOrderId) {
       const cleanId = String(targetOrderId).replace('#', '').trim();
       console.log(`[notify-customer] FORÇANDO ATUALIZAÇÃO ADMIN DE CANCELAMENTO DO PEDIDO #${cleanId}`);
