@@ -186,6 +186,12 @@ serve(async (req) => {
       return new Response(JSON.stringify({ success: true, message: 'Dropped legacy manual invocation' }), { status: 200, headers: { 'Content-Type': 'application/json' } });
     }
 
+    // Se a chamada for de outra tabela que não seja 'orders', ignoramos para evitar duplicidade.
+    if (payload.table && payload.table !== 'orders') {
+      console.log(`[notify-customer] Ignorando trigger da tabela '${payload.table}'. Apenas a tabela 'orders' envia notificações para o cliente.`);
+      return new Response(JSON.stringify({ success: true, message: `Ignored table ${payload.table}` }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    }
+
     if (!targetOrderId) {
       return new Response(JSON.stringify({ error: 'No orderId or record found' }), { status: 400 });
     }
