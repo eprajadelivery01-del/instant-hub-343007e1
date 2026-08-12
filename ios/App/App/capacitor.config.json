@@ -21,7 +21,11 @@
 		}
 	},
 	"packageClassList": [
+		"FirebaseMessagingPlugin",
 		"AppPlugin",
-		"SplashScreenPlugin"
+		"LocalNotificationsPlugin",
+		"PushNotificationsPlugin",
+		"SplashScreenPlugin",
+		"StatusBarPlugin"
 	]
 }
