@@ -281,11 +281,33 @@ function playNotificationAudio() {
   }
 }
 
+const recentNotifCache = new Set<string>();
+
+function getDeterministicNotifId(str: string): number {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash) + str.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash) % 899999 + 100000;
+}
+
 function triggerNativeNotification(notif: any, swRegistration: ServiceWorkerRegistration | null) {
   const title = `${notif.emoji ? notif.emoji + ' ' : ''}${notif.title || 'Novo Alerta É Pra Já!'}`;
   const body = notif.message || (notif.coupon_code ? `Use o cupom: ${notif.coupon_code}` : 'Confira no app!');
+  const notifKey = `${title}_${body}`;
 
-  // Notificação na central do celular (Android / iOS)
+  // Trava anti-duplicação: Se o mesmo alerta disparou nos últimos 5 segundos, ignora
+  if (recentNotifCache.has(notifKey)) {
+    console.log('[Notification] Ignorando notificação duplicada:', notifKey);
+    return;
+  }
+  recentNotifCache.add(notifKey);
+  setTimeout(() => recentNotifCache.delete(notifKey), 5000);
+
+  const notifId = getDeterministicNotifId(notif.id || title);
+
+  // Notificação na central do celular (Android / iOS) com ID fixo para colapsar duplicatas
   if (Capacitor.isNativePlatform()) {
     try {
       LocalNotifications.schedule({
@@ -293,10 +315,11 @@ function triggerNativeNotification(notif: any, swRegistration: ServiceWorkerRegi
           {
             title,
             body,
-            id: Math.floor(Math.random() * 100000),
+            id: notifId,
             channelId: 'default',
             schedule: { at: new Date(Date.now() + 100) },
             extra: {
+              tag: `marketing-${notif.id || notifId}`,
               coupon: notif.coupon_code
             }
           }
@@ -307,14 +330,15 @@ function triggerNativeNotification(notif: any, swRegistration: ServiceWorkerRegi
     }
   }
 
-  // Notificação Web / Service Worker
+  // Notificação Web / Service Worker com tag determinística para colapsar duplicatas
   if ('Notification' in window && Notification.permission === 'granted') {
     const options = {
       body,
       icon: '/icon-192x192.png',
       badge: '/icon-192x192.png',
       image: notif.image_url || undefined,
-      tag: `epraja-marketing-${notif.id || Date.now()}`,
+      tag: `epraja-marketing-${notifId}`,
+      renotify: false,
       data: {
         url: '/marketplace/coupons',
         coupon: notif.coupon_code

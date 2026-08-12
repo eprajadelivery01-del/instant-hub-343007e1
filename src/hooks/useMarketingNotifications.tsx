@@ -59,7 +59,7 @@ export function useMarketingNotifications() {
             }
           }
           
-          // Show toast
+          // Show toast in-app
           toast({
             title: `${newNotif.emoji || '🔔'} ${newNotif.title}`,
             description: "Clique aqui para ver a oferta!",
@@ -73,39 +73,6 @@ export function useMarketingNotifications() {
             ),
             duration: 8000
           });
-
-          // Show native device notification on mobile
-          if (Capacitor.isNativePlatform()) {
-            try {
-              LocalNotifications.schedule({
-                notifications: [
-                  {
-                    title: `${newNotif.emoji || '🔔'} ${newNotif.title}`,
-                    body: newNotif.message,
-                    id: Math.floor(Math.random() * 100000),
-                    schedule: { at: new Date(Date.now() + 100) },
-                    extra: {
-                      tag: `marketing-${newNotif.id}`
-                    }
-                  }
-                ]
-              }).catch(() => {});
-            } catch (e) {
-              console.warn("Failed to show local mobile notification", e);
-            }
-          }
-
-          // Show Web Notification if enabled
-          if ('Notification' in window && Notification.permission === 'granted') {
-            try {
-              new Notification(newNotif.title, {
-                body: newNotif.message,
-                icon: newNotif.image_url || '/icon-192x192.png'
-              });
-            } catch (e) {
-              console.warn("Failed to show web notification", e);
-            }
-          }
         }
       )
       .subscribe();

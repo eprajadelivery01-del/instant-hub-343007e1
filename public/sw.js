@@ -45,8 +45,8 @@ self.addEventListener('push', (event) => {
     ] : [
       { action: 'open_app', title: '🛍️ Ver Ofertas' }
     ],
-    tag: 'epraja-marketing-' + Date.now(),
-    renotify: true
+    tag: 'epraja-marketing-' + (data.title ? Math.abs(data.title.split('').reduce((a,b)=>{a=((a<<5)-a)+b.charCodeAt(0);return a|0},0)) : 'notif'),
+    renotify: false
   };
 
   event.waitUntil(
@@ -68,8 +68,8 @@ self.addEventListener('message', (event) => {
         url: '/marketplace/coupons',
         coupon: coupon_code
       },
-      tag: 'epraja-coupon-' + Date.now(),
-      renotify: true
+      tag: 'epraja-coupon-' + (title ? Math.abs(title.split('').reduce((a,b)=>{a=((a<<5)-a)+b.charCodeAt(0);return a|0},0)) : 'coupon'),
+      renotify: false
     };
     self.registration.showNotification(title || '🎉 Novo Cupom Disponível!', options);
   }
