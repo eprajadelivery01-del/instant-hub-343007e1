@@ -474,10 +474,9 @@ export function useOrderNotifications() {
           if (attempt === attempts) {
             if (localStorage.getItem(storageKey) !== message) {
               localStorage.setItem(storageKey, message);
-              console.info('[Push] Aviso de registro de Push do cliente:', message);
+              console.warn('[Push] Notificação push nativa não registrada no dispositivo:', message);
             }
-            return;
-          }
+          } return;
         }
         await new Promise((resolve) => setTimeout(resolve, attempt * 1500));
       }
