@@ -4,23 +4,24 @@
   "id": "/",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#FF7A00",
+  "background_color": "#0D0D0D",
   "theme_color": "#FF7A00",
   "description": "Peça o que você deseja e receba em minutos.",
   "icons": [
     {
-      "src": "/logo.png",
+      "src": "/icon-192x192.png?v=8",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
-      "src": "/logo.png",
+      "src": "/icon-512x512.png?v=8",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/logo.png",
+      "src": "/apple-touch-icon.png?v=8",
       "sizes": "180x180",
       "type": "image/png"
     }
