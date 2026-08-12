@@ -1,5 +1,5 @@
 import React from "react";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Utensils, ShoppingBag, Pill, Beer, Dog, Store, Tag, ChefHat, Star, Ticket, X, ChevronRight, Pizza, Sandwich, Cake, Croissant, Sparkles, Flame, Beef, Leaf, Package, IceCream, Wine, UtensilsCrossed, Scissors, Ruler } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
@@ -131,6 +131,9 @@ export function MarketplaceMenu({ children, onSelectCategory, onOpenPartnership 
                     Aproveite o <span className="text-primary">É Pra Já!</span>
                   </span>
                 </SheetTitle>
+                <SheetDescription className="sr-only">
+                  Menu de navegação do aplicativo
+                </SheetDescription>
               </SheetHeader>
               <button 
                 onClick={() => setIsOpen(false)}
