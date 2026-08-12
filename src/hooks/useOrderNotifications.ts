@@ -365,93 +365,67 @@ export function useOrderNotifications() {
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
 
-    let regListener: any = null;
-    let errListener: any = null;
-    let pushListener: any = null;
-    let tapListener: any = null;
-    let localTapListener: any = null;
-
-    PushNotifications.createChannel({
-      id: 'marketplace_orders',
-      name: 'Atualizações de Pedidos',
-      description: 'Notificações nativas do Marketplace para o cliente',
-      importance: 5,
-      visibility: 1,
-      sound: 'default',
-      vibration: true,
-    }).catch(() => {});
-
-    PushNotifications.requestPermissions().then((result) => {
-      if (result.receive === "granted") {
-        PushNotifications.register().catch(e => 
-          console.warn("[Push] Falha ao registrar push (safe):", e)
-        );
-      }
-    }).catch(e => console.warn("[Push] Falha ao pedir permissões de push:", e));
-
-    PushNotifications.addListener("registration", (token) => {
-      console.log("[FCM_TOKEN_RECEIVED]", token.value);
-
-      try {
-        localStorage.setItem('@epraja_fcm_token', token.value);
-        localStorage.setItem('fcm_token', token.value);
-      } catch {}
-
-      syncFcmTokenToDatabase(token.value);
-    }).then(listener => { regListener = listener; });
-
-    PushNotifications.addListener("registrationError", (error: any) => {
-      console.error("[Push] Erro no registro de Push do cliente:", error);
-    }).then(listener => { errListener = listener; });
-
-    PushNotifications.addListener("pushNotificationReceived", (notification) => {
-      console.log(
-          "[PUSH_RECEIVED]",
-          JSON.stringify(notification,null,2)
-      );
-      console.log("[Push] Notificação push do cliente recebida:", notification);
-      const title = notification.title || "Atualização de Pedido";
-      const body = notification.body || "";
-      const data: any = notification.data || {};
-      const orderId = data.orderId ? String(data.orderId) : undefined;
-      toast(title, { description: body, duration: 8000 });
-
-      // Com o app em primeiro plano o Android OS exibe automaticamente o push
-      // devido à configuração presentationOptions no capacitor.config.ts.
-      // Desativamos a duplicação local para evitar notificações em duplicidade.
-      /*
-      sendNativeDeviceNotification(title, {
-        body,
-        tag: orderId ? `order-${orderId}` : "fcm-push",
-        orderId,
-      });
-      */
-    }).then(listener => { pushListener = listener; });
-
-    // Toque na notificação da central -> abre o pedido correto
+    let disposed = false;
+    const listeners: Array<{ remove: () => Promise<void> }> = [];
     const openFromData = (data: any) => {
       const route = data?.route || (data?.orderId ? `/marketplace/orders/${data.orderId}` : null);
       if (route) window.location.href = String(route);
     };
-
-    PushNotifications.addListener("pushNotificationActionPerformed", (notification: any) => {
-      console.log(
-          "[PUSH_ACTION]",
-          JSON.stringify(notification,null,2)
-      );
-      openFromData(notification?.notification?.data);
-    }).then(listener => { tapListener = listener; });
-
-    LocalNotifications.addListener("localNotificationActionPerformed", (action: any) => {
-      openFromData(action?.notification?.extra);
-    }).then(listener => { localTapListener = listener; });
+    const setupPush = async () => {
+      const registered = await Promise.all([
+        PushNotifications.addListener("registration", (token) => {
+          console.log("[FCM_TOKEN_RECEIVED]", `${token.value.slice(0, 12)}…`);
+          try {
+            localStorage.setItem('@epraja_fcm_token', token.value);
+            localStorage.setItem('fcm_token', token.value);
+            localStorage.removeItem('@epraja_push_registration_error');
+          } catch {}
+          syncFcmTokenToDatabase(token.value);
+        }),
+        PushNotifications.addListener("registrationError", (error: unknown) => {
+          const message = error instanceof Error ? error.message : JSON.stringify(error);
+          const storageKey = '@epraja_push_registration_error';
+          if (localStorage.getItem(storageKey) === message) return;
+          localStorage.setItem(storageKey, message);
+          if (/aps-environment|authorization.*aps/i.test(message)) {
+            console.error("[Push] Build iOS sem autorização APNs válida. Reinstale a versão atualizada do app.");
+          } else {
+            console.error("[Push] Erro no registro de Push do cliente:", error);
+          }
+        }),
+        PushNotifications.addListener("pushNotificationReceived", (notification) => {
+          console.log("[PUSH_RECEIVED]", JSON.stringify(notification, null, 2));
+          const title = notification.title || "Atualização de Pedido";
+          const body = notification.body || "";
+          toast(title, { description: body, duration: 8000 });
+        }),
+        PushNotifications.addListener("pushNotificationActionPerformed", (notification: any) => {
+          openFromData(notification?.notification?.data);
+        }),
+        LocalNotifications.addListener("localNotificationActionPerformed", (action: any) => {
+          openFromData(action?.notification?.extra);
+        }),
+      ]);
+      if (disposed) {
+        await Promise.all(registered.map((listener) => listener.remove()));
+        return;
+      }
+      listeners.push(...registered);
+      if (Capacitor.getPlatform() === 'android') {
+        await PushNotifications.createChannel({
+          id: 'marketplace_orders', name: 'Atualizações de Pedidos',
+          description: 'Notificações nativas do Marketplace para o cliente',
+          importance: 5, visibility: 1, sound: 'default', vibration: true,
+        });
+      }
+      const permission = await PushNotifications.requestPermissions();
+      if (permission.receive === "granted") await PushNotifications.register();
+    };
+    setupPush().catch((error) => console.warn("[Push] Falha ao inicializar notificações:", error));
 
     return () => {
-      if (regListener) regListener.remove();
-      if (errListener) errListener.remove();
-      if (pushListener) pushListener.remove();
-      if (tapListener) tapListener.remove();
-      if (localTapListener) localTapListener.remove();
+      disposed = true;
+      listeners.forEach((listener) => void listener.remove());
     };
   }, [user?.id]);
 

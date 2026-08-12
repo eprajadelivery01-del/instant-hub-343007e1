@@ -5,8 +5,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Copy, X } from 'lucide-react';
 import { Capacitor } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
-import { PushNotifications } from '@capacitor/push-notifications';
-import { syncFcmTokenToDatabase } from '@/hooks/useOrderNotifications';
 
 const NOTIFICATION_AUDIO_URL = 'https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3';
 
@@ -80,57 +78,7 @@ export function GlobalMarketingListener() {
     }
   }, []);
 
-  // 2. Configura Push Notifications (FCM) no dispositivo móvel
-  useEffect(() => {
-    if (!Capacitor.isNativePlatform()) return;
-
-    PushNotifications.createChannel({
-      id: 'marketplace_orders',
-      name: 'Atualizações de Pedidos',
-      description: 'Notificações nativas do Marketplace para o cliente',
-      importance: 5,
-      visibility: 1,
-      sound: 'default',
-      vibration: true,
-    }).catch(() => {});
-
-    PushNotifications.requestPermissions().then((result) => {
-      if (result.receive === 'granted') {
-        PushNotifications.register().catch(() => {});
-      }
-    }).catch(() => {});
-
-    PushNotifications.addListener('registration', (token) => {
-      console.log("TOKEN FCM:", token.value);
-      try {
-        localStorage.setItem('@epraja_fcm_token', token.value);
-        localStorage.setItem('fcm_token', token.value);
-      } catch {}
-      syncFcmTokenToDatabase(token.value);
-    });
-
-    PushNotifications.addListener('pushNotificationReceived', (notification) => {
-      console.log('[Push] Notificação recebida em primeiro plano:', notification);
-      // Com o app em primeiro plano o Android OS exibe automaticamente o push
-      // devido à configuração presentationOptions no capacitor.config.ts.
-      // Desativamos a duplicação local para evitar notificações em duplicidade.
-      /*
-      if (Capacitor.isNativePlatform()) {
-        LocalNotifications.schedule({
-          notifications: [{
-            title: notification.title || '🔔 É Pra Já!',
-            body: notification.body || 'Você recebeu um novo alerta.',
-            id: Math.floor(Math.random() * 100000),
-            channelId: 'marketplace_orders',
-            schedule: { at: new Date(Date.now() + 100) },
-          }],
-        }).catch(() => {});
-      }
-      */
-    });
-  }, [user?.id]);
-
-  // 3. Realtime Listener para Cupons Novos, Ofertas e Atualizações de Pedido
+  // 2. Realtime Listener para Cupons Novos, Ofertas e Atualizações de Pedido
   useEffect(() => {
     const channelId = `global-client-listener-${Math.random().toString(36).substring(2, 9)}`;
     const channel = supabase
