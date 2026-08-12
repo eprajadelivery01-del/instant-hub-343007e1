@@ -9,8 +9,8 @@ import { Address } from '@/types/database';
 import MarketplaceLayout from '@/components/marketplace/MarketplaceLayout';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { reportErrorToTelegram } from '@/services/logger';
 import { MapPin, Banknote, AlertCircle, ArrowLeft, Loader2, FileText, Smartphone, Bike, Ticket, Plus } from 'lucide-react';
@@ -747,6 +747,9 @@ export default function Checkout() {
         <DialogContent className="max-w-md rounded-2xl p-0 overflow-hidden bg-background">
           <DialogHeader className="p-4 pb-2 border-b border-border text-left">
             <DialogTitle className="text-lg font-bold">Escolha o Endereço</DialogTitle>
+            <DialogDescription className="sr-only">
+              Selecione o endereço de entrega do seu pedido
+            </DialogDescription>
           </DialogHeader>
           <div className="p-4 max-h-[60vh] overflow-y-auto">
             <RadioGroup value={selectedAddress ?? ''} onValueChange={(val) => { setSelectedAddress(val); setShowAddressModal(false); }} className="space-y-3">
@@ -795,6 +798,9 @@ export default function Checkout() {
           <div className="mx-auto w-12 h-1.5 rounded-full bg-muted mb-6" />
           <SheetHeader className="px-6 mb-6">
             <SheetTitle className="text-center text-xl font-bold">Revise o seu pedido</SheetTitle>
+            <SheetDescription className="sr-only">
+              Confira os itens, o endereço e o pagamento antes de confirmar
+            </SheetDescription>
           </SheetHeader>
 
           <div className="px-6 space-y-6">
