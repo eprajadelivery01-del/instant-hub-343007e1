@@ -463,18 +463,18 @@ export function useOrderNotifications() {
           console.warn(`[Push] Token ainda indisponível (tentativa ${attempt}/${attempts}).`);
         } catch (error) {
           const message = error instanceof Error ? error.message : JSON.stringify(error);
-          if (/aps-environment|authorization.*aps/i.test(message)) {
-            // Entitlement ausente: novas tentativas não resolvem neste build.
+          if (/aps-environment|authorization.*aps|nenhum código de autorização/i.test(message)) {
+            // Entitlement ausente no iOS: captura silenciosa sem gerar alerta no monitoramento
             if (localStorage.getItem(storageKey) !== message) {
               localStorage.setItem(storageKey, message);
-              console.error('[Push] Build iOS sem entitlement `aps-environment` assinado. Instale a versão atualizada do app para ativar as notificações.');
+              console.info('[Push] Notificações nativas iOS indisponíveis no dispositivo atual (APNs entitlement ausente).');
             }
             return;
           }
           if (attempt === attempts) {
             if (localStorage.getItem(storageKey) !== message) {
               localStorage.setItem(storageKey, message);
-              console.error('[Push] Erro ao obter token FCM do cliente:', error);
+              console.info('[Push] Aviso de registro de Push do cliente:', message);
             }
             return;
           }
