@@ -28,7 +28,9 @@ export async function reportErrorToTelegram(payload: ErrorPayload, appName = "Ma
     msg.includes("offline") ||
     msg.includes("não encontrada") ||
     msg.includes("acesso negado") ||
-    msg.includes("exclusivo para entregadores")
+    msg.includes("exclusivo para entregadores") ||
+    msg.includes("aps-environment") ||
+    msg.includes("código de autorização")
   ) {
     return;
   }
