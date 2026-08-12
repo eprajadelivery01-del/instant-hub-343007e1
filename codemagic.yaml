@@ -24,6 +24,19 @@ workflows:
       - name: Capacitor sync iOS
         script: npx cap sync ios
 
+      - name: Install Firebase iOS configuration
+        script: |
+          if [ -z "$FIREBASE_IOS_PLIST_BASE64" ]; then
+            echo "FIREBASE_IOS_PLIST_BASE64 não foi configurado no grupo de variáveis do Codemagic."
+            exit 1
+          fi
+          echo "$FIREBASE_IOS_PLIST_BASE64" | base64 --decode > ios/App/App/GoogleService-Info.plist
+          PLIST_BUNDLE_ID=$(/usr/libexec/PlistBuddy -c "Print :BUNDLE_ID" ios/App/App/GoogleService-Info.plist)
+          if [ "$PLIST_BUNDLE_ID" != "$BUNDLE_ID" ]; then
+            echo "GoogleService-Info.plist pertence a '$PLIST_BUNDLE_ID', esperado '$BUNDLE_ID'."
+            exit 1
+          fi
+
       - name: Set up keychain
         script: keychain initialize
 
@@ -34,6 +47,21 @@ workflows:
         script: |
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           cp epraja_dist.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
+
+      - name: Validate APNs provisioning profile
+        script: |
+          security cms -D -i epraja_dist.mobileprovision > /tmp/epraja_profile.plist
+          PROFILE_APP_ID=$(/usr/libexec/PlistBuddy -c "Print :Entitlements:application-identifier" /tmp/epraja_profile.plist)
+          PROFILE_APS=$(/usr/libexec/PlistBuddy -c "Print :Entitlements:aps-environment" /tmp/epraja_profile.plist 2>/dev/null || true)
+          case "$PROFILE_APP_ID" in
+            *.$BUNDLE_ID) ;;
+            *) echo "Provisioning profile pertence a '$PROFILE_APP_ID', esperado '*.$BUNDLE_ID'."; exit 1 ;;
+          esac
+          if [ "$PROFILE_APS" != "production" ]; then
+            echo "Provisioning profile sem aps-environment=production. Gere um novo profile com Push Notifications ativo."
+            exit 1
+          fi
+          echo "Provisioning profile APNs válido para $BUNDLE_ID."
 
       - name: Set up code signing settings on Xcode project
         script: xcode-project use-profiles
@@ -55,6 +83,28 @@ workflows:
           xcode-project build-ipa \
             --project "ios/App/$XCODE_PROJECT" \
             --scheme "$XCODE_SCHEME"
+
+      - name: Validate signed IPA push configuration
+        script: |
+          IPA_PATH=$(find build/ios/ipa -name "*.ipa" -print -quit)
+          if [ -z "$IPA_PATH" ]; then
+            echo "IPA não encontrado para validação."
+            exit 1
+          fi
+          rm -rf /tmp/epraja_ipa && mkdir -p /tmp/epraja_ipa
+          unzip -q "$IPA_PATH" -d /tmp/epraja_ipa
+          APP_PATH=$(find /tmp/epraja_ipa/Payload -maxdepth 1 -name "*.app" -print -quit)
+          codesign -d --entitlements :- "$APP_PATH" > /tmp/signed_entitlements.plist 2>/dev/null
+          SIGNED_APS=$(/usr/libexec/PlistBuddy -c "Print :aps-environment" /tmp/signed_entitlements.plist 2>/dev/null || true)
+          if [ "$SIGNED_APS" != "production" ]; then
+            echo "IPA assinado sem aps-environment=production."
+            exit 1
+          fi
+          if [ ! -f "$APP_PATH/GoogleService-Info.plist" ]; then
+            echo "IPA sem GoogleService-Info.plist."
+            exit 1
+          fi
+          echo "IPA validado: APNs e Firebase iOS estão presentes."
 
     artifacts:
       - build/ios/ipa/*.ipa

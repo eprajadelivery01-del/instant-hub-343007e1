@@ -1,44 +1,33 @@
-# Corrigir notificações push no iPhone
+# Push Firebase nativo no iPhone e Android
 
-## Diagnóstico confirmado
+## Objetivo
+Garantir que as atualizações de pedido cheguem à central de notificações do aparelho usando tokens FCM válidos, sem conflito entre plugins nativos.
 
-O erro ocorre antes da geração do token: o iOS está recusando o registro no APNs porque o aplicativo instalado não foi assinado com um entitlement `aps-environment` válido.
+## Plano
+1. **Unificar o plugin de push**
+   - Remover `@capacitor/push-notifications`, pois a documentação do `@capacitor-firebase/messaging` proíbe a coexistência dos dois plugins.
+   - Manter somente `@capacitor-firebase/messaging` para permissão, token FCM, recebimento, clique e canais Android.
 
-No projeto atual:
-- o arquivo `App.entitlements` declara `aps-environment`, porém só está associado à configuração **Release** do target;
-- a capability **Push Notifications** não está registrada no projeto Xcode;
-- o pacote Swift gerado não lista os plugins nativos `PushNotifications` e `LocalNotifications`;
-- o pipeline instala manualmente um provisioning profile, mas não valida se esse profile contém `aps-environment` para `br.com.epraja.appFma`;
-- o `GoogleService-Info.plist` do app iOS ainda não está incluído no target.
+2. **Corrigir o registro do token no app**
+   - Migrar `useOrderNotifications` para os eventos `tokenReceived`, `notificationReceived` e `notificationActionPerformed`.
+   - Obter o token inicial com `FirebaseMessaging.getToken()` e sincronizá-lo em `device_tokens`.
+   - Preservar a abertura da tela correta do pedido ao tocar na notificação.
 
-## Implementação
+3. **Atualizar diagnóstico e configuração nativa**
+   - Migrar a tela de diagnóstico para consultar permissões e token pelo Firebase Messaging.
+   - Configurar `FirebaseMessaging.presentationOptions` para exibir alerta, som e badge no primeiro plano do iPhone.
+   - Adicionar a opção SwiftPM exigida pelo plugin no Capacitor.
 
-1. **Corrigir o target iOS**
-   - Vincular `App.entitlements` às configurações Debug e Release.
-   - Registrar a capability `com.apple.Push` no target.
-   - Manter `aps-environment` compatível com a assinatura, deixando o profile definir o ambiente correto no build.
-   - Adicionar `GoogleService-Info.plist` ao target e à fase de recursos, usando o arquivo correspondente ao bundle ID `br.com.epraja.appFma`.
+4. **Simplificar o AppDelegate do iOS**
+   - Seguir o fluxo oficial: encaminhar o token APNs bruto ao plugin e deixar o SDK Firebase produzir o token FCM.
+   - Manter a capability Push Notifications, `App.entitlements` e `GoogleService-Info.plist` vinculados ao target.
 
-2. **Completar a integração nativa do Firebase/Capacitor**
-   - Garantir que `@capacitor/push-notifications` e `@capacitor/local-notifications` façam parte do pacote Swift do app iOS após o sync.
-   - Adicionar/configurar o Firebase Messaging no target iOS quando necessário para converter o token APNs em token FCM aceito pelo pipeline existente.
-   - Preservar o encaminhamento de registro APNs já existente no `AppDelegate`.
+5. **Sincronizar e validar**
+   - Executar a sincronização nativa do Capacitor para remover o plugin antigo dos projetos iOS/Android.
+   - Rodar testes e verificar que o pacote nativo contém somente a integração Firebase Messaging.
+   - Validar em aparelho físico com build assinado: permissão concedida, token FCM salvo e push exibido na central.
 
-3. **Tornar o registro do app mais robusto**
-   - Registrar os listeners antes de chamar `PushNotifications.register()`, evitando perder eventos rápidos de sucesso ou erro.
-   - Diferenciar erro de configuração APNs de permissão negada pelo cliente e evitar repetição do mesmo alerta em cada navegação.
-   - Manter a sincronização do token válido com `device_tokens` e o fluxo atual da Edge Function `send-push`.
-
-4. **Blindar o build de produção**
-   - Atualizar o workflow iOS para inspecionar o provisioning profile antes do archive.
-   - Interromper o build com mensagem clara se bundle ID, application identifier ou `aps-environment` estiverem ausentes/incorretos.
-   - Após gerar o IPA, validar que o app assinado realmente contém o entitlement APNs e o `GoogleService-Info.plist`.
-
-5. **Validação final**
-   - Confirmar que o sync do Capacitor preserva os plugins e configurações.
-   - Validar o projeto iOS e os testes existentes disponíveis no ambiente.
-   - Gerar uma lista curta para o teste em aparelho físico: instalação limpa, permissão, token salvo em `device_tokens`, push com app aberto, em segundo plano e encerrado.
-
-## Dependência fornecida pelo cliente
-
-Será necessário anexar ao projeto o `GoogleService-Info.plist` já existente para o bundle ID `br.com.epraja.appFma`. A chave APNs já vinculada no Firebase será validada no teste final; ela não deve ser colocada no repositório.
+## Detalhes técnicos
+- O erro de `aps-environment` ainda depende de um provisioning profile com Push Notifications habilitado no Apple Developer; o código não consegue adicionar essa autorização a um perfil já emitido.
+- O build Codemagic continuará bloqueando a publicação caso `GoogleService-Info.plist` ou o entitlement APNs estejam ausentes.
+- Depois das alterações nativas, será necessário baixar as mudanças, executar `npm install`, `npx cap sync` e gerar um novo IPA/AAB; uma instalação antiga não recebe a correção.
