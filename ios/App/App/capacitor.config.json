@@ -24,7 +24,6 @@
 		"FirebaseMessagingPlugin",
 		"AppPlugin",
 		"LocalNotificationsPlugin",
-		"PushNotificationsPlugin",
 		"SplashScreenPlugin",
 		"StatusBarPlugin"
 	]
