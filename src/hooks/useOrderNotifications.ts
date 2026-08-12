@@ -226,9 +226,32 @@ export async function sendNativeDeviceNotification(
   }
 }
 
+/**
+ * Valida se a string recebida é realmente um token FCM.
+ * No iOS, quando o entitlement `aps-environment` não está assinado, o plugin
+ * pode devolver o token APNs bruto (64 chars hexadecimais) ou string vazia —
+ * nesses casos NÃO devemos gravar nada em `device_tokens`.
+ */
+export function isValidFcmToken(token?: string | null): token is string {
+  if (!token) return false;
+  const value = String(token).trim();
+  if (value.length < 100) return false;
+  if (/\s/.test(value)) return false;
+  if (/^[0-9a-fA-F]+$/.test(value)) return false; // token APNs bruto
+  return value.includes(':');                      // FCM: "<id>:APA91b..."
+}
+
 export async function syncFcmTokenToDatabase(providedToken?: string) {
   const token = providedToken || localStorage.getItem('@epraja_fcm_token') || localStorage.getItem('fcm_token');
   if (!token) return;
+  if (!isValidFcmToken(token)) {
+    console.warn('[FCM] Token inválido — registro em device_tokens abortado.');
+    try {
+      localStorage.removeItem('@epraja_fcm_token');
+      localStorage.removeItem('fcm_token');
+    } catch {}
+    return;
+  }
 
   try {
     const { data: authData } = await supabase.auth.getUser();
