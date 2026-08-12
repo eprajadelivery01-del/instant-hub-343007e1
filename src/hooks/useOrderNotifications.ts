@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { Capacitor } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
-import { PushNotifications } from '@capacitor/push-notifications';
+import { FirebaseMessaging } from '@capacitor-firebase/messaging';
 import { getMarketplaceStatus } from '@/utils/orderStatusResolver';
 import { callSendPush } from '@/lib/sendPush';
 
@@ -372,35 +372,28 @@ export function useOrderNotifications() {
       if (route) window.location.href = String(route);
     };
     const setupPush = async () => {
+      const persistToken = (token: string) => {
+        if (!token) return;
+        console.log("[FCM_TOKEN_RECEIVED]", `${token.slice(0, 12)}…`);
+        try {
+          localStorage.setItem('@epraja_fcm_token', token);
+          localStorage.setItem('fcm_token', token);
+          localStorage.removeItem('@epraja_push_registration_error');
+        } catch {}
+        void syncFcmTokenToDatabase(token);
+      };
       const registered = await Promise.all([
-        PushNotifications.addListener("registration", (token) => {
-          console.log("[FCM_TOKEN_RECEIVED]", `${token.value.slice(0, 12)}…`);
-          try {
-            localStorage.setItem('@epraja_fcm_token', token.value);
-            localStorage.setItem('fcm_token', token.value);
-            localStorage.removeItem('@epraja_push_registration_error');
-          } catch {}
-          syncFcmTokenToDatabase(token.value);
+        FirebaseMessaging.addListener("tokenReceived", ({ token }) => {
+          persistToken(token);
         }),
-        PushNotifications.addListener("registrationError", (error: unknown) => {
-          const message = error instanceof Error ? error.message : JSON.stringify(error);
-          const storageKey = '@epraja_push_registration_error';
-          if (localStorage.getItem(storageKey) === message) return;
-          localStorage.setItem(storageKey, message);
-          if (/aps-environment|authorization.*aps/i.test(message)) {
-            console.error("[Push] Build iOS sem autorização APNs válida. Reinstale a versão atualizada do app.");
-          } else {
-            console.error("[Push] Erro no registro de Push do cliente:", error);
-          }
-        }),
-        PushNotifications.addListener("pushNotificationReceived", (notification) => {
+        FirebaseMessaging.addListener("notificationReceived", ({ notification }) => {
           console.log("[PUSH_RECEIVED]", JSON.stringify(notification, null, 2));
           const title = notification.title || "Atualização de Pedido";
           const body = notification.body || "";
           toast(title, { description: body, duration: 8000 });
         }),
-        PushNotifications.addListener("pushNotificationActionPerformed", (notification: any) => {
-          openFromData(notification?.notification?.data);
+        FirebaseMessaging.addListener("notificationActionPerformed", ({ notification }) => {
+          openFromData(notification.data);
         }),
         LocalNotifications.addListener("localNotificationActionPerformed", (action: any) => {
           openFromData(action?.notification?.extra);
@@ -412,14 +405,30 @@ export function useOrderNotifications() {
       }
       listeners.push(...registered);
       if (Capacitor.getPlatform() === 'android') {
-        await PushNotifications.createChannel({
+        await FirebaseMessaging.createChannel({
           id: 'marketplace_orders', name: 'Atualizações de Pedidos',
           description: 'Notificações nativas do Marketplace para o cliente',
           importance: 5, visibility: 1, sound: 'default', vibration: true,
         });
       }
-      const permission = await PushNotifications.requestPermissions();
-      if (permission.receive === "granted") await PushNotifications.register();
+      const permission = await FirebaseMessaging.requestPermissions();
+      if (permission.receive === "granted") {
+        try {
+          const { token } = await FirebaseMessaging.getToken();
+          persistToken(token);
+        } catch (error) {
+          const message = error instanceof Error ? error.message : JSON.stringify(error);
+          const storageKey = '@epraja_push_registration_error';
+          if (localStorage.getItem(storageKey) !== message) {
+            localStorage.setItem(storageKey, message);
+            if (/aps-environment|authorization.*aps/i.test(message)) {
+              console.error("[Push] Build iOS sem autorização APNs válida. Reinstale a versão atualizada do app.");
+            } else {
+              console.error("[Push] Erro ao obter token FCM do cliente:", error);
+            }
+          }
+        }
+      }
     };
     setupPush().catch((error) => console.warn("[Push] Falha ao inicializar notificações:", error));
 

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Capacitor } from "@capacitor/core";
-import { PushNotifications } from "@capacitor/push-notifications";
+import { FirebaseMessaging } from "@capacitor-firebase/messaging";
 import { LocalNotifications } from "@capacitor/local-notifications";
 import { supabase } from "@/lib/supabase";
 import { callSendPush } from "@/lib/sendPush";
@@ -26,7 +26,7 @@ export default function PushDiagnostics() {
 
     if (Capacitor.isNativePlatform()) {
       try {
-        const p = await PushNotifications.checkPermissions();
+        const p = await FirebaseMessaging.checkPermissions();
         out.push({ label: "Permissão push", value: p.receive });
       } catch (e: any) {
         out.push({ label: "Permissão push", value: `erro: ${e?.message ?? e}` });
@@ -36,6 +36,18 @@ export default function PushDiagnostics() {
         out.push({ label: "Permissão central (local)", value: l.display });
       } catch (e: any) {
         out.push({ label: "Permissão central (local)", value: `erro: ${e?.message ?? e}` });
+      }
+      if (!token) {
+        try {
+          const result = await FirebaseMessaging.getToken();
+          if (result.token) {
+            localStorage.setItem("@epraja_fcm_token", result.token);
+            localStorage.setItem("fcm_token", result.token);
+            out.push({ label: "Token FCM Firebase", value: `${result.token.slice(0, 24)}…` });
+          }
+        } catch (e: any) {
+          out.push({ label: "Token FCM Firebase", value: `erro: ${e?.message ?? e}` });
+        }
       }
     } else {
       out.push({
