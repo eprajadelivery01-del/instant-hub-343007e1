@@ -8,8 +8,19 @@ const config: CapacitorConfig = {
   android: {
     backgroundColor: '#0D0D0D',
   },
+  experimental: {
+    ios: {
+      spm: {
+        packageOptions: {
+          '@capacitor-firebase/messaging': {
+            symlink: true,
+          },
+        },
+      },
+    },
+  },
   plugins: {
-    PushNotifications: {
+    FirebaseMessaging: {
       presentationOptions: ["badge", "sound", "alert"],
     },
     LocalNotifications: {
