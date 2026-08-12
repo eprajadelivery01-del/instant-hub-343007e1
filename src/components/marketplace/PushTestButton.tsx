@@ -4,7 +4,7 @@ import { callSendPush } from '@/lib/sendPush';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { BellRing, Loader2 } from 'lucide-react';
 import { Capacitor } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
@@ -194,6 +194,9 @@ export function PushTestButton({ className }: { className?: string }) {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Teste de notificação push</DialogTitle>
+            <DialogDescription className="sr-only">
+              Envie uma notificação de teste para este aparelho
+            </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-3">

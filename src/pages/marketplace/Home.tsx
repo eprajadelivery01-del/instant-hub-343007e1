@@ -17,7 +17,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { MediaImage } from '@/components/shared/MediaImage';
 import { HeaderActionButton } from '@/components/shared/HeaderActionButton';
 import { Search, Star, ChevronDown, Store, Utensils, Coffee, Pizza, Cake, Sandwich, Pill, ShoppingCart, User, PanelLeft, X, Dog, Beer, Plus, Croissant, Sparkles, Flame, Beef, Leaf, Package, IceCream, Wine, UtensilsCrossed, GlassWater, Scissors, Ruler } from 'lucide-react';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { getAvatarImage, getCompanyBannerImage, getCompanyLogoImage, getPrimaryProductImage } from '@/lib/media';
 import { useCart } from '@/contexts/CartContext';
@@ -549,6 +549,9 @@ export default function Home() {
                     Seja um {partnershipType === 'merchant' ? 'Parceiro' : 'Entregador'}
                   </span>
                 </SheetTitle>
+                <SheetDescription className="sr-only">
+                  Formulário de cadastro para parceria com o É Pra Já
+                </SheetDescription>
               </SheetHeader>
               <button onClick={() => setPartnershipType(null)} className="flex h-12 w-12 items-center justify-center rounded-full bg-secondary text-muted-foreground">
                 <X className="h-6 w-6" />

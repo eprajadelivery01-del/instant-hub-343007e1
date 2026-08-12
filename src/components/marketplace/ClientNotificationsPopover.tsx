@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { Bell, Copy, Check, Ticket, Sparkles, X, Gift, Package, Clock, ShoppingBag } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -535,9 +535,9 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
                   <SheetTitle className="text-lg font-black tracking-tight text-foreground">
                     Central de Notificações
                   </SheetTitle>
-                  <p className="text-xs text-muted-foreground">
+                  <SheetDescription className="text-xs text-muted-foreground">
                     Alertas de pedidos, cupons e promoções
-                  </p>
+                  </SheetDescription>
                 </div>
               </div>
             </div>
