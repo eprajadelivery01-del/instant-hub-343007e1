@@ -37,3 +37,6 @@ export function silenceConsoleInProduction() {
     }
   }
 }
+
+// Executa imediatamente ao ser importado (deve ser o primeiro import do app).
+silenceConsoleInProduction();
