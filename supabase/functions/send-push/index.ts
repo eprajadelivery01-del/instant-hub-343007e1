@@ -135,6 +135,7 @@ async function sendToToken(
   body: string,
   data: Record<string, string>,
 ): Promise<SendResult> {
+  const channelId = data.type === "delivery" ? "delivery-incoming-v8" : "marketplace_orders";
   const payload = {
     message: {
       token,
@@ -143,12 +144,12 @@ async function sendToToken(
       android: {
         priority: "HIGH",
         notification: {
-          channel_id: "marketplace_orders",
-          sound: "default",
+          channel_id: channelId,
+          sound: data.type === "delivery" ? "ring" : "default",
           default_vibrate_timings: true,
           notification_priority: "PRIORITY_MAX",
           visibility: "PUBLIC",
-          tag: data.orderId ? `order-${data.orderId}` : undefined,
+          tag: data.deliveryId ? `delivery-${data.deliveryId}` : (data.orderId ? `order-${data.orderId}` : undefined),
           click_action: "FLUTTER_NOTIFICATION_CLICK",
         },
       },
@@ -345,9 +346,94 @@ Deno.serve(async (req) => {
       return json({ error: "FIREBASE_SERVICE_ACCOUNT_JSON inválido (não é um JSON)" }, 500);
     }
 
-    const title: string = String(body.title ?? "É Pra Já").slice(0, 120);
-    const message: string = String(body.body ?? body.message ?? "Você tem uma nova atualização.").slice(0, 400);
+    // ── DETECÇÃO DE TRIGGER DE DELIVERY (webhook do Postgres)
+    // Quando body.table === "deliveries" e body.type === "INSERT", significa que uma nova
+    // entrega foi criada e precisamos notificar TODOS os entregadores ONLINE via FCM.
+    const isDeliveryTrigger = (body.table === "deliveries" || body.schema === "public") &&
+      (body.type === "INSERT" || body.type === "UPDATE") && body.record;
+
+    let title: string;
+    let message: string;
     const extra: Record<string, string> = {};
+
+    if (isDeliveryTrigger) {
+      const rec = body.record;
+      const storeName = rec.store_name || rec.company_name || "É Pra Já Delivery";
+      const details = rec.details || rec.address || "Nova corrida disponível!";
+      const deliveryId = rec.id || "";
+
+      title = `🏬 ${storeName}`;
+      message = String(details).slice(0, 400);
+
+      extra.type = "delivery";
+      extra.deliveryId = String(deliveryId);
+      extra.storeName = String(storeName);
+      extra.pickup = String(rec.pickup_address || rec.origin_address || "Retirada na Loja");
+      extra.dropoff = String(rec.delivery_address || rec.dropoff_address || "Endereço do cliente");
+      extra.fee = rec.delivery_fee ? `R$ ${Number(rec.delivery_fee).toFixed(2).replace(".", ",")}` : "";
+      extra.address = String(details);
+      extra.details = String(details);
+      extra.click_action = "FLUTTER_NOTIFICATION_CLICK";
+
+      console.log(`[send-push:${reqId}] DELIVERY TRIGGER detectado — deliveryId=${deliveryId} storeName=${storeName}`);
+
+      // Busca TODOS os tokens FCM dos entregadores ONLINE
+      const { data: drivers, error: drvErr } = await supabase
+        .from("delivery_drivers")
+        .select("fcm_token")
+        .eq("is_online", true)
+        .not("fcm_token", "is", null);
+
+      if (drvErr) {
+        console.error(`[send-push:${reqId}] Erro ao buscar entregadores:`, drvErr.message);
+      }
+
+      const driverTokens = (drivers ?? [])
+        .map((d: any) => d.fcm_token)
+        .filter((t: string) => t && t.trim().length > 10);
+
+      console.log(`[send-push:${reqId}] ${driverTokens.length} entregador(es) online com token FCM`);
+
+      if (driverTokens.length === 0) {
+        return json({ sent: 0, total: 0, warning: "Nenhum entregador online com token FCM" });
+      }
+
+      // Envia FCM para cada entregador usando o channel de alta prioridade
+      const accessToken = await getAccessToken(sa);
+      const results = await Promise.all(
+        driverTokens.map((t: string) => sendToToken(reqId, sa, accessToken, t, title, message, extra)),
+      );
+      const sent = results.filter((r) => r.ok).length;
+
+      // Saúde dos tokens
+      const invalidTokens = results.filter((r) => r.invalid).map((r) => r.token);
+      if (invalidTokens.length > 0) {
+        await supabase.from("delivery_drivers").update({ fcm_token: null }).in("fcm_token", invalidTokens);
+        console.log(`[send-push:${reqId}] ${invalidTokens.length} token(s) de entregador inválido(s) limpo(s)`);
+      }
+
+      console.log(`[send-push:${reqId}] DELIVERY BROADCAST enviados ${sent}/${driverTokens.length}`);
+      return json({
+        sent,
+        total: driverTokens.length,
+        invalid: invalidTokens.length,
+        trigger: "delivery_broadcast",
+        results: results.map((r) => ({
+          ok: r.ok,
+          status: r.status,
+          attempts: r.attempts,
+          invalid: r.invalid ?? false,
+          outcome: r.ok ? "success" : (r.outcome ?? "transient"),
+          code: r.code ?? null,
+          token: `${r.token.slice(0, 12)}…`,
+          error: r.error ?? undefined,
+        })),
+      });
+    }
+
+    // ── FLUXO NORMAL (Marketplace / notificações de pedido para clientes)
+    title = String(body.title ?? "É Pra Já").slice(0, 120);
+    message = String(body.body ?? body.message ?? "Você tem uma nova atualização.").slice(0, 400);
     if (body.orderId) extra.orderId = String(body.orderId);
     if (body.status) extra.status = String(body.status);
     if (body.url) extra.url = String(body.url);
