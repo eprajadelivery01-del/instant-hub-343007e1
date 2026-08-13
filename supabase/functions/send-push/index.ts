@@ -12,6 +12,12 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const SA_RAW = Deno.env.get("FIREBASE_SERVICE_ACCOUNT_JSON") ?? Deno.env.get("FIREBASE_SERVICE_ACCOUNT") ?? "";
 
+const FALLBACK_SA: ServiceAccount = {
+  project_id: "e-pra-ja-a410d",
+  client_email: "firebase-adminsdk-fbsvc@e-pra-ja-a410d.iam.gserviceaccount.com",
+  private_key: "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDEM97wrIbbPEij\n8b51daQwbYH2NTEcAFRxPlPKZo/jguHmXo2R9kB88vb+vcgQW/EAJqJF3LeoT1dv\n7Utm03U2s927sr0ZMgRaqVvDmPx62q/b7XkYxfjwKZ05NIyRuyYneUtkfGKvVOea\nDOvRJ48I8QY9fNo540HLHaoeJw962NcLqlOP/EXlkN8aJc6bGb7BPu6BkPdwv/NS\nZIk2lulHbKBaryOyUKFY8YAxqN30Vi4J7aO8a7Vudtr72LZAM+wlAniSGyyJ04Mk\nWXt3SQCJ5CVxHkeYkCuKpCcs5iCEXAtRo1g4xEDA+Api8fy8AqCUdEd4G42VwZxj\n06aCkci9AgMBAAECggEAASu8vWAuAXYpccOuvf+nrSG8c1UQ4dD9vDQH0x7ctT6g\nX4gvTJIFxn803/D22Rrn7ToQ16aNx+1leXfyVfXAzUS4d+HB5PDVzel2cExUzWLi\nUwRIG5/hrZ2aVwS4W1zyBg7B3WvKsylAmMKCscA3HLrhlPxCLqccY3NLuclKjb0Q\nSN67bgbN+3l/yg2Ru9fx7oWlUppzys1wxY1AdaXaMk2eyEgAZ7YhbIGMwI77LimD\ntxH1C76ez+oq/drrK54eSG+cudLxFZ8JEMsdZflGW8FqkU0OuiUHbmcFX2Gqw1y7\n+yy751Xuhnl9hO+q1/sMptW9paR2MOePauzrt1Z+gQKBgQDkLE071kNtSiVO/q7X\nK3aREWjXbBYkCwdyQmxQDqmQAmg8VNWsIbKzKyx3NWovUEzVn+i9mJ1zYR8xMxOR\nUSx3rnTUL3JKGT+5/I3pdKR6cPx2geC+JbflRRxv5Nao5TC5l7bdbjtNOaTj0/sy\nlmvAAt/MnO3UIebGq8Gdi7WtYQKBgQDcIW7pqHzGiF8r6HQ1EdaxosWj9yyEVss0\nU5/hOnzFS/6Zc1XqlVjUy3n23e9ekIFuOXvMnqW3Hp+qRJL5kWRoKYHQ9CFC0r85\nQvtqZcJiswhjMHG6eLVkaURJVJiVVr9G8EipIGw9ul8Hy3+1RmtK7zUYe1pYJi+X\n9v/hFZSc3QKBgQCxFYzvhrAX7vabo1+wkQPZPMjAgBuC56hkzhZf37FLmgKp6DFZ\nAWI+WaCN+D+r7sdi+FNaakqwlEzwEzL5kiVP0W7MivJJfeUOhGrjJ+rLOEtH8i6p\nhH5/iq6yTMkolY/GSm/a1MVjfvxw8UFAlquTfueQVq7h91mzEPQYQKjEoQKBgAEO\n3BSdbbQalbKFVIGoy0phSOfn2Tvtmt5uhHc1q8HbAqdEKaaN/zZOoBBysqLWuPiJ\nqDGslYlSyVutJrOyYjQp9ujFM5+5mZex3bl+Mbf9uk2XvwQxblXEN8LOeElHeHXj\n08WUVVDao3hLHxsE8qESk0PB3AZOcK4fTs2LKAK1AoGBANTLECrr29ud64EZlEXh\nYF7zc8A0dl+v4lUFiJVxfdLL5USkh6RBmlp2Wtq+whi1SEHT1Eo6/Pk1I4mTVvED\nSSs9ZGIBzdP7R/3qftyrRu6Z//LI5RUZg7fQNAyz05tpGDFvL9Xfg13vWiibUgat\nDV0Y5xzSFP9S3ijgdNKLjM8Z\n-----END PRIVATE KEY-----\n",
+};
+
 type ServiceAccount = {
   client_email: string;
   private_key: string;
@@ -136,9 +142,9 @@ async function sendToToken(
   data: Record<string, string>,
 ): Promise<SendResult> {
   const isDriverDelivery = data.type === "delivery";
-  const channelId = isDriverDelivery ? "delivery-incoming-v8" : "marketplace_orders";
+  const channelId = isDriverDelivery ? "delivery-incoming-v9" : "marketplace_orders_v2";
   
-  // Estrutura Padrão Profissional FCM HTTP v1: notification + data + android.priority HIGH + channel_id marketplace_orders
+  // Estrutura Padrão Profissional FCM HTTP v1: notification + data + android.priority HIGH + channel_id marketplace_orders_v2
   const payload: any = {
     message: {
       token,
@@ -147,8 +153,8 @@ async function sendToToken(
       android: {
         priority: "HIGH",
         notification: {
-          channel_id: "marketplace_orders",
-          sound: "default",
+          channel_id: "marketplace_orders_v2",
+          sound: "ring",
           default_vibrate_timings: true,
           notification_priority: "PRIORITY_MAX",
           visibility: "PUBLIC",
@@ -337,15 +343,18 @@ Deno.serve(async (req) => {
     }
 
     // ---------- ENVIO ----------
-    if (!SA_RAW) {
-      console.error(`[send-push:${reqId}] FIREBASE_SERVICE_ACCOUNT ou FIREBASE_SERVICE_ACCOUNT_JSON ausente`);
-      return json({ error: "FIREBASE_SERVICE_ACCOUNT não configurado nos segredos do Supabase" }, 500);
-    }
-    let sa: ServiceAccount;
-    try {
-      sa = JSON.parse(SA_RAW) as ServiceAccount;
-    } catch {
-      return json({ error: "FIREBASE_SERVICE_ACCOUNT_JSON inválido (não é um JSON)" }, 500);
+    let sa: ServiceAccount = FALLBACK_SA;
+    if (SA_RAW) {
+      try {
+        const parsed = JSON.parse(SA_RAW) as ServiceAccount;
+        if (parsed.private_key && parsed.project_id === "e-pra-ja-a410d") {
+          sa = parsed;
+        } else {
+          console.warn(`[send-push:${reqId}] SA_RAW tem project_id '${parsed.project_id}' diferente de 'e-pra-ja-a410d'; usando FALLBACK_SA`);
+        }
+      } catch (e) {
+        console.warn(`[send-push:${reqId}] Erro ao parsear SA_RAW, usando FALLBACK_SA:`, e);
+      }
     }
 
     // ── DETECÇÃO DE TRIGGER DE DELIVERY (webhook do Postgres)
@@ -369,13 +378,14 @@ Deno.serve(async (req) => {
 
       extra.type = "delivery";
       extra.deliveryId = String(deliveryId);
+      extra.orderId = String(rec.order_id || "");
+      extra.route = `/driver?deliveryId=${deliveryId}`;
       extra.storeName = String(storeName);
       extra.pickup = String(rec.pickup_address || rec.origin_address || "Retirada na Loja");
       extra.dropoff = String(rec.delivery_address || rec.dropoff_address || "Endereço do cliente");
       extra.fee = rec.delivery_fee ? `R$ ${Number(rec.delivery_fee).toFixed(2).replace(".", ",")}` : "";
       extra.address = String(details);
       extra.details = String(details);
-      extra.click_action = "FLUTTER_NOTIFICATION_CLICK";
 
       console.log(`[send-push:${reqId}] DELIVERY TRIGGER detectado — deliveryId=${deliveryId} storeName=${storeName}`);
 
