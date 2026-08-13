@@ -263,14 +263,13 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
             <div className="flex items-center gap-3">
               <ClientNotificationsPopover />
               <ThemeToggle />
-              <Link to="/marketplace/cart" className="relative p-2 text-muted-foreground hover:text-primary transition-colors">
-                <ShoppingBag className="h-6 w-6" />
-                {itemCount > 0 && (
-                  <span className="absolute top-0 right-0 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-black text-primary-foreground">
-                    {itemCount}
-                  </span>
-                )}
-              </Link>
+              <HeaderActionButton
+                onClick={() => navigate('/marketplace/cart')}
+                title="Sacola"
+                badge={itemCount}
+              >
+                <ShoppingBag className="h-5 w-5" strokeWidth={1.75} />
+              </HeaderActionButton>
               <HeaderActionButton
                 onClick={() => navigate('/marketplace/profile')}
                 title="Meu perfil"
