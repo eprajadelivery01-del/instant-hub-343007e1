@@ -138,39 +138,29 @@ async function sendToToken(
   const isDriverDelivery = data.type === "delivery";
   const channelId = isDriverDelivery ? "delivery-incoming-v8" : "marketplace_orders";
   
-  // Para ENTREGADORES (delivery), o payload deve ser APENAS de DADOS (Data-only message).
-  // Se houver o bloco 'notification', o Android intercepta a mensagem quando o app está
-  // em background, mostra na bandeja do sistema e NUNCA chama o MyFirebaseMessagingService.onMessageReceived.
-  // Sem o onMessageReceived, não conseguimos abrir o Popup FullScreen de Nova Corrida.
+  // Estrutura Padrão Profissional FCM HTTP v1: notification + data + android.priority HIGH + channel_id marketplace_orders
   const payload: any = {
     message: {
       token,
+      notification: { title, body },
       data,
       android: {
         priority: "HIGH",
+        notification: {
+          channel_id: "marketplace_orders",
+          sound: "default",
+          default_vibrate_timings: true,
+          notification_priority: "PRIORITY_MAX",
+          visibility: "PUBLIC",
+          tag: data.deliveryId ? `delivery-${data.deliveryId}` : (data.orderId ? `order-${data.orderId}` : undefined),
+        },
       },
       apns: {
-        headers: { "apns-priority": "10", "apns-push-type": "background" },
-        payload: { aps: { "content-available": 1 } },
+        headers: { "apns-priority": "10", "apns-push-type": "alert" },
+        payload: { aps: { alert: { title, body }, sound: "default", badge: 1, "mutable-content": 1 } },
       },
     },
   };
-
-  // Se NÃO for notificação de entregador (ou seja, é pro Marketplace), adiciona o bloco visual.
-  if (!isDriverDelivery) {
-    payload.message.notification = { title, body };
-    payload.message.android.notification = {
-      channel_id: channelId,
-      sound: "default",
-      default_vibrate_timings: true,
-      notification_priority: "PRIORITY_MAX",
-      visibility: "PUBLIC",
-      tag: data.orderId ? `order-${data.orderId}` : undefined,
-      click_action: "FLUTTER_NOTIFICATION_CLICK",
-    };
-    payload.message.apns.headers["apns-push-type"] = "alert";
-    payload.message.apns.payload.aps = { alert: { title, body }, sound: "default", badge: 1, "mutable-content": 1 };
-  }
 
   let last: SendResult = { ok: false, status: 0, attempts: 0, token };
 
