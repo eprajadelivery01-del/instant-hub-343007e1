@@ -266,7 +266,7 @@ export default function Profile() {
 
         {/* Coupons List Sheet */}
         <Sheet open={showCoupons} onOpenChange={setShowCoupons}>
-          <SheetContent side="bottom" hideClose className="h-[85vh] rounded-t-[3rem] border-none p-0 shadow-2xl">
+          <SheetContent side="bottom" hideClose className="h-[85vh] rounded-t-[3rem] border-none p-0 shadow-2xl" aria-describedby={undefined}>
             <SheetTitle className="sr-only">Meus Cupons</SheetTitle>
             <div className="h-full flex flex-col bg-background">
               <div className="px-8 pt-8 pb-6 flex items-center justify-between border-b border-border shrink-0">
@@ -626,7 +626,7 @@ export default function Profile() {
 
       {/* Edit Profile Sheet */}
       <Sheet open={editing} onOpenChange={setEditing}>
-        <SheetContent side="bottom" hideClose className="h-[75vh] rounded-t-[3rem] border-none p-0 shadow-2xl">
+        <SheetContent side="bottom" hideClose className="h-[75vh] rounded-t-[3rem] border-none p-0 shadow-2xl" aria-describedby={undefined}>
           <SheetTitle className="sr-only">Editar Meus Dados</SheetTitle>
           <div className="h-full flex flex-col bg-background">
             <div className="p-8 pb-6 flex items-center justify-between border-b border-border/50">
@@ -686,7 +686,7 @@ export default function Profile() {
 
       {/* Coupons List Sheet */}
       <Sheet open={showCoupons} onOpenChange={setShowCoupons}>
-        <SheetContent side="bottom" hideClose className="h-[85vh] rounded-t-[3rem] border-none p-0 shadow-2xl">
+        <SheetContent side="bottom" hideClose className="h-[85vh] rounded-t-[3rem] border-none p-0 shadow-2xl" aria-describedby={undefined}>
           <SheetTitle className="sr-only">Meus Cupons</SheetTitle>
           <div className="h-full flex flex-col bg-background">
             <div className="px-8 pt-8 pb-6 flex items-center justify-between border-b border-border shrink-0">
