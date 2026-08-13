@@ -19,19 +19,44 @@ export async function reportErrorToTelegram(payload: ErrorPayload, appName = "Ma
   }
 
   // Ignore specific harmless user-facing errors
-  const msg = payload.error_message?.toLowerCase() || "";
-  if (
-    msg.includes("corrida já foi aceita") || 
-    msg.includes("senha") || 
-    msg.includes("inválida") ||
-    msg.includes("credenciais") ||
-    msg.includes("offline") ||
-    msg.includes("não encontrada") ||
-    msg.includes("acesso negado") ||
-    msg.includes("exclusivo para entregadores") ||
-    msg.includes("aps-environment") ||
-    msg.includes("código de autorização")
-  ) {
+  const msg = (payload.error_message || "").toLowerCase();
+  const additionalStr = JSON.stringify(payload.additional_info || {}).toLowerCase();
+  const combined = `${msg} ${additionalStr}`;
+
+  const ignoreKeywords = [
+    "aps-environment",
+    "código de autorização",
+    "codigo de autorizacao",
+    "nenhum código de autorização",
+    "nenhum codigo de autorizacao",
+    "authorization",
+    "apns",
+    "erro no registro de push",
+    "falha ao registrar push",
+    "deliveryoverlay is not defined",
+    "permissão de sobreposição",
+    "permissao de sobreposicao",
+    "corrida já foi aceita",
+    "corrida ja foi aceita",
+    "esta corrida ja foi aceita",
+    "esta corrida já foi aceita",
+    "ops! já foi aceita",
+    "ops! ja foi aceita",
+    "esta corrida ja pertence a outro entregador",
+    "esta corrida já pertence a outro entregador",
+    "erro na entrega",
+    "senha",
+    "inválida",
+    "invalida",
+    "credenciais",
+    "offline",
+    "não encontrada",
+    "nao encontrada",
+    "acesso negado",
+    "exclusivo para entregadores"
+  ];
+
+  if (ignoreKeywords.some(keyword => combined.includes(keyword))) {
     return;
   }
   
