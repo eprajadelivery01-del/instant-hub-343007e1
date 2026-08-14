@@ -145,22 +145,29 @@ async function sendToToken(
   const channelId = isDriverDelivery ? "delivery-incoming-v9" : "marketplace_orders_v2";
   
   // Estrutura Padrão Profissional FCM HTTP v1: notification + data + android.priority HIGH + channel_id marketplace_orders_v2
-  const payload: any = {
-    message: {
-      token,
-      notification: { title, body },
-      data,
-      android: {
-        priority: "HIGH",
-        notification: {
-          channel_id: "marketplace_orders_v2",
-          sound: "ring",
-          default_vibrate_timings: true,
-          notification_priority: "PRIORITY_MAX",
-          visibility: "PUBLIC",
-          tag: data.deliveryId ? `delivery-${data.deliveryId}` : (data.orderId ? `order-${data.orderId}` : undefined),
+    const notifTag = data.deliveryId 
+      ? `delivery-${data.deliveryId}` 
+      : (data.orderId 
+          ? `order-${data.orderId}` 
+          : `mkt-${title.trim().toLowerCase().replace(/[^a-z0-9]/g, '')}`);
+
+    const payload: any = {
+      message: {
+        token,
+        notification: { title, body },
+        data,
+        android: {
+          priority: "HIGH",
+          collapse_key: notifTag,
+          notification: {
+            channel_id: "marketplace_orders_v2",
+            sound: "ring",
+            default_vibrate_timings: true,
+            notification_priority: "PRIORITY_MAX",
+            visibility: "PUBLIC",
+            tag: notifTag,
+          },
         },
-      },
       apns: {
         headers: { "apns-priority": "10", "apns-push-type": "alert" },
         payload: { aps: { alert: { title, body }, sound: "default", badge: 1, "mutable-content": 1 } },
