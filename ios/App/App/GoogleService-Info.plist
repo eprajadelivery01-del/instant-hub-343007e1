@@ -9,7 +9,7 @@
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.epraja</string>
+	<string>br.com.epraja.appFma</string>
 	<key>PROJECT_ID</key>
 	<string>e-pra-ja-a410d</string>
 	<key>STORAGE_BUCKET</key>
@@ -25,6 +25,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:69983283333:ios:2de2be12c4323821be61ec</string>
+	<string>1:69983283333:ios:877966e3583bc9dbbe61ec</string>
 </dict>
 </plist>
