@@ -181,8 +181,9 @@ export default function Home() {
       }, 1500);
     };
 
+    const channelName = `companies-realtime-v3-${Date.now()}_${Math.random().toString(36).substring(7)}`;
     const channel = supabase
-      .channel("companies-realtime-v3")
+      .channel(channelName)
       .on("postgres_changes", { event: "*", schema: "public", table: "companies" }, scheduleRefetch)
       .subscribe();
 

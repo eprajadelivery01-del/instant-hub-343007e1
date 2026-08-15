@@ -152,7 +152,8 @@ export default function Cart() {
     fetchSuggestions();
 
     // Subscribe to changes
-    const channel = supabase.channel(`company-status-${company.id}`)
+    const channelName = `company-status-${company.id}-${Date.now()}_${Math.random().toString(36).substring(7)}`;
+    const channel = supabase.channel(channelName)
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'companies', filter: `id=eq.${company.id}` }, 
         (p) => {
           setIsStoreOpen(isStoreOpenNow(p.new as any));

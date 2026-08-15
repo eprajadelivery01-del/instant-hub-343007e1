@@ -73,7 +73,8 @@ export default function OrderDetail() {
 
   useEffect(() => {
     if (!id) return;
-    const orderChannel = supabase.channel(`order-${id}`)
+    const channelName = `order-${id}-${Date.now()}_${Math.random().toString(36).substring(7)}`;
+    const orderChannel = supabase.channel(channelName)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'orders', filter: `id=eq.${id}` },
         (p) => {
           if (!p.new) return;

@@ -68,8 +68,9 @@ export default function Search() {
     }, 500);
 
     // Realtime subscription for search
+    const channelName = `search-realtime-${Date.now()}_${Math.random().toString(36).substring(7)}`;
     const channel = supabase
-      .channel('search-realtime')
+      .channel(channelName)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'companies' }, () => {
         // Just invalidate/refetch if needed, but here we wait for next search or keysteoke
       })

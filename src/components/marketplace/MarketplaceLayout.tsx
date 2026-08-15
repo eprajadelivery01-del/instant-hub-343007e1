@@ -51,13 +51,14 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
     };
     checkInitialStatus();
 
-    const channel = supabase.channel(`store-opening-notification-${company.id}`)
+    const channelName = `store-opening-notification-${company.id}-${Date.now()}_${Math.random().toString(36).substring(7)}`;
+    const channel = supabase.channel(channelName)
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'companies', filter: `id=eq.${company.id}` }, 
         (p) => {
           const isNowOpen = p.new.is_open;
           if (isNowOpen && wasClosed && initialStatusChecked) {
             import('sonner').then(({ toast }) => {
-              toast.success(`🎉 Boas nãotícias! ${company.name} abriu!`, {
+              toast.success(`🎉 Boas notícias! ${company.name} abriu!`, {
                 description: 'Finalize seu pedido agora que está na sacola.',
                 action: {
                   label: 'Ver Sacola',
@@ -105,8 +106,9 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
 
     fetchOrderCount();
 
+    const channelName = `layout-orders-${user.id}-${Date.now()}_${Math.random().toString(36).substring(7)}`;
     const channel = supabase
-      .channel(`layout-orders-${user.id}`)
+      .channel(channelName)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'orders' },

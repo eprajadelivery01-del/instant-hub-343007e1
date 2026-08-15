@@ -70,8 +70,9 @@ export default function Orders() {
     fetchOrders();
 
     // Realtime: escuta inserts e updates tanto dos pedidos quanto das entregas
+    const channelName = `customer-orders-realtime-${user.id}-${Date.now()}_${Math.random().toString(36).substring(7)}`;
     const channel = supabase
-      .channel(`customer-orders-realtime-${user.id}`)
+      .channel(channelName)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'orders' },

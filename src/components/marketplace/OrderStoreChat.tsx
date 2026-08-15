@@ -46,56 +46,73 @@ export function OrderStoreChat({ orderId, companyId, companyName }: OrderStoreCh
     let channel: ReturnType<typeof supabase.channel> | null = null;
 
     (async () => {
-      const { data: companyData } = await supabase.from('companies').select('user_id').eq('id', companyId).maybeSingle();
-      const companyUserId = companyData?.user_id;
+      try {
+        const { data: companyData } = await supabase.from('companies').select('user_id').eq('id', companyId).maybeSingle();
+        const companyUserId = companyData?.user_id;
 
-      let { data: session } = await supabase
-        .from('conversations')
-        .select('*')
-        .eq('order_id', orderId)
-        .maybeSingle();
-
-      if (!session) {
-        const { data: created } = await supabase
+        let { data: session } = await supabase
           .from('conversations')
-          .insert({ 
-            order_id: orderId, 
-            participants: companyUserId ? [user.id, companyUserId] : [user.id, companyId],
-            topic: 'Suporte do Pedido' 
-          })
-          .select()
-          .single();
-        session = created;
+          .select('*')
+          .eq('order_id', orderId)
+          .maybeSingle();
+
+        if (!session) {
+          const { data: created } = await supabase
+            .from('conversations')
+            .insert({ 
+              order_id: orderId, 
+              participants: companyUserId ? [user.id, companyUserId] : [user.id, companyId],
+              topic: 'Suporte do Pedido' 
+            })
+            .select()
+            .single();
+          session = created;
+        }
+        if (!active || !session) { setLoading(false); return; }
+        setSessionId(session.id);
+
+        const { data: history } = await supabase
+          .from('messages')
+          .select('*')
+          .eq('conversation_id', session.id)
+          .order('created_at', { ascending: true });
+        if (!active) return;
+        setMessages(history || []);
+        setLoading(false);
+
+        const channelName = `order_chat_${session.id}_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+        channel = supabase
+          .channel(channelName)
+          .on(
+            'postgres_changes',
+            { event: 'INSERT', schema: 'public', table: 'messages', filter: `conversation_id=eq.${session.id}` },
+            (payload) => {
+              const m = payload.new as any;
+              setMessages((prev) => (prev.find((x) => x.id === m.id) ? prev : [...prev, m]));
+            },
+          );
+
+        if (!active) {
+          supabase.removeChannel(channel);
+          channel = null;
+          return;
+        }
+
+        channel.subscribe();
+      } catch (err) {
+        console.error('[OrderStoreChat] Erro ao carregar chat:', err);
+        if (active) setLoading(false);
       }
-      if (!active || !session) { setLoading(false); return; }
-      setSessionId(session.id);
-
-      const { data: history } = await supabase
-        .from('messages')
-        .select('*')
-        .eq('conversation_id', session.id)
-        .order('created_at', { ascending: true });
-      if (active) setMessages(history || []);
-      setLoading(false);
-
-      channel = supabase
-        .channel(`order_chat_${session.id}`)
-        .on(
-          'postgres_changes',
-          { event: 'INSERT', schema: 'public', table: 'messages', filter: `conversation_id=eq.${session.id}` },
-          (payload) => {
-            const m = payload.new as any; // Usando any momentaneamente ou ajustando Msg interface abaixo
-            setMessages((prev) => (prev.find((x) => x.id === m.id) ? prev : [...prev, m]));
-          },
-        )
-        .subscribe();
     })();
 
     return () => {
       active = false;
-      if (channel) supabase.removeChannel(channel);
+      if (channel) {
+        supabase.removeChannel(channel);
+        channel = null;
+      }
     };
-  }, [user, topic, companyId]);
+  }, [user, orderId, companyId]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });

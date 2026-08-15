@@ -35,7 +35,8 @@ export function OrderRatingModal() {
     if (!user) return;
     checkForPendingReview();
 
-    const channel = supabase.channel(`order_ratings_listener_${user.id}`)
+    const channelName = `order_ratings_listener_${user.id}_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+    const channel = supabase.channel(channelName)
       .on('postgres_changes', { 
         event: 'UPDATE', 
         schema: 'public', 
