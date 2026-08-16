@@ -317,7 +317,6 @@ function triggerNativeNotification(notif: any, swRegistration: ServiceWorkerRegi
             body,
             id: notifId,
             channelId: 'default',
-            schedule: { at: new Date(Date.now() + 100) },
             extra: {
               tag: `marketing-${notif.id || notifId}`,
               coupon: notif.coupon_code
