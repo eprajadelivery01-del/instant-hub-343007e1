@@ -62,13 +62,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const initializeAuth = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        let currentSession: Session | null = null;
+        try {
+          const res = await supabase.auth.getSession();
+          if (res.error) {
+            if (res.error.message?.includes("Refresh Token") || res.error.message?.includes("Invalid")) {
+              try {
+                localStorage.removeItem("epraja-marketplace-auth-token");
+                await supabase.auth.signOut({ scope: "local" });
+              } catch {}
+            }
+          } else {
+            currentSession = res.data.session;
+          }
+        } catch (e: any) {
+          try {
+            localStorage.removeItem("epraja-marketplace-auth-token");
+            await supabase.auth.signOut({ scope: "local" });
+          } catch {}
+        }
+
         if (!mounted) return;
 
-        const currentUser = session?.user;
+        const currentUser = currentSession?.user;
         const guestUser = currentUser?.email === GUEST_EMAIL;
 
-        setSession(session);
+        setSession(currentSession);
         if (currentUser && !guestUser) {
           setUser(currentUser);
           setIsGuest(false);
@@ -81,7 +100,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setIsGuest(true);
           setProfile(null);
           
-          if (!session) {
+          if (!currentSession) {
             // Autenticação em segundo plano para o leitor público de dados Supabase (evita RLS 42501)
             try {
               const { data: guestRes } = await supabase.auth.signInWithPassword({
