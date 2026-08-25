@@ -180,8 +180,8 @@ serve(async (req) => {
     const newStatus = payload.deliveryStatus || payload.status || record.status || record.deliveryStatus;
 
     // Se a chamada for um invoke manual vindo do frontend (sem o campo table preenchido),
-    // ignoramos para evitar duplicidade com a trigger oficial do banco de dados.
-    if (!payload.table) {
+    // ignoramos para evitar duplicidade com a trigger oficial do banco de dados (EXCETO para cancelamentos)
+    if (!payload.table && newStatus !== 'cancelled') {
       console.log(`[notify-customer] Bloqueando chamada manual legada do frontend (sem tabela) para o pedido #${targetOrderId}`);
       return new Response(JSON.stringify({ success: true, message: 'Dropped legacy manual invocation' }), { status: 200, headers: { 'Content-Type': 'application/json' } });
     }
