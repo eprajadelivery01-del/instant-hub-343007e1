@@ -52,7 +52,16 @@ export async function reportErrorToTelegram(payload: ErrorPayload, appName = "Ma
     "offline",
     "não encontrada",
     "nao encontrada",
-    "acesso negado",
+    "failed to fetch",
+    "networkerror",
+    "network error",
+    "network request failed",
+    "load failed",
+    "the operation was aborted",
+    "aborterror",
+    "abort error",
+    "refreshaccesstoken",
+    "callrefreshtoken",
     "exclusivo para entregadores"
   ];
 
