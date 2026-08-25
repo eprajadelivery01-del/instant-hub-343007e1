@@ -66,6 +66,13 @@ export function getCachedStoreData(storeId: string | undefined): PrecachedStoreD
 export async function startBackgroundPrecacheSync(): Promise<void> {
   loadPrecacheFromStorage();
 
+  const lastSync = localStorage.getItem(STORAGE_KEY_TIMESTAMP);
+  const now = Date.now();
+  if (lastSync && now - Number(lastSync) < 30 * 60 * 1000 && memoryCompanies && memoryCompanies.length > 0) {
+    console.log('[Precache] Cache local recente. Evitando requisição desnecessária no banco.');
+    return;
+  }
+
   try {
     const { data: companies, error: compErr } = await supabase
       .from('companies')

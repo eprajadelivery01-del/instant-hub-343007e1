@@ -16,6 +16,5 @@ export function useOnlineDrivers() {
   return useQuery({
     queryKey: ["online-drivers"],
     queryFn: fetchOnlineDrivers,
-    refetchInterval: 5000, // Refresh every 5s for realtime feel
   });
 }
