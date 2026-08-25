@@ -56,7 +56,8 @@ export default function Orders() {
           .from('orders')
           .select('*, company:companies(*), deliveries(*)')
           .or(`customer_id.eq.${user.id},user_id.eq.${user.id}`)
-          .order('created_at', { ascending: false });
+          .order('created_at', { ascending: false })
+          .limit(20);
 
         if (error) throw error;
         console.log(`[Orders] Pedidos encontrados para ${user.id}:`, data?.length || 0);
