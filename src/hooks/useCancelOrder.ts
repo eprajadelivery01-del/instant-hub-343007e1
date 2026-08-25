@@ -23,13 +23,36 @@ export function useCancelOrder() {
 
       const cleanId = String(orderId).replace('#', '').trim();
       const nowISO = new Date().toISOString();
+      const isUUID = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(cleanId);
 
-      // 2. Atualiza tabelas orders, deliveries e available_deliveries no Supabase
-      await Promise.allSettled([
-        supabase.from('orders').update({ status: 'cancelled', updated_at: nowISO }).or(`id.eq.${cleanId},id.ilike.${cleanId}%`),
-        supabase.from('deliveries').update({ status: 'cancelled', updated_at: nowISO }).or(`order_id.eq.${cleanId},order_id.ilike.${cleanId}%`),
-        supabase.from('available_deliveries').update({ status: 'cancelled', updated_at: nowISO }).or(`order_id.eq.${cleanId},order_id.ilike.${cleanId}%`),
+      let targetId = cleanId;
+      if (!isUUID) {
+        // Se for um short ID (ex: últimos 6 caracteres do UUID), busca o UUID correspondente
+        const { data: foundOrders } = await supabase
+          .from('orders')
+          .select('id')
+          .neq('status', 'cancelled');
+        
+        const matchedOrder = foundOrders?.find(o => 
+          o.id.toLowerCase().endsWith(cleanId.toLowerCase())
+        );
+        if (matchedOrder) {
+          targetId = matchedOrder.id;
+        }
+      }
+
+      // 2. Atualiza tabelas orders, deliveries e available_deliveries no Supabase usando o ID completo (UUID)
+      const results = await Promise.all([
+        supabase.from('orders').update({ status: 'cancelled', updated_at: nowISO }).eq('id', targetId),
+        supabase.from('deliveries').update({ status: 'cancelled', updated_at: nowISO }).eq('order_id', targetId),
+        supabase.from('available_deliveries').update({ status: 'cancelled', updated_at: nowISO }).eq('order_id', targetId),
       ]);
+
+      for (const res of results) {
+        if (res.error) {
+          console.error('[useCancelOrder] Erro ao atualizar banco:', res.error);
+        }
+      }
 
       // 3. Se possuir companyId, notifica os lojistas na tabela notifications
       if (companyId) {
