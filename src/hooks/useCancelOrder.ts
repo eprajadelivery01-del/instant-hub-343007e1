@@ -41,11 +41,10 @@ export function useCancelOrder() {
         }
       }
 
-      // 2. Atualiza tabelas orders, deliveries e available_deliveries no Supabase usando o ID completo (UUID)
+      // 2. Atualiza tabelas orders e deliveries no Supabase usando o ID completo (UUID)
       const results = await Promise.all([
         supabase.from('orders').update({ status: 'cancelled', updated_at: nowISO }).eq('id', targetId),
         supabase.from('deliveries').update({ status: 'cancelled', updated_at: nowISO }).eq('order_id', targetId),
-        supabase.from('available_deliveries').update({ status: 'cancelled', updated_at: nowISO }).eq('order_id', targetId),
       ]);
 
       for (const res of results) {
