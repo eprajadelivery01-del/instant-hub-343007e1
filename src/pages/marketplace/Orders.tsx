@@ -94,10 +94,14 @@ export default function Orders() {
     const q = search.trim().toLowerCase();
     
     // Filtragem por aba (Ativos vs Histórico) usando getMarketplaceStatus
-    const tabFiltered = orders.filter(o => {
+    let tabFiltered = orders.filter(o => {
       const computed = getMarketplaceStatus(o);
       return activeTab === 'active' ? !computed.isFinished : computed.isFinished;
     });
+
+    if (activeTab === 'history') {
+      tabFiltered = tabFiltered.slice(0, 10);
+    }
 
     if (!q) return tabFiltered;
     return tabFiltered.filter((o) => {
