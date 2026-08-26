@@ -27,14 +27,15 @@ export function useCancelOrder() {
 
       let targetId = cleanId;
       if (!isUUID) {
-        // Se for um short ID (ex: últimos 6 caracteres do UUID), busca o UUID correspondente
+        // Se for um short ID (ex: últimos 6 caracteres ou primeiros 8 caracteres do UUID), busca o UUID correspondente
         const { data: foundOrders } = await supabase
           .from('orders')
           .select('id')
           .neq('status', 'cancelled');
         
         const matchedOrder = foundOrders?.find(o => 
-          o.id.toLowerCase().endsWith(cleanId.toLowerCase())
+          o.id.toLowerCase().endsWith(cleanId.toLowerCase()) || 
+          o.id.toLowerCase().startsWith(cleanId.toLowerCase())
         );
         if (matchedOrder) {
           targetId = matchedOrder.id;

@@ -62,7 +62,14 @@ export async function reportErrorToTelegram(payload: ErrorPayload, appName = "Ma
     "abort error",
     "refreshaccesstoken",
     "callrefreshtoken",
-    "exclusivo para entregadores"
+    "exclusivo para entregadores",
+    "the database connection is closing",
+    "database connection is closing",
+    "idbdatabase",
+    "failed to execute 'transaction' on 'idbdatabase'",
+    "transaction on 'idbdatabase'",
+    "invalidstateerror",
+    "quotaexceedederror"
   ];
 
   if (ignoreKeywords.some(keyword => combined.includes(keyword))) {

@@ -18,14 +18,14 @@ export let analytics: any = null;
 if (typeof window !== "undefined") {
   isSupported().then((supported) => {
     if (supported) {
-      analytics = getAnalytics(app);
-      console.log("[Firebase] Analytics ativo");
-      
-      logEvent(analytics, "app_open");
-      console.log("[Firebase] Evento app_open enviado");
-
-      logEvent(analytics, "screen_view" as any, { screen_name: "Marketplace_Home" } as any);
-      console.log("[Firebase] Evento screen_view enviado");
+      try {
+        analytics = getAnalytics(app);
+        
+        try { logEvent(analytics, "app_open"); } catch {}
+        try { logEvent(analytics, "screen_view" as any, { screen_name: "Marketplace_Home" } as any); } catch {}
+      } catch (e) {
+        console.warn("[Firebase] Erro ao inicializar Analytics:", e);
+      }
     }
   }).catch((err) => {
     console.warn("[Firebase] Falha ao verificar suporte a Analytics:", err);
