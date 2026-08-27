@@ -57,19 +57,19 @@ export function useCancelOrder() {
       // 3. Se possuir companyId, notifica os lojistas na tabela notifications
       if (companyId) {
         try {
-          const { data: companyUsers } = await supabase
-            .from('company_users')
+          const { data: comp } = await supabase
+            .from('companies')
             .select('user_id')
-            .eq('company_id', companyId);
+            .eq('id', companyId)
+            .maybeSingle();
             
-          if (companyUsers && companyUsers.length > 0) {
-            const notifications = companyUsers.map(cu => ({
-              user_id: cu.user_id,
+          if (comp?.user_id) {
+            await supabase.from('notifications').insert([{
+              user_id: comp.user_id,
               title: "Pedido Cancelado pelo Cliente",
-              message: `O cliente cancelou o pedido #${orderId.split('-')[0].toUpperCase()}.`,
+              message: `O cliente cancelou o pedido #${cleanId.split('-')[0].toUpperCase()}.`,
               type: "order_cancelled"
-            }));
-            await supabase.from('notifications').insert(notifications);
+            }]);
           }
         } catch (e) {
           console.warn('[useCancelOrder] Erro ao notificar lojistas:', e);

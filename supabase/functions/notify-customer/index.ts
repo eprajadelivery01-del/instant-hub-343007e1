@@ -90,9 +90,14 @@ function isDuplicatePush(orderId: string, status: string): boolean {
   return false;
 }
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { status: 200, headers: { 'Access-Control-Allow-Origin': '*' } });
+    return new Response('ok', { status: 200, headers: corsHeaders });
   }
 
   try {
@@ -100,7 +105,7 @@ serve(async (req) => {
     const SERVICE_ROLE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
 
     if (!SUPABASE_URL || !SERVICE_ROLE) {
-      return new Response(JSON.stringify({ error: 'Missing Supabase vars' }), { status: 500 });
+      return new Response(JSON.stringify({ error: 'Missing Supabase vars' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     const adminClient = createClient(SUPABASE_URL, SERVICE_ROLE, {
@@ -115,11 +120,14 @@ serve(async (req) => {
       const cleanId = String(payload.orderId || payload.order_id).replace('#', '').trim();
       const targetStatus = payload.status || 'preparing';
       console.log(`[notify-customer] RESTAURANDO PEDIDO #${cleanId} PARA STATUS ${targetStatus}`);
-      await Promise.allSettled([
-        adminClient.from('orders').update({ status: targetStatus, updated_at: new Date().toISOString() }).or(`id.eq.${cleanId},id.ilike.${cleanId}%`),
-        adminClient.from('deliveries').update({ status: targetStatus, updated_at: new Date().toISOString() }).or(`order_id.eq.${cleanId},order_id.ilike.${cleanId}%`),
-      ]);
-      return new Response(JSON.stringify({ success: true, message: `Order ${cleanId} restored to ${targetStatus}` }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      const isUUID = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(cleanId);
+      if (isUUID) {
+        await Promise.allSettled([
+          adminClient.from('orders').update({ status: targetStatus, updated_at: new Date().toISOString() }).eq('id', cleanId),
+          adminClient.from('deliveries').update({ status: targetStatus, updated_at: new Date().toISOString() }).eq('order_id', cleanId),
+        ]);
+      }
+      return new Response(JSON.stringify({ success: true, message: `Order ${cleanId} restored to ${targetStatus}` }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     // Se a requisição for para salvar token FCM do cliente com admin service role
@@ -183,28 +191,28 @@ serve(async (req) => {
     // ignoramos para evitar duplicidade com a trigger oficial do banco de dados (EXCETO para cancelamentos)
     if (!payload.table && newStatus !== 'cancelled') {
       console.log(`[notify-customer] Bloqueando chamada manual legada do frontend (sem tabela) para o pedido #${targetOrderId}`);
-      return new Response(JSON.stringify({ success: true, message: 'Dropped legacy manual invocation' }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      return new Response(JSON.stringify({ success: true, message: 'Dropped legacy manual invocation' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     // Se a chamada for de outra tabela que não seja 'orders', ignoramos para evitar duplicidade.
     if (payload.table && payload.table !== 'orders') {
       console.log(`[notify-customer] Ignorando trigger da tabela '${payload.table}'. Apenas a tabela 'orders' envia notificações para o cliente.`);
-      return new Response(JSON.stringify({ success: true, message: `Ignored table ${payload.table}` }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      return new Response(JSON.stringify({ success: true, message: `Ignored table ${payload.table}` }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     if (!targetOrderId) {
-      return new Response(JSON.stringify({ error: 'No orderId or record found' }), { status: 400 });
+      return new Response(JSON.stringify({ error: 'No orderId or record found' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     const ALLOWED_STATUSES = ['preparing', 'in_transit', 'in_route', 'delivering', 'delivered', 'completed', 'cancelled'];
     if (!ALLOWED_STATUSES.includes(newStatus)) {
       console.log(`[notify-customer] Status '${newStatus}' não está na lista de enviáveis. Ignorando push para o pedido #${targetOrderId}`);
-      return new Response(JSON.stringify({ success: true, message: `Ignored status: ${newStatus}` }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      return new Response(JSON.stringify({ success: true, message: `Ignored status: ${newStatus}` }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     if (oldRecord && oldRecord.status === record.status) {
       console.log(`[notify-customer] Status do pedido #${targetOrderId} não mudou (${record.status}). Ignorando push duplicado.`);
-      return new Response(JSON.stringify({ success: true, message: 'Status unchanged, ignoring' }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      return new Response(JSON.stringify({ success: true, message: 'Status unchanged, ignoring' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     // Normalização de chave de status para deduplicação (ex: in_route / delivering -> in_transit)
@@ -212,7 +220,7 @@ serve(async (req) => {
     
     if (isDuplicatePush(String(targetOrderId), normStatus)) {
       console.log(`[notify-customer] DEDUPLICAÇÃO ATIVA: Notificação do status '${normStatus}' para o pedido #${targetOrderId} já foi enviada recentemente. Dropando.`);
-      return new Response(JSON.stringify({ success: true, message: `Deduplicated push for status ${normStatus}` }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      return new Response(JSON.stringify({ success: true, message: `Deduplicated push for status ${normStatus}` }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     const STATUS_RANK: Record<string, number> = {
@@ -231,17 +239,19 @@ serve(async (req) => {
     };
 
     // Bloqueio de Notificação Retrocedida (Out-of-Order):
-    // Se o pedido já está num status mais avançado no banco, ignora notificações antigas (ex: 'confirmed' quando já está 'ready' ou 'in_transit').
     if (targetOrderId && newStatus !== 'cancelled') {
       try {
         const cleanId = String(targetOrderId).replace('#', '').trim();
-        const { data: dbOrder } = await adminClient.from('orders').select('status').or(`id.eq.${cleanId},id.ilike.${cleanId}%`).maybeSingle();
-        if (dbOrder && dbOrder.status) {
-          const currentRank = STATUS_RANK[dbOrder.status] || 0;
-          const incomingRank = STATUS_RANK[newStatus] || 0;
-          if (incomingRank > 0 && currentRank > 0 && incomingRank < currentRank) {
-            console.log(`[notify-customer] BLOQUEIO RETROCEDIDO: Notificação '${newStatus}' (rank ${incomingRank}) é menor que o status atual no banco '${dbOrder.status}' (rank ${currentRank}) do pedido #${cleanId}. Dropando.`);
-            return new Response(JSON.stringify({ success: true, message: `Dropped backward status push (${newStatus} < ${dbOrder.status})` }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+        const isUUID = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(cleanId);
+        if (isUUID) {
+          const { data: dbOrder } = await adminClient.from('orders').select('status').eq('id', cleanId).maybeSingle();
+          if (dbOrder && dbOrder.status) {
+            const currentRank = STATUS_RANK[dbOrder.status] || 0;
+            const incomingRank = STATUS_RANK[newStatus] || 0;
+            if (incomingRank > 0 && currentRank > 0 && incomingRank < currentRank) {
+              console.log(`[notify-customer] BLOQUEIO RETROCEDIDO: Notificação '${newStatus}' (rank ${incomingRank}) é menor que o status atual no banco '${dbOrder.status}' (rank ${currentRank}) do pedido #${cleanId}. Dropando.`);
+              return new Response(JSON.stringify({ success: true, message: `Dropped backward status push (${newStatus} < ${dbOrder.status})` }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+            }
           }
         }
       } catch (errRank) {
@@ -253,10 +263,16 @@ serve(async (req) => {
       const cleanId = String(targetOrderId).replace('#', '').trim();
       console.log(`[notify-customer] FORÇANDO ATUALIZAÇÃO ADMIN DE CANCELAMENTO DO PEDIDO #${cleanId}`);
       try {
-        await Promise.all([
-          adminClient.from('orders').update({ status: 'cancelled', updated_at: new Date().toISOString() }).or(`id.eq.${cleanId},id.ilike.${cleanId}%`),
-          adminClient.from('deliveries').update({ status: 'cancelled', updated_at: new Date().toISOString() }).or(`order_id.eq.${cleanId},order_id.ilike.${cleanId}%`),
-          adminClient.from('available_deliveries').update({ status: 'cancelled', updated_at: new Date().toISOString() }).or(`order_id.eq.${cleanId},order_id.ilike.${cleanId}%`),
+        const isUUID = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(cleanId);
+        let actualOrderId = cleanId;
+        if (!isUUID) {
+          const { data: foundOrders } = await adminClient.from('orders').select('id').neq('status', 'cancelled');
+          const matched = foundOrders?.find((o: any) => o.id.toLowerCase().endsWith(cleanId.toLowerCase()) || o.id.toLowerCase().startsWith(cleanId.toLowerCase()));
+          if (matched) actualOrderId = matched.id;
+        }
+        await Promise.allSettled([
+          adminClient.from('orders').update({ status: 'cancelled', updated_at: new Date().toISOString() }).eq('id', actualOrderId),
+          adminClient.from('deliveries').update({ status: 'cancelled', updated_at: new Date().toISOString() }).eq('order_id', actualOrderId),
         ]);
       } catch (errDb) {
         console.error(`[notify-customer] Erro ao atualizar banco para cancelado via adminClient:`, errDb);
@@ -265,7 +281,7 @@ serve(async (req) => {
 
     const msg = statusMessages[newStatus];
     if (!msg) {
-      return new Response(JSON.stringify({ message: `Status '${newStatus}' has no mapping, ignoring` }), { status: 200 });
+      return new Response(JSON.stringify({ message: `Status '${newStatus}' has no mapping, ignoring` }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     let customerId = payload.customer_id || record.customer_id;
@@ -276,12 +292,15 @@ serve(async (req) => {
       let orderData: any = null;
 
       try {
-        const { data: oData } = await adminClient
-          .from('orders')
-          .select('customer_id, user_id')
-          .eq('id', cleanId)
-          .maybeSingle();
-        orderData = oData;
+        const isUUID = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(cleanId);
+        if (isUUID) {
+          const { data: oData } = await adminClient
+            .from('orders')
+            .select('customer_id, user_id')
+            .eq('id', cleanId)
+            .maybeSingle();
+          orderData = oData;
+        }
       } catch {}
 
       if (!orderData) {
@@ -292,7 +311,7 @@ serve(async (req) => {
             .order('created_at', { ascending: false })
             .limit(20);
           if (listOrds && listOrds.length > 0) {
-            orderData = listOrds.find(o => String(o.id).toLowerCase().includes(cleanId.toLowerCase()));
+            orderData = listOrds.find((o: any) => String(o.id).toLowerCase().includes(cleanId.toLowerCase()));
           }
         } catch {}
       }
@@ -351,14 +370,12 @@ serve(async (req) => {
       }
     }
 
-
-
     if (!fcmToken) {
       console.log(`[notify-customer] Nenhum token FCM encontrado no sistema.`);
       if (newStatus === 'cancelled') {
-        return new Response(JSON.stringify({ success: true, message: 'Order status updated to cancelled in DB' }), { status: 200 });
+        return new Response(JSON.stringify({ success: true, message: 'Order status updated to cancelled in DB' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
-      return new Response(JSON.stringify({ message: 'Customer does not have an FCM token' }), { status: 200 });
+      return new Response(JSON.stringify({ message: 'Customer does not have an FCM token' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     const message = {
@@ -407,10 +424,11 @@ serve(async (req) => {
     console.log("[notify-customer] PUSH ENTREGUE PELO FIREBASE:", response);
 
     return new Response(JSON.stringify({ success: true, response }), {
-      headers: { 'Content-Type': 'application/json' },
+      status: 200,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (err: any) {
     console.error("[notify-customer] Erro ao enviar push para o cliente:", err);
-    return new Response(JSON.stringify({ error: err.message }), { status: 500 });
+    return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
 });
