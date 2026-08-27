@@ -42,17 +42,19 @@ export function useCancelOrder() {
         }
       }
 
-      // 2. Atualiza tabelas orders e deliveries no Supabase usando o ID completo (UUID)
-      const results = await Promise.all([
+      // 2. Chama a RPC com SECURITY DEFINER para garantir cancelamento imediato no banco
+      try {
+        await supabase.rpc('cancel_order_customer', { p_order_id: targetId });
+      } catch (errRpc) {
+        console.warn('[useCancelOrder] Aviso RPC cancel_order_customer:', errRpc);
+      }
+
+      // 3. Atualiza tabelas orders e deliveries diretamente no Supabase como garantia adicional
+      const results = await Promise.allSettled([
         supabase.from('orders').update({ status: 'cancelled', updated_at: nowISO }).eq('id', targetId),
         supabase.from('deliveries').update({ status: 'cancelled', updated_at: nowISO }).eq('order_id', targetId),
+        supabase.from('available_deliveries').update({ status: 'cancelled', updated_at: nowISO }).eq('order_id', targetId),
       ]);
-
-      for (const res of results) {
-        if (res.error) {
-          console.error('[useCancelOrder] Erro ao atualizar banco:', res.error);
-        }
-      }
 
       // 3. Se possuir companyId, notifica os lojistas na tabela notifications
       if (companyId) {
