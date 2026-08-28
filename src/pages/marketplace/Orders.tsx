@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, Navigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { Order } from '@/types/database';
@@ -121,7 +121,7 @@ export default function Orders() {
     currentPage * PAGE_SIZE,
   );
 
-  if (!user) { navigate('/marketplace/login'); return null; }
+  if (!user) { return <Navigate to="/marketplace/login" replace />; }
 
   return (
     <MarketplaceLayout>
