@@ -14,13 +14,37 @@ export function useEvaluation() {
         .limit(1);
       
       if (error) {
-        console.error('[useEvaluation] Error checking rating:', error);
-        return true; // Assume true on error to avoid bothering user if DB is down
+        // If aborted or lock contention occurred, try once more quietly
+        const isAbort = 
+          error.message?.toLowerCase().includes('abort') || 
+          error.details?.toLowerCase().includes('abort') ||
+          error.hint?.toLowerCase().includes('abort');
+
+        if (isAbort) {
+          try {
+            const retry = await supabase
+              .from('reviews')
+              .select('id')
+              .eq('order_id', orderId)
+              .limit(1);
+            if (!retry.error) {
+              return !!(retry.data && retry.data.length > 0);
+            }
+          } catch {
+            return false;
+          }
+        }
+
+        console.warn('[useEvaluation] Warning checking rating:', error.message || error);
+        return false;
       }
-      return data && data.length > 0;
-    } catch (err) {
-      console.error('[useEvaluation] Exception checking rating:', err);
-      return true;
+      return !!(data && data.length > 0);
+    } catch (err: any) {
+      if (err?.name === 'AbortError' || err?.message?.toLowerCase().includes('abort')) {
+        return false;
+      }
+      console.warn('[useEvaluation] Exception checking rating:', err?.message || err);
+      return false;
     }
   }, []);
 

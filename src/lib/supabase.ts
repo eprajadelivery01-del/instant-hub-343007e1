@@ -8,6 +8,9 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     persistSession: true,
     autoRefreshToken: true,
     storageKey: 'epraja-marketplace-auth-token',
+    lock: async (_name: string, _acquireTimeout: number, fn: () => Promise<any>) => {
+      return await fn();
+    },
   },
   realtime: {
     params: {
