@@ -1,15 +1,38 @@
 {
-	"appId": "br.com.epraja.appFma",
-	"appName": "É Pra Já - Cliente",
+	"appId": "com.epraja",
+	"appName": "É Pra Já - Delivery",
 	"webDir": "dist",
 	"backgroundColor": "#0D0D0D",
 	"android": {
 		"backgroundColor": "#0D0D0D"
 	},
+	"experimental": {
+		"ios": {
+			"spm": {
+				"packageOptions": {
+					"@capacitor-firebase/messaging": {
+						"symlink": true
+					}
+				}
+			}
+		}
+	},
 	"plugins": {
+		"FirebaseMessaging": {
+			"presentationOptions": [
+				"badge",
+				"sound",
+				"alert"
+			]
+		},
+		"LocalNotifications": {
+			"smallIcon": "ic_launcher",
+			"iconColor": "#FF5722",
+			"sound": "default"
+		},
 		"StatusBar": {
-			"backgroundColor": "#0D0D0D",
-			"style": "DARK",
+			"backgroundColor": "#FFFFFF",
+			"style": "DEFAULT",
 			"overlaysWebView": false
 		},
 		"SplashScreen": {
