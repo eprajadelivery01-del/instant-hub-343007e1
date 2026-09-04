@@ -75,7 +75,11 @@ export async function reportErrorToTelegram(payload: ErrorPayload, appName = "Ma
     "failed to execute 'transaction' on 'idbdatabase'",
     "transaction on 'idbdatabase'",
     "invalidstateerror",
-    "quotaexceedederror"
+    "quotaexceedederror",
+    "importing a module script failed",
+    "failed to fetch dynamically imported module",
+    "chunkloaderror",
+    "loading chunk"
   ];
 
   if (ignoreKeywords.some(keyword => combined.includes(keyword))) {
