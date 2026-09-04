@@ -76,7 +76,7 @@ export async function startBackgroundPrecacheSync(): Promise<void> {
   try {
     const { data: companies, error: compErr } = await supabase
       .from('companies')
-      .select('id, name, description, category, rating, is_open, active, is_active, delivery_fee, delivery_regions_pricing, show_in_marketplace, city, state, banner_url, cover_url, logo_url, business_hours, prep_time_min, prep_time_max, created_at, user_id')
+      .select('id, name, description, category, rating, is_open, active, is_active, delivery_fee, delivery_regions_pricing, show_in_marketplace, city, state, address, phone, banner_url, cover_url, logo_url, business_hours, prep_time, prep_time_min, prep_time_max, created_at, user_id')
       .or('show_in_marketplace.eq.true,is_active.eq.true')
       .order('name', { ascending: true });
 

@@ -18,7 +18,7 @@ registerRouteDataPrefetcher("/marketplace/store", async ({ id }, queryClient, si
         supabase
           .from("companies")
           .select(
-            "id, name, description, category, rating, is_open, active, is_active, delivery_fee, delivery_regions_pricing, show_in_marketplace, city, state, banner_url, cover_url, logo_url, business_hours, prep_time_min, prep_time_max, created_at, user_id"
+            "id, name, description, category, rating, is_open, active, is_active, delivery_fee, delivery_regions_pricing, show_in_marketplace, city, state, address, phone, banner_url, cover_url, logo_url, business_hours, prep_time, prep_time_min, prep_time_max, created_at, user_id"
           )
           .eq("id", id)
           .single(),

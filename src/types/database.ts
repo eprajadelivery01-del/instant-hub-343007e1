@@ -38,6 +38,9 @@ export interface Company {
   is_open?: boolean;
   business_hours?: string | null;
   show_in_marketplace?: boolean | null;
+  address?: string | null;
+  phone?: string | null;
+  prep_time?: number | null;
   prep_time_min?: number | null;
   prep_time_max?: number | null;
   /** JSON array of { region_id, customer_price } set by the merchant */

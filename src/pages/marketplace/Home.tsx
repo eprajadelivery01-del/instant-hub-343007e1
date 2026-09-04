@@ -39,7 +39,7 @@ const categories = [
 type MarketplaceCompany = Company & { products: Product[]; rating: number; isPremium?: boolean };
 
 const COMPANY_LIST_COLUMNS =
-  'id, name, description, category, rating, is_open, active, is_active, delivery_fee, show_in_marketplace, city, state, banner_url, cover_url, logo_url, business_hours, prep_time_min, prep_time_max, created_at';
+  'id, name, description, category, rating, is_open, active, is_active, delivery_fee, show_in_marketplace, city, state, banner_url, cover_url, logo_url, business_hours, prep_time, prep_time_min, prep_time_max, created_at';
 
 import { NotificationBanner } from '@/components/shared/NotificationBanner';
 import { ClientNotificationsPopover } from '@/components/marketplace/ClientNotificationsPopover';

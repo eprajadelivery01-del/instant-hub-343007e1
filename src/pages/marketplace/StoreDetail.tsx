@@ -18,6 +18,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { calculateDeliveryFee } from '@/utils/freight';
 import { Address } from '@/types/database';
 import { StoreCouponsSheet } from '@/components/marketplace/StoreCouponsSheet';
+import { StoreInfoSheet } from '@/components/marketplace/StoreInfoSheet';
 import { useActiveCoupons } from '@/services/coupons';
 import { SafeAreaHeader, safeAreaTopValue } from '@/components/shared/SafeAreaHeader';
 
@@ -36,6 +37,7 @@ export default function StoreDetail() {
   const [isOutOfRange, setIsOutOfRange] = useState(false);
   const [calculatingFee, setCalculatingFee] = useState(false);
   const [isCouponsSheetOpen, setIsCouponsSheetOpen] = useState(false);
+  const [isStoreInfoOpen, setIsStoreInfoOpen] = useState(false);
   const { data: storeCoupons } = useActiveCoupons(id);
   const hasCoupons = storeCoupons && storeCoupons.length > 0;
 
@@ -92,7 +94,7 @@ export default function StoreDetail() {
       try {
         let { data, error } = await supabase
           .from('companies')
-          .select('id, name, description, category, rating, is_open, active, is_active, delivery_fee, delivery_regions_pricing, show_in_marketplace, city, state, banner_url, cover_url, logo_url, business_hours, prep_time_min, prep_time_max, created_at, user_id')
+          .select('id, name, description, category, rating, is_open, active, is_active, delivery_fee, delivery_regions_pricing, show_in_marketplace, city, state, address, phone, banner_url, cover_url, logo_url, business_hours, prep_time, prep_time_min, prep_time_max, created_at, user_id')
           .or(`id.eq.${id},user_id.eq.${id}`)
           .maybeSingle();
 
@@ -105,7 +107,7 @@ export default function StoreDetail() {
             if (guestRes?.session) {
               const retryRes = await supabase
                 .from('companies')
-                .select('id, name, description, category, rating, is_open, active, is_active, delivery_fee, delivery_regions_pricing, show_in_marketplace, city, state, banner_url, cover_url, logo_url, business_hours, prep_time_min, prep_time_max, created_at, user_id')
+                .select('id, name, description, category, rating, is_open, active, is_active, delivery_fee, delivery_regions_pricing, show_in_marketplace, city, state, address, phone, banner_url, cover_url, logo_url, business_hours, prep_time, prep_time_min, prep_time_max, created_at, user_id')
                 .or(`id.eq.${id},user_id.eq.${id}`)
                 .maybeSingle();
               data = retryRes.data;
@@ -119,7 +121,7 @@ export default function StoreDetail() {
         if (!data) {
           const fallbackCompany = await supabase
             .from('companies')
-            .select('id, name, description, category, rating, is_open, active, is_active, delivery_fee, show_in_marketplace, city, state, banner_url, cover_url, logo_url, business_hours, prep_time_min, prep_time_max, user_id')
+            .select('id, name, description, category, rating, is_open, active, is_active, delivery_fee, show_in_marketplace, city, state, address, phone, banner_url, cover_url, logo_url, business_hours, prep_time, prep_time_min, prep_time_max, user_id')
             .or(`id.eq.${id},user_id.eq.${id}`)
             .maybeSingle();
           companyData = fallbackCompany.data;
@@ -470,6 +472,16 @@ export default function StoreDetail() {
                   </>
                 )}
               </div>
+
+              {company.description && (
+                <p 
+                  onClick={() => setIsStoreInfoOpen(true)}
+                  title="Clique para ver mais informações da loja"
+                  className="mt-2.5 text-xs font-medium text-muted-foreground line-clamp-2 leading-relaxed cursor-pointer hover:text-foreground transition-colors"
+                >
+                  {company.description}
+                </p>
+              )}
             </div>
             
             <div className="relative shrink-0">
@@ -504,10 +516,13 @@ export default function StoreDetail() {
               <Clock className="h-3.5 w-3.5 text-muted-foreground" />
               <span className="text-xs font-bold text-foreground">{getPrepTimeLabel(company as any)}</span>
             </div>
-            <div className="flex items-center gap-1.5 rounded-xl bg-secondary/60 px-3 py-1.5">
-              <Info className="h-3.5 w-3.5 text-muted-foreground" />
+            <button
+              onClick={() => setIsStoreInfoOpen(true)}
+              className="flex items-center gap-1.5 rounded-xl bg-secondary/60 hover:bg-secondary px-3 py-1.5 cursor-pointer active:scale-95 transition-all text-left group"
+            >
+              <Info className="h-3.5 w-3.5 text-primary group-hover:scale-110 transition-transform" />
               <span className="text-xs font-bold text-foreground">Ver mais</span>
-            </div>
+            </button>
           </div>
 
           <div className="mt-4 flex flex-wrap items-center gap-2">
@@ -743,6 +758,12 @@ export default function StoreDetail() {
           companyId={id}
         />
       )}
+
+      <StoreInfoSheet
+        isOpen={isStoreInfoOpen}
+        onOpenChange={setIsStoreInfoOpen}
+        company={company}
+      />
     </MarketplaceLayout>
   );
 }
