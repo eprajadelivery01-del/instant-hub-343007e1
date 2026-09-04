@@ -69,15 +69,23 @@ export default function StoreDetail() {
   const formatCategoryName = (cat: string) => categoryDisplayNames[cat] || cat;
 
   useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 150);
-    window.addEventListener('scroll', handleScroll);
+    let ticking = false;
+    let lastScrolled = false;
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const currentScrolled = window.scrollY > 150;
+          if (currentScrolled !== lastScrolled) {
+            lastScrolled = currentScrolled;
+            setIsScrolled(currentScrolled);
+          }
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  const [minuteTick, setMinuteTick] = useState(0);
-  useEffect(() => {
-    const timer = setInterval(() => setMinuteTick(t => t + 1), 60000);
-    return () => clearInterval(timer);
   }, []);
 
   // Uses local pre-cached data as initialData for instant 0ms rendering
@@ -179,7 +187,8 @@ export default function StoreDetail() {
           .from('addresses')
           .select('*')
           .eq('user_id', user.id)
-          .order('created_at', { ascending: false });
+          .order('created_at', { ascending: false })
+          .limit(1);
 
         if (addresses && addresses.length > 0) {
           const addr = addresses[0]; // Pega o mais recente

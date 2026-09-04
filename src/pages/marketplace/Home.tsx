@@ -136,7 +136,7 @@ export default function Home() {
             const ratingValue =
               company.rating && Number(company.rating) > 0
                 ? Number(company.rating)
-                : 4.5 + Math.random() * 0.5;
+                : 4.8;
 
             const rawProds = ((company as any).products && (company as any).products.length > 0)
               ? (company as any).products

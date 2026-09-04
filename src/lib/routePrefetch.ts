@@ -82,7 +82,7 @@ export function registerRouteDataPrefetcher(loaderKey: string, fn: DataPrefetche
 // ---------- Concurrency limiter + throttle ----------
 
 const MAX_CONCURRENT = 2;
-const HOVER_DWELL_MS = 80; // user must linger this long before we prefetch
+const HOVER_DWELL_MS = 180; // user must linger this long before we prefetch
 const COMMIT_DWELL_MS = 0; // pointerdown/touchstart fires immediately
 
 let inFlight = 0;

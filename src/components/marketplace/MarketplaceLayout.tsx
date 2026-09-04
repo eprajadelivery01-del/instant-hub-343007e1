@@ -85,7 +85,9 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
         const { data, error } = await supabase
           .from('orders')
           .select('status, deliveries(status)')
-          .or(`customer_id.eq.${user.id},user_id.eq.${user.id}`);
+          .or(`customer_id.eq.${user.id},user_id.eq.${user.id}`)
+          .order('created_at', { ascending: false })
+          .limit(20);
 
         if (error) throw error;
         

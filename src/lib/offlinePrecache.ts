@@ -19,10 +19,12 @@ export function loadPrecacheFromStorage() {
     if (cachedCompRaw) {
       memoryCompanies = JSON.parse(cachedCompRaw);
     }
-
+    // Carrega produtos sob demanda para não bloquear o parsing inicial do bundle
     const cachedProdRaw = localStorage.getItem(STORAGE_KEY_PRODUCTS);
     if (cachedProdRaw) {
-      memoryProductsByStore = JSON.parse(cachedProdRaw);
+      try {
+        memoryProductsByStore = JSON.parse(cachedProdRaw);
+      } catch {}
     }
   } catch (e) {
     console.warn('[Precache] Error loading from storage:', e);
@@ -64,52 +66,42 @@ export function getCachedStoreData(storeId: string | undefined): PrecachedStoreD
 }
 
 export async function startBackgroundPrecacheSync(): Promise<void> {
-  loadPrecacheFromStorage();
-
   const lastSync = localStorage.getItem(STORAGE_KEY_TIMESTAMP);
   const now = Date.now();
   if (lastSync && now - Number(lastSync) < 30 * 60 * 1000 && memoryCompanies && memoryCompanies.length > 0) {
-    console.log('[Precache] Cache local recente. Evitando requisição desnecessária no banco.');
     return;
   }
 
-  try {
-    const { data: companies, error: compErr } = await supabase
-      .from('companies')
-      .select('id, name, description, category, rating, is_open, active, is_active, delivery_fee, delivery_regions_pricing, show_in_marketplace, city, state, address, phone, banner_url, cover_url, logo_url, business_hours, prep_time, prep_time_min, prep_time_max, created_at, user_id')
-      .or('show_in_marketplace.eq.true,is_active.eq.true')
-      .order('name', { ascending: true });
+  // Executa em idle/background de forma não-bloqueante
+  const runner = async () => {
+    try {
+      const { data: companies, error: compErr } = await supabase
+        .from('companies')
+        .select('id, name, description, category, rating, is_open, active, is_active, delivery_fee, delivery_regions_pricing, show_in_marketplace, city, state, address, phone, banner_url, cover_url, logo_url, business_hours, prep_time, prep_time_min, prep_time_max, created_at, user_id')
+        .or('show_in_marketplace.eq.true,is_active.eq.true')
+        .order('name', { ascending: true })
+        .limit(50);
 
-    if (!compErr && companies && companies.length > 0) {
-      memoryCompanies = companies as Company[];
-      localStorage.setItem(STORAGE_KEY_COMPANIES, JSON.stringify(companies));
+      if (!compErr && companies && companies.length > 0) {
+        memoryCompanies = companies as Company[];
+        try {
+          localStorage.setItem(STORAGE_KEY_COMPANIES, JSON.stringify(companies));
+          localStorage.setItem(STORAGE_KEY_TIMESTAMP, Date.now().toString());
+        } catch {}
+      }
+    } catch (e) {
+      console.warn('[Precache] Falha suave no pré-carregamento:', e);
     }
+  };
 
-    const { data: products, error: prodErr } = await supabase
-      .from('products')
-      .select('*')
-      .eq('active', true)
-      .order('category')
-      .order('sort_order', { ascending: true })
-      .order('created_at', { ascending: true });
-
-    if (!prodErr && products && products.length > 0) {
-      const grouped: Record<string, Product[]> = {};
-      products.forEach((prod: any) => {
-        if (prod.company_id) {
-          if (!grouped[prod.company_id]) grouped[prod.company_id] = [];
-          grouped[prod.company_id].push(prod as Product);
-        }
-      });
-
-      memoryProductsByStore = grouped;
-      localStorage.setItem(STORAGE_KEY_PRODUCTS, JSON.stringify(grouped));
-      localStorage.setItem(STORAGE_KEY_TIMESTAMP, Date.now().toString());
-      console.log(`[Precache] Pré-carregamento concluído! ${companies?.length || 0} lojas e ${products.length} produtos armazenados permanentemente.`);
-    }
-  } catch (e) {
-    console.warn('[Precache] Falha no pré-carregamento em segundo plano:', e);
+  if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+    (window as any).requestIdleCallback(() => runner(), { timeout: 4000 });
+  } else {
+    setTimeout(() => runner(), 1500);
   }
 }
 
-loadPrecacheFromStorage();
+// Inicialização preguiçosa não bloqueante
+if (typeof window !== 'undefined') {
+  setTimeout(() => loadPrecacheFromStorage(), 100);
+}
