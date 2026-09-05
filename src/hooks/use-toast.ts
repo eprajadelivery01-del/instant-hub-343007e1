@@ -140,19 +140,27 @@ function toast({ ...props }: Toast) {
   if (props.variant === "destructive") {
     const title = typeof props.title === "string" ? props.title : "Alerta de Erro";
     const description = typeof props.description === "string" ? props.description : "";
+    const fullText = `${title} ${description}`.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     
-    import("@/services/logger").then(({ reportErrorToTelegram }) => {
-      reportErrorToTelegram({
-        error_message: `Alerta para o Usuário: [${title}] - ${description}`,
-        stack_trace: "Toast de Erro exibido na tela do usuário.",
-        url: window.location.href,
-        additional_info: {
-          isUserFacingAlert: true,
-          toastTitle: title,
-          toastDescription: description
-        }
-      }, "Marketplace Cliente").catch(() => {});
-    }).catch(() => {});
+    if (
+      !fullText.includes("cupom") &&
+      !fullText.includes("invalido") &&
+      !fullText.includes("invalida") &&
+      !fullText.includes("expirou")
+    ) {
+      import("@/services/logger").then(({ reportErrorToTelegram }) => {
+        reportErrorToTelegram({
+          error_message: `Alerta para o Usuário: [${title}] - ${description}`,
+          stack_trace: "Toast de Erro exibido na tela do usuário.",
+          url: window.location.href,
+          additional_info: {
+            isUserFacingAlert: true,
+            toastTitle: title,
+            toastDescription: description
+          }
+        }, "Marketplace Cliente").catch(() => {});
+      }).catch(() => {});
+    }
   }
   const update = (props: ToasterToast) =>
     dispatch({

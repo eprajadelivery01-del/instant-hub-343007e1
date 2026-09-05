@@ -45,8 +45,17 @@ sonnerToast.error = function (message: any, options: any) {
     text = "Falha de conexão. Verifique sua internet e tente nãovamente.";
   }
 
-  if (lower.includes("offline")) {
-    return originalError.apply(this, arguments as any);
+  const lowerNorm = lower.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  if (
+    lowerNorm.includes("offline") ||
+    lowerNorm.includes("cupom") ||
+    lowerNorm.includes("expirou") ||
+    lowerNorm.includes("invalido") ||
+    lowerNorm.includes("invalida") ||
+    lowerNorm.includes("exclusivo de outra loja") ||
+    lowerNorm.includes("valor minimo para aplicar")
+  ) {
+    return originalError.call(this, text, toastOptions as any);
   }
 
   // Erros do checkout com request_id já ficam registrados não audit_logs da
