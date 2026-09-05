@@ -19,38 +19,37 @@ export async function reportErrorToTelegram(payload: ErrorPayload, appName = "Ma
   }
 
   // Ignore specific harmless user-facing errors
-  const msg = (payload.error_message || "").toLowerCase();
-  const additionalStr = JSON.stringify(payload.additional_info || {}).toLowerCase();
-  const combined = `${msg} ${additionalStr}`;
+  const norm = (str: string) => (str || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const combined = norm(
+    (payload.error_message || "") + " " + 
+    (payload.stack_trace || "") + " " + 
+    JSON.stringify(payload.additional_info || {})
+  );
 
   const ignoreKeywords = [
     "aps-environment",
-    "código de autorização",
     "codigo de autorizacao",
-    "nenhum código de autorização",
     "nenhum codigo de autorizacao",
     "authorization",
     "apns",
     "erro no registro de push",
     "falha ao registrar push",
     "deliveryoverlay is not defined",
-    "permissão de sobreposição",
     "permissao de sobreposicao",
-    "corrida já foi aceita",
     "corrida ja foi aceita",
     "esta corrida ja foi aceita",
-    "esta corrida já foi aceita",
-    "ops! já foi aceita",
     "ops! ja foi aceita",
     "esta corrida ja pertence a outro entregador",
-    "esta corrida já pertence a outro entregador",
     "erro na entrega",
     "senha",
-    "inválida",
     "invalida",
+    "invalido",
+    "cupom",
+    "expirou",
+    "exclusivo de outra loja",
+    "valor minimo para aplicar",
     "credenciais",
     "offline",
-    "não encontrada",
     "nao encontrada",
     "failed to fetch",
     "fetch failed",
