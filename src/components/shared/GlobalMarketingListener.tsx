@@ -21,6 +21,9 @@ const statusMessages: Record<string, { title: string; description: string; icon:
   cancelled: { title: '❌ Pedido cancelado', description: 'Seu pedido foi cancelado.', icon: '❌' },
 };
 
+const notifiedOrdersMap = new Map<string, string>();
+const lastNotificationTimeMap = new Map<string, number>();
+
 export function GlobalMarketingListener() {
   const { user } = useAuth();
   const userOrderIdsRef = useRef<Set<string>>(new Set());
@@ -191,27 +194,37 @@ export function GlobalMarketingListener() {
           if (!isMyOrder) return;
 
           const newStatus = order.status;
-          const oldStatus = payload.old?.status;
+          if (!newStatus) return;
 
-          console.log("[TESTE] STATUS ATUAL:", newStatus);
+          const notifKey = `${order.id}_${newStatus}`;
+          const lastStatus = notifiedOrdersMap.get(order.id);
+          const lastTime = lastNotificationTimeMap.get(notifKey) || 0;
+          const now = Date.now();
 
-          if (newStatus && newStatus !== oldStatus) {
-            const msg = statusMessages[newStatus];
-            if (msg) {
-              console.log("[TESTE] PUSH RECEBIDO - NOTIFICAÇÃO SALVA E TOAST EXIBIDO:", msg);
-              playNotificationAudio();
+          // Trava anti-duplicação rigorosa: se já notificou este mesmo status ou disparou nos últimos 60 segundos, descarta
+          if (lastStatus === newStatus || (now - lastTime < 60000)) {
+            return;
+          }
 
-              triggerNativeNotification({
-                title: msg.title,
-                message: msg.description,
-                emoji: msg.icon
-              }, swRegRef.current);
+          notifiedOrdersMap.set(order.id, newStatus);
+          lastNotificationTimeMap.set(notifKey, now);
 
-              toast.info(msg.title, {
-                description: msg.description,
-                duration: 10000,
-              });
-            }
+          const msg = statusMessages[newStatus];
+          if (msg) {
+            playNotificationAudio();
+
+            triggerNativeNotification({
+              title: msg.title,
+              message: msg.description,
+              emoji: msg.icon
+            }, swRegRef.current);
+
+            // Usa ID determinístico para nunca empilhar notificações repetidas
+            toast.info(msg.title, {
+              id: `order-status-${order.id}`,
+              description: msg.description,
+              duration: 5000,
+            });
           }
         }
       )
@@ -231,32 +244,38 @@ export function GlobalMarketingListener() {
             Boolean(delivery.order_id) &&
             (myOrderIds.includes(delivery.order_id) || userOrderIdsRef.current.has(delivery.order_id));
 
-          console.log('[TESTE] REALTIME DELIVERY UPDATE:', { deliveryId: delivery.id, orderId: delivery.order_id, status: delivery.status, isMyDelivery });
-
           if (!isMyDelivery) return;
 
           const newStatus = delivery.status;
-          const oldStatus = payload.old?.status;
+          if (!newStatus || !delivery.order_id) return;
 
-          console.log("[TESTE] DELIVERY STATUS:", newStatus);
+          const notifKey = `${delivery.order_id}_${newStatus}`;
+          const lastStatus = notifiedOrdersMap.get(delivery.order_id);
+          const lastTime = lastNotificationTimeMap.get(notifKey) || 0;
+          const now = Date.now();
 
-          if (newStatus && newStatus !== oldStatus) {
-            const msg = statusMessages[newStatus];
-            if (msg) {
-              console.log("[TESTE] PUSH ENVIADO PARA O CLIENTE (Delivery status):", msg);
-              playNotificationAudio();
+          if (lastStatus === newStatus || (now - lastTime < 60000)) {
+            return;
+          }
 
-              triggerNativeNotification({
-                title: msg.title,
-                message: msg.description,
-                emoji: msg.icon
-              }, swRegRef.current);
+          notifiedOrdersMap.set(delivery.order_id, newStatus);
+          lastNotificationTimeMap.set(notifKey, now);
 
-              toast.info(msg.title, {
-                description: msg.description,
-                duration: 10000,
-              });
-            }
+          const msg = statusMessages[newStatus];
+          if (msg) {
+            playNotificationAudio();
+
+            triggerNativeNotification({
+              title: msg.title,
+              message: msg.description,
+              emoji: msg.icon
+            }, swRegRef.current);
+
+            toast.info(msg.title, {
+              id: `order-status-${delivery.order_id}`,
+              description: msg.description,
+              duration: 5000,
+            });
           }
         }
       )

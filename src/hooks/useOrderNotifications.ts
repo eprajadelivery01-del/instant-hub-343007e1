@@ -528,6 +528,8 @@ export function useOrderNotifications() {
       return false;
     };
 
+    const lastNotifiedStatusMap = new Map<string, string>();
+
     const handleOrderNotification = async (orderId: string) => {
       try {
         const { data: ord } = await supabase
@@ -541,7 +543,13 @@ export function useOrderNotifications() {
         if (ord.status === 'pending') return; // NUNCA dispara toast/notificacao para status pending
 
         const computed = getMarketplaceStatus(ord);
+        if (lastNotifiedStatusMap.get(ord.id) === computed.statusKey) {
+          return; // Já foi notificado sobre este status, descarta repetição
+        }
+        lastNotifiedStatusMap.set(ord.id, computed.statusKey);
+
         toast(computed.title, {
+          id: `order-status-${ord.id}`,
           description: `${computed.label} (Pedido #${ord.id.slice(0, 8)})`,
           duration: 5000,
           action: {
