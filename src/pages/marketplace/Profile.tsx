@@ -8,11 +8,12 @@ import MarketplaceLayout from '@/components/marketplace/MarketplaceLayout';
 import { toast } from 'sonner';
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { SupportChat } from '@/components/chat/SupportChat';
+import { OrderStoreChat } from '@/components/marketplace/OrderStoreChat';
 import { cn } from '@/lib/utils';
 import {
   LogOut, MapPin, ChevronRight, Loader2,
   Bike, FileText, ShieldCheck, Moon, Sun,
-  Wallet, HelpCircle, X, Check,
+  Wallet, HelpCircle, X, Check, MessageCircle,
   Package, Clock, CheckCircle2, XCircle, Truck, Ticket, Copy,
   ShoppingBag, ArrowUpRight, Plus, Trophy, Cog, User as UserIcon, LogIn
 } from 'lucide-react';
@@ -39,6 +40,8 @@ export default function Profile() {
   const [showCoupons, setShowCoupons] = useState(false);
   const [coupons, setCoupons] = useState<any[]>([]);
   const [loadingCoupons, setLoadingCoupons] = useState(false);
+  const [showConversations, setShowConversations] = useState(false);
+  const [selectedOrderChat, setSelectedOrderChat] = useState<{ orderId: string; companyId: string; companyName?: string } | null>(null);
 
   useEffect(() => {
     setFullName(profile?.full_name || '');
@@ -46,8 +49,8 @@ export default function Profile() {
   }, [profile]);
 
   useEffect(() => {
-    if (!user || isGuest) return;
     fetchOrders();
+    if (!user || isGuest) return;
     fetchCoupons(false);
   }, [user, isGuest]);
 
@@ -98,14 +101,36 @@ export default function Profile() {
   };
 
   const fetchOrders = async () => {
-    if (!user?.id) return;
+    if (!user?.id) {
+      try {
+        const localOrders = JSON.parse(localStorage.getItem('@epraja_recent_orders') || '[]');
+        const lastOrderId = localStorage.getItem('last_order_id');
+        const ids = [...new Set([...localOrders, lastOrderId].filter(Boolean))];
+        if (ids.length > 0) {
+          setLoadingOrders(true);
+          const { data } = await supabase
+            .from('orders')
+            .select(`
+              id, company_id, status, total, created_at,
+              companies ( id, name, logo_url )
+            `)
+            .in('id', ids)
+            .order('created_at', { ascending: false })
+            .limit(10);
+          setOrders(data || []);
+        }
+      } catch { /* silent */ }
+      finally { setLoadingOrders(false); }
+      return;
+    }
+
     setLoadingOrders(true);
     try {
       const { data } = await supabase
         .from('orders')
         .select(`
-          id, status, total, created_at,
-          companies ( name, logo_url )
+          id, company_id, status, total, created_at,
+          companies ( id, name, logo_url )
         `)
         .or(`customer_id.eq.${user.id},user_id.eq.${user.id}`)
         .order('created_at', { ascending: false })
@@ -199,6 +224,7 @@ export default function Profile() {
                 {[
                   { icon: MapPin, label: 'Endereços', subtitle: 'Escolha a cidade para entrega', onClick: () => navigate('/marketplace/addresses') },
                   { icon: ShoppingBag, label: 'Meus Pedidos', subtitle: 'Faça login para ver seu histórico', onClick: () => navigate('/marketplace/login') },
+                  { icon: MessageCircle, label: 'Conversas', subtitle: 'Chat com lojas e suporte', onClick: () => setShowConversations(true) },
                   { icon: Ticket, label: 'Cupons de Desconto', subtitle: 'Veja as promoções disponíveis', onClick: () => fetchCoupons(true) },
                   { icon: theme === 'dark' ? Sun : Moon, label: 'Aparência', subtitle: theme === 'dark' ? 'Modo escuro' : 'Modo claro', onClick: () => toggleTheme(), isThemeToggle: true },
                   { icon: HelpCircle, label: 'Central de Ajuda', subtitle: 'Fale com o suporte', onClick: () => setSupportType('support') },
@@ -517,6 +543,13 @@ export default function Profile() {
             <div className="rounded-3xl bg-card border border-border overflow-hidden divide-y divide-border">
               {[
                 { icon: MapPin, label: 'Endereços', subtitle: 'Locais de entrega', onClick: () => navigate('/marketplace/addresses') },
+                { 
+                  icon: MessageCircle, 
+                  label: 'Conversas', 
+                  subtitle: 'Chat com lojas e suporte', 
+                  badge: orders.some(o => !['delivered', 'completed', 'cancelled'].includes(o.status)) ? 'Ativo' : undefined,
+                  onClick: () => setShowConversations(true) 
+                },
                 { icon: Wallet, label: 'Carteira', subtitle: 'Saldo e transações', onClick: () => toast('Em breve!') },
                 { icon: theme === 'dark' ? Sun : Moon, label: 'Aparência', subtitle: theme === 'dark' ? 'Modo escuro ativo' : 'Modo claro ativo', onClick: () => toggleTheme(), isThemeToggle: true },
               ].map((item: any) => (
@@ -529,7 +562,14 @@ export default function Profile() {
                     <item.icon className="h-[16px] w-[16px] text-foreground/75" />
                   </div>
                   <div className="flex-1 min-w-0 text-left">
-                    <p className="text-[14px] font-display font-semibold tracking-tight">{item.label}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-[14px] font-display font-semibold tracking-tight">{item.label}</p>
+                      {item.badge && (
+                        <span className="px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-primary text-white leading-none">
+                          {item.badge}
+                        </span>
+                      )}
+                    </div>
                     <p className="text-[11px] text-muted-foreground mt-0.5 truncate">{item.subtitle}</p>
                   </div>
                   {item.isThemeToggle ? (
@@ -738,6 +778,154 @@ export default function Profile() {
           </div>
         </SheetContent>
       </Sheet>
+
+      {/* Conversations List Sheet */}
+      <Sheet open={showConversations} onOpenChange={setShowConversations}>
+        <SheetContent side="bottom" hideClose className="h-[85vh] rounded-t-[3rem] border-none p-0 shadow-2xl" aria-describedby={undefined}>
+          <SheetTitle className="sr-only">Conversas</SheetTitle>
+          <div className="h-full flex flex-col bg-background">
+            <div className="px-8 pt-8 pb-6 flex items-center justify-between border-b border-border shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center">
+                  <MessageCircle className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-black text-foreground tracking-tight">Conversas</h3>
+                  <p className="text-[11px] text-muted-foreground">Lojas, pedidos e suporte</p>
+                </div>
+              </div>
+              <button onClick={() => setShowConversations(false)} className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+                <X className="h-5 w-5 text-muted-foreground" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-6 space-y-5">
+              {/* Suporte da Plataforma */}
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-2 px-1">Atendimento É Pra Já</p>
+                <button
+                  onClick={() => {
+                    setShowConversations(false);
+                    setSupportType('support');
+                  }}
+                  className="w-full p-4 rounded-2xl bg-card border border-border flex items-center gap-3.5 hover:bg-muted/40 transition-colors text-left"
+                >
+                  <div className="w-11 h-11 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
+                    <HelpCircle className="h-5 w-5 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-bold text-foreground">Suporte da Plataforma</p>
+                      <span className="text-[10px] font-semibold text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full">Online</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-0.5 truncate">Tire dúvidas sobre pagamentos, conta e entregas</p>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground/60 shrink-0" />
+                </button>
+              </div>
+
+              {/* Conversas com Lojas */}
+              <div>
+                <div className="flex items-center justify-between mb-2 px-1">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Lojas e Pedidos</p>
+                  {orders.length > 0 && (
+                    <span className="text-[10px] text-muted-foreground font-medium">{orders.length} pedidos</span>
+                  )}
+                </div>
+
+                {loadingOrders ? (
+                  <div className="py-12 flex items-center justify-center">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  </div>
+                ) : orders.length === 0 ? (
+                  <div className="py-12 px-4 rounded-2xl bg-card border border-dashed border-border flex flex-col items-center text-center gap-2">
+                    <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+                      <ShoppingBag className="h-6 w-6 text-muted-foreground/60" />
+                    </div>
+                    <p className="text-sm font-bold text-foreground">Nenhuma conversa de pedido</p>
+                    <p className="text-xs text-muted-foreground max-w-[240px]">
+                      Quando você fizer um pedido, o chat direto com o restaurante aparecerá aqui.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-2.5">
+                    {orders.map((ord) => {
+                      const isActive = !['delivered', 'completed', 'cancelled'].includes(ord.status);
+                      const storeName = ord.companies?.name || 'Restaurante';
+                      const storeLogo = ord.companies?.logo_url;
+                      const orderCode = `#${ord.id.slice(-6).toUpperCase()}`;
+
+                      return (
+                        <button
+                          key={ord.id}
+                          onClick={() => {
+                            setSelectedOrderChat({
+                              orderId: ord.id,
+                              companyId: ord.company_id || ord.companies?.id,
+                              companyName: storeName,
+                            });
+                          }}
+                          className={cn(
+                            "w-full p-3.5 rounded-2xl border transition-all text-left flex items-center gap-3.5",
+                            isActive 
+                              ? "bg-primary/5 border-primary/30 shadow-sm" 
+                              : "bg-card border-border hover:bg-muted/40"
+                          )}
+                        >
+                          <div className="w-11 h-11 rounded-xl bg-muted overflow-hidden shrink-0 border border-border flex items-center justify-center font-bold text-sm text-foreground/80">
+                            {storeLogo ? (
+                              <img src={storeLogo} alt={storeName} className="w-full h-full object-cover" />
+                            ) : (
+                              storeName.charAt(0).toUpperCase()
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-1">
+                              <p className="text-sm font-bold text-foreground truncate">{storeName}</p>
+                              {isActive ? (
+                                <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full shrink-0">
+                                  Em andamento
+                                </span>
+                              ) : (
+                                <span className="text-[10px] text-muted-foreground shrink-0">
+                                  Finalizado
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <span className="text-xs text-muted-foreground font-mono">{orderCode}</span>
+                              <span className="text-[10px] text-muted-foreground">• Toque para abrir o chat</span>
+                            </div>
+                          </div>
+                          <ChevronRight className="h-4 w-4 text-muted-foreground/60 shrink-0" />
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Sheet de Chat com a Loja específica selecionada */}
+      {selectedOrderChat && (
+        <Sheet open={!!selectedOrderChat} onOpenChange={(open) => !open && setSelectedOrderChat(null)}>
+          <SheetContent side="bottom" hideClose className="h-[90vh] rounded-t-[2.5rem] border-none p-0 shadow-2xl overflow-hidden" aria-describedby={undefined}>
+            <SheetTitle className="sr-only">Chat com a Loja</SheetTitle>
+            <div className="h-full bg-background flex flex-col">
+              <OrderStoreChat
+                orderId={selectedOrderChat.orderId}
+                companyId={selectedOrderChat.companyId}
+                companyName={selectedOrderChat.companyName}
+                onClose={() => setSelectedOrderChat(null)}
+                fullHeight
+              />
+            </div>
+          </SheetContent>
+        </Sheet>
+      )}
 
     </MarketplaceLayout>
   );

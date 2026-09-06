@@ -3,12 +3,16 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Send, Loader2, Store } from 'lucide-react';
+import { Send, Loader2, Store, X } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface OrderStoreChatProps {
   orderId: string;
   companyId: string;
   companyName?: string | null;
+  fullHeight?: boolean;
+  className?: string;
+  onClose?: () => void;
 }
 
 interface Msg {
@@ -23,7 +27,7 @@ interface Msg {
  * Uses conversations + messages.
  * Becomes available as soon as the order is accepted by the merchant.
  */
-export function OrderStoreChat({ orderId, companyId, companyName }: OrderStoreChatProps) {
+export function OrderStoreChat({ orderId, companyId, companyName, fullHeight, className, onClose }: OrderStoreChatProps) {
   const { user } = useAuth();
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Msg[]>([]);
@@ -164,12 +168,33 @@ export function OrderStoreChat({ orderId, companyId, companyName }: OrderStoreCh
   };
 
   return (
-    <div className="mt-3">
-      <div className="flex items-center gap-2 mb-2 text-xs text-muted-foreground">
-        <Store className="h-3.5 w-3.5" />
-        <span>Conversa com {companyName || 'o lojista'}</span>
-      </div>
-      <div className="h-52 overflow-y-auto space-y-2 mb-3 p-3 border border-border rounded-xl bg-secondary/30">
+    <div className={className || "mt-3 flex flex-col h-full"}>
+      {onClose && (
+        <div className="flex items-center justify-between p-4 border-b border-border bg-card shrink-0">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
+              <Store className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-foreground leading-tight">{companyName || 'Lojista'}</p>
+              <p className="text-[10px] text-muted-foreground font-mono">Pedido #{orderId.slice(-6).toUpperCase()}</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+            <X className="h-4 w-4 text-muted-foreground" />
+          </button>
+        </div>
+      )}
+      {!fullHeight && !onClose && (
+        <div className="flex items-center gap-2 mb-2 text-xs text-muted-foreground">
+          <Store className="h-3.5 w-3.5" />
+          <span>Conversa com {companyName || 'o lojista'}</span>
+        </div>
+      )}
+      <div className={cn(
+        "overflow-y-auto space-y-2.5 p-3 border border-border rounded-2xl bg-secondary/20 flex-1 min-h-0",
+        fullHeight ? "my-3 mx-4" : "h-52 mb-3 rounded-xl bg-secondary/30"
+      )}>
         {loading ? (
           <div className="flex items-center justify-center h-full">
             <Loader2 className="h-5 w-5 animate-spin text-primary" />
@@ -181,16 +206,22 @@ export function OrderStoreChat({ orderId, companyId, companyName }: OrderStoreCh
         ) : (
           messages.map((m) => {
             const isMe = m.sender_id === user?.id;
+            const content = (m as any).content || m.message;
             return (
               <div key={m.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
                 <div
-                  className={`rounded-2xl px-3 py-2 max-w-[80%] text-sm ${
+                  className={`rounded-2xl px-3.5 py-2.5 max-w-[85%] text-xs shadow-2xs whitespace-pre-line leading-relaxed ${
                     isMe
-                      ? 'bg-primary text-primary-foreground rounded-br-md'
-                      : 'bg-card text-foreground rounded-bl-md border border-border'
+                      ? 'bg-primary text-primary-foreground rounded-br-xs font-medium'
+                      : 'bg-card text-foreground rounded-bl-xs border border-border/80'
                   }`}
                 >
-                  {(m as any).content || m.message}
+                  <p>{content}</p>
+                  {m.created_at && (
+                    <span className={`text-[9px] block text-right mt-1 ${isMe ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}>
+                      {new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  )}
                 </div>
               </div>
             );

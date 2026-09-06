@@ -16,6 +16,7 @@ import { ClientNotificationsPopover } from './ClientNotificationsPopover';
 import { HeaderActionButton } from '../shared/HeaderActionButton';
 import { MediaImage } from '../shared/MediaImage';
 import { getAvatarImage } from '@/lib/media';
+import { ActiveOrderChatFab } from './ActiveOrderChatFab';
 
 const navItems = [
   { path: '/marketplace', icon: Home, label: 'Início' },
@@ -224,6 +225,7 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
           </Link>
         </div>
       )}
+      <ActiveOrderChatFab />
     </>
   );
 
