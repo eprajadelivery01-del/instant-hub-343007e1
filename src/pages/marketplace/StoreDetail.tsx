@@ -24,6 +24,32 @@ import { SafeAreaHeader, safeAreaTopValue } from '@/components/shared/SafeAreaHe
 
 import { getCachedStoreData } from '@/lib/offlinePrecache';
 
+let guestAuthPromise: Promise<boolean> | null = null;
+async function ensureAuthenticated() {
+  try {
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (sessionData?.session) return true;
+    if (guestAuthPromise) return guestAuthPromise;
+
+    guestAuthPromise = (async () => {
+      try {
+        const res = await supabase.auth.signInWithPassword({
+          email: 'guest_client_marketplace@epraja.com',
+          password: 'GuestClient123!'
+        });
+        return !!res.data?.session;
+      } catch {
+        return false;
+      } finally {
+        setTimeout(() => { guestAuthPromise = null; }, 15000);
+      }
+    })();
+    return await guestAuthPromise;
+  } catch {
+    return false;
+  }
+}
+
 export default function StoreDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -93,40 +119,30 @@ export default function StoreDetail() {
     queryKey: ['store', id],
     enabled: !!id,
     staleTime: 5 * 60 * 1000,
-    initialData: () => getCachedStoreData(id),
+    refetchOnWindowFocus: false,
+    retry: 1,
+    initialData: () => {
+      const cached = getCachedStoreData(id);
+      if (cached && cached.products && cached.products.length > 0) {
+        return cached;
+      }
+      return undefined;
+    },
     queryFn: async () => {
       let companyData: any = null;
       let productsData: any[] = [];
+
+      await ensureAuthenticated();
 
       // 1. Busca dados da empresa com produtos embutidos em consulta única de alta velocidade
       try {
         const COMPANY_QUERY = 'id, name, description, category, rating, is_open, active, is_active, delivery_fee, delivery_regions_pricing, show_in_marketplace, city, state, address, phone, banner_url, cover_url, logo_url, business_hours, prep_time, prep_time_min, prep_time_max, created_at, user_id, products(id, company_id, name, description, price, image_url, category, active, sort_order, is_featured, created_at)';
 
-        let { data, error } = await supabase
+        let { data } = await supabase
           .from('companies')
           .select(COMPANY_QUERY)
           .or(`id.eq.${id},user_id.eq.${id}`)
           .maybeSingle();
-
-        if (error && (error.code === '42501' || error.message?.includes('permission denied'))) {
-          try {
-            const { data: guestRes } = await supabase.auth.signInWithPassword({
-              email: 'guest_client_marketplace@epraja.com',
-              password: 'GuestClient123!'
-            });
-            if (guestRes?.session) {
-              const retryRes = await supabase
-                .from('companies')
-                .select(COMPANY_QUERY)
-                .or(`id.eq.${id},user_id.eq.${id}`)
-                .maybeSingle();
-              data = retryRes.data;
-              error = retryRes.error;
-            }
-          } catch (e) {
-            console.warn('[StoreDetail] Aviso de login visitante:', e);
-          }
-        }
 
         if (data) {
           companyData = data;
@@ -172,10 +188,14 @@ export default function StoreDetail() {
   });
 
   const isOpenNow = useStoreOpenStatus(storeData?.company as any);
-  const company: Company | null = storeData?.company
-    ? ({ ...storeData.company, is_open: isOpenNow } as Company)
-    : null;
-  const products: Product[] = (storeData?.products as Product[]) ?? [];
+  const company: Company | null = useMemo(() => {
+    return storeData?.company
+      ? ({ ...storeData.company, is_open: isOpenNow } as Company)
+      : null;
+  }, [storeData?.company, isOpenNow]);
+  const products: Product[] = useMemo(() => {
+    return (storeData?.products as Product[]) ?? [];
+  }, [storeData?.products]);
 
   useEffect(() => {
     if (!user?.id || !company?.id) return;
@@ -245,7 +265,7 @@ export default function StoreDetail() {
     };
 
     checkDeliveryFee();
-  }, [user?.id, company?.id, company?.delivery_fee, company?.delivery_regions_pricing]);
+  }, [user?.id, company?.id, company?.delivery_fee, JSON.stringify((company as any)?.delivery_regions_pricing ?? null)]);
 
   const featuredProductsList = useMemo(() => {
     const featured = products.filter(p => p.is_featured);
