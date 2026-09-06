@@ -98,11 +98,13 @@ export default function StoreDetail() {
       let companyData: any = null;
       let productsData: any[] = [];
 
-      // 1. Busca dados da empresa (combina id ou user_id) com retry em caso de RLS 42501
+      // 1. Busca dados da empresa com produtos embutidos em consulta única de alta velocidade
       try {
+        const COMPANY_QUERY = 'id, name, description, category, rating, is_open, active, is_active, delivery_fee, delivery_regions_pricing, show_in_marketplace, city, state, address, phone, banner_url, cover_url, logo_url, business_hours, prep_time, prep_time_min, prep_time_max, created_at, user_id, products(id, company_id, name, description, price, image_url, category, active, sort_order, is_featured, created_at)';
+
         let { data, error } = await supabase
           .from('companies')
-          .select('id, name, description, category, rating, is_open, active, is_active, delivery_fee, delivery_regions_pricing, show_in_marketplace, city, state, address, phone, banner_url, cover_url, logo_url, business_hours, prep_time, prep_time_min, prep_time_max, created_at, user_id')
+          .select(COMPANY_QUERY)
           .or(`id.eq.${id},user_id.eq.${id}`)
           .maybeSingle();
 
@@ -115,7 +117,7 @@ export default function StoreDetail() {
             if (guestRes?.session) {
               const retryRes = await supabase
                 .from('companies')
-                .select('id, name, description, category, rating, is_open, active, is_active, delivery_fee, delivery_regions_pricing, show_in_marketplace, city, state, address, phone, banner_url, cover_url, logo_url, business_hours, prep_time, prep_time_min, prep_time_max, created_at, user_id')
+                .select(COMPANY_QUERY)
                 .or(`id.eq.${id},user_id.eq.${id}`)
                 .maybeSingle();
               data = retryRes.data;
@@ -126,44 +128,43 @@ export default function StoreDetail() {
           }
         }
 
-        if (!data) {
+        if (data) {
+          companyData = data;
+          if (data.products && Array.isArray(data.products) && data.products.length > 0) {
+            productsData = data.products
+              .filter((p: any) => p.active !== false)
+              .sort((a: any, b: any) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+          }
+        } else {
           const fallbackCompany = await supabase
             .from('companies')
             .select('id, name, description, category, rating, is_open, active, is_active, delivery_fee, show_in_marketplace, city, state, address, phone, banner_url, cover_url, logo_url, business_hours, prep_time, prep_time_min, prep_time_max, user_id')
             .or(`id.eq.${id},user_id.eq.${id}`)
             .maybeSingle();
           companyData = fallbackCompany.data;
-        } else {
-          companyData = data;
         }
       } catch (e) {
         console.warn('[StoreDetail] Exceção ao consultar empresa:', e);
       }
 
-      // 2. Busca produtos associados (combinando id e user_id da empresa)
-      try {
-        const storeIds = Array.from(new Set([id, companyData?.id, companyData?.user_id].filter(Boolean)));
-        const productRes = await supabase
-          .from('products')
-          .select('id, company_id, name, description, price, image_url, category, active, sort_order, created_at')
-          .in('company_id', storeIds)
-          .eq('active', true)
-          .order('category')
-          .order('sort_order', { ascending: true })
-          .order('created_at', { ascending: true });
-
-        if (productRes.error) {
-          console.warn('[StoreDetail] Erro ao buscar produtos ordenados, tentando fallback:', productRes.error);
-          const fallbackProd = await supabase
+      // 2. Se produtos não vieram embutidos, busca como garantia secundária
+      if (productsData.length === 0) {
+        try {
+          const storeIds = Array.from(new Set([id, companyData?.id, companyData?.user_id].filter(Boolean)));
+          const productRes = await supabase
             .from('products')
-            .select('id, company_id, name, description, price, image_url, category, active')
-            .in('company_id', storeIds);
-          productsData = (fallbackProd.data ?? []).filter((p: any) => p.active !== false);
-        } else {
-          productsData = productRes.data ?? [];
+            .select('id, company_id, name, description, price, image_url, category, active, sort_order, is_featured, created_at')
+            .in('company_id', storeIds)
+            .neq('active', false)
+            .order('category')
+            .order('sort_order', { ascending: true });
+
+          if (productRes.data && productRes.data.length > 0) {
+            productsData = productRes.data;
+          }
+        } catch (e) {
+          console.warn('[StoreDetail] Exceção ao consultar produtos secundários:', e);
         }
-      } catch (e) {
-        console.warn('[StoreDetail] Exceção ao consultar produtos:', e);
       }
 
       return { company: companyData, products: productsData };

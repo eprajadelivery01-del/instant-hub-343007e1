@@ -189,12 +189,12 @@ export function ActiveOrderChatFab() {
         </button>
       </div>
 
-      {/* Sheet Lateral / Inferior do Chat */}
+      {/* Sheet Lateral / Inferior do Chat (z-[250] acima da barra de navegação z-[100]) */}
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
         <SheetContent
           side="bottom"
           hideClose
-          className="rounded-t-[2.5rem] border-none p-0 max-h-[88vh] flex flex-col bg-background shadow-2xl"
+          className="!z-[250] rounded-t-[2.5rem] border-none p-0 h-[88vh] max-h-[92vh] flex flex-col bg-background shadow-2xl overflow-hidden"
           aria-describedby={undefined}
         >
           <SheetTitle className="sr-only">Chat do Pedido</SheetTitle>
@@ -230,14 +230,14 @@ export function ActiveOrderChatFab() {
             </button>
           </div>
 
-          {/* Área de Chat Scrolável */}
-          <div className="flex-1 overflow-y-auto px-4 py-2">
+          {/* Área do Chat com altura total flexível */}
+          <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
             <OrderStoreChat
               orderId={activeOrder.id}
               companyId={activeOrder.company_id}
               companyName={companyName}
               fullHeight
-              className="mt-1"
+              className="flex-1 min-h-0 flex flex-col h-full overflow-hidden"
             />
           </div>
         </SheetContent>

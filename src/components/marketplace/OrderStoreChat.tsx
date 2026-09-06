@@ -27,11 +27,20 @@ interface Msg {
  * Uses conversations + messages.
  * Becomes available as soon as the order is accepted by the merchant.
  */
+export const DEFAULT_AUTO_MESSAGE = `Olá! Pedido confirmado com sucesso! 🚀✨\nNossa equipe já iniciou o preparo com todo capricho e atenção aos detalhes.\n\nQualquer dúvida ou observação sobre seu pedido, estamos à sua disposição aqui pelo chat. Bom apetite! 🍽️🛵`;
+
 export function OrderStoreChat({ orderId, companyId, companyName, fullHeight, className, onClose }: OrderStoreChatProps) {
   const { user } = useAuth();
   const [sessionId, setSessionId] = useState<string | null>(null);
-  const [messages, setMessages] = useState<Msg[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [messages, setMessages] = useState<Msg[]>(() => [
+    {
+      id: 'default-welcome',
+      sender_id: companyId,
+      message: DEFAULT_AUTO_MESSAGE,
+      created_at: new Date().toISOString(),
+    }
+  ]);
+  const [loading, setLoading] = useState(false);
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
@@ -51,14 +60,13 @@ export function OrderStoreChat({ orderId, companyId, companyName, fullHeight, cl
 
     (async () => {
       try {
-        const { data: companyData } = await supabase.from('companies').select('user_id').eq('id', companyId).maybeSingle();
-        const companyUserId = companyData?.user_id;
+        const [companyRes, sessionRes] = await Promise.all([
+          supabase.from('companies').select('user_id, opening_hours').eq('id', companyId).maybeSingle(),
+          supabase.from('conversations').select('*').eq('order_id', orderId).maybeSingle(),
+        ]);
 
-        let { data: session } = await supabase
-          .from('conversations')
-          .select('*')
-          .eq('order_id', orderId)
-          .maybeSingle();
+        const companyUserId = companyRes.data?.user_id;
+        let session = sessionRes.data;
 
         if (!session) {
           const { data: created } = await supabase
@@ -72,13 +80,16 @@ export function OrderStoreChat({ orderId, companyId, companyName, fullHeight, cl
             .single();
           session = created;
         }
-        if (!active || !session) { setLoading(false); return; }
+
+        if (!active || !session) return;
         setSessionId(session.id);
+
         const { data: history } = await supabase
           .from('messages')
           .select('*')
           .eq('conversation_id', session.id)
-          .order('created_at', { ascending: true });
+          .order('created_at', { ascending: true })
+          .limit(30);
 
         let currentMsgs = history || [];
 
@@ -88,18 +99,11 @@ export function OrderStoreChat({ orderId, companyId, companyName, fullHeight, cl
 
         if (!hasStoreMessage) {
           try {
-            const { data: comp } = await supabase
-              .from('companies')
-              .select('opening_hours')
-              .eq('id', companyId)
-              .maybeSingle();
-
-            const hours = typeof comp?.opening_hours === 'string'
-              ? JSON.parse(comp.opening_hours)
-              : (comp?.opening_hours || {});
+            const hours = typeof companyRes.data?.opening_hours === 'string'
+              ? JSON.parse(companyRes.data.opening_hours)
+              : (companyRes.data?.opening_hours || {});
 
             if (hours.auto_message_enabled !== false) {
-              const DEFAULT_AUTO_MESSAGE = `Olá! Pedido confirmado com sucesso! 🚀✨\nNossa equipe já iniciou o preparo com todo capricho e atenção aos detalhes.\n\nQualquer dúvida ou observação sobre seu pedido, estamos à sua disposição aqui pelo chat. Bom apetite! 🍽️🛵`;
               const autoText = (typeof hours.auto_message === 'string' && hours.auto_message.trim())
                 ? hours.auto_message.trim()
                 : DEFAULT_AUTO_MESSAGE;
@@ -131,7 +135,6 @@ export function OrderStoreChat({ orderId, companyId, companyName, fullHeight, cl
 
         if (!active) return;
         setMessages(currentMsgs);
-        setLoading(false);
 
         const channelName = `order_chat_${session.id}_${Date.now()}_${Math.random().toString(36).substring(7)}`;
         channel = supabase
@@ -154,7 +157,6 @@ export function OrderStoreChat({ orderId, companyId, companyName, fullHeight, cl
         channel.subscribe();
       } catch (err) {
         console.error('[OrderStoreChat] Erro ao carregar chat:', err);
-        if (active) setLoading(false);
       }
     })();
 
@@ -241,8 +243,8 @@ export function OrderStoreChat({ orderId, companyId, companyName, fullHeight, cl
         </div>
       )}
       <div className={cn(
-        "overflow-y-auto space-y-2.5 p-3 border border-border rounded-2xl bg-secondary/20 flex-1 min-h-0",
-        fullHeight ? "my-3 mx-4" : "h-52 mb-3 rounded-xl bg-secondary/30"
+        "overflow-y-auto space-y-2.5 p-4 bg-secondary/20 flex-1 min-h-0",
+        fullHeight ? "my-0 mx-0 border-none rounded-none" : "h-52 mb-3 rounded-xl border border-border bg-secondary/30"
       )}>
         {loading ? (
           <div className="flex items-center justify-center h-full">
@@ -285,7 +287,7 @@ export function OrderStoreChat({ orderId, companyId, companyName, fullHeight, cl
       </div>
 
       {/* Sugestões de Respostas */}
-      <div className="flex gap-2 overflow-x-auto pb-2 mb-1 scrollbar-hide">
+      <div className="flex gap-2 overflow-x-auto px-4 py-2 shrink-0 border-t border-border/40 bg-card/50 scrollbar-hide">
         {QUICK_MESSAGES.map((msg, i) => (
           <button
             key={i}
@@ -296,22 +298,29 @@ export function OrderStoreChat({ orderId, companyId, companyName, fullHeight, cl
               e.stopPropagation();
               send(undefined, msg);
             }}
-            className="shrink-0 px-3 py-1.5 rounded-full bg-primary/5 border border-primary/10 text-[10px] font-bold text-primary active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="shrink-0 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-[11px] font-bold text-primary active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/20"
           >
             {msg}
           </button>
         ))}
       </div>
 
-      <form onSubmit={send} className="flex gap-2">
+      {/* Campo de Digitação PINNED NA BASE */}
+      <form onSubmit={send} className="shrink-0 p-3 pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))] border-t border-border bg-card flex gap-2 items-center shadow-lg z-20">
         <Input
           value={text}
           onChange={(e) => setText(e.target.value)}
-          placeholder="Digite sua mensagem..."
-          className="rounded-xl h-10"
+          placeholder="Digite sua mensagem para a loja..."
+          className="rounded-xl h-11 text-sm bg-background border-border flex-1 focus-visible:ring-primary"
         />
-        <Button type="submit" size="icon" id="btn-send-store" className="rounded-xl h-10 w-10 shrink-0" disabled={(!text.trim() && !sending) || !sessionId}>
-          {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+        <Button 
+          type="submit" 
+          size="icon" 
+          id="btn-send-store" 
+          className="rounded-xl h-11 w-11 shrink-0 bg-primary text-primary-foreground shadow-md active:scale-95 transition-all cursor-pointer hover:bg-primary/90" 
+          disabled={(!text.trim() && !sending) || !sessionId}
+        >
+          {sending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
         </Button>
       </form>
     </div>
