@@ -552,7 +552,7 @@ Denão.seráve(async (req) => {
 
   const total = Math.max(0, subtotal - discount) + deliveryFee;
 
-  // 7) Garante customers vinculado e atualiza telefone do cadastro (profiles)
+  // 7) Garante customers vinculado e atualiza telefone e nome do cadastro
   let customerId: string | null = null;
   const { data: customer } = await adminClient
     .from('customers')
@@ -560,22 +560,63 @@ Denão.seráve(async (req) => {
     .eq('user_id', user.id)
     .maybeSingle();
 
-  // Buscar dados do perfil do usuário para garantir o telefone mais atualizado
-  const { data: userProfile } = await adminClient
+  // Buscar dados do perfil do usuário para garantir o telefone e nome mais atualizados
+  const { data: userProfiles } = await adminClient
     .from('profiles')
     .select('phone, full_name')
-    .eq('id', user.id)
-    .maybeSingle();
+    .or(`id.eq.${user.id},user_id.eq.${user.id}`)
+    .limit(1);
+  const userProfile = userProfiles && userProfiles.length > 0 ? userProfiles[0] : null;
 
-  const userPhone = userProfile?.phone || (user.user_metadata as any)?.phone || customer?.phone || null;
-  const userName = userProfile?.full_name || (user.user_metadata as any)?.full_name || customer?.name || 'Cliente Marketplace';
+  const isGenericName = (val?: string | null) => {
+    if (!val) return true;
+    const s = String(val).trim().toLowerCase();
+    return (
+      s === '' ||
+      s === 'cliente marketplace' ||
+      s === 'cliente' ||
+      s === 'consumidor' ||
+      s === 'usuário' ||
+      s === 'usuario' ||
+      s === 'visitante' ||
+      s === 'null' ||
+      s === 'undefined'
+    );
+  };
+
+  const rawBodyName = typeof body.customer_name === 'string' && !isGenericName(body.customer_name) ? body.customer_name.trim() : null;
+  const rawProfileName = userProfile?.full_name && !isGenericName(userProfile.full_name) ? userProfile.full_name.trim() : null;
+  const rawMetaName = (user.user_metadata as any)?.full_name && !isGenericName((user.user_metadata as any).full_name) ? (user.user_metadata as any).full_name.trim() : null;
+  const rawCustomerName = customer?.name && !isGenericName(customer.name) ? customer.name.trim() : null;
+  const emailPrefix = user.email ? user.email.split('@')[0].replace(/[._-]/g, ' ') : null;
+
+  const candidateName = rawBodyName || rawProfileName || rawMetaName || rawCustomerName || emailPrefix || 'Cliente';
+  const userName = candidateName;
+
+  const rawBodyPhone = typeof body.customer_phone === 'string' && body.customer_phone.replace(/\D/g, '').length >= 10 ? body.customer_phone.trim() : null;
+  const userPhone = rawBodyPhone || userProfile?.phone || (user.user_metadata as any)?.phone || customer?.phone || null;
+
+  // Se o perfil do usuário não tiver nome ou for genérico, atualiza com candidateName
+  if (candidateName && candidateName !== 'Cliente' && (!userProfile?.full_name || isGenericName(userProfile.full_name))) {
+    await adminClient
+      .from('profiles')
+      .update({ full_name: candidateName })
+      .or(`id.eq.${user.id},user_id.eq.${user.id}`);
+  }
 
   if (customer?.id) {
     customerId = customer.id;
-    if (!customer.phone && userPhone) {
+    const customerUpdates: Record<string, any> = {};
+    if (userPhone && (!customer.phone || customer.phone !== userPhone)) {
+      customerUpdates.phone = userPhone;
+    }
+    if (candidateName && candidateName !== 'Cliente' && (isGenericName(customer.name) || !customer.name)) {
+      customerUpdates.name = candidateName;
+    }
+    if (Object.keys(customerUpdates).length > 0) {
       await adminClient
         .from('customers')
-        .update({ phone: userPhone })
+        .update(customerUpdates)
         .eq('id', customer.id);
     }
   } else {
@@ -583,7 +624,7 @@ Denão.seráve(async (req) => {
       .from('customers')
       .insert({
         user_id: user.id,
-        name: userName,
+        name: candidateName,
         phone: userPhone,
       })
       .select('id')

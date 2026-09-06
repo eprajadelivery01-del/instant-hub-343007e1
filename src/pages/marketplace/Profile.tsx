@@ -183,7 +183,16 @@ export default function Profile() {
     if (!user) return;
     setSaving(true);
     try {
-      await supabase.from('profiles').update({ full_name: fullName, phone }).eq('id', user.id);
+      await Promise.allSettled([
+        supabase.from('profiles').update({ full_name: fullName, phone }).or(`id.eq.${user.id},user_id.eq.${user.id}`),
+        supabase.from('customers').update({ name: fullName, phone, updated_at: new Date().toISOString() }).or(`user_id.eq.${user.id},id.eq.${user.id}`)
+      ]);
+      try {
+        localStorage.setItem('@epraja_customer_name', fullName);
+        localStorage.setItem('epraja_customer_name', fullName);
+        localStorage.setItem('@epraja_customer_phone', phone);
+        localStorage.setItem('epraja_customer_phone', phone);
+      } catch {}
       await new Promise(resolve => setTimeout(resolve, 500));
       await refreshProfile();
       

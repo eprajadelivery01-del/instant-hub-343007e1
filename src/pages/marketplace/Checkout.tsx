@@ -13,12 +13,12 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { reportErrorToTelegram } from '@/services/logger';
-import { MapPin, Banknote, AlertCircle, ArrowLeft, Loader2, FileText, Smartphone, Bike, Ticket, Plus } from 'lucide-react';
+import { MapPin, Banknote, AlertCircle, ArrowLeft, Loader2, FileText, Smartphone, Bike, Ticket, Plus, User as UserIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useOrderLock } from '@/hooks/useOrderLock';
 import { calculateDeliveryFee } from '@/utils/freight';
 import { isStoreOpenNow } from '@/lib/storeHours';
-import { useRequirePhone } from '@/hooks/useRequirePhone';
+import { useRequirePhone, isGenericCustomerName } from '@/hooks/useRequirePhone';
 import { RequirePhoneModal } from '@/components/marketplace/RequirePhoneModal';
 import { syncFcmTokenToDatabase } from '@/hooks/useOrderNotifications';
 
@@ -110,6 +110,8 @@ export default function Checkout() {
     setShowPhoneModal,
     phoneInput,
     setPhoneInput,
+    nameInput,
+    setNameInput,
     handlePhoneSubmit,
     isSubmittingPhone
   } = useRequirePhone();
@@ -291,31 +293,52 @@ export default function Checkout() {
       navigate('/marketplace/login');
       return;
     }
+
+    const trimmedName = nameInput.trim();
+    const needsName = !trimmedName || isGenericCustomerName(trimmedName) || trimmedName.length < 2;
     const numericPhoneInput = phoneInput.replace(/\D/g, '');
-    if (!profile?.phone || profile.phone.replace(/\D/g, '').length < 10) {
+    const needsPhone = !profile?.phone || profile.phone.replace(/\D/g, '').length < 10;
+
+    if (needsName) {
+      toast.error('Por favor, informe seu nome completo para a entrega.');
+      return;
+    }
+
+    if (needsPhone) {
       if (numericPhoneInput.length < 10 || numericPhoneInput.length > 11) {
         toast.error('Por favor, informe um número de WhatsApp/Telefone válido com DDD.');
         return;
       }
-      
+    }
+
+    if (needsName || needsPhone) {
       setLoading(true);
       try {
-        const { error } = await supabase
-          .from('profiles')
-          .upsert({
-            id: user.id,
-            user_id: user.id,
-            phone: phoneInput,
-            full_name: profile?.full_name || user.user_metadata?.full_name || 'Cliente',
-            role: profile?.role || 'customer'
-          });
-        if (error) throw error;
+        await Promise.allSettled([
+          supabase
+            .from('profiles')
+            .upsert({
+              id: user.id,
+              user_id: user.id,
+              phone: phoneInput,
+              full_name: trimmedName,
+              role: profile?.role || 'customer'
+            }),
+          supabase
+            .from('customers')
+            .update({ name: trimmedName, phone: phoneInput, updated_at: new Date().toISOString() })
+            .or(`user_id.eq.${user.id},id.eq.${user.id}`),
+        ]);
+        try {
+          localStorage.setItem('@epraja_customer_name', trimmedName);
+          localStorage.setItem('epraja_customer_name', trimmedName);
+          localStorage.setItem('@epraja_customer_phone', phoneInput);
+          localStorage.setItem('epraja_customer_phone', phoneInput);
+        } catch {}
         await refreshProfile();
-        toast.success('WhatsApp salvo com sucesso!');
+        toast.success('Identificação salva com sucesso!');
       } catch (err) {
-        toast.error('Erro ao salvar o número. Tente novamente.');
-        setLoading(false);
-        return;
+        console.error(err);
       } finally {
         setLoading(false);
       }
@@ -367,6 +390,22 @@ export default function Checkout() {
         return;
       }
 
+      const finalCustomerName =
+        nameInput.trim() ||
+        profile?.full_name?.trim() ||
+        localStorage.getItem('@epraja_customer_name') ||
+        localStorage.getItem('epraja_customer_name') ||
+        (user.user_metadata as any)?.full_name ||
+        null;
+
+      const finalCustomerPhone =
+        profile?.phone ||
+        phoneInput ||
+        (user.user_metadata as any)?.phone ||
+        localStorage.getItem('@epraja_customer_phone') ||
+        localStorage.getItem('epraja_customer_phone') ||
+        null;
+
       const requestBody = {
         items: validItems.map((it) => ({
           product_id: it.product.id,
@@ -378,7 +417,8 @@ export default function Checkout() {
         address_id: fulfillmentMode === 'pickup' ? null : selectedAddress,
         payment_method: paymentMethod,
         coupon_code: appliedCoupon?.code ?? null,
-        customer_phone: profile?.phone || (user.user_metadata as any)?.phone || localStorage.getItem('@epraja_customer_phone') || localStorage.getItem('epraja_customer_phone') || null,
+        customer_name: finalCustomerName,
+        customer_phone: finalCustomerPhone,
         notes: fulfillmentMode === 'pickup' ? `[RETIRADA NO LOCAL] ${orderNotes || ''}`.trim() : orderNotes,
         needs_change: paymentMethod === 'money' && needsChange,
         change_for: changeFor ? Number(changeFor) : null,
@@ -693,26 +733,52 @@ export default function Checkout() {
           )}
         </div>
 
-        {/* WhatsApp obrigatório se não houver telefone no perfil */}
-        {(!profile?.phone || profile.phone.replace(/\D/g, '').length < 10) && (
-          <div className="px-4 mb-6">
-            <div className="flex items-center gap-3 mb-2">
-              <Smartphone className="h-5 w-5 text-foreground" />
+        {/* Identificação do Cliente (Nome e WhatsApp obrigatórios para entrega) */}
+        {((!nameInput || isGenericCustomerName(nameInput)) || (!profile?.phone || profile.phone.replace(/\D/g, '').length < 10)) && (
+          <div className="px-4 mb-6 space-y-4">
+            {(!nameInput || isGenericCustomerName(nameInput)) && (
               <div>
-                <h3 className="font-bold text-sm text-foreground">Número de WhatsApp</h3>
-                <p className="text-xs text-destructive font-semibold">Obrigatório para ajudar o entregador se precisar</p>
+                <div className="flex items-center gap-3 mb-2">
+                  <UserIcon className="h-5 w-5 text-foreground" />
+                  <div>
+                    <h3 className="font-bold text-sm text-foreground">Seu Nome Completo</h3>
+                    <p className="text-xs text-destructive font-semibold">Obrigatório para identificação na loja e entrega</p>
+                  </div>
+                </div>
+                <div className="mt-3">
+                  <input
+                    type="text"
+                    value={nameInput}
+                    onChange={(e) => setNameInput(e.target.value)}
+                    placeholder="Ex: Maria Silva"
+                    className="w-full h-12 bg-background border border-destructive rounded-xl px-4 text-sm font-semibold focus:outline-none focus:border-primary transition-colors text-foreground"
+                    required
+                  />
+                </div>
               </div>
-            </div>
-            <div className="mt-3">
-              <input
-                type="tel"
-                value={phoneInput}
-                onChange={(e) => setPhoneInput(e.target.value)}
-                placeholder="(11) 99999-9999"
-                className="w-full h-12 bg-background border border-destructive rounded-xl px-4 text-sm font-semibold focus:outline-none focus:border-primary transition-colors text-foreground"
-                required
-              />
-            </div>
+            )}
+
+            {(!profile?.phone || profile.phone.replace(/\D/g, '').length < 10) && (
+              <div>
+                <div className="flex items-center gap-3 mb-2">
+                  <Smartphone className="h-5 w-5 text-foreground" />
+                  <div>
+                    <h3 className="font-bold text-sm text-foreground">Número de WhatsApp</h3>
+                    <p className="text-xs text-destructive font-semibold">Obrigatório para ajudar o entregador se precisar</p>
+                  </div>
+                </div>
+                <div className="mt-3">
+                  <input
+                    type="tel"
+                    value={phoneInput}
+                    onChange={(e) => setPhoneInput(e.target.value)}
+                    placeholder="(11) 99999-9999"
+                    className="w-full h-12 bg-background border border-destructive rounded-xl px-4 text-sm font-semibold focus:outline-none focus:border-primary transition-colors text-foreground"
+                    required
+                  />
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -880,6 +946,8 @@ export default function Checkout() {
         onClose={() => setShowPhoneModal(false)}
         phoneInput={phoneInput}
         setPhoneInput={setPhoneInput}
+        nameInput={nameInput}
+        setNameInput={setNameInput}
         onSubmit={handlePhoneSubmit}
         isSubmitting={isSubmittingPhone}
       />
