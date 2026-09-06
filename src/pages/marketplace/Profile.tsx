@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { SupportChat } from '@/components/chat/SupportChat';
 import { OrderStoreChat } from '@/components/marketplace/OrderStoreChat';
+import HelpCenterSheet from '@/components/marketplace/HelpCenterSheet';
 import { cn } from '@/lib/utils';
 import {
   LogOut, MapPin, ChevronRight, Loader2,
@@ -41,6 +42,7 @@ export default function Profile() {
   const [coupons, setCoupons] = useState<any[]>([]);
   const [loadingCoupons, setLoadingCoupons] = useState(false);
   const [showConversations, setShowConversations] = useState(false);
+  const [showHelpCenter, setShowHelpCenter] = useState(false);
   const [selectedOrderChat, setSelectedOrderChat] = useState<{ orderId: string; companyId: string; companyName?: string } | null>(null);
 
   useEffect(() => {
@@ -227,7 +229,7 @@ export default function Profile() {
                   { icon: MessageCircle, label: 'Conversas', subtitle: 'Chat com lojas e suporte', onClick: () => setShowConversations(true) },
                   { icon: Ticket, label: 'Cupons de Desconto', subtitle: 'Veja as promoções disponíveis', onClick: () => fetchCoupons(true) },
                   { icon: theme === 'dark' ? Sun : Moon, label: 'Aparência', subtitle: theme === 'dark' ? 'Modo escuro' : 'Modo claro', onClick: () => toggleTheme(), isThemeToggle: true },
-                  { icon: HelpCircle, label: 'Central de Ajuda', subtitle: 'Fale com o suporte', onClick: () => setSupportType('support') },
+                  { icon: HelpCircle, label: 'Central de Ajuda', subtitle: 'Fale com o suporte', onClick: () => setShowHelpCenter(true) },
                   { icon: FileText, label: 'Termos de Uso', subtitle: 'Regras da plataforma', onClick: () => navigate('/marketplace/terms') },
                   { icon: ShieldCheck, label: 'Privacidade', subtitle: 'Segurança dos dados', onClick: () => navigate('/marketplace/privacy') },
                 ].map((item: any) => (
@@ -595,7 +597,7 @@ export default function Profile() {
             <h2 className="text-[10px] font-medium uppercase tracking-[0.25em] text-muted-foreground/70 px-2 mb-2">Ajuda & Legal</h2>
             <div className="rounded-3xl bg-card border border-border overflow-hidden divide-y divide-border">
               {[
-                { icon: HelpCircle, label: 'Central de Ajuda', subtitle: 'Suporte e dúvidas', onClick: () => setSupportType('support') },
+                { icon: HelpCircle, label: 'Central de Ajuda', subtitle: 'Suporte e dúvidas', onClick: () => setShowHelpCenter(true) },
                 { icon: FileText, label: 'Termos de Uso', subtitle: 'Regras da plataforma', onClick: () => navigate('/marketplace/terms') },
                 { icon: ShieldCheck, label: 'Privacidade', subtitle: 'Segurança dos dados', onClick: () => navigate('/marketplace/privacy') },
               ].map((item) => (
@@ -827,9 +829,9 @@ export default function Profile() {
               {/* Conversas com Lojas */}
               <div>
                 <div className="flex items-center justify-between mb-2 px-1">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Lojas e Pedidos</p>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Últimos Pedidos</p>
                   {orders.length > 0 && (
-                    <span className="text-[10px] text-muted-foreground font-medium">{orders.length} pedidos</span>
+                    <span className="text-[10px] text-muted-foreground font-medium">{Math.min(orders.length, 3)} recentes</span>
                   )}
                 </div>
 
@@ -849,7 +851,7 @@ export default function Profile() {
                   </div>
                 ) : (
                   <div className="space-y-2.5">
-                    {orders.map((ord) => {
+                    {orders.slice(0, 3).map((ord) => {
                       const isActive = !['delivered', 'completed', 'cancelled'].includes(ord.status);
                       const storeName = ord.companies?.name || 'Restaurante';
                       const storeLogo = ord.companies?.logo_url;
@@ -926,6 +928,14 @@ export default function Profile() {
           </SheetContent>
         </Sheet>
       )}
+
+      {/* Central de Ajuda Sheet */}
+      <HelpCenterSheet
+        open={showHelpCenter}
+        onOpenChange={setShowHelpCenter}
+        orders={orders}
+        onOpenDriverApplication={() => setSupportType('driver_application')}
+      />
 
     </MarketplaceLayout>
   );

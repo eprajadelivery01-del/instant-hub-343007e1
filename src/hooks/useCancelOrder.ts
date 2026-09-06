@@ -42,55 +42,29 @@ export function useCancelOrder() {
         }
       }
 
-      // 2. Chama a RPC com SECURITY DEFINER para garantir cancelamento imediato no banco
-      try {
-        await supabase.rpc('cancel_order_customer', { p_order_id: targetId });
-      } catch (errRpc) {
-        console.warn('[useCancelOrder] Aviso RPC cancel_order_customer:', errRpc);
-      }
-
-      // 3. Atualiza tabelas orders e deliveries diretamente no Supabase como garantia adicional
-      const results = await Promise.allSettled([
-        supabase.from('orders').update({ status: 'cancelled', updated_at: nowISO }).eq('id', targetId),
-        supabase.from('deliveries').update({ status: 'cancelled', updated_at: nowISO }).eq('order_id', targetId),
-        supabase.from('available_deliveries').update({ status: 'cancelled', updated_at: nowISO }).eq('order_id', targetId),
-      ]);
-
-      // 3. Se possuir companyId, notifica os lojistas na tabela notifications
-      if (companyId) {
-        try {
-          const { data: comp } = await supabase
-            .from('companies')
-            .select('user_id')
-            .eq('id', companyId)
-            .maybeSingle();
-            
-          if (comp?.user_id) {
-            await supabase.from('notifications').insert([{
-              user_id: comp.user_id,
-              title: "Pedido Cancelado pelo Cliente",
-              message: `O cliente cancelou o pedido #${cleanId.split('-')[0].toUpperCase()}.`,
-              type: "order_cancelled"
-            }]);
-          }
-        } catch (e) {
-          console.warn('[useCancelOrder] Erro ao notificar lojistas:', e);
-        }
-      }
-
-      // 4. Invocação da Edge Function para forçar atualização ADMIN (Service Role) e disparar Realtime para o Lojista
+      // 2. Invocação da Edge Function com SERVICE_ROLE para garantir atualização imediata no banco e notificar o lojista
       try {
         await supabase.functions.invoke('notify-customer', {
           body: {
-            orderId: orderId,
-            order_id: orderId,
+            orderId: targetId,
+            order_id: targetId,
             status: 'cancelled',
             deliveryStatus: 'cancelled',
             company_id: companyId
           }
         });
       } catch (e) {
-        console.warn('[useCancelOrder] Erro ao invocar notify-customer:', e);
+        console.warn('[useCancelOrder] Aviso invoke notify-customer:', e);
+      }
+
+      // 3. Atualização direta no client como garantia complementar
+      try {
+        await Promise.allSettled([
+          supabase.from('orders').update({ status: 'cancelled', updated_at: nowISO }).eq('id', targetId),
+          supabase.from('deliveries').update({ status: 'cancelled', updated_at: nowISO }).eq('order_id', targetId),
+        ]);
+      } catch {
+        // Ignora silenciosamente caso RLS restrinja UPDATE direto do cliente
       }
 
       toast.success("Pedido cancelado com sucesso.");

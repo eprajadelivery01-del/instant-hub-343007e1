@@ -92,7 +92,8 @@ function isDuplicatePush(orderId: string, status: string): boolean {
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, Authorization, X-Client-Info, ApiKey, Content-Type',
+  'Access-Control-Allow-Methods': 'POST, GET, OPTIONS, PUT, DELETE',
 };
 
 serve(async (req) => {
@@ -274,6 +275,29 @@ serve(async (req) => {
           adminClient.from('orders').update({ status: 'cancelled', updated_at: new Date().toISOString() }).eq('id', actualOrderId),
           adminClient.from('deliveries').update({ status: 'cancelled', updated_at: new Date().toISOString() }).eq('order_id', actualOrderId),
         ]);
+
+        // Notifica o lojista com role de admin
+        try {
+          let compId = payload.company_id;
+          if (!compId) {
+            const { data: ord } = await adminClient.from('orders').select('company_id').eq('id', actualOrderId).maybeSingle();
+            compId = ord?.company_id;
+          }
+          if (compId) {
+            const { data: comp } = await adminClient.from('companies').select('user_id').eq('id', compId).maybeSingle();
+            if (comp?.user_id) {
+              await adminClient.from('notifications').insert([{
+                user_id: comp.user_id,
+                title: 'Pedido Cancelado pelo Cliente',
+                message: `O cliente cancelou o pedido #${cleanId.split('-')[0].toUpperCase()}.`,
+                type: 'order_cancelled',
+                created_at: new Date().toISOString(),
+              }]);
+            }
+          }
+        } catch (errNotif) {
+          console.warn('[notify-customer] Erro ao notificar lojista:', errNotif);
+        }
       } catch (errDb) {
         console.error(`[notify-customer] Erro ao atualizar banco para cancelado via adminClient:`, errDb);
       }
