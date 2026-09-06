@@ -303,6 +303,85 @@ serve(async (req) => {
       }
     }
 
+    if (newStatus === 'preparing' && targetOrderId) {
+      try {
+        const cleanId = String(targetOrderId).replace('#', '').trim();
+        const isUUID = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(cleanId);
+        let orderUuid = cleanId;
+        if (!isUUID) {
+          const { data: matched } = await adminClient.from('orders').select('id').ilike('id', `%${cleanId}%`).maybeSingle();
+          if (matched) orderUuid = matched.id;
+        }
+
+        const { data: orderDetails } = await adminClient
+          .from('orders')
+          .select('id, company_id, customer_id, user_id')
+          .eq('id', orderUuid)
+          .maybeSingle();
+
+        if (orderDetails?.company_id) {
+          const { data: comp } = await adminClient
+            .from('companies')
+            .select('id, user_id, opening_hours')
+            .eq('id', orderDetails.company_id)
+            .maybeSingle();
+
+          const hours = typeof comp?.opening_hours === 'string'
+            ? JSON.parse(comp.opening_hours)
+            : (comp?.opening_hours || {});
+
+          if (hours.auto_message_enabled !== false) {
+            const DEFAULT_MSG = "Olá! Pedido confirmado com sucesso! 🚀✨\nNossa equipe já iniciou o preparo com todo capricho e atenção aos detalhes.\n\nQualquer dúvida ou observação sobre seu pedido, estamos à sua disposição aqui pelo chat. Bom apetite! 🍽️🛵";
+            const autoText = (typeof hours.auto_message === 'string' && hours.auto_message.trim())
+              ? hours.auto_message.trim()
+              : DEFAULT_MSG;
+
+            const senderUserId = comp?.user_id || comp?.id;
+            const targetCustomer = orderDetails.user_id || orderDetails.customer_id;
+
+            let { data: conv } = await adminClient
+              .from('conversations')
+              .select('id')
+              .eq('order_id', orderUuid)
+              .maybeSingle();
+
+            if (!conv) {
+              const participants = Array.from(new Set([senderUserId, targetCustomer].filter(Boolean)));
+              const { data: newConv } = await adminClient
+                .from('conversations')
+                .insert({
+                  order_id: orderUuid,
+                  participants: participants.length > 0 ? participants : [senderUserId],
+                  topic: 'Suporte do Pedido'
+                })
+                .select()
+                .maybeSingle();
+              conv = newConv;
+            }
+
+            if (conv?.id) {
+              const { data: existingMsgs } = await adminClient
+                .from('messages')
+                .select('id')
+                .eq('conversation_id', conv.id)
+                .limit(1);
+
+              if (!existingMsgs || existingMsgs.length === 0) {
+                await adminClient.from('messages').insert({
+                  conversation_id: conv.id,
+                  sender_id: senderUserId,
+                  content: autoText
+                });
+                console.log(`[notify-customer] Mensagem automática da loja inserida no pedido #${orderUuid}`);
+              }
+            }
+          }
+        }
+      } catch (errAuto) {
+        console.warn('[notify-customer] Erro ao disparar mensagem automática da loja:', errAuto);
+      }
+    }
+
     const msg = statusMessages[newStatus];
     if (!msg) {
       return new Response(JSON.stringify({ message: `Status '${newStatus}' has no mapping, ignoring` }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });

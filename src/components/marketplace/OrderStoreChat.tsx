@@ -74,14 +74,63 @@ export function OrderStoreChat({ orderId, companyId, companyName, fullHeight, cl
         }
         if (!active || !session) { setLoading(false); return; }
         setSessionId(session.id);
-
         const { data: history } = await supabase
           .from('messages')
           .select('*')
           .eq('conversation_id', session.id)
           .order('created_at', { ascending: true });
+
+        let currentMsgs = history || [];
+
+        // Auto-mensagem de boas-vindas do restaurante como 1ª mensagem garantida
+        const storeSenderId = companyUserId || companyId;
+        const hasStoreMessage = currentMsgs.some(m => m.sender_id !== user.id);
+
+        if (!hasStoreMessage) {
+          try {
+            const { data: comp } = await supabase
+              .from('companies')
+              .select('opening_hours')
+              .eq('id', companyId)
+              .maybeSingle();
+
+            const hours = typeof comp?.opening_hours === 'string'
+              ? JSON.parse(comp.opening_hours)
+              : (comp?.opening_hours || {});
+
+            if (hours.auto_message_enabled !== false) {
+              const DEFAULT_AUTO_MESSAGE = `Olá! Pedido confirmado com sucesso! 🚀✨\nNossa equipe já iniciou o preparo com todo capricho e atenção aos detalhes.\n\nQualquer dúvida ou observação sobre seu pedido, estamos à sua disposição aqui pelo chat. Bom apetite! 🍽️🛵`;
+              const autoText = (typeof hours.auto_message === 'string' && hours.auto_message.trim())
+                ? hours.auto_message.trim()
+                : DEFAULT_AUTO_MESSAGE;
+
+              const autoMsgId = crypto.randomUUID();
+              const autoMsg: Msg = {
+                id: autoMsgId,
+                sender_id: storeSenderId,
+                message: autoText,
+                created_at: new Date().toISOString(),
+              };
+
+              currentMsgs = [autoMsg, ...currentMsgs];
+
+              // Persiste na tabela messages do Supabase
+              supabase.from('messages').insert({
+                id: autoMsgId,
+                conversation_id: session.id,
+                sender_id: storeSenderId,
+                content: autoText,
+              }).then(({ error }) => {
+                if (error) console.warn('[OrderStoreChat] Erro ao gravar auto-mensagem:', error);
+              });
+            }
+          } catch (e) {
+            console.warn('[OrderStoreChat] Erro ao verificar auto-mensagem:', e);
+          }
+        }
+
         if (!active) return;
-        setMessages(history || []);
+        setMessages(currentMsgs);
         setLoading(false);
 
         const channelName = `order_chat_${session.id}_${Date.now()}_${Math.random().toString(36).substring(7)}`;
@@ -216,6 +265,11 @@ export function OrderStoreChat({ orderId, companyId, companyName, fullHeight, cl
                       : 'bg-card text-foreground rounded-bl-xs border border-border/80'
                   }`}
                 >
+                  {!isMe && (
+                    <span className="text-[10px] font-bold text-primary block mb-1">
+                      {companyName || 'Restaurante'}
+                    </span>
+                  )}
                   <p>{content}</p>
                   {m.created_at && (
                     <span className={`text-[9px] block text-right mt-1 ${isMe ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}>

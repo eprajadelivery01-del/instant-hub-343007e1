@@ -57,15 +57,7 @@ export function useCancelOrder() {
         console.warn('[useCancelOrder] Aviso invoke notify-customer:', e);
       }
 
-      // 3. Atualização direta no client como garantia complementar
-      try {
-        await Promise.allSettled([
-          supabase.from('orders').update({ status: 'cancelled', updated_at: nowISO }).eq('id', targetId),
-          supabase.from('deliveries').update({ status: 'cancelled', updated_at: nowISO }).eq('order_id', targetId),
-        ]);
-      } catch {
-        // Ignora silenciosamente caso RLS restrinja UPDATE direto do cliente
-      }
+
 
       toast.success("Pedido cancelado com sucesso.");
       return true;

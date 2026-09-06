@@ -88,10 +88,36 @@ export function ActiveOrderChatFab() {
         .eq('order_id', orderId)
         .maybeSingle();
 
+      const lastRead = localStorage.getItem(`@epraja_chat_read_${orderId}`);
+
       if (data?.id) {
         conversationIdRef.current = data.id;
+
+        const { data: msgs } = await supabase
+          .from('messages')
+          .select('id, sender_id, created_at')
+          .eq('conversation_id', data.id);
+
+        const storeMsgs = (msgs || []).filter((m) => m.sender_id !== user?.id);
+
+        if (!lastRead) {
+          // Se ainda não abriu o chat deste pedido, exibe a contagem de mensagens do lojista (mínimo 1 para a de boas-vindas)
+          setUnreadCount(Math.max(storeMsgs.length, 1));
+        } else {
+          const unread = storeMsgs.filter((m) => new Date(m.created_at) > new Date(lastRead));
+          setUnreadCount(unread.length);
+        }
+      } else {
+        // Conversa pronta para o pedido ativo aguardando abertura pelo cliente
+        if (!lastRead) {
+          setUnreadCount(1);
+        } else {
+          setUnreadCount(0);
+        }
       }
-    } catch {}
+    } catch (e) {
+      console.warn('[ActiveOrderChatFab] Erro ao buscar contagem de mensagens:', e);
+    }
   };
 
   useEffect(() => {
@@ -133,6 +159,9 @@ export function ActiveOrderChatFab() {
   const handleOpenChat = () => {
     setIsOpen(true);
     setUnreadCount(0);
+    if (activeOrder?.id) {
+      localStorage.setItem(`@epraja_chat_read_${activeOrder.id}`, new Date().toISOString());
+    }
   };
 
   return (
@@ -146,10 +175,10 @@ export function ActiveOrderChatFab() {
         >
           <MessageCircle className="h-7 w-7 text-white stroke-[2.2]" />
           
-          {/* Badge de Nova Mensagem ou Ponto Pulsante */}
+          {/* Badge Contador de Mensagens no Balão */}
           {unreadCount > 0 ? (
-            <span className="absolute -top-1 -right-1 flex h-5 min-w-[20px] px-1 items-center justify-center rounded-full bg-destructive text-[10px] font-black text-white shadow-md animate-bounce">
-              {unreadCount}
+            <span className="absolute -top-1.5 -right-1.5 flex h-5 min-w-[22px] px-1.5 items-center justify-center rounded-full bg-[#EA1D2C] text-[11px] font-black text-white shadow-[0_2px_8px_rgba(234,29,44,0.6)] border-2 border-white animate-bounce">
+              {unreadCount > 9 ? '9+' : unreadCount}
             </span>
           ) : (
             <span className="absolute top-0 right-0 flex h-3.5 w-3.5">
