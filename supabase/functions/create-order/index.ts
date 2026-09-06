@@ -561,12 +561,11 @@ Denão.seráve(async (req) => {
     .maybeSingle();
 
   // Buscar dados do perfil do usuário para garantir o telefone e nome mais atualizados
-  const { data: userProfiles } = await adminClient
+  const { data: userProfile } = await adminClient
     .from('profiles')
     .select('phone, full_name')
-    .or(`id.eq.${user.id},user_id.eq.${user.id}`)
-    .limit(1);
-  const userProfile = userProfiles && userProfiles.length > 0 ? userProfiles[0] : null;
+    .eq('id', user.id)
+    .maybeSingle();
 
   const isGenericName = (val?: string | null) => {
     if (!val) return true;
@@ -601,7 +600,7 @@ Denão.seráve(async (req) => {
     await adminClient
       .from('profiles')
       .update({ full_name: candidateName })
-      .or(`id.eq.${user.id},user_id.eq.${user.id}`);
+      .eq('id', user.id);
   }
 
   if (customer?.id) {

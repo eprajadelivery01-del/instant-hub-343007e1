@@ -317,17 +317,16 @@ export default function Checkout() {
         await Promise.allSettled([
           supabase
             .from('profiles')
-            .upsert({
-              id: user.id,
-              user_id: user.id,
+            .update({
               phone: phoneInput,
               full_name: trimmedName,
-              role: profile?.role || 'customer'
-            }),
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', user.id),
           supabase
             .from('customers')
             .update({ name: trimmedName, phone: phoneInput, updated_at: new Date().toISOString() })
-            .or(`user_id.eq.${user.id},id.eq.${user.id}`),
+            .eq('user_id', user.id),
         ]);
         try {
           localStorage.setItem('@epraja_customer_name', trimmedName);

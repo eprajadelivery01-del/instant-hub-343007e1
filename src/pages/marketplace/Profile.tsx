@@ -184,8 +184,8 @@ export default function Profile() {
     setSaving(true);
     try {
       await Promise.allSettled([
-        supabase.from('profiles').update({ full_name: fullName, phone }).or(`id.eq.${user.id},user_id.eq.${user.id}`),
-        supabase.from('customers').update({ name: fullName, phone, updated_at: new Date().toISOString() }).or(`user_id.eq.${user.id},id.eq.${user.id}`)
+        supabase.from('profiles').update({ full_name: fullName, phone, updated_at: new Date().toISOString() }).eq('id', user.id),
+        supabase.from('customers').update({ name: fullName, phone, updated_at: new Date().toISOString() }).eq('user_id', user.id)
       ]);
       try {
         localStorage.setItem('@epraja_customer_name', fullName);
