@@ -166,8 +166,8 @@ export function ActiveOrderChatFab() {
 
   return (
     <>
-      {/* Botão Flutuante Circular Laranja (FAB) */}
-      <div className="fixed right-4 bottom-20 md:bottom-24 z-40 flex items-center gap-2 group animate-in fade-in slide-in-from-bottom-5 duration-300">
+      {/* Botão Flutuante Circular Laranja (FAB) semi-escondido no rodapé */}
+      <div className="fixed right-5 bottom-8 z-40 flex items-center gap-2 group animate-in fade-in slide-in-from-bottom-5 duration-300">
         <button
           onClick={handleOpenChat}
           aria-label="Abrir conversa do pedido ativo"
