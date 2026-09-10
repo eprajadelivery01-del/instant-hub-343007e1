@@ -42,7 +42,7 @@ export default function OrderSummaryDialog({ orderId, open, onOpenChange }: Prop
             .from('orders')
             .select('*, company:companies(*)')
             .eq('id', orderId)
-            .single(),
+            .maybeSingle(),
           supabase.from('order_items').select('*').eq('order_id', orderId),
         ]);
         setOrder(orderRes.data as Order);

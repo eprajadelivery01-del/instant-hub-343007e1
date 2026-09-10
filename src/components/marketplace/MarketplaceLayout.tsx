@@ -44,7 +44,7 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
     let wasClosed = false;
 
     const checkInitialStatus = async () => {
-      const { data } = await supabase.from('companies').select('is_open').eq('id', company.id).single();
+      const { data } = await supabase.from('companies').select('is_open').eq('id', company.id).maybeSingle();
       if (data) {
         wasClosed = !data.is_open;
         initialStatusChecked = true;

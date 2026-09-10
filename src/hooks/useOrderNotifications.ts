@@ -536,7 +536,7 @@ export function useOrderNotifications() {
           .from('orders')
           .select('*, company:companies(*), deliveries(*)')
           .eq('id', orderId)
-          .single();
+          .maybeSingle();
 
         if (!ord) return;
         if (!isMyOrder(ord)) return;

@@ -21,7 +21,7 @@ registerRouteDataPrefetcher("/marketplace/store", async ({ id }, queryClient, si
             "id, name, description, category, rating, is_open, active, is_active, delivery_fee, delivery_regions_pricing, show_in_marketplace, city, state, address, phone, banner_url, cover_url, logo_url, business_hours, prep_time, prep_time_min, prep_time_max, created_at, user_id"
           )
           .eq("id", id)
-          .single(),
+          .maybeSingle(),
         supabase
           .from("products")
           .select("*")
@@ -49,7 +49,7 @@ registerRouteDataPrefetcher("/marketplace/orders", async ({ id }, queryClient, s
           .from("orders")
           .select("*, company:companies(*), address:addresses(*)")
           .eq("id", id)
-          .single(),
+          .maybeSingle(),
         supabase.from("order_items").select("*, products(*)").eq("order_id", id),
         supabase.from("deliveries").select("*").eq("order_id", id).maybeSingle(),
       ]);

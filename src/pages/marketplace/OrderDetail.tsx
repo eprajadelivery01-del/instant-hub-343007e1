@@ -37,7 +37,7 @@ export default function OrderDetail() {
     staleTime: 10_000,
     queryFn: async () => {
       const [orderRes, itemsRes, deliveryRes] = await Promise.all([
-        supabase.from('orders').select('*, company:companies(*), address:addresses(*)').eq('id', id!).single(),
+        supabase.from('orders').select('*, company:companies(*), address:addresses(*)').eq('id', id!).maybeSingle(),
         supabase.from('order_items').select('*, products(*)').eq('order_id', id!),
         supabase.from('deliveries').select('*').eq('order_id', id!).maybeSingle(),
       ]);
