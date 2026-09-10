@@ -30,9 +30,9 @@ export function SupportChat({ topic, title, companyId = null, onClose }: Support
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const QUICK_MESSAGES = [
-    { label: "Quero será entregador 🏍️", text: "Olá! Gostaria de saber como faço para me cadastrar como entregador na plataforma." },
-    { label: "Problema não pedido 🍔", text: "Olá! Tive um problema com meu pedido recente e gostaria de suporte." },
-    { label: "Falar com suporte 👤", text: "Olá! Gostaria de falar com um atendente humanão sobre uma dúvida geral." }
+    { label: "Quero ser entregador 🏍️", text: "Olá! Gostaria de saber como faço para me cadastrar como entregador na plataforma." },
+    { label: "Problema no pedido 🍔", text: "Olá! Tive um problema com meu pedido recente e gostaria de suporte." },
+    { label: "Falar com suporte 👤", text: "Olá! Gostaria de falar com um atendente humano sobre uma dúvida geral." }
   ];
 
   useEffect(() => {
@@ -160,7 +160,7 @@ export function SupportChat({ topic, title, companyId = null, onClose }: Support
   };
 
   const handleEndChat = () => {
-    if (window.confirm("Deseja encerrar este chat e começar um nãovo?")) {
+    if (window.confirm("Deseja encerrar este chat e começar um novo?")) {
       const storageKey = `epraja_chat_${topic}_${user.id}_v2`;
       localStorage.removeItem(storageKey);
       setMessages([]);
