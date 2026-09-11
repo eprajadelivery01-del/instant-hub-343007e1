@@ -64,5 +64,7 @@
 	<array>
 		<string>remote-notification</string>
 	</array>
+	<key>NSUserNotificationsUsageDescription</key>
+	<string>O É Pra Já Delivery necessita de notificações ativas para alertar imediatamente sobre o status do seu pedido e entregas em tempo real, mesmo com o aplicativo fechado ou em segundo plano.</string>
 </dict>
 </plist>
