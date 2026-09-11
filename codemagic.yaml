@@ -44,8 +44,11 @@ workflows:
 
       - name: Install manual provisioning profile
         script: |
-          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          cp epraja_dist.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
+          PROFILES_DIR="$HOME/Library/MobileDevice/Provisioning Profiles"
+          mkdir -p "$PROFILES_DIR"
+          PROFILE_UUID="311ca7b6-054f-4e22-9886-bbe20f6758ae"
+          cp epraja_dist.mobileprovision "$PROFILES_DIR/$PROFILE_UUID.mobileprovision"
+          cp epraja_dist.mobileprovision "$PROFILES_DIR/epraja_dist.mobileprovision"
 
       - name: Validate APNs provisioning profile
         script: |
@@ -63,7 +66,7 @@ workflows:
           echo "Provisioning profile APNs válido para $BUNDLE_ID."
 
       - name: Set up code signing settings on Xcode project
-        script: xcode-project use-profiles
+        script: xcode-project use-profiles --project "ios/App/$XCODE_PROJECT"
 
       - name: Increment build number
         script: |
