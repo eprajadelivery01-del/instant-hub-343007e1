@@ -15,8 +15,26 @@ console.log("[Firebase] Firebase App inicializado para o projeto:", firebaseConf
 
 export let analytics: any = null;
 
+// Polyfill de segurança para ambientes/crawlers onde IDBRequest não está disponível globalmente
+if (typeof window !== "undefined" && typeof (window as any).IDBRequest === "undefined") {
+  try {
+    (window as any).IDBRequest = class IDBRequest {};
+  } catch {}
+}
+
 if (typeof window !== "undefined") {
-  isSupported().then((supported) => {
+  const checkSupport = async () => {
+    try {
+      if (typeof indexedDB === "undefined" || typeof IDBRequest === "undefined") {
+        return false;
+      }
+      return await isSupported();
+    } catch {
+      return false;
+    }
+  };
+
+  checkSupport().then((supported) => {
     if (supported) {
       try {
         analytics = getAnalytics(app);
@@ -31,3 +49,4 @@ if (typeof window !== "undefined") {
     console.warn("[Firebase] Falha ao verificar suporte a Analytics:", err);
   });
 }
+
