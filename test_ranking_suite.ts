@@ -322,9 +322,52 @@ console.log('--- INICIANDO BATERIA DE TESTES DO RANKING INTELIGENTE (COM PRIORID
   );
 }
 
-// TESTE 14: Confirmação de integridade crítica do sistema
+// TESTE 15 (CENÁRIO REAL DO BANCO É PRA JÁ):
+// Valida que lojas reais abertas com produtos ficam acima das lojas sem produtos (farmácias/papelaria),
+// e que lojas fechadas ficam abaixo das abertas.
 {
-  assert(true, 'TESTE 14: Carrinho, Checkout, Pedidos, Preços e RLS 100% preservados');
+  const realStoresMock = [
+    { id: 'farma-popular', name: 'FARMA POPULAR', is_open: true, products: [], rating: 5.0, category: 'farmacia' },
+    { id: 'drogaria-paulista', name: 'DROGARIA PAULISTA', is_open: true, products: [], rating: 5.0, category: 'farmacia' },
+    { id: 'dpapel', name: "D'PAPEL PAPELARIA", is_open: true, products: [], rating: 5.0, category: 'shopping' },
+    { id: 'marmitaria-fortaleza', name: 'MARMITARIA FORTALEZA', is_open: true, products: [{ name: 'Marmita', active: true }], rating: 4.8, category: 'restaurante' },
+    { id: 'recanto-sonhos', name: 'RESTAURANTE RECANTO DOS SONHOS', is_open: true, products: [{ name: 'Prato Feito', active: true }], rating: 4.8, category: 'restaurante' },
+    { id: 'mercado-central', name: 'MERCADO CENTRAL', is_open: true, products: [{ name: 'Arroz', active: true }], rating: 4.8, category: 'mercado' },
+    { id: 'vem-que-tem', name: 'VEM QUE TEM', is_open: false, products: [{ name: 'Item', active: true }], rating: 4.9, category: 'restaurante' },
+    { id: 'santa-brasa', name: 'SANTA BRASA', is_open: false, products: [{ name: 'Carne', active: true }], rating: 4.9, category: 'restaurante' },
+  ];
+
+  const d = createDateAtHour(12, 30); // Horário de almoço
+  const ranked = rankStores(realStoresMock, d);
+
+  // 1º colocado deve ser Marmitaria Fortaleza
+  assert(
+    ranked[0].id === 'marmitaria-fortaleza',
+    'TESTE 15 (CENÁRIO REAL): No almoço, MARMITARIA FORTALEZA fica em 1º lugar no topo absoluto'
+  );
+
+  // Lojas sem produtos (farma-popular, drogaria-paulista, dpapel) devem ficar ABAIXO das lojas abertas com produtos
+  const marmitaIdx = ranked.findIndex((s) => s.id === 'marmitaria-fortaleza');
+  const recantoIdx = ranked.findIndex((s) => s.id === 'recanto-sonhos');
+  const mercadoIdx = ranked.findIndex((s) => s.id === 'mercado-central');
+  const farmaIdx = ranked.findIndex((s) => s.id === 'farma-popular');
+  const paulistaIdx = ranked.findIndex((s) => s.id === 'drogaria-paulista');
+  const dpapelIdx = ranked.findIndex((s) => s.id === 'dpapel');
+  const vemQueTemIdx = ranked.findIndex((s) => s.id === 'vem-que-tem');
+
+  const allActiveWithCatalogAbove = [marmitaIdx, recantoIdx, mercadoIdx].every(
+    (idx) => idx < farmaIdx && idx < paulistaIdx && idx < dpapelIdx
+  );
+  assert(
+    allActiveWithCatalogAbove,
+    'TESTE 15 (CENÁRIO REAL): Lojas abertas com catálogo ficam todas ACIMA de lojas que exibem "Cardápio em atualização"'
+  );
+
+  // Lojas fechadas ficam abaixo das abertas
+  assert(
+    vemQueTemIdx > farmaIdx && vemQueTemIdx > dpapelIdx,
+    'TESTE 15 (CENÁRIO REAL): Lojas fechadas ficam abaixo das lojas abertas'
+  );
 }
 
 console.log(`\n========================================`);
