@@ -287,11 +287,49 @@ export function getStoreTimeScore(company: any, period: DayPeriod): number {
 }
 
 /**
- * Ordena as lojas de forma inteligente:
- * 1º - Lojas ABERTAS vêm primeiro (regra suprema do sistema preservada).
- * 2º - Maior Score de Prioridade por Horário (+50, +30, 0).
- *      (Uma loja altamente relevante fica acima de uma neutra mesmo que a neutra tenha rating maior).
+ * Determina se a loja possui produtos válidos/disponíveis no catálogo.
+ * Segue a regra exata existente no É Pra Já:
+ * produtos com active !== false && is_active !== false.
+ */
+export function hasAvailableProducts(company: any): boolean {
+  if (!company || !Array.isArray(company.products) || company.products.length === 0) {
+    return false;
+  }
+  return company.products.some(
+    (p: any) => p && p.active !== false && p.is_active !== false
+  );
+}
+
+/**
+ * Retorna o nível de prioridade baseado no status da loja e catálogo:
+ * 4 = ABERTA + COM PRODUTOS
+ * 3 = ABERTA + SEM PRODUTOS
+ * 2 = FECHADA + COM PRODUTOS
+ * 1 = FECHADA + SEM PRODUTOS
+ */
+export function getStoreCatalogTier(company: StoreStatusInput): number {
+  const isOpen = isStoreOpenNow(company) === true;
+  const hasProducts = hasAvailableProducts(company);
+
+  if (isOpen && hasProducts) return 4;
+  if (isOpen && !hasProducts) return 3;
+  if (!isOpen && hasProducts) return 2;
+  return 1;
+}
+
+/**
+ * Ordena as lojas de forma inteligente com a nova hierarquia:
+ * 1º - Grupo de Disponibilidade de Catálogo:
+ *      1. Aberta + Com Produtos (Tier 4)
+ *      2. Aberta + Sem Produtos (Tier 3)
+ *      3. Fechada + Com Produtos (Tier 2)
+ *      4. Fechada + Sem Produtos (Tier 1)
+ *
+ * 2º - Score de Prioridade por Horário (+50, +30, 0):
+ *      (Dentro de "Aberta + Com Produtos", lojas relevantes ficam acima de neutras).
+ *
  * 3º - Melhor Avaliação (rating) como critério de desempate secundário.
+ *
  * 4º - Ordem alfabética pelo nome (estabilidade visual).
  *
  * NOTA: Esta função não mutaciona os objetos e não filtra nenhuma loja.
@@ -307,12 +345,13 @@ export function rankStores<T extends StoreStatusInput>(
   const period = resolveDayPeriod(currentDate, explicitTimezone);
 
   return [...stores].sort((a, b) => {
-    // 1º Critério: Abertas vs Fechadas
-    const aOpen = isStoreOpenNow(a) === true;
-    const bOpen = isStoreOpenNow(b) === true;
+    // 1º Critério: Grupo de Disponibilidade de Catálogo
+    const aTier = getStoreCatalogTier(a);
+    const bTier = getStoreCatalogTier(b);
 
-    if (aOpen && !bOpen) return -1;
-    if (!aOpen && bOpen) return 1;
+    if (bTier !== aTier) {
+      return bTier - aTier;
+    }
 
     // 2º Critério: Score de Prioridade por Horário (+50, +30, 0)
     const aScore = getStoreTimeScore(a, period);
@@ -322,7 +361,7 @@ export function rankStores<T extends StoreStatusInput>(
       return bScore - aScore;
     }
 
-    // 3º Critério: Avaliação (rating) como desempate
+    // 3º Critério: Avaliação (rating) como desempate secundário
     const aRating = Number((a as any).rating) || 0;
     const bRating = Number((b as any).rating) || 0;
 
