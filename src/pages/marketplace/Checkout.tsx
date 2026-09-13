@@ -346,7 +346,7 @@ export default function Checkout() {
     if (fulfillmentMode === 'delivery') {
       if (!selectedAddress) { toast.error('Selecione um endereço'); return; }
       if (unavailable) { toast.error('Entrega não disponível'); return; }
-      if (loadingFee) { toast.error('Calculando frete, aguarde'); return; }
+      if (loadingFee) { toast.error('Calculando entrega, aguarde'); return; }
     }
     setShowReviewModal(true);
   };

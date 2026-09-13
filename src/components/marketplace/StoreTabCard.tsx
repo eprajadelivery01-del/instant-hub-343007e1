@@ -114,7 +114,7 @@ export function StoreTabCard({ company }: StoreTabCardProps) {
               } else if (prices.length === 1) {
                 return `Entrega R$ ${prices[0].toFixed(2).replace('.', ',')}`;
               }
-              return 'Consultar frete';
+              return 'Consultar entrega';
             })()}
           </div>
         </div>
