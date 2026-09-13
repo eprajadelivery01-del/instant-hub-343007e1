@@ -21,7 +21,7 @@ import { StoreCouponsSheet } from '@/components/marketplace/StoreCouponsSheet';
 import { StoreInfoSheet } from '@/components/marketplace/StoreInfoSheet';
 import { useActiveCoupons } from '@/services/coupons';
 import { SafeAreaHeader, safeAreaTopValue } from '@/components/shared/SafeAreaHeader';
-import { WhatsAppOrderDialog } from '@/components/marketplace/WhatsAppOrderDialog';
+import { WhatsAppOrderDialog, WhatsAppIcon } from '@/components/marketplace/WhatsAppOrderDialog';
 import { getWhatsAppOnlyStore } from '@/lib/whatsappStores';
 
 import { getCachedStoreData } from '@/lib/offlinePrecache';
@@ -671,10 +671,10 @@ export default function StoreDetail() {
             <div className="flex flex-wrap items-center justify-center gap-2 mt-2">
               {whatsAppConfig && (
                 <Button
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold gap-2 shadow-md shadow-emerald-600/20"
+                  className="bg-[#25D366] hover:bg-[#1EBE5D] text-white font-bold gap-2 shadow-md shadow-[#25D366]/20"
                   onClick={() => setIsWhatsAppDialogOpen(true)}
                 >
-                  <MessageCircle className="h-4 w-4 fill-current" />
+                  <WhatsAppIcon className="h-4 w-4 fill-white" />
                   Falar no WhatsApp
                 </Button>
               )}
