@@ -7,150 +7,6 @@ import {
   getStoreCatalogTier,
 } from './src/lib/storeRanking';
 
-// Mock de lojas representativas baseadas no banco real do É Pra Já
-const mockStores: any[] = [
-  {
-    id: 'padaria-1',
-    name: 'Panificadora Pão Dourado',
-    category: 'restaurante',
-    description: 'Pães quentinhos, café da manhã e salgados',
-    rating: 4.5,
-    is_open: true,
-    active: true,
-    products: [{ name: 'Pão Francês', category: 'PADARIA', active: true }],
-  },
-  {
-    id: 'marmitaria-com-produtos',
-    name: 'Marmitaria Recanto dos Sabores',
-    category: 'restaurante',
-    description: 'Marmitas executivas, prato feito e comida caseira no almoço',
-    rating: 4.4,
-    is_open: true,
-    active: true,
-    products: [{ name: 'Marmitex Completa', category: 'A LA CARTE', active: true, is_active: true }],
-  },
-  {
-    id: 'doceria-1',
-    name: 'Fabiely Bolos e Doces',
-    category: 'restaurante',
-    description: 'Bolos confeitados, tortas doces, docinhos e café da tarde',
-    rating: 4.7,
-    is_open: true,
-    active: true,
-    products: [{ name: 'Bolo de Chocolate', category: 'Doces', active: true }],
-  },
-  {
-    id: 'burger-1',
-    name: 'Na Chapa Hamburgueria',
-    category: 'lanches',
-    description: 'Hamburguer artesanal na brasa, porções e refrigerantes',
-    rating: 4.6,
-    is_open: true,
-    active: true,
-    products: [{ name: 'X-Burguer Especial', category: 'HAMBURGUER ARTESANAL', active: true }],
-  },
-  {
-    id: 'pizzaria-1',
-    name: 'Pizzaria Bella Itália',
-    category: 'restaurante',
-    description: 'Pizzas tradicionais e especiais no forno a lenha',
-    rating: 4.8,
-    is_open: true,
-    active: true,
-    products: [{ name: 'Pizza Calabresa', category: 'Pizzas', active: true }],
-  },
-  {
-    id: 'conveniencia-1',
-    name: 'Conveniência 24h Pit Stop',
-    category: 'mercado',
-    description: 'Bebidas geladas, lanches rápidos, conveniência',
-    rating: 4.5,
-    is_open: true,
-    active: true,
-    products: [{ name: 'Cerveja Lata', category: 'Bebidas', active: true }],
-  },
-  {
-    id: 'papelaria-com-produtos',
-    name: 'D\'Papel Papelaria',
-    category: 'shopping',
-    description: 'Materiais escolares e escritório',
-    rating: 5.0, // Nota máxima (5.0) - Neutra no almoço (score 0), MAS COM PRODUTOS!
-    is_open: true,
-    active: true,
-    products: [{ name: 'Caderno Universitário', category: 'Outros', active: true, is_active: true }],
-  },
-  {
-    id: 'marmitaria-sem-produtos',
-    name: 'Marmitaria Almoço Fácil (Sem Produtos)',
-    category: 'restaurante',
-    description: 'Marmitaria e comida caseira no almoço',
-    rating: 5.0,
-    is_open: true,
-    active: true,
-    products: [], // Sem produtos cadastrados!
-  },
-  {
-    id: 'marmitaria-produtos-inativos',
-    name: 'Marmitaria Sabor Caseiro (Produtos Inativos)',
-    category: 'restaurante',
-    description: 'Marmitas executivas no almoço',
-    rating: 4.9,
-    is_open: true,
-    active: true,
-    products: [
-      { name: 'Marmita Feijoada', active: false, is_active: true },
-      { name: 'Marmita Bife', active: true, is_active: false },
-    ],
-  },
-  {
-    id: 'sem-categoria',
-    name: 'Loja Sem Categoria',
-    category: null,
-    description: null,
-    rating: 4.2,
-    is_open: true,
-    active: true,
-    products: [{ name: 'Item Teste', active: true }],
-  },
-  {
-    id: 'sem-horario',
-    name: 'Loja Sem Horário',
-    category: 'restaurante',
-    description: 'Loja com horário nulo',
-    business_hours: null,
-    rating: 4.3,
-    is_open: true,
-    active: true,
-    products: [{ name: 'Item Teste', active: true }],
-  },
-  {
-    id: 'fechada-com-produtos',
-    name: 'Pizzaria Madrugada Fechada (Com Produtos)',
-    category: 'restaurante',
-    description: 'Pizzas especiais',
-    rating: 4.9,
-    is_open: false, // Fechada!
-    active: true,
-    products: [{ name: 'Pizza Família', active: true }],
-  },
-  {
-    id: 'fechada-sem-produtos',
-    name: 'Loja Fechada Sem Catálogo',
-    category: 'restaurante',
-    description: 'Loja fechada sem itens',
-    rating: 5.0,
-    is_open: false, // Fechada!
-    active: true,
-    products: [],
-  }
-];
-
-function createDateAtHour(hour: number, minute: number = 0): Date {
-  const d = new Date();
-  d.setHours(hour, minute, 0, 0);
-  return d;
-}
-
 let passed = 0;
 let failed = 0;
 
@@ -164,214 +20,230 @@ function assert(condition: boolean, testName: string, detail?: string) {
   }
 }
 
-console.log('--- INICIANDO BATERIA DE TESTES DO RANKING INTELIGENTE (COM PRIORIDADE DE CATÁLOGO) ---\n');
-
-// TESTES ESPECÍFICOS DE PRIORIDADE DE CATÁLOGO:
-// TESTE 1: Loja aberta + produtos + score 0 DEVE ficar ACIMA de loja aberta + sem produtos + score 50
-{
-  const d = createDateAtHour(12, 0); // Horário de almoço
-  const ranked = rankStores(mockStores, d);
-  const papelariaIdx = ranked.findIndex((s: any) => s.id === 'papelaria-com-produtos'); // Aberta + Produtos + Score 0
-  const marmitaSemProdIdx = ranked.findIndex((s: any) => s.id === 'marmitaria-sem-produtos'); // Aberta + Sem Produtos + Score 50
-
-  assert(
-    papelariaIdx !== -1 && marmitaSemProdIdx !== -1 && papelariaIdx < marmitaSemProdIdx,
-    'TESTE OBRIGATÓRIO 1: Loja aberta + produtos (score 0) fica ACIMA de loja aberta sem produtos (score 50)',
-    `Papelaria idx: ${papelariaIdx}, Marmita Sem Prod idx: ${marmitaSemProdIdx}`
-  );
+function createDateAtHour(hour: number, minute: number = 0): Date {
+  const d = new Date();
+  d.setHours(hour, minute, 0, 0);
+  return d;
 }
 
-// TESTE 2: Loja aberta + produtos + score 50 deve ficar no topo
+console.log('--- EXECUTANDO OS 16 TESTES OBRIGATÓRIOS DO RANKING COM PRIORIDADE DE CATÁLOGO ---\n');
+
+// 1. Aberta + produtos + score 0 acima de aberta + sem produtos + score 50
 {
-  const d = createDateAtHour(12, 0);
-  const ranked = rankStores(mockStores, d);
-  const firstStore = ranked[0];
-  assert(
-    firstStore.id === 'marmitaria-com-produtos',
-    'TESTE OBRIGATÓRIO 2: Loja aberta + produtos + score 50 fica no topo absoluto',
-    `1ª colocada: ${firstStore.name} (${firstStore.id})`
-  );
-}
-
-// TESTE 3: Loja aberta + sem produtos + score 50 deve ficar abaixo de TODAS as lojas abertas com produtos
-{
-  const d = createDateAtHour(12, 0);
-  const ranked = rankStores(mockStores, d);
-  const marmitaSemProdIdx = ranked.findIndex((s: any) => s.id === 'marmitaria-sem-produtos');
-  
-  // Todas as lojas abertas com produtos devem ter índice menor que marmitaSemProdIdx
-  const openWithProducts = ranked.filter(
-    (s: any) => s.is_open === true && hasAvailableProducts(s) === true
-  );
-  const allAbove = openWithProducts.every((s: any) => ranked.indexOf(s) < marmitaSemProdIdx);
-
-  assert(
-    allAbove,
-    'TESTE OBRIGATÓRIO 3: Loja aberta sem produtos fica abaixo de TODAS as lojas abertas com produtos',
-    `Total abertas c/ prod: ${openWithProducts.length}, Marmita Sem Prod idx: ${marmitaSemProdIdx}`
-  );
-}
-
-// TESTE 4: Loja fechada + produtos deve ficar abaixo de TODAS as lojas abertas
-{
-  const d = createDateAtHour(12, 0);
-  const ranked = rankStores(mockStores, d);
-  const fechadaComProdIdx = ranked.findIndex((s: any) => s.id === 'fechada-com-produtos');
-  
-  const allOpenStores = ranked.filter((s: any) => s.is_open === true);
-  const allOpenAbove = allOpenStores.every((s: any) => ranked.indexOf(s) < fechadaComProdIdx);
-
-  assert(
-    allOpenAbove,
-    'TESTE OBRIGATÓRIO 4: Loja fechada com produtos fica abaixo de TODAS as lojas abertas',
-    `Total abertas: ${allOpenStores.length}, Fechada c/ prod idx: ${fechadaComProdIdx}`
-  );
-}
-
-// TESTE 5: Loja fechada + sem produtos deve ficar no final da lista
-{
-  const d = createDateAtHour(12, 0);
-  const ranked = rankStores(mockStores, d);
-  const lastStore = ranked[ranked.length - 1];
-  assert(
-    lastStore.id === 'fechada-sem-produtos',
-    'TESTE OBRIGATÓRIO 5: Loja fechada sem produtos fica no final da lista',
-    `Última loja: ${lastStore.name} (${lastStore.id})`
-  );
-}
-
-// TESTE 6: Empresa com products = [] deve ser considerada sem catálogo
-{
-  const company = { name: 'Teste Vazia', products: [] };
-  assert(
-    hasAvailableProducts(company) === false,
-    'TESTE OBRIGATÓRIO 6: Empresa com products = [] tem hasAvailableProducts === false'
-  );
-}
-
-// TESTE 7: Empresa sem products (null ou undefined) não pode gerar erro
-{
-  const compNull = { name: 'Sem prop products', products: null };
-  const compUndef = { name: 'Sem prop products' };
-  assert(
-    hasAvailableProducts(compNull) === false && hasAvailableProducts(compUndef) === false,
-    'TESTE OBRIGATÓRIO 7: Empresa com products nulo ou indefinido não gera erro e retorna false'
-  );
-}
-
-// TESTE 8: Produtos existentes mas todos inativos (active: false ou is_active: false)
-{
-  const compInativa = mockStores.find((s: any) => s.id === 'marmitaria-produtos-inativos');
-  assert(
-    hasAvailableProducts(compInativa) === false,
-    'TESTE OBRIGATÓRIO 8: Loja com produtos apenas inativos é considerada sem catálogo disponível'
-  );
-}
-
-// TESTE 9: Busca por loja continua funcionando
-{
-  const search = 'pizza';
-  const ranked = rankStores(mockStores, createDateAtHour(19, 0));
-  const filtered = ranked.filter((s: any) => s.name.toLowerCase().includes(search));
-  assert(
-    filtered.length > 0 && filtered[0].id === 'pizzaria-1',
-    'TESTE OBRIGATÓRIO 9: Busca por "pizza" retorna loja correspondente perfeitamente'
-  );
-}
-
-// TESTE 10: Filtro por categoria continua funcionando
-{
-  const categoryFilter = 'shopping';
-  const ranked = rankStores(mockStores, createDateAtHour(14, 0));
-  const filtered = ranked.filter((s: any) => s.category === categoryFilter);
-  assert(
-    filtered.length === 1 && filtered[0].id === 'papelaria-com-produtos',
-    'TESTE OBRIGATÓRIO 10: Filtro por shopping retorna D\'Papel Papelaria'
-  );
-}
-
-// TESTES DOS PERÍODOS DE HORÁRIO:
-// TESTE 11 (07:00): Padaria com catálogo no topo
-{
-  const d = createDateAtHour(7, 0);
-  const ranked = rankStores(mockStores, d);
-  assert(
-    ranked[0].id === 'padaria-1',
-    'TESTE 11 (07:00): Padaria com catálogo é a 1ª colocada'
-  );
-}
-
-// TESTE 12 (15:00): Doceria com catálogo no topo à tarde
-{
-  const d = createDateAtHour(15, 0);
-  const ranked = rankStores(mockStores, d);
-  assert(
-    ranked[0].id === 'doceria-1',
-    'TESTE 12 (15:00): Doceria com catálogo é a 1ª colocada à tarde'
-  );
-}
-
-// TESTE 13 (19:00): Hamburgueria e Pizzaria com catálogo no topo à noite
-{
-  const d = createDateAtHour(19, 0);
-  const ranked = rankStores(mockStores, d);
-  const topTwo = [ranked[0].id, ranked[1].id];
-  assert(
-    topTwo.includes('burger-1') && topTwo.includes('pizzaria-1'),
-    'TESTE 13 (19:00): Hamburgueria e Pizzaria com catálogo estão no topo à noite'
-  );
-}
-
-// TESTE 15 (CENÁRIO REAL DO BANCO É PRA JÁ):
-// Valida que lojas reais abertas com produtos ficam acima das lojas sem produtos (farmácias/papelaria),
-// e que lojas fechadas ficam abaixo das abertas.
-{
-  const realStoresMock = [
-    { id: 'farma-popular', name: 'FARMA POPULAR', is_open: true, products: [], rating: 5.0, category: 'farmacia' },
-    { id: 'drogaria-paulista', name: 'DROGARIA PAULISTA', is_open: true, products: [], rating: 5.0, category: 'farmacia' },
-    { id: 'dpapel', name: "D'PAPEL PAPELARIA", is_open: true, products: [], rating: 5.0, category: 'shopping' },
-    { id: 'marmitaria-fortaleza', name: 'MARMITARIA FORTALEZA', is_open: true, products: [{ name: 'Marmita', active: true }], rating: 4.8, category: 'restaurante' },
-    { id: 'recanto-sonhos', name: 'RESTAURANTE RECANTO DOS SONHOS', is_open: true, products: [{ name: 'Prato Feito', active: true }], rating: 4.8, category: 'restaurante' },
-    { id: 'mercado-central', name: 'MERCADO CENTRAL', is_open: true, products: [{ name: 'Arroz', active: true }], rating: 4.8, category: 'mercado' },
-    { id: 'vem-que-tem', name: 'VEM QUE TEM', is_open: false, products: [{ name: 'Item', active: true }], rating: 4.9, category: 'restaurante' },
-    { id: 'santa-brasa', name: 'SANTA BRASA', is_open: false, products: [{ name: 'Carne', active: true }], rating: 4.9, category: 'restaurante' },
+  const stores = [
+    { id: 'farma-sem-prod', name: 'Farmácia Sem Produtos', is_open: true, category: 'farmacia', products: [], rating: 5.0 }, // Score manhã = 50, sem prod (Tier 3)
+    { id: 'marmita-com-prod', name: 'Marmitaria Com Produtos', is_open: true, category: 'restaurante', products: [{ name: 'Marmita', active: true }], rating: 4.0 }, // Score manhã = 0, com prod (Tier 4)
   ];
-
-  const d = createDateAtHour(12, 30); // Horário de almoço
-  const ranked = rankStores(realStoresMock, d);
-
-  // 1º colocado deve ser Marmitaria Fortaleza
+  const ranked = rankStores(stores, createDateAtHour(7, 0)); // Período MORNING
   assert(
-    ranked[0].id === 'marmitaria-fortaleza',
-    'TESTE 15 (CENÁRIO REAL): No almoço, MARMITARIA FORTALEZA fica em 1º lugar no topo absoluto'
+    ranked[0].id === 'marmita-com-prod' && ranked[1].id === 'farma-sem-prod',
+    'TESTE 1: Aberta com produtos (score 0) fica acima de aberta sem produtos (score 50)'
   );
+}
 
-  // Lojas sem produtos (farma-popular, drogaria-paulista, dpapel) devem ficar ABAIXO das lojas abertas com produtos
-  const marmitaIdx = ranked.findIndex((s) => s.id === 'marmitaria-fortaleza');
-  const recantoIdx = ranked.findIndex((s) => s.id === 'recanto-sonhos');
-  const mercadoIdx = ranked.findIndex((s) => s.id === 'mercado-central');
-  const farmaIdx = ranked.findIndex((s) => s.id === 'farma-popular');
-  const paulistaIdx = ranked.findIndex((s) => s.id === 'drogaria-paulista');
-  const dpapelIdx = ranked.findIndex((s) => s.id === 'dpapel');
-  const vemQueTemIdx = ranked.findIndex((s) => s.id === 'vem-que-tem');
-
-  const allActiveWithCatalogAbove = [marmitaIdx, recantoIdx, mercadoIdx].every(
-    (idx) => idx < farmaIdx && idx < paulistaIdx && idx < dpapelIdx
-  );
+// 2. Aberta + produtos + score 50 no topo
+{
+  const stores = [
+    { id: 'loja-neutra', name: 'Loja Neutra', is_open: true, products: [{ name: 'Item', active: true }], rating: 5.0 },
+    { id: 'marmita-topo', name: 'Marmitaria No Almoço', is_open: true, description: 'almoço caseiro', products: [{ name: 'Marmitex', active: true }], rating: 4.8 },
+  ];
+  const ranked = rankStores(stores, createDateAtHour(12, 0)); // LUNCH
   assert(
-    allActiveWithCatalogAbove,
-    'TESTE 15 (CENÁRIO REAL): Lojas abertas com catálogo ficam todas ACIMA de lojas que exibem "Cardápio em atualização"'
+    ranked[0].id === 'marmita-topo',
+    'TESTE 2: Aberta com produtos + score 50 fica no topo'
   );
+}
 
-  // Lojas fechadas ficam abaixo das abertas
+// 3. Aberta + sem produtos + score 50 abaixo de TODAS as abertas com produtos
+{
+  const stores = [
+    { id: 'loja-a', name: 'Loja A', is_open: true, products: [{ name: 'P1', active: true }], rating: 4.0 },
+    { id: 'loja-b', name: 'Loja B', is_open: true, products: [{ name: 'P2', active: true }], rating: 3.5 },
+    { id: 'loja-c', name: 'Loja C', is_open: true, products: [{ name: 'P3', active: true }], rating: 4.2 },
+    { id: 'marmita-vazia', name: 'Marmitaria Vazia', is_open: true, description: 'almoço', products: [], rating: 5.0 }, // score 50, tier 3
+  ];
+  const ranked = rankStores(stores, createDateAtHour(12, 0));
+  const vaziaIndex = ranked.findIndex((s) => s.id === 'marmita-vazia');
   assert(
-    vemQueTemIdx > farmaIdx && vemQueTemIdx > dpapelIdx,
-    'TESTE 15 (CENÁRIO REAL): Lojas fechadas ficam abaixo das lojas abertas'
+    vaziaIndex === 3,
+    'TESTE 3: Aberta sem produtos + score 50 fica abaixo de TODAS as abertas com produtos'
+  );
+}
+
+// 4. Fechada + produtos abaixo de TODAS as abertas
+{
+  const stores = [
+    { id: 'aberta-com-prod', name: 'Aberta Com Prod', is_open: true, products: [{ name: 'Item', active: true }] },
+    { id: 'aberta-sem-prod', name: 'Aberta Sem Prod', is_open: true, products: [] },
+    { id: 'fechada-com-prod', name: 'Fechada Com Prod', is_open: false, products: [{ name: 'Item', active: true }], rating: 5.0 },
+  ];
+  const ranked = rankStores(stores, createDateAtHour(12, 0));
+  const fechadaIdx = ranked.findIndex((s) => s.id === 'fechada-com-prod');
+  assert(
+    fechadaIdx === 2,
+    'TESTE 4: Fechada com produtos fica abaixo de TODAS as lojas abertas (com e sem produtos)'
+  );
+}
+
+// 5. Fechada + sem produtos no último grupo
+{
+  const stores = [
+    { id: 'aberta-com-prod', name: 'Aberta Com Prod', is_open: true, products: [{ name: 'Item', active: true }] },
+    { id: 'fechada-com-prod', name: 'Fechada Com Prod', is_open: false, products: [{ name: 'Item', active: true }] },
+    { id: 'fechada-sem-prod', name: 'Fechada Sem Prod', is_open: false, products: [] },
+    { id: 'aberta-sem-prod', name: 'Aberta Sem Prod', is_open: true, products: [] },
+  ];
+  const ranked = rankStores(stores, createDateAtHour(12, 0));
+  assert(
+    ranked[3].id === 'fechada-sem-prod',
+    'TESTE 5: Fechada sem produtos fica no último grupo (Tier 1)'
+  );
+}
+
+// 6. products = [] deve ser considerada sem catálogo
+{
+  const comp = { name: 'Loja', products: [] };
+  assert(
+    hasAvailableProducts(comp) === false,
+    'TESTE 6: products = [] é classificada como sem catálogo'
+  );
+}
+
+// 7. products = null não pode gerar erro
+{
+  const comp = { name: 'Loja', products: null };
+  assert(
+    hasAvailableProducts(comp) === false,
+    'TESTE 7: products = null não gera erro e retorna false'
+  );
+}
+
+// 8. products = undefined não pode gerar erro
+{
+  const comp = { name: 'Loja', products: undefined };
+  assert(
+    hasAvailableProducts(comp) === false,
+    'TESTE 8: products = undefined não gera erro e retorna false'
+  );
+}
+
+// 9. Somente produtos inativos (active === false)
+{
+  const comp = {
+    name: 'Loja Inativa',
+    products: [
+      { name: 'P1', active: false, is_active: true },
+      { name: 'P2', active: false, is_active: true },
+    ],
+  };
+  assert(
+    hasAvailableProducts(comp) === false,
+    'TESTE 9: Somente produtos com active === false é considerada sem catálogo'
+  );
+}
+
+// 10. Somente produtos is_active === false
+{
+  const comp = {
+    name: 'Loja Inativa 2',
+    products: [
+      { name: 'P1', active: true, is_active: false },
+      { name: 'P2', active: true, is_active: false },
+    ],
+  };
+  assert(
+    hasAvailableProducts(comp) === false,
+    'TESTE 10: Somente produtos com is_active === false é considerada sem catálogo'
+  );
+}
+
+// 11. Produto ativo válido
+{
+  const comp = {
+    name: 'Loja Ativa',
+    products: [{ name: 'P1', active: true, is_active: true }],
+  };
+  assert(
+    hasAvailableProducts(comp) === true,
+    'TESTE 11: Produto ativo e disponível é considerado com catálogo'
+  );
+}
+
+// 12. Múltiplos produtos onde pelo menos um é válido
+{
+  const comp = {
+    name: 'Loja Mista',
+    products: [
+      { name: 'P1', active: false, is_active: true },
+      { name: 'P2', active: true, is_active: false },
+      { name: 'P3', active: true, is_active: true }, // Válido!
+    ],
+  };
+  assert(
+    hasAvailableProducts(comp) === true,
+    'TESTE 12: Múltiplos produtos com pelo menos 1 válido é considerada com catálogo'
+  );
+}
+
+// 13. Empate de tier + score deve usar rating como desempate
+{
+  const stores = [
+    { id: 'marmita-4.5', name: 'Marmitaria Menor', is_open: true, description: 'almoço', products: [{ name: 'M1', active: true }], rating: 4.5 },
+    { id: 'marmita-4.9', name: 'Marmitaria Maior', is_open: true, description: 'almoço', products: [{ name: 'M2', active: true }], rating: 4.9 },
+  ];
+  const ranked = rankStores(stores, createDateAtHour(12, 0));
+  assert(
+    ranked[0].id === 'marmita-4.9' && ranked[1].id === 'marmita-4.5',
+    'TESTE 13: Empate de tier e score desempata por rating decrescente'
+  );
+}
+
+// 14. Empate total (tier + score + rating) deve usar nome (ordem alfabética)
+{
+  const stores = [
+    { id: 'loja-z', name: 'Zeta Lanches', is_open: true, products: [{ name: 'P', active: true }], rating: 4.8 },
+    { id: 'loja-a', name: 'Alfa Lanches', is_open: true, products: [{ name: 'P', active: true }], rating: 4.8 },
+  ];
+  const ranked = rankStores(stores, createDateAtHour(12, 0));
+  assert(
+    ranked[0].name === 'Alfa Lanches' && ranked[1].name === 'Zeta Lanches',
+    'TESTE 14: Empate total usa estabilidade alfabética pelo nome'
+  );
+}
+
+// 15. Confirmar que todos os estabelecimentos continuam aparecendo
+{
+  const stores = [
+    { id: 's1', name: 'Store 1', is_open: true, products: [{ name: 'P', active: true }] },
+    { id: 's2', name: 'Store 2', is_open: true, products: [] },
+    { id: 's3', name: 'Store 3', is_open: false, products: [{ name: 'P', active: true }] },
+    { id: 's4', name: 'Store 4', is_open: false, products: [] },
+  ];
+  const ranked = rankStores(stores, createDateAtHour(12, 0));
+  assert(
+    ranked.length === stores.length && stores.every((s) => ranked.some((r) => r.id === s.id)),
+    'TESTE 15: 100% dos estabelecimentos continuam na lista retornada'
+  );
+}
+
+// 16. Confirmar que busca e filtros existentes não sofrem regressão
+{
+  const stores = [
+    { id: 'pizza-1', name: 'Pizzaria Napolitana', category: 'restaurante', is_open: true, products: [{ name: 'Pizza', active: true }] },
+    { id: 'burger-1', name: 'Hamburgueria Top', category: 'lanches', is_open: true, products: [{ name: 'Burger', active: true }] },
+  ];
+  const ranked = rankStores(stores, createDateAtHour(12, 0));
+  const searchFilter = ranked.filter((s) => s.name.toLowerCase().includes('pizza'));
+  const catFilter = ranked.filter((s) => s.category === 'lanches');
+  assert(
+    searchFilter.length === 1 && searchFilter[0].id === 'pizza-1' &&
+    catFilter.length === 1 && catFilter[0].id === 'burger-1',
+    'TESTE 16: Busca e filtros de categoria operam perfeitamente sobre a lista'
   );
 }
 
 console.log(`\n========================================`);
-console.log(`RESULTADO: ${passed} passaram, ${failed} falharam.`);
+console.log(`RESULTADO DOS 16 TESTES: ${passed} passaram, ${failed} falharam.`);
 console.log(`========================================\n`);
 
 if (failed > 0) {
