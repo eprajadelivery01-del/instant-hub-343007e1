@@ -31,7 +31,46 @@ export const DAY_PERIODS: readonly DayPeriodConfig[] = [
 ] as const;
 
 /**
- * Retorna o período do dia atual baseado no timezone local da plataforma.
+ * Normalização robusta de texto:
+ * - lowercase;
+ * - remoção de acentos (NFD);
+ * - trim.
+ */
+export function normalizeText(text: string | null | undefined): string {
+  if (!text) return '';
+  return String(text)
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim();
+}
+
+/**
+ * Comparação segura de palavras-chave:
+ * Previne falsos positivos por substrings acidentais no meio de palavras.
+ */
+function safeMatchesKeyword(normalizedText: string, keyword: string): boolean {
+  if (!normalizedText || !keyword) return false;
+  const normKw = normalizeText(keyword);
+  if (!normKw) return false;
+
+  // Se o termo possui espaços (ex: "comida caseira", "bolo de pote"), usa includes direto
+  if (normKw.includes(' ')) {
+    return normalizedText.includes(normKw);
+  }
+
+  // Palavra única: garante correspondência isolada com fronteiras não alfanuméricas
+  const regex = new RegExp(`(^|[^a-z0-9])${normKw}([^a-z0-9]|$)`, 'i');
+  return regex.test(normalizedText);
+}
+
+function matchesAnyKeyword(normalizedText: string, keywords: string[]): boolean {
+  if (!normalizedText) return false;
+  return keywords.some((kw) => safeMatchesKeyword(normalizedText, kw));
+}
+
+/**
+ * Retorna o período do dia atual baseado no timezone local da plataforma (America/Cuiaba).
  */
 export function resolveDayPeriod(
   date: Date = new Date(),
@@ -85,140 +124,93 @@ export function resolveDayPeriod(
 }
 
 /**
- * Extrai texto normalizado para busca de palavras-chave da loja.
+ * Avalia um texto específico para determinar se pontua para o período dado.
  */
-function getStoreSearchableText(company: any): string {
-  if (!company) return '';
-  const parts: string[] = [];
-  if (company.category) parts.push(String(company.category));
-  if (company.name) parts.push(String(company.name));
-  if (company.description) parts.push(String(company.description));
-
-  if (Array.isArray(company.products)) {
-    company.products.forEach((p: any) => {
-      if (p?.category) parts.push(String(p.category));
-      if (p?.name) parts.push(String(p.name));
-    });
-  }
-
-  return parts.join(' ').toLowerCase();
-}
-
-/**
- * Verifica se o texto da loja contém alguma das palavras ou categorias fornecidas.
- */
-function matchesKeywords(text: string, keywords: string[]): boolean {
-  return keywords.some((kw) => text.includes(kw));
-}
-
-/**
- * Calcula a pontuação de prioridade da loja para o período do dia.
- * Retorna:
- * +50 para forte relação
- * +30 para relação moderada
- * +0 para categoria neutra / sem prioridade
- */
-export function getStoreTimeScore(
-  company: any,
-  period: DayPeriod
-): number {
-  if (!company) return 0;
-  const text = getStoreSearchableText(company);
+function evaluateTextForPeriod(text: string, period: DayPeriod): number {
   if (!text) return 0;
 
   switch (period) {
     case 'MORNING': {
-      // De manhã cedo (05:00 - 09:00):
-      // Alta prioridade (+50): Padarias, Cafés, Cafeterias, Panificadoras, Conveniências, Mercados
-      const strongKeywords = ['padaria', 'panificadora', 'cafeteria', 'café', 'cafe', 'conveniencia', 'conveniência', 'mercado', 'empório', 'emporio'];
-      if (matchesKeywords(text, strongKeywords)) return 50;
+      // 05:00 - 09:00:
+      // 1. Padarias, Panificadoras, Cafés, Cafeterias (+50)
+      // 2. Conveniências, Mercados, Empórios (+30)
+      // 3. Salgados, Lanches rápidos (+20)
+      if (matchesAnyKeyword(text, ['doceria', 'confeitaria', 'bolo', 'bolos', 'doces', 'tarde', 'sorvete', 'geladinho'])) {
+        return 0;
+      }
 
-      // Se for loja tipicamente de almoço ou noite, não pontua de manhã cedo
-      if (matchesKeywords(text, ['marmitaria', 'hamburguer', 'burger', 'pizza', 'pizzaria'])) return 0;
+      if (matchesAnyKeyword(text, ['marmitaria', 'hamburguer', 'burger', 'pizza', 'pizzaria'])) return 0;
 
-      // Média prioridade (+30): Lanches matinais, Salgados, Bebidas
-      const moderateKeywords = ['salgado', 'pastel', 'suco', 'lanche'];
-      if (matchesKeywords(text, moderateKeywords)) return 30;
+      const bakeryAndCoffeeKeywords = ['padaria', 'panificadora', 'cafeteria', 'cafe', 'pao', 'paes'];
+      if (matchesAnyKeyword(text, bakeryAndCoffeeKeywords)) return 50;
+
+      const convenienceAndMarketKeywords = ['conveniencia', 'mercado', 'emporio'];
+      if (matchesAnyKeyword(text, convenienceAndMarketKeywords)) return 30;
+
+      const breakfastSnacksKeywords = ['salgado', 'pastel', 'suco', 'lanche'];
+      if (matchesAnyKeyword(text, breakfastSnacksKeywords)) return 20;
 
       return 0;
     }
 
     case 'LATE_MORNING': {
-      // Meio da manhã (09:00 - 11:00):
-      // Alta prioridade (+50): Padarias, Cafeterias, Mercados, Conveniências
-      const strongKeywords = ['padaria', 'panificadora', 'cafeteria', 'café', 'cafe', 'mercado', 'conveniencia', 'conveniência', 'hortifruti', 'feirinha'];
-      if (matchesKeywords(text, strongKeywords)) return 50;
+      // 09:00 - 11:00: Padarias, Cafeterias, Mercados, Conveniências, Feirinhas
+      const strongKeywords = ['padaria', 'panificadora', 'cafeteria', 'cafe', 'mercado', 'conveniencia', 'hortifruti', 'feirinha'];
+      if (matchesAnyKeyword(text, strongKeywords)) return 50;
 
-      // Média prioridade (+30): Restaurantes/Marmitarias se preparando para almoço, Lanches, Salgados
-      const moderateKeywords = ['marmitaria', 'restaurante', 'almoço', 'almoco', 'lanche', 'salgado'];
-      if (matchesKeywords(text, moderateKeywords)) return 30;
-
+      const moderateKeywords = ['marmitaria', 'restaurante', 'almoco', 'lanche', 'salgado'];
+      if (matchesAnyKeyword(text, moderateKeywords)) return 30;
       return 0;
     }
 
     case 'LUNCH': {
-      // Horário do almoço (11:00 - 14:00):
-      // Alta prioridade (+50): Marmitarias, Restaurantes, Comida Caseira, Self-service, Almoço
-      const strongKeywords = ['marmitaria', 'comida caseira', 'almoço', 'almoco', 'marmita', 'prato feito', 'buffet', 'caseira'];
-      if (matchesKeywords(text, strongKeywords)) return 50;
+      // 11:00 - 14:00: Marmitarias, Restaurantes almoço, Comida Caseira, Self-service
+      const strongKeywords = ['marmitaria', 'comida caseira', 'almoco', 'marmita', 'prato feito', 'buffet', 'caseira'];
+      if (matchesAnyKeyword(text, strongKeywords)) return 50;
 
-      // Se for padaria, doceria, bolos, geladinho, sorvete: não é almoço
-      if (matchesKeywords(text, ['padaria', 'panificadora', 'doceria', 'bolo', 'bolos', 'geladinho', 'sorvete', 'papelaria', 'aviamentos'])) {
+      // Se for padaria, doceria, bolos, geladinho, sorvete, papelaria: não é almoço (+0)
+      if (matchesAnyKeyword(text, ['padaria', 'panificadora', 'doceria', 'bolo', 'bolos', 'geladinho', 'sorvete', 'papelaria', 'aviamentos'])) {
         return 0;
       }
 
-      // Média prioridade (+30): Restaurantes em geral, Lanchonetes, Petiscaria, Carnes/Assados, Bebidas
       const moderateKeywords = ['restaurante', 'lanches', 'lanche', 'petiscaria', 'espetaria', 'churrasco', 'assados', 'bebidas'];
-      if (matchesKeywords(text, moderateKeywords)) return 30;
-
+      if (matchesAnyKeyword(text, moderateKeywords)) return 30;
       return 0;
     }
 
     case 'AFTERNOON': {
-      // Meio da tarde (14:00 - 17:00):
-      // Alta prioridade (+50): Padarias, Cafeterias, Docerias, Bolos, Doces, Lanches, Sorveterias, Geladinhos, Açaí
-      const strongKeywords = ['padaria', 'cafeteria', 'café', 'cafe', 'doceria', 'bolo', 'doces', 'lanches', 'lanche', 'sorvete', 'geladinho', 'açaí', 'acai', 'pastel'];
-      if (matchesKeywords(text, strongKeywords)) return 50;
+      // 14:00 - 17:00: Padarias, Cafeterias, Docerias, Bolos, Lanches, Sorveterias, Geladinhos, Açaí
+      const strongKeywords = ['padaria', 'cafeteria', 'cafe', 'doceria', 'bolo', 'doces', 'lanches', 'lanche', 'sorvete', 'geladinho', 'acai', 'pastel'];
+      if (matchesAnyKeyword(text, strongKeywords)) return 50;
 
-      // Se for marmitaria exclusiva de almoço: não pontua à tarde
-      if (matchesKeywords(text, ['marmitaria', 'marmita', 'almoço'])) return 0;
+      if (matchesAnyKeyword(text, ['marmitaria', 'marmita', 'almoco'])) return 0;
 
-      // Média prioridade (+30): Mercados, Conveniências, Bebidas
-      const moderateKeywords = ['mercado', 'conveniencia', 'conveniência', 'bebidas'];
-      if (matchesKeywords(text, moderateKeywords)) return 30;
-
+      const moderateKeywords = ['mercado', 'conveniencia', 'bebidas'];
+      if (matchesAnyKeyword(text, moderateKeywords)) return 30;
       return 0;
     }
 
     case 'EVENING': {
-      // À noite (17:00 - 23:00):
-      // Alta prioridade (+50): Hamburguerias, Pizzarias, Lanchonetes, Petiscarias, Espetarias, Restaurantes janta, Açaí, Conveniências
-      const strongKeywords = ['hamburguer', 'hambúrguer', 'burger', 'pizza', 'pizzaria', 'lanches', 'lanche', 'petiscaria', 'espetaria', 'espetinho', 'açaí', 'acai', 'conveniencia', 'conveniência', 'chapa'];
-      if (matchesKeywords(text, strongKeywords)) return 50;
+      // 17:00 - 23:00: Hamburguerias, Pizzarias, Lanchonetes, Petiscarias, Espetarias, Janta, Açaí, Conveniências
+      const strongKeywords = ['hamburguer', 'burger', 'pizza', 'pizzaria', 'lanches', 'lanche', 'petiscaria', 'espetaria', 'espetinho', 'acai', 'conveniencia', 'chapa'];
+      if (matchesAnyKeyword(text, strongKeywords)) return 50;
 
-      // Se for padaria matinal ou marmitaria exclusiva de almoço: não pontua no pico noturno
-      if (matchesKeywords(text, ['padaria', 'panificadora', 'marmitaria', 'marmita', 'almoço'])) return 0;
+      if (matchesAnyKeyword(text, ['padaria', 'panificadora', 'marmitaria', 'marmita', 'almoco'])) return 0;
 
-      // Média prioridade (+30): Restaurantes, Bebidas, Geladinhos/Doces, Mercados
       const moderateKeywords = ['restaurante', 'bebidas', 'cerveja', 'geladinho', 'doces', 'mercado'];
-      if (matchesKeywords(text, moderateKeywords)) return 30;
-
+      if (matchesAnyKeyword(text, moderateKeywords)) return 30;
       return 0;
     }
 
     case 'NIGHT': {
-      // Madrugada (23:00 - 05:00):
-      // Alta prioridade (+50): Lanchonetes, Hamburguerias, Conveniências, Bebidas, Pizzarias abertas
-      const strongKeywords = ['lanches', 'lanche', 'hamburguer', 'hambúrguer', 'burger', 'conveniencia', 'conveniência', 'bebidas', 'pizza', 'pizzaria', 'chapa'];
-      if (matchesKeywords(text, strongKeywords)) return 50;
+      // 23:00 - 05:00: Lanchonetes, Hamburguerias, Conveniências, Bebidas, Pizzarias abertas na madrugada
+      const strongKeywords = ['lanches', 'lanche', 'hamburguer', 'burger', 'conveniencia', 'bebidas', 'pizza', 'pizzaria', 'chapa'];
+      if (matchesAnyKeyword(text, strongKeywords)) return 50;
 
-      // Se for padaria, marmitaria ou comércio diurno: não pontua na madrugada
-      if (matchesKeywords(text, ['padaria', 'panificadora', 'marmitaria', 'marmita', 'almoço', 'papelaria', 'aviamentos'])) return 0;
+      if (matchesAnyKeyword(text, ['padaria', 'panificadora', 'marmitaria', 'marmita', 'almoco', 'papelaria', 'aviamentos'])) return 0;
 
-      // Média prioridade (+30): Restaurantes em geral abertos nesse horário
       const moderateKeywords = ['restaurante', 'petiscaria'];
-      if (matchesKeywords(text, moderateKeywords)) return 30;
-
+      if (matchesAnyKeyword(text, moderateKeywords)) return 30;
       return 0;
     }
 
@@ -228,11 +220,79 @@ export function getStoreTimeScore(
 }
 
 /**
+ * Calcula a pontuação de prioridade da loja para o período do dia.
+ * Respeita ESTRITAMENTE a ordem de consulta do item 7:
+ * 1º - company.category
+ * 2º - company.name
+ * 3º - company.description
+ * 4º - company.products[].category
+ *
+ * Retorna:
+ * +50 para forte relação com o horário
+ * +30 para relação moderada
+ * +0 para categoria neutra / sem prioridade
+ */
+export function getStoreTimeScore(company: any, period: DayPeriod): number {
+  if (!company) return 0;
+
+  // 1º - company.category
+  const normCategory = normalizeText(company.category);
+  const categoryScore = evaluateTextForPeriod(normCategory, period);
+  // Se a categoria direta já for forte (ex: lanches/mercado/bebidas), pode ser considerada
+  // Mas se for categoria ampla ("restaurante"), verificamos a especialização no nome/descrição
+  if (categoryScore === 50) {
+    return 50;
+  }
+
+  // 2º - informações já disponíveis do nome (company.name)
+  const normName = normalizeText(company.name);
+  const nameScore = evaluateTextForPeriod(normName, period);
+  if (nameScore === 50) {
+    return 50;
+  }
+
+  // 3º - descrição já disponível (company.description)
+  const normDesc = normalizeText(company.description);
+  const descScore = evaluateTextForPeriod(normDesc, period);
+  if (descScore === 50) {
+    return 50;
+  }
+
+  // 4º - categorias dos produtos já carregados
+  if (Array.isArray(company.products) && company.products.length > 0) {
+    for (const p of company.products) {
+      const prodCategory = normalizeText(p?.category);
+      const prodScore = evaluateTextForPeriod(prodCategory, period);
+      if (prodScore === 50) {
+        return 50;
+      }
+    }
+  }
+
+  // Se nenhum nível deu +50, verifica se algum nível obteve pontuação moderada (+30)
+  if (categoryScore === 30 || nameScore === 30 || descScore === 30) {
+    return 30;
+  }
+
+  if (Array.isArray(company.products) && company.products.length > 0) {
+    for (const p of company.products) {
+      const prodCategory = normalizeText(p?.category);
+      if (evaluateTextForPeriod(prodCategory, period) === 30) {
+        return 30;
+      }
+    }
+  }
+
+  return 0;
+}
+
+/**
  * Ordena as lojas de forma inteligente:
  * 1º - Lojas ABERTAS vêm primeiro (regra suprema do sistema preservada).
  * 2º - Maior Score de Prioridade por Horário (+50, +30, 0).
- * 3º - Melhor Avaliação (rating) como critério de desempate.
- * 4º - Ordem alfabética pelo nome.
+ *      (Uma loja altamente relevante fica acima de uma neutra mesmo que a neutra tenha rating maior).
+ * 3º - Melhor Avaliação (rating) como critério de desempate secundário.
+ * 4º - Ordem alfabética pelo nome (estabilidade visual).
  *
  * NOTA: Esta função não mutaciona os objetos e não filtra nenhuma loja.
  * Todas as lojas continuam na lista.
@@ -254,7 +314,7 @@ export function rankStores<T extends StoreStatusInput>(
     if (aOpen && !bOpen) return -1;
     if (!aOpen && bOpen) return 1;
 
-    // 2º Critério: Score de Prioridade por Horário
+    // 2º Critério: Score de Prioridade por Horário (+50, +30, 0)
     const aScore = getStoreTimeScore(a, period);
     const bScore = getStoreTimeScore(b, period);
 
@@ -262,7 +322,7 @@ export function rankStores<T extends StoreStatusInput>(
       return bScore - aScore;
     }
 
-    // 3º Critério: Avaliação (rating)
+    // 3º Critério: Avaliação (rating) como desempate
     const aRating = Number((a as any).rating) || 0;
     const bRating = Number((b as any).rating) || 0;
 
