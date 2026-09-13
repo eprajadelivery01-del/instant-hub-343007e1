@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
@@ -6,7 +6,7 @@ import { Company, Product } from '@/types/database';
 import { useCart } from '@/contexts/CartContext';
 import MarketplaceLayout from '@/components/marketplace/MarketplaceLayout';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Minus, Plus, Star, Clock, Store as StoreIcon, Share2, Utensils, Search, Info, Ticket, AlertCircle, Flame, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Minus, Plus, Star, Clock, Store as StoreIcon, Share2, Utensils, Search, Info, Ticket, AlertCircle, Flame, RefreshCw, MessageCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getPrepTimeLabel, getStoreStatusLabel } from '@/lib/storeHours';
 import { useStoreOpenStatus } from '@/hooks/useStoreOpenStatus';
@@ -21,6 +21,8 @@ import { StoreCouponsSheet } from '@/components/marketplace/StoreCouponsSheet';
 import { StoreInfoSheet } from '@/components/marketplace/StoreInfoSheet';
 import { useActiveCoupons } from '@/services/coupons';
 import { SafeAreaHeader, safeAreaTopValue } from '@/components/shared/SafeAreaHeader';
+import { WhatsAppOrderDialog } from '@/components/marketplace/WhatsAppOrderDialog';
+import { getWhatsAppOnlyStore } from '@/lib/whatsappStores';
 
 import { getCachedStoreData } from '@/lib/offlinePrecache';
 
@@ -196,6 +198,26 @@ export default function StoreDetail() {
   const products: Product[] = useMemo(() => {
     return (storeData?.products as Product[]) ?? [];
   }, [storeData?.products]);
+
+  const whatsAppConfig = useMemo(() => {
+    return getWhatsAppOnlyStore(company);
+  }, [company]);
+  const [isWhatsAppDialogOpen, setIsWhatsAppDialogOpen] = useState(false);
+  const hasAutoOpenedWhatsAppModalRef = useRef(false);
+
+  useEffect(() => {
+    hasAutoOpenedWhatsAppModalRef.current = false;
+  }, [company?.id]);
+
+  useEffect(() => {
+    if (!loading && company && whatsAppConfig) {
+      // Abre automaticamente SOMENTE quando a loja alvo não possui produtos disponíveis
+      if (products.length === 0 && !hasAutoOpenedWhatsAppModalRef.current) {
+        hasAutoOpenedWhatsAppModalRef.current = true;
+        setIsWhatsAppDialogOpen(true);
+      }
+    }
+  }, [loading, company, whatsAppConfig, products.length]);
 
   useEffect(() => {
     if (!user?.id || !company?.id) return;
@@ -647,7 +669,16 @@ export default function StoreDetail() {
               </p>
             </div>
             <div className="flex flex-wrap items-center justify-center gap-2 mt-2">
-              <Button onClick={() => navigate('/marketplace')}>
+              {whatsAppConfig && (
+                <Button
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold gap-2 shadow-md shadow-emerald-600/20"
+                  onClick={() => setIsWhatsAppDialogOpen(true)}
+                >
+                  <MessageCircle className="h-4 w-4 fill-current" />
+                  Falar no WhatsApp
+                </Button>
+              )}
+              <Button onClick={() => navigate('/marketplace')} variant={whatsAppConfig ? 'outline' : 'default'}>
                 <ArrowLeft className="h-4 w-4" />
                 Voltar para lojas
               </Button>
@@ -793,6 +824,12 @@ export default function StoreDetail() {
         isOpen={isStoreInfoOpen}
         onOpenChange={setIsStoreInfoOpen}
         company={company}
+      />
+
+      <WhatsAppOrderDialog
+        open={isWhatsAppDialogOpen}
+        onOpenChange={setIsWhatsAppDialogOpen}
+        config={whatsAppConfig}
       />
     </MarketplaceLayout>
   );
