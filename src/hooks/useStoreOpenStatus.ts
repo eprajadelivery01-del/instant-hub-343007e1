@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { isStoreOpenNow, sortStoresByOpenStatus, type StoreStatusInput } from '@/lib/storeHours';
+import { isStoreOpenNow, type StoreStatusInput } from '@/lib/storeHours';
+import { rankStores } from '@/lib/storeRanking';
 
 /**
  * Tick compartilhado: reavalia o relógio a cada minuto (alinhado ao início
@@ -60,7 +61,7 @@ export function useStoresOpenStatus<T extends StoreStatusInput>(companies: T[] |
       return c;
     });
 
-    return sortStoresByOpenStatus(withUpdatedStatus);
+    return rankStores(withUpdatedStatus);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [companies, tick]);
 }

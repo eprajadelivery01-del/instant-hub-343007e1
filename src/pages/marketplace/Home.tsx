@@ -7,6 +7,7 @@ import { useAddress } from '@/contexts/AddressContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import { getPrepTimeLabel, isStoreOpenNow, sortStoresByOpenStatus } from '@/lib/storeHours';
+import { rankStores } from '@/lib/storeRanking';
 import MarketplaceLayout from '@/components/marketplace/MarketplaceLayout';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -51,7 +52,7 @@ export default function Home() {
   const [companies, setCompanies] = useState<MarketplaceCompany[]>(() => {
     const cached = getCachedCompanies();
     if (!cached) return [];
-    return sortStoresByOpenStatus(cached as any[]) as any[];
+    return rankStores(cached as any[]) as any[];
   });
   const [loading, setLoading] = useState(() => {
     const cached = getCachedCompanies();
@@ -129,7 +130,7 @@ export default function Home() {
         }
       }
 
-      const processed: MarketplaceCompany[] = sortStoresByOpenStatus(
+      const processed: MarketplaceCompany[] = rankStores(
         rows
           .filter((c) => (c as any).show_in_marketplace !== false)
           .map((company): MarketplaceCompany => {
