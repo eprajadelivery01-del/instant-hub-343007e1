@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { Company, Product } from '@/types/database';
-import { ArrowRight, Clock3, MessageCircle, ShoppingBag, Star, Store as StoreIcon } from 'lucide-react';
+import { ArrowRight, Clock3, ShoppingBag, Star, Store as StoreIcon } from 'lucide-react';
+import { WhatsAppIcon } from '@/components/marketplace/WhatsAppOrderDialog';
 import { cn } from '@/lib/utils';
 import { MediaImage } from '@/components/shared/MediaImage';
 import { getCompanyBannerImage, getCompanyLogoImage, getPrimaryProductImage } from '@/lib/media';
@@ -149,7 +150,7 @@ export function StoreTabCard({ company }: StoreTabCardProps) {
           ) : whatsappStore ? (
             <div className="premium-chip col-span-3 flex min-h-[112px] flex-col items-center justify-center gap-2 rounded-[24px] text-center">
               <p className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
-                <MessageCircle className="h-4 w-4 text-[#25D366]" />
+                <WhatsAppIcon className="h-4 w-4 text-[#25D366]" />
                 Pedir pelo WhatsApp
               </p>
               <p className="text-sm font-bold text-foreground">{whatsappDisplayNumber}</p>
@@ -177,7 +178,7 @@ export function StoreTabCard({ company }: StoreTabCardProps) {
                 }}
                 className="mt-1 inline-flex cursor-pointer items-center gap-2 rounded-full bg-[#25D366] px-4 py-2 text-xs font-bold text-white shadow-sm transition-colors hover:bg-[#1fb857]"
               >
-                <MessageCircle className="h-4 w-4" />
+                <WhatsAppIcon className="h-4 w-4 fill-white" />
                 Chamar no WhatsApp
               </span>
             </div>
