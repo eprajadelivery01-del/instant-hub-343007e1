@@ -80,26 +80,26 @@ assert(
   '8. Farma Popular com catálogo → modal NÃO abre'
 );
 
-// 9. Link Difarma → 556596068049
+// 9. Link Difarma → 5565996068049
 const difarmaConfig = getWhatsAppOnlyStore({ id: difarmaId });
 assert(difarmaConfig !== null, 'Difarma config encontrada por ID');
-assert(difarmaConfig?.phone === '556596068049', '9. Link Difarma → 556596068049');
+assert(difarmaConfig?.phone === '5565996068049', '9. Link Difarma → 5565996068049');
 const linkDifarma = buildWhatsAppLink(difarmaConfig!.phone, difarmaConfig!.defaultMessage);
-assert(linkDifarma.includes('556596068049'), 'Link Difarma possui telefone correto');
+assert(linkDifarma.includes('5565996068049'), 'Link Difarma possui telefone correto');
 
-// 10. Link Paulista → 556599154448
+// 10. Link Paulista → 5565999154448
 const paulistaConfig = getWhatsAppOnlyStore({ id: paulistaId });
 assert(paulistaConfig !== null, 'Paulista config encontrada por ID');
-assert(paulistaConfig?.phone === '556599154448', '10. Link Paulista → 556599154448');
+assert(paulistaConfig?.phone === '5565999154448', '10. Link Paulista → 5565999154448');
 const linkPaulista = buildWhatsAppLink(paulistaConfig!.phone, paulistaConfig!.defaultMessage);
-assert(linkPaulista.includes('556599154448'), 'Link Paulista possui telefone correto');
+assert(linkPaulista.includes('5565999154448'), 'Link Paulista possui telefone correto');
 
-// 11. Link Farma Popular → 55659650987
+// 11. Link Farma Popular → 5565996590987
 const farmaPopularConfig = getWhatsAppOnlyStore({ id: farmaPopularId });
 assert(farmaPopularConfig !== null, 'Farma Popular config encontrada por ID');
-assert(farmaPopularConfig?.phone === '55659650987', '11. Link Farma Popular → 55659650987');
+assert(farmaPopularConfig?.phone === '5565996590987', '11. Link Farma Popular → 5565996590987');
 const linkFarmaPopular = buildWhatsAppLink(farmaPopularConfig!.phone, farmaPopularConfig!.defaultMessage);
-assert(linkFarmaPopular.includes('55659650987'), 'Link Farma Popular possui telefone correto');
+assert(linkFarmaPopular.includes('5565996590987'), 'Link Farma Popular possui telefone correto');
 
 // 12. Mensagem do WhatsApp está corretamente codificada
 assert(

@@ -18,8 +18,8 @@ export const WHATSAPP_ONLY_STORES: Record<string, WhatsAppStoreConfig> = {
   '746054ea-4a94-4adc-b890-1e9476d3de9d': {
     id: '746054ea-4a94-4adc-b890-1e9476d3de9d',
     name: 'Drogaria Difarma',
-    phone: '556596068049',
-    displayPhone: '+55 65 9606-8049',
+    phone: '5565996068049',
+    displayPhone: '+55 65 99606-8049',
     defaultMessage: DEFAULT_WHATSAPP_ORDER_MESSAGE,
   },
 
@@ -27,8 +27,8 @@ export const WHATSAPP_ONLY_STORES: Record<string, WhatsAppStoreConfig> = {
   'd62614e7-d781-40f6-959a-e812a5d1ba96': {
     id: 'd62614e7-d781-40f6-959a-e812a5d1ba96',
     name: 'DROGARIA PAULISTA',
-    phone: '556599154448',
-    displayPhone: '+55 65 9915-4448',
+    phone: '5565999154448',
+    displayPhone: '+55 65 99915-4448',
     defaultMessage: DEFAULT_WHATSAPP_ORDER_MESSAGE,
   },
 
@@ -36,8 +36,8 @@ export const WHATSAPP_ONLY_STORES: Record<string, WhatsAppStoreConfig> = {
   '5d6183dc-d941-4a46-8ccc-6375271c2683': {
     id: '5d6183dc-d941-4a46-8ccc-6375271c2683',
     name: 'FARMA POPULAR',
-    phone: '55659650987',
-    displayPhone: '+55 65 9659-0987',
+    phone: '5565996590987',
+    displayPhone: '+55 65 99659-0987',
     defaultMessage: DEFAULT_WHATSAPP_ORDER_MESSAGE,
   },
 };
@@ -78,7 +78,10 @@ export function getWhatsAppOnlyStore(company: any): WhatsAppStoreConfig | null {
  * Monta o link wa.me oficial com mensagem pré-codificada
  */
 export function buildWhatsAppLink(phone: string, message: string = DEFAULT_WHATSAPP_ORDER_MESSAGE): string {
-  const cleanPhone = phone.replace(/\D/g, '');
+  let cleanPhone = phone.replace(/\D/g, '');
+  if (cleanPhone.length === 10 || cleanPhone.length === 11) {
+    cleanPhone = `55${cleanPhone}`;
+  }
   const encodedText = encodeURIComponent(message).replace(/!/g, '%21');
   return `https://wa.me/${cleanPhone}?text=${encodedText}`;
 }

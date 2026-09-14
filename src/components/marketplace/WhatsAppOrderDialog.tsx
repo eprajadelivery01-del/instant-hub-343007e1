@@ -42,7 +42,14 @@ export function WhatsAppOrderDialog({
   const whatsappUrl = buildWhatsAppLink(config.phone, config.defaultMessage);
 
   const handleOpenWhatsApp = () => {
-    window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+    try {
+      const newWin = window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+      if (!newWin || newWin.closed || typeof newWin.closed === 'undefined') {
+        window.location.href = whatsappUrl;
+      }
+    } catch {
+      window.location.href = whatsappUrl;
+    }
   };
 
   return (
