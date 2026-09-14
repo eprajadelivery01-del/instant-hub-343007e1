@@ -1,88 +1,150 @@
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Capacitor } from '@capacitor/core';
 import { supabase } from '@/lib/supabase';
-import { useAuth } from '@/contexts/AuthContext';
-import { Order, OrderItem, Delivery, Product } from '@/types/database';
+import { Order, OrderItem, Delivery } from '@/types/database';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, MessageCircle, MapPin, Banknote, Smartphone, AlertCircle } from 'lucide-react';
-import { toast } from 'sonner';
 import { OrderStoreChat } from '@/components/marketplace/OrderStoreChat';
 import MarketplaceLayout from '@/components/marketplace/MarketplaceLayout';
 import { getMarketplaceStatus } from '@/utils/orderStatusResolver';
 import { useCancelOrder } from '@/hooks/useCancelOrder';
+import { useNotificationPermission } from '@/hooks/useNotificationPermission';
 
-const statusSteps = ['pending', 'confirmed', 'preparing', 'ready', 'delivering', 'delivered'];
+// Métrica temporária de abertura da tela (só em desenvolvimento).
+const PERF = import.meta.env.DEV;
+const mark = (label: string) => {
+  if (PERF) console.log(`[DELIVERY] ${label}`, `${Math.round(performance.now())}ms`);
+};
+
+export const orderSeedKey = (id: string) => ['order-seed', id] as const;
+
+function Skeleton({ className = '' }: { className?: string }) {
+  return <div className={`animate-pulse rounded-md bg-muted ${className}`} />;
+}
 
 export default function OrderDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
   const queryClient = useQueryClient();
-  const { cancelOrder, loading: isCancelling } = useCancelOrder();
-  
-  const [showStoreChat, setShowStoreChat] = useState(false);
-  const [notifEnabled, setNotifEnabled] = useState<boolean>(() => {
-    if (typeof window === 'undefined') return false;
-    if (!('Notification' in window)) return false;
-    return Notification.permission === 'granted' && localStorage.getItem('epj_order_notif') === 'true';
-  });
-  const [notifLoading, setNotifLoading] = useState(false);
+  const { cancelOrder } = useCancelOrder();
 
-  // Shared queryKey with the route data prefetcher (routeDataPrefetchers.ts).
-  const { data: orderData, isLoading: loading } = useQuery({
-    queryKey: ['order', id],
+  const [showStoreChat, setShowStoreChat] = useState(false);
+  const notif = useNotificationPermission();
+
+  useEffect(() => {
+    mark('mount');
+  }, []);
+
+  useEffect(() => {
+    if (!PERF) return;
+    console.log('[NOTIFICATION] platform', notif.isNative ? 'native' : 'web');
+    console.log('[NOTIFICATION] native-permission', notif.permission);
+    console.log('[NOTIFICATION] preference', notif.preference);
+    console.log('[NOTIFICATION] effective-state', notif.effectiveEnabled);
+  }, [notif.isNative, notif.permission, notif.preference, notif.effectiveEnabled]);
+
+  // ---------- 1. Cabeçalho: libera a renderização da tela ----------
+  const {
+    data: header,
+    isPlaceholderData: headerIsSeed,
+    isLoading: headerLoading,
+  } = useQuery({
+    queryKey: ['order-header', id],
+    enabled: !!id,
+    staleTime: 10_000,
+    placeholderData: () => {
+      const seed = queryClient.getQueryData<Order>(orderSeedKey(id!));
+      return seed ? { order: seed } : undefined;
+    },
+    queryFn: async () => {
+      mark('header-start');
+      const { data } = await supabase
+        .from('orders')
+        .select('*, company:companies(*), address:addresses(*)')
+        .eq('id', id!)
+        .maybeSingle();
+      mark('header-end');
+      return { order: (data ?? null) as Order | null };
+    },
+  });
+
+  // ---------- 2. Detalhes: chegam depois, sem bloquear a tela ----------
+  const { data: details, isLoading: detailsLoading } = useQuery({
+    queryKey: ['order-details', id],
     enabled: !!id,
     staleTime: 10_000,
     queryFn: async () => {
-      const [orderRes, itemsRes, deliveryRes] = await Promise.all([
-        supabase.from('orders').select('*, company:companies(*), address:addresses(*)').eq('id', id!).maybeSingle(),
+      mark('items-start');
+      mark('delivery-start');
+      const [itemsRes, deliveryRes] = await Promise.all([
         supabase.from('order_items').select('*, products(*)').eq('order_id', id!),
         supabase.from('deliveries').select('*').eq('order_id', id!).maybeSingle(),
       ]);
+      mark('items-end');
+      mark('delivery-end');
       return {
-        order: orderRes.data as Order | null,
         items: (itemsRes.data ?? []) as OrderItem[],
         delivery: (deliveryRes.data ?? null) as Delivery | null,
       };
     },
   });
 
-  const order = orderData?.order ?? null;
-  const orderItems = orderData?.items ?? [];
-  const delivery = orderData?.delivery ?? null;
+  const order = header?.order ?? null;
+  const orderItems = details?.items;
+  const delivery = details?.delivery ?? null;
+  // "Semente" da lista: não contém endereço/itens/entrega — esses blocos ficam
+  // em carregamento até a consulta real terminar.
+  const headerPartial = headerIsSeed;
+  const detailsPending = detailsLoading || !details;
+
+  const firstRenderLogged = useRef(false);
+  useEffect(() => {
+    if (order && !firstRenderLogged.current) {
+      firstRenderLogged.current = true;
+      mark('first-render');
+    }
+  }, [order]);
+
   const maxStatusRankRef = useRef<number>(0);
+  const STATUS_HIERARCHY: Record<string, number> = useMemo(
+    () => ({ pending: 1, confirmed: 2, preparing: 3, ready: 4, delivering: 5, delivered: 6 }),
+    []
+  );
 
   useEffect(() => {
-    if (orderData?.order?.status) {
-      const STATUS_HIERARCHY: Record<string, number> = {
-        pending: 1,
-        confirmed: 2,
-        preparing: 3,
-        ready: 4,
-        delivering: 5,
-        delivered: 6,
-      };
-      const currentRank = STATUS_HIERARCHY[orderData.order.status as string] || 0;
-      if (currentRank > maxStatusRankRef.current) {
-        maxStatusRankRef.current = currentRank;
-      }
-    }
-  }, [orderData?.order?.status]);
+    const status = order?.status as string | undefined;
+    if (!status) return;
+    const currentRank = STATUS_HIERARCHY[status] || 0;
+    if (currentRank > maxStatusRankRef.current) maxStatusRankRef.current = currentRank;
+  }, [order?.status, STATUS_HIERARCHY]);
+
+  // A chave de notificações NÃO deve recriar o canal Realtime — lida via ref.
+  const notifEnabledRef = useRef(notif.effectiveEnabled);
+  useEffect(() => {
+    notifEnabledRef.current = notif.effectiveEnabled;
+  }, [notif.effectiveEnabled]);
 
   useEffect(() => {
     if (!id) return;
     const channelName = `order-${id}-${Date.now()}_${Math.random().toString(36).substring(7)}`;
-    const orderChannel = supabase.channel(channelName)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders', filter: `id=eq.${id}` },
+    const orderChannel = supabase
+      .channel(channelName)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'orders', filter: `id=eq.${id}` },
         (p) => {
           if (!p.new) return;
-          queryClient.setQueryData(['order', id], (old: any) =>
-            old ? { ...old, order: { ...old.order, ...p.new } } : old
+          queryClient.setQueryData(['order-header', id], (old: any) =>
+            old?.order ? { ...old, order: { ...old.order, ...p.new } } : old
           );
-          // Dispara notificação nativa se permitido
-          if (notifEnabled && ('Notification' in window) && Notification.permission === 'granted') {
+          if (
+            notifEnabledRef.current &&
+            typeof window !== 'undefined' &&
+            'Notification' in window &&
+            Notification.permission === 'granted' &&
+            !(window as any).Capacitor?.isNativePlatform?.()
+          ) {
             const statusLabels: Record<string, string> = {
               confirmed: '✅ Pedido confirmado pela loja!',
               preparing: '👨‍🍳 Seu pedido está sendo preparado',
@@ -91,90 +153,62 @@ export default function OrderDetail() {
               delivered: '🎉 Pedido entregue! Bom apetite!',
               cancelled: '❌ Pedido cancelado',
             };
-            const STATUS_HIERARCHY: Record<string, number> = {
-              pending: 1,
-              confirmed: 2,
-              preparing: 3,
-              ready: 4,
-              delivering: 5,
-              delivered: 6,
-            };
-
             const newStatus = (p.new as any).status as string;
             const newRank = STATUS_HIERARCHY[newStatus] || 0;
             const shouldNotify = newStatus === 'cancelled' || newRank > maxStatusRankRef.current;
-
-            if (newRank > maxStatusRankRef.current) {
-              maxStatusRankRef.current = newRank;
-            }
-
+            if (newRank > maxStatusRankRef.current) maxStatusRankRef.current = newRank;
             const msg = statusLabels[newStatus];
             if (msg && shouldNotify) {
-              new Notification('É Pra Já Delivery', {
-                body: msg,
-                icon: '/logo.png',
-                badge: '/logo.png',
-              });
+              new Notification('É Pra Já Delivery', { body: msg, icon: '/logo.png', badge: '/logo.png' });
             }
           }
-        })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'deliveries', filter: `order_id=eq.${id}` },
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'deliveries', filter: `order_id=eq.${id}` },
         (p) => {
           if (!p.new) return;
-          queryClient.setQueryData(['order', id], (old: any) =>
+          queryClient.setQueryData(['order-details', id], (old: any) =>
             old ? { ...old, delivery: { ...(old.delivery ?? {}), ...p.new } } : old
           );
-        })
+        }
+      )
       .subscribe();
 
-    return () => { supabase.removeChannel(orderChannel); };
-  }, [id, notifEnabled, queryClient]);
+    return () => {
+      supabase.removeChannel(orderChannel);
+    };
+  }, [id, queryClient, STATUS_HIERARCHY]);
 
   const handleToggleNotif = useCallback(async () => {
-    if (!('Notification' in window)) {
-      alert('Seu navegador não suporta notificações.');
+    if (notif.effectiveEnabled) {
+      notif.disable();
       return;
     }
-    if (notifEnabled) {
-      // Desligar
-      localStorage.setItem('epj_order_notif', 'false');
-      setNotifEnabled(false);
-      return;
-    }
-    // Ligar: pedir permissão
-    setNotifLoading(true);
-    try {
-      const permission = await Notification.requestPermission();
-      if (permission === 'granted') {
-        localStorage.setItem('epj_order_notif', 'true');
-        setNotifEnabled(true);
-        new Notification('É Pra Já Delivery', {
-          body: '🔔 Notificações ativadas! Você será avisado sobre seu pedido.',
-          icon: '/logo.png',
-        });
-      } else {
-        alert('Permissão negada. Verifique as configurações do seu navegador e permita notificações para este site.');
-      }
-    } finally {
-      setNotifLoading(false);
-    }
-  }, [notifEnabled]);
+    await notif.enable();
+  }, [notif]);
 
   const handleCancelOrder = async () => {
     if (!order) return;
-    if (!window.confirm("Tem certeza que deseja cancelar este pedido?")) return;
-    
+    if (!window.confirm('Tem certeza que deseja cancelar este pedido?')) return;
     const success = await cancelOrder(order.id, order.company_id);
-    if (success) {
-      navigate("/marketplace/orders");
-    }
+    if (success) navigate('/marketplace/orders');
   };
 
-  if (loading || !order) {
+  if (!order) {
     return (
       <MarketplaceLayout>
-        <div className="flex h-[70vh] items-center justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+        <div className="mx-auto max-w-lg px-4 pt-6 space-y-4">
+          {headerLoading ? (
+            <>
+              <Skeleton className="h-28 w-full rounded-3xl" />
+              <Skeleton className="h-24 w-full rounded-3xl" />
+              <Skeleton className="h-40 w-full rounded-3xl" />
+            </>
+          ) : (
+            <div className="py-20 text-center text-sm text-muted-foreground">Pedido não encontrado.</div>
+          )}
         </div>
       </MarketplaceLayout>
     );
@@ -183,19 +217,34 @@ export default function OrderDetail() {
   const computedStatus = getMarketplaceStatus({ order, delivery, deliveries: delivery ? [delivery] : [] });
   const title = computedStatus.title;
   const currentStepIndex = computedStatus.stepRank;
-
-  // Gera código aleatório (mock) com base no ID
   const deliveryCode = id ? parseInt(id.replace(/[^0-9]/g, '').substring(0, 4)) || 6656 : 6656;
+  const itemsCount = orderItems ? orderItems.reduce((acc, curr) => acc + curr.quantity, 0) : 0;
+  const itemsSubtotal = orderItems
+    ? orderItems.reduce((acc, curr) => acc + (curr.price || curr.unit_price || 0) * curr.quantity, 0)
+    : 0;
 
-  // Calculo total
-  const itemsCount = orderItems.reduce((acc, curr) => acc + curr.quantity, 0);
+  const notifText = notif.isNative
+    ? notif.effectiveEnabled
+      ? '🔔 Notificações ativadas! Você receberá alertas na central do celular.'
+      : notif.blocked
+      ? 'Notificações desativadas. Você pode reativar nas configurações do aparelho.'
+      : 'Ative para receber os avisos do seu pedido na central do celular.'
+    : notif.unsupported
+    ? 'Seu navegador não suporta notificações.'
+    : notif.effectiveEnabled
+    ? '🔔 Notificações ativadas! Você será avisado sobre seu pedido.'
+    : notif.blocked
+    ? 'Notificações bloqueadas. Habilite nas configurações do navegador.'
+    : 'Fique sabendo na hora se houver algum problema com seu pedido.';
+
+  const notifTitle = notif.effectiveEnabled ? 'Notificações ativadas' : 'Ative as notificações e acompanhe seu pedido';
 
   return (
     <MarketplaceLayout>
       <div className="relative min-h-[calc(100vh-64px)] pb-32">
         {/* Background Mapa Fictício */}
-        <div 
-          className="absolute top-0 left-0 right-0 h-[40vh] z-0 opacity-80" 
+        <div
+          className="absolute top-0 left-0 right-0 h-[40vh] z-0 opacity-80"
           style={{
             backgroundImage: `url('https://images.unsplash.com/photo-1524661135-423995f22d0b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80')`,
             backgroundSize: 'cover',
@@ -203,7 +252,6 @@ export default function OrderDetail() {
             filter: 'blur(1px) sepia(20%) hue-rotate(-10deg)',
           }}
         >
-          {/* Degradê para misturar com o fundo */}
           <div className="absolute inset-0 bg-gradient-to-b from-background/30 via-background/60 to-background" />
         </div>
 
@@ -224,20 +272,19 @@ export default function OrderDetail() {
 
         {/* Content */}
         <div className="relative z-10 mx-auto max-w-lg px-4 pt-16 space-y-4">
-          
+
           {/* Card Principal: Tracking */}
           <div className="bg-background rounded-3xl p-5 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] border border-border">
             <h2 className="text-xl font-bold text-foreground mb-1 pr-4">{title}</h2>
             {computedStatus.description && (
               <p className="text-sm text-muted-foreground mb-4 leading-snug">{computedStatus.description}</p>
             )}
-            
-            {/* Barra de Progresso Verde Segmentada */}
+
             <div className="flex gap-1 mb-5">
               {[0, 1, 2, 3, 4, 5].map((step, idx) => (
-                <div 
-                  key={idx} 
-                  className={`h-1.5 flex-1 rounded-full ${idx <= currentStepIndex ? 'bg-[#00A868]' : 'bg-muted'}`} 
+                <div
+                  key={idx}
+                  className={`h-1.5 flex-1 rounded-full ${idx <= currentStepIndex ? 'bg-[#00A868]' : 'bg-muted'}`}
                 />
               ))}
             </div>
@@ -259,31 +306,23 @@ export default function OrderDetail() {
           <div className="bg-background rounded-3xl p-5 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] border border-border">
             <div className="flex justify-between items-center">
               <div className="pr-4">
-                <h3 className="font-bold text-base mb-1">Ative as notificações e acompanhe seu pedido</h3>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  {Capacitor.isNativePlatform()
-                    ? '🔔 Notificações ativadas! Você receberá alertas em tempo real na central do celular.'
-                    : ('Notification' in window) && Notification.permission === 'denied'
-                    ? 'Notificações bloqueadas. Habilite nas configurações do navegador.'
-                    : !('Notification' in window)
-                    ? 'Seu dispositivo não suporta notificações web.'
-                    : 'Fique sabendo na hora se houver algum problema com seu pedido.'}
-                </p>
+                <h3 className="font-bold text-base mb-1">{notifTitle}</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">{notifText}</p>
               </div>
               <button
                 onClick={handleToggleNotif}
-                disabled={!Capacitor.isNativePlatform() && (notifLoading || !('Notification' in window) || Notification.permission === 'denied')}
-                aria-label={notifEnabled ? 'Desativar notificações' : 'Ativar notificações'}
+                disabled={notif.loading || notif.unsupported || (notif.blocked && !notif.effectiveEnabled)}
+                aria-label={notif.effectiveEnabled ? 'Desativar notificações' : 'Ativar notificações'}
                 className={`relative w-12 h-6 rounded-full shrink-0 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-40 disabled:cursor-not-allowed ${
-                  (Capacitor.isNativePlatform() || notifEnabled) ? 'bg-[#00A868]' : 'bg-muted'
+                  notif.effectiveEnabled ? 'bg-[#00A868]' : 'bg-muted'
                 }`}
               >
                 <span
                   className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-300 ${
-                    (Capacitor.isNativePlatform() || notifEnabled) ? 'translate-x-[26px]' : 'translate-x-0.5'
+                    notif.effectiveEnabled ? 'translate-x-[26px]' : 'translate-x-0.5'
                   }`}
                 />
-                {notifLoading && (
+                {notif.loading && (
                   <span className="absolute inset-0 flex items-center justify-center">
                     <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   </span>
@@ -299,13 +338,17 @@ export default function OrderDetail() {
               <div className="mt-0.5 bg-secondary/50 p-1.5 rounded-full h-fit">
                 <MapPin className="h-5 w-5 text-foreground" />
               </div>
-              <div>
-                <p className="font-bold text-[15px] leading-tight text-foreground">
-                  {order.delivery_address || 'Endereço não informado'}
-                </p>
+              <div className="flex-1">
+                {headerPartial ? (
+                  <Skeleton className="h-5 w-4/5" />
+                ) : (
+                  <p className="font-bold text-[15px] leading-tight text-foreground">
+                    {order.delivery_address || 'Endereço não informado'}
+                  </p>
+                )}
               </div>
             </div>
-            {computedStatus.statusKey === 'delivering' && (
+            {!detailsPending && computedStatus.statusKey === 'delivering' && (
               <div className="bg-muted/50 p-3 rounded-xl border border-border flex items-center justify-between">
                 <span className="text-xs font-medium text-muted-foreground">Esta entrega é feita pela loja e não poderá ser rastreada</span>
                 <div className="h-4 w-4 rounded-full bg-secondary text-muted-foreground flex items-center justify-center text-[10px] font-bold">?</div>
@@ -316,15 +359,19 @@ export default function OrderDetail() {
           {/* Detalhes do Pedido */}
           <div className="bg-background rounded-3xl p-5 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] border border-border">
             <h3 className="font-bold text-base mb-4">Detalhes do pedido</h3>
-            
+
             <div className="flex items-center justify-between mb-5 cursor-pointer" onClick={() => navigate('/marketplace/store/' + order.company_id)}>
               <div className="flex gap-3 items-center">
                 <div className="h-10 w-10 rounded-full bg-secondary border border-border shrink-0 flex items-center justify-center overflow-hidden">
-                   <img src={order.company?.logo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(order.company?.name?.charAt(0) || 'L')}&background=random`} className="w-full h-full object-cover" />
+                   <img src={order.company?.logo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(order.company?.name?.charAt(0) || 'L')}&background=random`} className="w-full h-full object-cover" alt={order.company?.name || 'Loja'} />
                 </div>
                 <div>
                   <p className="font-bold text-[15px]">{order.company?.name}</p>
-                  <p className="text-xs text-muted-foreground">Pedido Nº {id?.split('-')[0]} • {itemsCount} item{itemsCount > 1 ? 's' : ''}</p>
+                  {detailsPending ? (
+                    <Skeleton className="mt-1 h-3 w-32" />
+                  ) : (
+                    <p className="text-xs text-muted-foreground">Pedido Nº {id?.split('-')[0]} • {itemsCount} item{itemsCount > 1 ? 's' : ''}</p>
+                  )}
                 </div>
               </div>
               <ArrowLeft className="h-4 w-4 text-muted-foreground rotate-180" />
@@ -332,39 +379,51 @@ export default function OrderDetail() {
 
             {/* Lista de Itens */}
             <div className="mb-5 space-y-3">
-              {orderItems.map((item, i) => (
-                <div key={i} className="flex justify-between text-sm">
-                  <div className="flex gap-2">
-                    <span className="font-medium text-muted-foreground">{item.quantity}x</span>
-                    <div>
-                      <p className="font-medium text-foreground">{item.product_name || (item as any).products?.name}</p>
-                      {Array.isArray(item.options) && item.options.length > 0 && (
-                        <div className="mt-1 space-y-0.5">
-                          {item.options.map((opt: any, optIdx: number) => {
-                            const optQty = Number(opt.quantity) > 0 ? Number(opt.quantity) : 1;
-                            const optPrice = Number(opt.price) || 0;
-                            return (
-                              <p key={optIdx} className="text-xs text-muted-foreground">
-                                + {optQty > 1 ? `${optQty}x ` : ''}{opt.name}
-                                {optPrice > 0 ? ` (+ R$ ${(optPrice * optQty).toFixed(2).replace('.', ',')})` : ''}
-                              </p>
-                            );
-                          })}
-                        </div>
-                      )}
-                      {item.notes && <p className="text-xs text-muted-foreground mt-0.5">{item.notes}</p>}
+              {detailsPending ? (
+                <>
+                  <Skeleton className="h-5 w-full" />
+                  <Skeleton className="h-5 w-5/6" />
+                  <Skeleton className="h-5 w-2/3" />
+                </>
+              ) : (
+                orderItems!.map((item, i) => (
+                  <div key={i} className="flex justify-between text-sm">
+                    <div className="flex gap-2">
+                      <span className="font-medium text-muted-foreground">{item.quantity}x</span>
+                      <div>
+                        <p className="font-medium text-foreground">{item.product_name || (item as any).products?.name}</p>
+                        {Array.isArray(item.options) && item.options.length > 0 && (
+                          <div className="mt-1 space-y-0.5">
+                            {item.options.map((opt: any, optIdx: number) => {
+                              const optQty = Number(opt.quantity) > 0 ? Number(opt.quantity) : 1;
+                              const optPrice = Number(opt.price) || 0;
+                              return (
+                                <p key={optIdx} className="text-xs text-muted-foreground">
+                                  + {optQty > 1 ? `${optQty}x ` : ''}{opt.name}
+                                  {optPrice > 0 ? ` (+ R$ ${(optPrice * optQty).toFixed(2).replace('.', ',')})` : ''}
+                                </p>
+                              );
+                            })}
+                          </div>
+                        )}
+                        {item.notes && <p className="text-xs text-muted-foreground mt-0.5">{item.notes}</p>}
+                      </div>
                     </div>
+                    <span className="font-medium text-foreground shrink-0 pl-4">R$ {((item.price || item.unit_price || 0) * item.quantity).toFixed(2).replace('.', ',')}</span>
                   </div>
-                  <span className="font-medium text-foreground shrink-0 pl-4">R$ {((item.price || item.unit_price || 0) * item.quantity).toFixed(2).replace('.', ',')}</span>
-                </div>
-              ))}
+                ))
+              )}
             </div>
 
             {/* Subtotais */}
             <div className="space-y-2 mb-5 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Subtotal</span>
-                <span className="font-medium text-foreground">R$ {orderItems.reduce((acc, curr) => acc + ((curr.price || curr.unit_price || 0) * curr.quantity), 0).toFixed(2).replace('.', ',')}</span>
+                {detailsPending ? (
+                  <Skeleton className="h-4 w-16" />
+                ) : (
+                  <span className="font-medium text-foreground">R$ {itemsSubtotal.toFixed(2).replace('.', ',')}</span>
+                )}
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Taxa de entrega</span>
@@ -372,39 +431,47 @@ export default function OrderDetail() {
               </div>
             </div>
 
-            <div className="flex gap-3 mb-5">
-              {order.payment_method === 'money' ? (
-                <Banknote className="h-5 w-5 text-[#00A868] shrink-0 mt-0.5" />
-              ) : (
-                <Smartphone className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-              )}
-              <div>
-                <p className="font-bold text-[15px] flex items-center gap-1">Pagamento na entrega <span className="text-[#00A868]">●</span> {order.payment_method === 'money' ? 'Dinheiro' : 'Máquina'}</p>
-                <p className="text-sm text-muted-foreground">
-                   {order.payment_method === 'money'
-                    ? (order.notes?.includes('Troco para R$') 
-                        ? order.notes.split('Troco para R$')[1].split(' •')[0].trim() ? `Troco para R$ ${order.notes.split('Troco para R$')[1].split(' •')[0].trim()}` : 'Sem troco necessário'
-                        : 'Sem troco necessário')
-                    : ''}
-                </p>
+            {headerPartial ? (
+              <Skeleton className="h-10 w-2/3 mb-5" />
+            ) : (
+              <div className="flex gap-3 mb-5">
+                {order.payment_method === 'money' ? (
+                  <Banknote className="h-5 w-5 text-[#00A868] shrink-0 mt-0.5" />
+                ) : (
+                  <Smartphone className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                )}
+                <div>
+                  <p className="font-bold text-[15px] flex items-center gap-1">Pagamento na entrega <span className="text-[#00A868]">●</span> {order.payment_method === 'money' ? 'Dinheiro' : 'Máquina'}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {order.payment_method === 'money'
+                      ? (order.notes?.includes('Troco para R$')
+                          ? order.notes.split('Troco para R$')[1].split(' •')[0].trim() ? `Troco para R$ ${order.notes.split('Troco para R$')[1].split(' •')[0].trim()}` : 'Sem troco necessário'
+                          : 'Sem troco necessário')
+                      : ''}
+                  </p>
+                </div>
               </div>
-            </div>
+            )}
 
             <div className="flex justify-between items-center font-bold text-base mb-6">
               <span className="text-foreground">Total com entrega</span>
-              <span>R$ {(orderItems.reduce((acc, curr) => acc + ((curr.price || curr.unit_price || 0) * curr.quantity), 0) + (order.delivery_fee || 0)).toFixed(2).replace('.', ',')}</span>
+              {detailsPending ? (
+                <Skeleton className="h-5 w-20" />
+              ) : (
+                <span>R$ {(itemsSubtotal + (order.delivery_fee || 0)).toFixed(2).replace('.', ',')}</span>
+              )}
             </div>
 
             <div className="border-t border-border/50 pt-5 text-center flex flex-col gap-3">
-              <button 
+              <button
                 className="text-[#EA1D2C] font-bold text-[15px] flex items-center justify-center gap-2 mx-auto"
                 onClick={() => setShowStoreChat(true)}
               >
                 <MessageCircle className="h-4 w-4" /> Chat com a loja
               </button>
-              
+
               {(computedStatus.statusKey === 'pending' || computedStatus.statusKey === 'preparing' || computedStatus.statusKey === 'ready') && (
-                <button 
+                <button
                   className="text-muted-foreground font-medium text-[14px] flex items-center justify-center gap-2 mx-auto hover:text-destructive transition-colors"
                   onClick={handleCancelOrder}
                 >
@@ -415,7 +482,7 @@ export default function OrderDetail() {
           </div>
         </div>
       </div>
-      
+
       {/* Store Chat Drawer */}
       {showStoreChat && (
         <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm">
