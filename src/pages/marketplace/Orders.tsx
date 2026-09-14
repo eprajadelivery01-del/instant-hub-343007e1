@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate, Navigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
@@ -40,6 +41,7 @@ import { getMarketplaceStatus } from '@/utils/orderStatusResolver';
 export default function Orders() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -60,8 +62,13 @@ export default function Orders() {
           .limit(20);
 
         if (error) throw error;
-        console.log(`[Orders] Pedidos encontrados para ${user.id}:`, data?.length || 0);
         setOrders(data || []);
+        // Semente APENAS para a primeira pintura da tela de detalhes.
+        // Não é o pedido completo: endereço/itens/entrega continuam em
+        // carregamento até a consulta real terminar.
+        (data || []).forEach((o) => {
+          queryClient.setQueryData(['order-seed', o.id], o);
+        });
       } catch (error) {
         console.error("[Orders] Erro ao buscar pedidos:", error);
       } finally {
@@ -89,7 +96,7 @@ export default function Orders() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user]);
+  }, [user, queryClient]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();

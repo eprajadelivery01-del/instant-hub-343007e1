@@ -37,30 +37,37 @@ registerRouteDataPrefetcher("/marketplace/store", async ({ id }, queryClient, si
   });
 });
 
-// /marketplace/orders/:id — order header, items and delivery row.
+// /marketplace/orders/:id — split into header (unblocks the screen) and
+// details (items + delivery), matching the queryKeys used in OrderDetail.tsx.
 registerRouteDataPrefetcher("/marketplace/orders", async ({ id }, queryClient, signal) => {
   if (!id) return;
-  await queryClient.prefetchQuery({
-    queryKey: ["order", id],
-    queryFn: async () => {
-      if (signal.aborted) throw new Error("aborted");
-      const [orderRes, itemsRes, deliveryRes] = await Promise.all([
-        supabase
+  await Promise.all([
+    queryClient.prefetchQuery({
+      queryKey: ["order-header", id],
+      queryFn: async () => {
+        if (signal.aborted) throw new Error("aborted");
+        const { data } = await supabase
           .from("orders")
           .select("*, company:companies(*), address:addresses(*)")
           .eq("id", id)
-          .maybeSingle(),
-        supabase.from("order_items").select("*, products(*)").eq("order_id", id),
-        supabase.from("deliveries").select("*").eq("order_id", id).maybeSingle(),
-      ]);
-      return {
-        order: orderRes.data,
-        items: itemsRes.data ?? [],
-        delivery: deliveryRes.data,
-      };
-    },
-    staleTime: 10_000,
-  });
+          .maybeSingle();
+        return { order: data };
+      },
+      staleTime: 10_000,
+    }),
+    queryClient.prefetchQuery({
+      queryKey: ["order-details", id],
+      queryFn: async () => {
+        if (signal.aborted) throw new Error("aborted");
+        const [itemsRes, deliveryRes] = await Promise.all([
+          supabase.from("order_items").select("*, products(*)").eq("order_id", id),
+          supabase.from("deliveries").select("*").eq("order_id", id).maybeSingle(),
+        ]);
+        return { items: itemsRes.data ?? [], delivery: deliveryRes.data };
+      },
+      staleTime: 10_000,
+    }),
+  ]);
 });
 
 // /marketplace/checkout — the user's addresses (the page also computes
