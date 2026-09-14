@@ -43,6 +43,8 @@ export interface Company {
   prep_time_max?: number | null;
   /** JSON array of { region_id, customer_price } set by the merchant */
   delivery_regions_pricing?: Array<{ region_id: string; customer_price: string | number }> | string | null;
+  /** JSON array of custom ordered category names set by the merchant */
+  category_order?: string[] | null;
 }
 
 export interface Product {

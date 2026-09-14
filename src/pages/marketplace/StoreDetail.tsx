@@ -138,13 +138,24 @@ export default function StoreDetail() {
 
       // 1. Busca dados da empresa com produtos embutidos em consulta única de alta velocidade
       try {
-        const COMPANY_QUERY = 'id, name, description, category, rating, is_open, active, is_active, delivery_fee, delivery_regions_pricing, show_in_marketplace, city, state, address, phone, banner_url, cover_url, logo_url, business_hours, prep_time, prep_time_min, prep_time_max, created_at, user_id, products(id, company_id, name, description, price, image_url, category, active, sort_order, is_featured, created_at)';
+        const COMPANY_QUERY = 'id, name, description, category, rating, is_open, active, is_active, delivery_fee, delivery_regions_pricing, show_in_marketplace, city, state, address, phone, banner_url, cover_url, logo_url, business_hours, prep_time, prep_time_min, prep_time_max, created_at, user_id, category_order, products(id, company_id, name, description, price, image_url, category, active, sort_order, is_featured, created_at)';
 
-        let { data } = await supabase
+        let { data, error } = await supabase
           .from('companies')
           .select(COMPANY_QUERY)
           .or(`id.eq.${id},user_id.eq.${id}`)
           .maybeSingle();
+
+        // Fallback defensivo caso a coluna category_order ainda não tenha sido criada no banco
+        if (error && (error.message?.includes('category_order') || error.code === '42703')) {
+          const BASE_QUERY = 'id, name, description, category, rating, is_open, active, is_active, delivery_fee, delivery_regions_pricing, show_in_marketplace, city, state, address, phone, banner_url, cover_url, logo_url, business_hours, prep_time, prep_time_min, prep_time_max, created_at, user_id, products(id, company_id, name, description, price, image_url, category, active, sort_order, is_featured, created_at)';
+          const retryRes = await supabase
+            .from('companies')
+            .select(BASE_QUERY)
+            .or(`id.eq.${id},user_id.eq.${id}`)
+            .maybeSingle();
+          data = retryRes.data;
+        }
 
         if (data) {
           companyData = data;
@@ -156,7 +167,7 @@ export default function StoreDetail() {
         } else {
           const fallbackCompany = await supabase
             .from('companies')
-            .select('id, name, description, category, rating, is_open, active, is_active, delivery_fee, show_in_marketplace, city, state, address, phone, banner_url, cover_url, logo_url, business_hours, prep_time, prep_time_min, prep_time_max, user_id')
+            .select('id, name, description, category, rating, is_open, active, is_active, delivery_fee, show_in_marketplace, city, state, address, phone, banner_url, cover_url, logo_url, business_hours, prep_time, prep_time_min, prep_time_max, user_id, category_order')
             .or(`id.eq.${id},user_id.eq.${id}`)
             .maybeSingle();
           companyData = fallbackCompany.data;
@@ -296,9 +307,32 @@ export default function StoreDetail() {
   }, [products]);
 
   const categories = useMemo(() => {
-    const cats = [...new Set(products.map((product) => product.category))].filter(Boolean);
-    return products.length > 0 ? ['Destaques', ...cats] : cats;
-  }, [products]);
+    const rawCategories = [...new Set(products.map((product) => product.category?.trim()).filter(Boolean))] as string[];
+    
+    // Suporte à ordenação manual do lojista
+    let customOrder: string[] = [];
+    if (company?.category_order) {
+      if (Array.isArray(company.category_order)) {
+        customOrder = company.category_order;
+      } else if (typeof company.category_order === 'string') {
+        try { customOrder = JSON.parse(company.category_order); } catch {}
+      }
+    }
+
+    let sortedCategories: string[];
+    if (customOrder.length > 0) {
+      // 1. Categorias que estão na ordem manual e existem na loja
+      const ordered = customOrder.filter((cat) => rawCategories.includes(cat));
+      // 2. Categorias existentes na loja que não constam na ordem manual (novas) vão para o final
+      const remaining = rawCategories.filter((cat) => !customOrder.includes(cat));
+      sortedCategories = [...ordered, ...remaining];
+    } else {
+      // Fallback: comportamento original idêntico ao atual
+      sortedCategories = rawCategories;
+    }
+
+    return products.length > 0 ? ['Destaques', ...sortedCategories] : sortedCategories;
+  }, [products, company?.category_order]);
 
   const filteredProducts = useMemo(
     () => products.filter((product) =>
