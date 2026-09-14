@@ -146,6 +146,41 @@ export function StoreTabCard({ company }: StoreTabCardProps) {
                 </p>
               </div>
             ))
+          ) : whatsappStore ? (
+            <div className="premium-chip col-span-3 flex min-h-[112px] flex-col items-center justify-center gap-2 rounded-[24px] text-center">
+              <p className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
+                <MessageCircle className="h-4 w-4 text-[#25D366]" />
+                Pedir pelo WhatsApp
+              </p>
+              <p className="text-sm font-bold text-foreground">{whatsappDisplayNumber}</p>
+              <span
+                role="link"
+                tabIndex={0}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  window.open(
+                    buildWhatsAppLink(whatsappStore.phone, whatsappStore.defaultMessage),
+                    '_blank',
+                    'noopener,noreferrer'
+                  );
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    window.open(
+                      buildWhatsAppLink(whatsappStore.phone, whatsappStore.defaultMessage),
+                      '_blank',
+                      'noopener,noreferrer'
+                    );
+                  }
+                }}
+                className="mt-1 inline-flex cursor-pointer items-center gap-2 rounded-full bg-[#25D366] px-4 py-2 text-xs font-bold text-white shadow-sm transition-colors hover:bg-[#1fb857]"
+              >
+                <MessageCircle className="h-4 w-4" />
+                Chamar no WhatsApp
+              </span>
+            </div>
           ) : (
             <div className="premium-chip col-span-3 flex min-h-[112px] flex-col items-center justify-center rounded-[24px] text-center text-muted-foreground">
               <ShoppingBag className="mb-2 h-8 w-8 opacity-50" />
