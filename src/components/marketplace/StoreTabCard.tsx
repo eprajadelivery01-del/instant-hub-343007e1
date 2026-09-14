@@ -21,6 +21,10 @@ export function StoreTabCard({ company }: StoreTabCardProps) {
   const isOpen = isStoreOpenNow(company);
   const statusLabel = getStoreStatusLabel(company);
   const prepLabel = getPrepTimeLabel(company);
+  const whatsappStore = getWhatsAppOnlyStore(company);
+  const whatsappDisplayNumber = whatsappStore
+    ? whatsappStore.displayPhone.replace(/^\+55\s*/, '')
+    : null;
 
   return (
     <button
