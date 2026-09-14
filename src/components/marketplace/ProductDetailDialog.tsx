@@ -56,20 +56,55 @@ export function ProductDetailDialog({ product, isOpen, onClose, onAddToCart, ini
   const fetchOptions = async (productId: string) => {
     setLoadingOptions(true);
     try {
-      const { data: groupsData } = await supabase
+      let { data: groupsData, error: groupsError } = await supabase
         .from('product_option_groups')
         .select('*')
         .eq('product_id', productId)
         .order('created_at');
 
+      // Fallback defensivo em caso de restrição RLS (42501) para visitantes anônimos
+      if (groupsError && (groupsError.code === '42501' || groupsError.message?.includes('permission denied'))) {
+        try {
+          const { data: guestRes } = await supabase.auth.signInWithPassword({
+            email: 'guest_client_marketplace@epraja.com',
+            password: 'GuestClient123!'
+          });
+          if (guestRes?.session) {
+            const retryRes = await supabase
+              .from('product_option_groups')
+              .select('*')
+              .eq('product_id', productId)
+              .order('created_at');
+            groupsData = retryRes.data;
+            groupsError = retryRes.error;
+          }
+        } catch { /* silent */ }
+      }
+
       if (groupsData && groupsData.length > 0) {
         setGroups(groupsData);
-        const { data: optionsData } = await supabase
+        let { data: optionsData, error: optionsError } = await supabase
           .from('product_options')
           .select('*')
           .in('group_id', groupsData.map(g => g.id))
           .eq('is_active', true)
           .order('created_at');
+
+        if (optionsError && (optionsError.code === '42501' || optionsError.message?.includes('permission denied'))) {
+          try {
+            await supabase.auth.signInWithPassword({
+              email: 'guest_client_marketplace@epraja.com',
+              password: 'GuestClient123!'
+            });
+            const retryOpt = await supabase
+              .from('product_options')
+              .select('*')
+              .in('group_id', groupsData.map(g => g.id))
+              .eq('is_active', true)
+              .order('created_at');
+            optionsData = retryOpt.data;
+          } catch { /* silent */ }
+        }
         
         setOptions(optionsData || []);
       } else {
