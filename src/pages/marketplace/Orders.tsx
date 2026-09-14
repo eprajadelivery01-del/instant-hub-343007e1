@@ -96,7 +96,7 @@ export default function Orders() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user]);
+  }, [user, queryClient]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
