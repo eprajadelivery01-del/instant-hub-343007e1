@@ -1,8 +1,8 @@
 export interface WhatsAppStoreConfig {
   id: string;
   name: string;
-  phone: string;        // Número formatado para wa.me (ex: 556596068049)
-  displayPhone: string; // Exibição formatada amigável (ex: +55 65 9606-8049)
+  phone: string;        // Número formatado para wa.me (ex: 5565996068049 — com o 9 do celular)
+  displayPhone: string; // Exibição formatada amigável (ex: +55 65 99606-8049)
   defaultMessage?: string;
 }
 
