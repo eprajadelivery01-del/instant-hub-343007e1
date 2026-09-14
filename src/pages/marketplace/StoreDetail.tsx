@@ -154,7 +154,7 @@ export default function StoreDetail() {
             .select(BASE_QUERY)
             .or(`id.eq.${id},user_id.eq.${id}`)
             .maybeSingle();
-          data = retryRes.data;
+          data = retryRes.data as typeof data;
         }
 
         if (data) {
