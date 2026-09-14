@@ -41,17 +41,6 @@ export function WhatsAppOrderDialog({
 
   const whatsappUrl = buildWhatsAppLink(config.phone, config.defaultMessage);
 
-  const handleOpenWhatsApp = () => {
-    try {
-      const newWin = window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
-      if (!newWin || newWin.closed || typeof newWin.closed === 'undefined') {
-        window.location.href = whatsappUrl;
-      }
-    } catch {
-      window.location.href = whatsappUrl;
-    }
-  };
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[420px] rounded-[32px] p-6 text-center border border-border shadow-2xl">
@@ -88,15 +77,18 @@ export function WhatsAppOrderDialog({
         </div>
 
         <div className="flex flex-col gap-2.5 mt-2">
-          <Button
-            type="button"
-            onClick={handleOpenWhatsApp}
-            className="h-12 w-full rounded-2xl bg-[#25D366] hover:bg-[#1EBE5D] text-white font-bold text-sm shadow-lg shadow-[#25D366]/25 gap-2 transition-all active:scale-[0.98]"
+          {/* Link <a> nativo com target="_blank" para abrir em nova aba/app sem ser bloqueado em iframes (Lovable preview) */}
+          <a
+            href={whatsappUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => onOpenChange(false)}
+            className="h-12 w-full rounded-2xl bg-[#25D366] hover:bg-[#1EBE5D] text-white font-bold text-sm shadow-lg shadow-[#25D366]/25 flex items-center justify-center gap-2 transition-all active:scale-[0.98] cursor-pointer no-underline"
           >
             <WhatsAppIcon className="h-5 w-5 fill-white" />
-            Falar no WhatsApp
+            <span>Falar no WhatsApp</span>
             <ExternalLink className="h-3.5 w-3.5 opacity-80 ml-auto" />
-          </Button>
+          </a>
 
           <Button
             type="button"
