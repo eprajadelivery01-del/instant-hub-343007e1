@@ -1,10 +1,11 @@
 import { useNavigate } from 'react-router-dom';
 import { Company, Product } from '@/types/database';
-import { ArrowRight, Clock3, ShoppingBag, Star, Store as StoreIcon } from 'lucide-react';
+import { ArrowRight, Clock3, MessageCircle, ShoppingBag, Star, Store as StoreIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MediaImage } from '@/components/shared/MediaImage';
 import { getCompanyBannerImage, getCompanyLogoImage, getPrimaryProductImage } from '@/lib/media';
 import { getPrepTimeLabel, getStoreStatusLabel, isStoreOpenNow } from '@/lib/storeHours';
+import { buildWhatsAppLink, getWhatsAppOnlyStore } from '@/lib/whatsappStores';
 
 interface StoreTabCardProps {
   company: Company & { products: Product[]; rating?: number | null; cover_url?: string | null; category?: string | null; prep_time_min?: number | null; prep_time_max?: number | null };
