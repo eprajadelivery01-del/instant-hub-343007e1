@@ -4,8 +4,6 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.os.Build;
 import android.os.Bundle;
-import androidx.core.app.NotificationCompat;
-import androidx.core.app.NotificationManagerCompat;
 import com.getcapacitor.BridgeActivity;
 
 public class MainActivity extends BridgeActivity {
@@ -13,7 +11,6 @@ public class MainActivity extends BridgeActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         createNotificationChannel();
-        sendTestNotification();
     }
 
     private void createNotificationChannel() {
@@ -42,22 +39,6 @@ public class MainActivity extends BridgeActivity {
                 defaultChannel.setShowBadge(true);
                 manager.createNotificationChannel(defaultChannel);
             }
-        }
-    }
-
-    private void sendTestNotification() {
-        try {
-            NotificationCompat.Builder builder =
-                new NotificationCompat.Builder(this, "marketplace_orders")
-                    .setSmallIcon(R.mipmap.ic_launcher)
-                    .setContentTitle("🔔 É Pra Já Marketplace")
-                    .setContentText("Notificações ativadas na central do seu celular!")
-                    .setPriority(NotificationCompat.PRIORITY_MAX)
-                    .setAutoCancel(true);
-
-            NotificationManagerCompat.from(this).notify(999, builder.build());
-        } catch (Exception e) {
-            e.printStackTrace();
         }
     }
 }

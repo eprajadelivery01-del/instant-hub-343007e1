@@ -86,7 +86,7 @@ export function GlobalMarketingListener() {
     const channelId = `global-client-listener-${Math.random().toString(36).substring(2, 9)}`;
     const channel = supabase
       .channel(channelId)
-      // A) Ofertass e Notificações de Marketing
+      // A) Ofertas e Notificações de Marketing
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'marketing_notifications' },
@@ -94,7 +94,9 @@ export function GlobalMarketingListener() {
           const newNotif = payload.new;
           playNotificationAudio();
 
-          triggerNativeNotification(newNotif, swRegRef.current);
+          // Notificação in-app (Toast/banner com imagem, cupom e botão fechar).
+          // NOTA: A notificação nativa na barra/central do celular é de responsabilidade
+          // exclusiva do push remoto FCM enviado pelo backend, evitando duplicatas.
 
           toast.custom((t) => (
             <div className="relative flex flex-col gap-3 p-4 bg-background border border-border rounded-xl shadow-2xl w-[350px] animate-in slide-in-from-top-2">
