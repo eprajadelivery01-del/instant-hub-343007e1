@@ -178,7 +178,7 @@ export function StoreTabCard({ company }: StoreTabCardProps) {
                 }}
                 className="mt-1 inline-flex cursor-pointer items-center gap-2 rounded-full bg-[#25D366] px-4 py-2 text-xs font-bold text-white shadow-sm transition-colors hover:bg-[#1fb857]"
               >
-                <MessageCircle className="h-4 w-4" />
+                <WhatsAppIcon className="h-4 w-4 fill-white" />
                 Chamar no WhatsApp
               </span>
             </div>
