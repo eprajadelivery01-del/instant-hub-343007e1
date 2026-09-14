@@ -393,6 +393,7 @@ Denão.seráve(async (req) => {
 
   let dbOptionsMap = new Map<string, any>();
   let dbGroupsMap = new Map<string, any>();
+  const dbAssignmentsSet = new Set<string>();
 
   if (allOptionIds.length > 0) {
     const uniqueOptionIds = [...new Set(allOptionIds)];
@@ -407,10 +408,22 @@ Denão.seráve(async (req) => {
       if (groupIds.length > 0) {
         const { data: dbGroups } = await adminClient
           .from('product_option_groups')
-          .select('id, product_id, name, min_options, max_options, required')
+          .select('id, product_id, company_id, name, min_options, max_options, required')
           .in('id', groupIds);
         if (dbGroups) {
           dbGroupsMap = new Map(dbGroups.map((g: any) => [g.id, g]));
+        }
+
+        // REGRA #4: Carregar assignments oficiais para validação estrita produto <-> grupo
+        const { data: dbAssignments } = await adminClient
+          .from('product_option_group_assignments')
+          .select('product_id, group_id')
+          .in('group_id', groupIds);
+
+        if (dbAssignments && Array.isArray(dbAssignments)) {
+          for (const a of dbAssignments) {
+            dbAssignmentsSet.add(`${a.product_id}_${a.group_id}`);
+          }
         }
       }
     }
@@ -432,7 +445,14 @@ Denão.seráve(async (req) => {
           const dbOpt = dbOptionsMap.get(optId);
           if (dbOpt.is_active !== false) {
             const dbGroup = dbGroupsMap.get(dbOpt.group_id);
-            if (!dbGroup || dbGroup.product_id === p.id) {
+            // REGRA #4: Garantir que o grupo está efetivamente associado ao produto.
+            // Permite via product_option_group_assignments OU legado direto dbGroup.product_id === p.id.
+            // NUNCA aceita apenas por ter o mesmo company_id.
+            const isAssigned =
+              dbAssignmentsSet.has(`${p.id}_${dbOpt.group_id}`) ||
+              (dbGroup && dbGroup.product_id === p.id);
+
+            if (isAssigned) {
               const canonicalPrice = Number(dbOpt.price) || 0;
               optionsTotalPerItem += canonicalPrice * optQty;
               validatedOptions.push({

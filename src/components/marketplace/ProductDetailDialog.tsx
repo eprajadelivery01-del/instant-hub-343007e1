@@ -56,6 +56,27 @@ export function ProductDetailDialog({ product, isOpen, onClose, onAddToCart, ini
   const fetchOptions = async (productId: string) => {
     setLoadingOptions(true);
     try {
+      // 1. Buscar grupos via assignments oficial (N:N)
+      const { data: assignmentsData, error: assignmentsError } = await supabase
+        .from('product_option_group_assignments')
+        .select(`
+          group_id,
+          product_option_groups:group_id (
+            id,
+            name,
+            min_options,
+            max_options,
+            required,
+            created_at
+          )
+        `)
+        .eq('product_id', productId);
+
+      if (assignmentsError) {
+        console.warn('Aviso ao carregar assignments no marketplace:', assignmentsError.message);
+      }
+
+      // 2. Buscar grupos via product_id legado
       let { data: groupsData, error: groupsError } = await supabase
         .from('product_option_groups')
         .select('*')
@@ -81,12 +102,44 @@ export function ProductDetailDialog({ product, isOpen, onClose, onAddToCart, ini
         } catch { /* silent */ }
       }
 
-      if (groupsData && groupsData.length > 0) {
-        setGroups(groupsData);
+      // 3. Combinar e deduplicar rigorosamente por group.id
+      const groupMap = new Map<string, Group>();
+
+      if (assignmentsData && Array.isArray(assignmentsData)) {
+        for (const row of assignmentsData) {
+          const g: any = row.product_option_groups;
+          if (g && g.id) {
+            const isReq = Boolean(g.required);
+            groupMap.set(g.id, {
+              ...g,
+              required: isReq,
+              min_options: isReq ? Math.max(1, g.min_options ?? 1) : 0,
+            });
+          }
+        }
+      }
+
+      if (groupsData && Array.isArray(groupsData)) {
+        for (const g of groupsData) {
+          if (g && g.id && !groupMap.has(g.id)) {
+            const isReq = Boolean(g.required);
+            groupMap.set(g.id, {
+              ...g,
+              required: isReq,
+              min_options: isReq ? Math.max(1, g.min_options ?? 1) : 0,
+            });
+          }
+        }
+      }
+
+      const finalGroups = Array.from(groupMap.values());
+
+      if (finalGroups.length > 0) {
+        setGroups(finalGroups);
         let { data: optionsData, error: optionsError } = await supabase
           .from('product_options')
           .select('*')
-          .in('group_id', groupsData.map(g => g.id))
+          .in('group_id', finalGroups.map(g => g.id))
           .eq('is_active', true)
           .order('created_at');
 
@@ -99,7 +152,7 @@ export function ProductDetailDialog({ product, isOpen, onClose, onAddToCart, ini
             const retryOpt = await supabase
               .from('product_options')
               .select('*')
-              .in('group_id', groupsData.map(g => g.id))
+              .in('group_id', finalGroups.map(g => g.id))
               .eq('is_active', true)
               .order('created_at');
             optionsData = retryOpt.data;
@@ -173,8 +226,10 @@ export function ProductDetailDialog({ product, isOpen, onClose, onAddToCart, ini
   };
 
   const isGroupSatisfied = (group: Group): boolean => {
+    const isReq = Boolean(group.required);
+    if (!isReq) return true; // REGRA #8: Grupos opcionais NUNCA bloqueiam
     const total = getGroupTotalSelected(group.id);
-    const minRequired = group.required ? Math.max(1, group.min_options || 1) : (group.min_options || 0);
+    const minRequired = Math.max(1, group.min_options ?? 1);
     return total >= minRequired;
   };
 
@@ -199,7 +254,7 @@ export function ProductDetailDialog({ product, isOpen, onClose, onAddToCart, ini
   const handleAdd = () => {
     const missing = getFirstUnsatisfiedGroup();
     if (missing) {
-      const minRequired = missing.required ? Math.max(1, missing.min_options || 1) : missing.min_options;
+      const minRequired = Math.max(1, missing.min_options ?? 1);
       toast.error(`Escolha pelo menos ${minRequired} opção em "${missing.name}"`);
       return;
     }
@@ -303,10 +358,25 @@ export function ProductDetailDialog({ product, isOpen, onClose, onAddToCart, ini
               {/* Option Groups */}
               {groups.map((group) => {
                 const totalInGroup = getGroupTotalSelected(group.id);
-                const isSingleChoice = (group.max_options || 1) === 1;
+                const isReq = Boolean(group.required);
+                const minOptions = isReq ? Math.max(1, group.min_options ?? 1) : 0;
+                const maxOptions = Math.max(minOptions, group.max_options ?? 1);
+                const isSingleChoice = maxOptions === 1;
                 const isSatisfied = isGroupSatisfied(group);
-                const isReq = group.required || (group.min_options > 0);
                 const groupOptions = options.filter(o => o.group_id === group.id);
+
+                let instructionText = "";
+                if (!isReq) {
+                  instructionText = maxOptions === 1 ? 'Escolha até 1 opção' : `Escolha até ${maxOptions} opções`;
+                } else {
+                  if (minOptions === 1 && maxOptions === 1) {
+                    instructionText = 'Escolha 1 opção';
+                  } else if (minOptions === maxOptions) {
+                    instructionText = `Escolha ${minOptions} opções`;
+                  } else {
+                    instructionText = `Escolha de ${minOptions} a ${maxOptions} opções`;
+                  }
+                }
 
                 return (
                   <div key={group.id} className="flex flex-col">
@@ -322,13 +392,13 @@ export function ProductDetailDialog({ product, isOpen, onClose, onAddToCart, ini
                               {isSatisfied ? '✓ Concluído' : 'Obrigatório'}
                             </span>
                           ) : (
-                            <span className="text-[10px] font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground bg-muted px-2 py-0.5 rounded-full border border-border/60">
                               Opcional
                             </span>
                           )}
                         </div>
                         <p className="text-[11px] font-medium text-muted-foreground mt-0.5">
-                          {isSingleChoice ? 'Escolha 1 opção' : `Escolha até ${group.max_options} opções`}
+                          {instructionText}
                         </p>
                       </div>
 
