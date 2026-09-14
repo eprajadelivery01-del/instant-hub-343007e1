@@ -41,6 +41,7 @@ import { getMarketplaceStatus } from '@/utils/orderStatusResolver';
 export default function Orders() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
