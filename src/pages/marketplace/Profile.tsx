@@ -142,33 +142,134 @@ export default function Profile() {
     finally { setLoadingOrders(false); }
   };
 
+  const compressAvatar = (file: File): Promise<Blob> => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          const maxDim = 800;
+
+          if (width > height && width > maxDim) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else if (height > maxDim) {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, width, height);
+            canvas.toBlob(
+              (blob) => {
+                resolve(blob || file);
+              },
+              'image/jpeg',
+              0.85
+            );
+          } else {
+            resolve(file);
+          }
+        };
+        img.onerror = () => resolve(file);
+        img.src = e.target?.result as string;
+      };
+      reader.onerror = () => resolve(file);
+      reader.readAsDataURL(file);
+    });
+  };
+
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
     setUploading(true);
     try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+      // 1. Garante que a sessão está ativa e renovada
+      const { data: sessionData } = await supabase.auth.getSession();
+      const activeUser = sessionData?.session?.user || user;
+      if (!activeUser?.id) {
+        throw new Error('Sessão expirada. Faça login novamente.');
+      }
+
+      // 2. Comprime a imagem para tamanho otimizado (evita timeouts e bloqueios de cota)
+      const compressedBlob = await compressAvatar(file);
+
+      // 3. Upload com path único e content-type explícito SEM upsert (evita colisão de RLS no UPDATE)
+      const fileName = `${activeUser.id}/${Date.now()}.jpg`;
       
-      const { error: uploadError } = await supabase.storage
+      let uploadError: any = null;
+      let finalPath = fileName;
+
+      const res = await supabase.storage
         .from('avatars')
-        .upload(fileName, file, { 
+        .upload(fileName, compressedBlob, { 
           cacheControl: '3600',
-          upsert: true 
+          contentType: 'image/jpeg',
+          upsert: false 
         });
+
+      uploadError = res.error;
+
+      // Fallback defensivo: se falhar com pasta do usuário, tenta com nome direto no bucket avatars
+      if (uploadError) {
+        console.warn('Tentativa inicial com subpasta falhou, tentando fallback:', uploadError.message);
+        const fallbackName = `avatar-${activeUser.id}-${Date.now()}.jpg`;
+        const fallbackRes = await supabase.storage
+          .from('avatars')
+          .upload(fallbackName, compressedBlob, {
+            cacheControl: '3600',
+            contentType: 'image/jpeg',
+            upsert: false
+          });
+        
+        if (!fallbackRes.error) {
+          uploadError = null;
+          finalPath = fallbackName;
+        } else {
+          // Último fallback: tenta o bucket store-assets caso avatars esteja restrito
+          const storeAssetsName = `avatars/${activeUser.id}-${Date.now()}.jpg`;
+          const storeAssetsRes = await supabase.storage
+            .from('store-assets')
+            .upload(storeAssetsName, compressedBlob, {
+              cacheControl: '3600',
+              contentType: 'image/jpeg',
+              upsert: false
+            });
+
+          if (!storeAssetsRes.error) {
+            uploadError = null;
+            const { data: { publicUrl } } = supabase.storage
+              .from('store-assets')
+              .getPublicUrl(storeAssetsName);
+            
+            await Promise.allSettled([
+              supabase.from('profiles').update({ avatar_url: publicUrl }).eq('id', activeUser.id),
+              supabase.from('customers').update({ avatar_url: publicUrl }).eq('user_id', activeUser.id),
+            ]);
+            await refreshProfile();
+            toast.success('Foto atualizada com sucesso!');
+            return;
+          }
+        }
+      }
 
       if (uploadError) throw uploadError;
 
       const { data: { publicUrl } } = supabase.storage
         .from('avatars')
-        .getPublicUrl(fileName);
+        .getPublicUrl(finalPath);
 
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ avatar_url: publicUrl })
-        .eq('id', user.id);
-
-      if (updateError) throw updateError;
+      // Atualiza tanto em profiles quanto em customers para consistência
+      await Promise.allSettled([
+        supabase.from('profiles').update({ avatar_url: publicUrl }).eq('id', activeUser.id),
+        supabase.from('customers').update({ avatar_url: publicUrl }).eq('user_id', activeUser.id),
+      ]);
 
       await refreshProfile();
       toast.success('Foto atualizada com sucesso!');
@@ -176,7 +277,10 @@ export default function Profile() {
       console.error('Photo upload error:', err);
       toast.error('Falha no upload: ' + (err.message || 'Erro de permissão ou conexão')); 
     }
-    finally { setUploading(false); }
+    finally { 
+      setUploading(false); 
+      if (e.target) e.target.value = '';
+    }
   };
 
   const handleSave = async () => {
