@@ -85,7 +85,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
     // Generate a unique ID for this item based on product + options
     // Note is now editable and doesn't define the item's identity in the cart
     const validOptions = (options || []).filter(Boolean);
-    const optionsHash = validOptions.map(o => o.id).sort().join('-');
+    const optionsHash = validOptions
+      .map(o => `${o.id}:${Number(o.quantity) > 0 ? Number(o.quantity) : 1}`)
+      .sort()
+      .join('-');
     const cartItemId = `${product.id}${optionsHash ? `-${optionsHash}` : ''}`;
 
     if (company && company.id !== comp.id) {
@@ -148,7 +151,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
     let price = Number(item.product?.price || 0);
     if (item.options) {
       item.options.forEach(opt => {
-        if (opt) price += Number(opt.price || 0);
+        if (opt) {
+          const qty = Number(opt.quantity) > 0 ? Number(opt.quantity) : 1;
+          price += (Number(opt.price) || 0) * qty;
+        }
       });
     }
     return price;

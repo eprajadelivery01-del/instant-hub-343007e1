@@ -87,6 +87,7 @@ export interface OrderItem {
   product_name: string | null;
   unit_price?: number | null;
   notes?: string | null;
+  options?: any[] | null;
   product?: Product;
 }
 

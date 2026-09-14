@@ -379,17 +379,87 @@ Denão.seráve(async (req) => {
     if (isAvailable === false) return fail(400, 'create_order.product_unavailable', `Product ${p.name} is unavailable.`);
   }
 
-  // 4) Subtotal canônico
+  // 4) Carregar opções oficiais do banco e calcular subtotal canônico
+  const allOptionIds: string[] = [];
+  for (const it of body.items) {
+    if (Array.isArray(it.options)) {
+      for (const opt of it.options) {
+        if (opt && typeof opt.id === 'string' && opt.id.trim()) {
+          allOptionIds.push(opt.id.trim());
+        }
+      }
+    }
+  }
+
+  let dbOptionsMap = new Map<string, any>();
+  let dbGroupsMap = new Map<string, any>();
+
+  if (allOptionIds.length > 0) {
+    const uniqueOptionIds = [...new Set(allOptionIds)];
+    const { data: dbOptions, error: dbOptionsErr } = await adminClient
+      .from('product_options')
+      .select('id, group_id, name, price, is_active')
+      .in('id', uniqueOptionIds);
+
+    if (!dbOptionsErr && dbOptions && dbOptions.length > 0) {
+      dbOptionsMap = new Map(dbOptions.map((o: any) => [o.id, o]));
+      const groupIds = [...new Set(dbOptions.map((o: any) => o.group_id).filter(Boolean))];
+      if (groupIds.length > 0) {
+        const { data: dbGroups } = await adminClient
+          .from('product_option_groups')
+          .select('id, product_id, name, min_options, max_options, required')
+          .in('id', groupIds);
+        if (dbGroups) {
+          dbGroupsMap = new Map(dbGroups.map((g: any) => [g.id, g]));
+        }
+      }
+    }
+  }
+
   const enrichedItems = body.items.map((it) => {
     const p = byId.get(it.product_id)!;
+    const basePrice = Number(p.price) || 0;
+    let optionsTotalPerItem = 0;
+    const validatedOptions: any[] = [];
+
+    if (Array.isArray(it.options)) {
+      for (const rawOpt of it.options) {
+        if (!rawOpt) continue;
+        const optId = typeof rawOpt.id === 'string' ? rawOpt.id.trim() : null;
+        const optQty = Math.max(1, Math.floor(Number(rawOpt.quantity) || 1));
+        
+        if (optId && dbOptionsMap.has(optId)) {
+          const dbOpt = dbOptionsMap.get(optId);
+          if (dbOpt.is_active !== false) {
+            const dbGroup = dbGroupsMap.get(dbOpt.group_id);
+            if (!dbGroup || dbGroup.product_id === p.id) {
+              const canonicalPrice = Number(dbOpt.price) || 0;
+              optionsTotalPerItem += canonicalPrice * optQty;
+              validatedOptions.push({
+                id: dbOpt.id,
+                group_id: dbOpt.group_id,
+                group_name: dbGroup?.name || rawOpt.group_name || 'Opções',
+                name: dbOpt.name,
+                price: canonicalPrice,
+                quantity: optQty,
+              });
+            }
+          }
+        }
+      }
+    }
+
+    const itemUnitPrice = basePrice + optionsTotalPerItem;
+    const itemQuantity = Math.max(1, Math.floor(Number(it.quantity) || 1));
+
     return {
       product_id: p.id,
       product_name: p.name,
-      unit_price: Number(p.price) || 0,
-      quantity: it.quantity,
-      line_total: (Number(p.price) || 0) * it.quantity,
+      unit_price: itemUnitPrice,
+      quantity: itemQuantity,
+      line_total: itemUnitPrice * itemQuantity,
       notes: it.notes ?? null,
-      options: it.options ?? [],
+      options: validatedOptions,
     };
   });
   const subtotal = enrichedItems.reduce((acc, x) => acc + x.line_total, 0);

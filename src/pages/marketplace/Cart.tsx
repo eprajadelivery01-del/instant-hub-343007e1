@@ -59,19 +59,27 @@ function CartItemRow({ item, companyId, updateQuantity, updateNote, navigate }: 
             <h4 className="text-sm font-semibold text-foreground tracking-tight">{item.product.name}</h4>
             {item.options && item.options.length > 0 ? (
               <div className="mt-1 flex flex-col gap-0.5">
-                {item.options.map((opt: any, idx: number) => (
-                  <span key={idx} className="text-xs text-muted-foreground flex gap-2">
-                    <span className="w-4 text-center">1</span>
-                    {opt.name} {opt.price > 0 && `(+ R$ ${opt.price.toFixed(2).replace('.', ',')})`}
-                  </span>
-                ))}
+                {item.options.map((opt: any, idx: number) => {
+                  const qty = Number(opt.quantity) > 0 ? Number(opt.quantity) : 1;
+                  const price = Number(opt.price) || 0;
+                  return (
+                    <span key={idx} className="text-xs text-muted-foreground flex gap-2">
+                      <span className="w-5 text-center font-semibold text-primary">{qty}x</span>
+                      <span className="flex-1">{opt.name}</span>
+                      {price > 0 && <span>(+ R$ {(price * qty).toFixed(2).replace('.', ',')})</span>}
+                    </span>
+                  );
+                })}
               </div>
             ) : (
               <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1 font-medium">{item.product.description}</p>
             )}
           </div>
           <div className="mt-2 text-sm font-bold text-foreground">
-            R$ {((Number(item.product.price || 0) + (item.options?.reduce((acc, opt) => acc + Number(opt.price || 0), 0) || 0))).toFixed(2).replace('.', ',')}
+            R$ {((Number(item.product.price || 0) + (item.options?.reduce((acc, opt) => {
+              const qty = Number(opt.quantity) > 0 ? Number(opt.quantity) : 1;
+              return acc + ((Number(opt.price) || 0) * qty);
+            }, 0) || 0))).toFixed(2).replace('.', ',')}
           </div>
         </div>
 

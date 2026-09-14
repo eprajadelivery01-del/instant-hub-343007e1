@@ -38,7 +38,7 @@ export function ProductDetailDialog({ product, isOpen, onClose, onAddToCart, ini
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [groups, setGroups] = useState<Group[]>([]);
   const [options, setOptions] = useState<Option[]>([]);
-  const [selectedOptions, setSelectedOptions] = useState<Record<string, string[]>>({});
+  const [selectedOptions, setSelectedOptions] = useState<Record<string, Record<string, number>>>({});
   const [loadingOptions, setLoadingOptions] = useState(false);
   const [note, setNote] = useState('');
 
@@ -87,40 +87,116 @@ export function ProductDetailDialog({ product, isOpen, onClose, onAddToCart, ini
 
   const images = getProductImageUrls(product);
 
-  const toggleOption = (groupId: string, optionId: string, max: number) => {
+  const getGroupTotalSelected = (groupId: string): number => {
+    const groupSelections = selectedOptions[groupId] || {};
+    return Object.values(groupSelections).reduce((sum, qty) => sum + (qty || 0), 0);
+  };
+
+  const getOptionQuantity = (groupId: string, optionId: string): number => {
+    return selectedOptions[groupId]?.[optionId] || 0;
+  };
+
+  const handleRadioSelect = (groupId: string, optionId: string, isRequired: boolean) => {
     setSelectedOptions(prev => {
-      const current = prev[groupId] || [];
-      if (current.includes(optionId)) {
-        return { ...prev, [groupId]: current.filter(id => id !== optionId) };
+      const currentQty = prev[groupId]?.[optionId] || 0;
+      if (!isRequired && currentQty > 0) {
+        return { ...prev, [groupId]: {} };
       }
-      if (current.length < max) {
-        return { ...prev, [groupId]: [...current, optionId] };
-      }
-      if (max === 1) {
-        return { ...prev, [groupId]: [optionId] };
-      }
-      return prev;
+      return { ...prev, [groupId]: { [optionId]: 1 } };
     });
+  };
+
+  const handleIncrementOption = (groupId: string, optionId: string, maxGroupOptions: number) => {
+    const currentTotal = getGroupTotalSelected(groupId);
+    if (currentTotal >= maxGroupOptions) return;
+
+    setSelectedOptions(prev => {
+      const groupSelections = { ...(prev[groupId] || {}) };
+      const currentQty = groupSelections[optionId] || 0;
+      groupSelections[optionId] = currentQty + 1;
+      return {
+        ...prev,
+        [groupId]: groupSelections
+      };
+    });
+  };
+
+  const handleDecrementOption = (groupId: string, optionId: string) => {
+    setSelectedOptions(prev => {
+      const groupSelections = { ...(prev[groupId] || {}) };
+      const currentQty = groupSelections[optionId] || 0;
+      if (currentQty <= 1) {
+        delete groupSelections[optionId];
+      } else {
+        groupSelections[optionId] = currentQty - 1;
+      }
+      return {
+        ...prev,
+        [groupId]: groupSelections
+      };
+    });
+  };
+
+  const isGroupSatisfied = (group: Group): boolean => {
+    const total = getGroupTotalSelected(group.id);
+    const minRequired = group.required ? Math.max(1, group.min_options || 1) : (group.min_options || 0);
+    return total >= minRequired;
+  };
+
+  const getFirstUnsatisfiedGroup = (): Group | undefined => {
+    return groups.find(g => !isGroupSatisfied(g));
   };
 
   const calculateTotalPrice = () => {
     let total = Number(product.price || 0);
-    Object.values(selectedOptions).flat().forEach(optId => {
-      const opt = options.find(o => o.id === optId);
-      if (opt) total += Number(opt.price || 0);
-    });
+    for (const group of groups) {
+      const groupSelections = selectedOptions[group.id] || {};
+      for (const [optId, qty] of Object.entries(groupSelections)) {
+        if (qty > 0) {
+          const opt = options.find(o => o.id === optId);
+          if (opt) total += (Number(opt.price) || 0) * qty;
+        }
+      }
+    }
     return total * quantity;
   };
 
   const handleAdd = () => {
-    // Check required groups
-    const missing = groups.find(g => g.required && (selectedOptions[g.id]?.length || 0) < g.min_options);
+    const missing = getFirstUnsatisfiedGroup();
     if (missing) {
-      toast.error(`Escolha pelo menãos ${missing.min_options} em ${missing.name}`);
+      const minRequired = missing.required ? Math.max(1, missing.min_options || 1) : missing.min_options;
+      toast.error(`Escolha pelo menos ${minRequired} opção em "${missing.name}"`);
       return;
     }
 
-    const flatOptions = Object.values(selectedOptions).flat().map(id => options.find(o => o.id === id)).filter(Boolean);
+    const flatOptions: Array<{
+      id: string;
+      group_id: string;
+      group_name: string;
+      name: string;
+      price: number;
+      quantity: number;
+    }> = [];
+
+    for (const group of groups) {
+      const groupSelections = selectedOptions[group.id] || {};
+      for (const [optId, qty] of Object.entries(groupSelections)) {
+        if (qty > 0) {
+          const opt = options.find(o => o.id === optId);
+          if (opt) {
+            flatOptions.push({
+              id: opt.id,
+              group_id: group.id,
+              group_name: group.name,
+              name: opt.name,
+              price: Number(opt.price) || 0,
+              quantity: qty,
+            });
+          }
+        }
+      }
+    }
+
     onAddToCart(product, quantity, flatOptions, note);
     onClose();
   };
@@ -190,42 +266,138 @@ export function ProductDetailDialog({ product, isOpen, onClose, onAddToCart, ini
 
             <div className="mt-6 flex flex-col gap-6">
               {/* Option Groups */}
-              {groups.map((group) => (
-                <div key={group.id} className="flex flex-col">
-                  <div className="bg-secondary/40 -mx-6 px-6 py-3 mb-2 border-y border-border/40">
-                    <h3 className="text-sm font-bold text-foreground tracking-tight">{group.name}</h3>
-                    <p className="text-[11px] font-medium text-muted-foreground">
-                      {group.max_options === 1 ? 'Escolha 1 opção' : `Escolha até ${group.max_options} opções`}
-                    </p>
-                  </div>
+              {groups.map((group) => {
+                const totalInGroup = getGroupTotalSelected(group.id);
+                const isSingleChoice = (group.max_options || 1) === 1;
+                const isSatisfied = isGroupSatisfied(group);
+                const isReq = group.required || (group.min_options > 0);
+                const groupOptions = options.filter(o => o.group_id === group.id);
 
-                  <div className="divide-y divide-border/40">
-                    {options.filter(o => o.group_id === group.id).map((opt) => {
-                      const active = selectedOptions[group.id]?.includes(opt.id);
-                      return (
-                        <div 
-                          key={opt.id} 
-                          onClick={() => toggleOption(group.id, opt.id, group.max_options)}
-                          className="flex items-center justify-between py-4 cursor-pointer active:opacity-70 transition-all"
-                        >
-                          <div className="flex flex-col pr-4">
-                            <span className={cn("text-sm font-semibold", active ? "text-primary" : "text-foreground")}>{opt.name}</span>
-                            {opt.price > 0 && (
-                              <span className="text-xs text-muted-foreground">+ {opt.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                return (
+                  <div key={group.id} className="flex flex-col">
+                    <div className="bg-secondary/40 -mx-6 px-6 py-3 mb-2 border-y border-border/40 flex items-center justify-between">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-sm font-bold text-foreground tracking-tight">{group.name}</h3>
+                          {isReq ? (
+                            <span className={cn(
+                              "text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider",
+                              isSatisfied ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "bg-primary/10 text-primary"
+                            )}>
+                              {isSatisfied ? '✓ Concluído' : 'Obrigatório'}
+                            </span>
+                          ) : (
+                            <span className="text-[10px] font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                              Opcional
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[11px] font-medium text-muted-foreground mt-0.5">
+                          {isSingleChoice ? 'Escolha 1 opção' : `Escolha até ${group.max_options} opções`}
+                        </p>
+                      </div>
+
+                      <div className="text-right">
+                        <span className={cn(
+                          "text-xs font-bold px-2 py-1 rounded-md",
+                          totalInGroup > 0 ? "bg-primary/10 text-primary" : "text-muted-foreground bg-secondary/50"
+                        )}>
+                          {totalInGroup}/{group.max_options}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="divide-y divide-border/40">
+                      {groupOptions.map((opt) => {
+                        const optQty = getOptionQuantity(group.id, opt.id);
+                        const isSelected = optQty > 0;
+                        const canIncrement = totalInGroup < group.max_options;
+
+                        return (
+                          <div 
+                            key={opt.id} 
+                            onClick={() => {
+                              if (isSingleChoice) {
+                                handleRadioSelect(group.id, opt.id, isReq);
+                              }
+                            }}
+                            className={cn(
+                              "flex items-center justify-between py-3.5 transition-all select-none",
+                              isSingleChoice && "cursor-pointer active:opacity-70"
+                            )}
+                          >
+                            <div className="flex flex-col pr-4 min-w-0 flex-1">
+                              <span className={cn(
+                                "text-sm font-medium transition-colors",
+                                isSelected ? "text-foreground font-semibold" : "text-foreground/90"
+                              )}>
+                                {opt.name}
+                              </span>
+                              {Number(opt.price) > 0 ? (
+                                <span className="text-xs font-medium text-primary mt-0.5">
+                                  + {Number(opt.price).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                                </span>
+                              ) : (
+                                <span className="text-xs text-muted-foreground mt-0.5">Grátis</span>
+                              )}
+                            </div>
+
+                            {/* Selection Controls */}
+                            {isSingleChoice ? (
+                              <div className={cn(
+                                "flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-all",
+                                isSelected ? "border-primary bg-primary" : "border-muted-foreground/30 bg-transparent"
+                              )}>
+                                {isSelected && (
+                                  <div className="h-2 w-2 rounded-full bg-primary-foreground" />
+                                )}
+                              </div>
+                            ) : (
+                              <div 
+                                className="flex items-center gap-2 bg-secondary/40 rounded-xl p-1 shrink-0 border border-border/40"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <button
+                                  type="button"
+                                  onClick={() => handleDecrementOption(group.id, opt.id)}
+                                  disabled={optQty <= 0}
+                                  className={cn(
+                                    "flex h-7 w-7 items-center justify-center rounded-lg bg-background shadow-xs text-foreground transition-all active:scale-90",
+                                    optQty <= 0 && "opacity-30 cursor-not-allowed active:scale-100"
+                                  )}
+                                  aria-label="Diminuir"
+                                >
+                                  <Minus className="h-3.5 w-3.5" />
+                                </button>
+                                
+                                <span className={cn(
+                                  "w-5 text-center text-xs font-bold",
+                                  optQty > 0 ? "text-primary" : "text-muted-foreground"
+                                )}>
+                                  {optQty}
+                                </span>
+
+                                <button
+                                  type="button"
+                                  onClick={() => handleIncrementOption(group.id, opt.id, group.max_options)}
+                                  disabled={!canIncrement}
+                                  className={cn(
+                                    "flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-xs transition-all active:scale-90",
+                                    !canIncrement && "opacity-30 cursor-not-allowed bg-muted text-muted-foreground active:scale-100"
+                                  )}
+                                  aria-label="Aumentar"
+                                >
+                                  <Plus className="h-3.5 w-3.5" />
+                                </button>
+                              </div>
                             )}
                           </div>
-                          <div className={cn(
-                            "flex h-4 w-4 items-center justify-center rounded-full border-2 transition-all",
-                            active ? "bg-primary border-primary text-primary-foreground" : "border-muted-foreground/30 text-muted-foreground/30"
-                          )}>
-                            {active ? <Minus className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
-                          </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
 
               {/* Observation Section */}
               <div className="flex flex-col gap-3 pt-4 border-t border-border/40">

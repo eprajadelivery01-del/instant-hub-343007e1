@@ -338,6 +338,20 @@ export default function OrderDetail() {
                     <span className="font-medium text-muted-foreground">{item.quantity}x</span>
                     <div>
                       <p className="font-medium text-foreground">{item.product_name || (item as any).products?.name}</p>
+                      {Array.isArray(item.options) && item.options.length > 0 && (
+                        <div className="mt-1 space-y-0.5">
+                          {item.options.map((opt: any, optIdx: number) => {
+                            const optQty = Number(opt.quantity) > 0 ? Number(opt.quantity) : 1;
+                            const optPrice = Number(opt.price) || 0;
+                            return (
+                              <p key={optIdx} className="text-xs text-muted-foreground">
+                                + {optQty > 1 ? `${optQty}x ` : ''}{opt.name}
+                                {optPrice > 0 ? ` (+ R$ ${(optPrice * optQty).toFixed(2).replace('.', ',')})` : ''}
+                              </p>
+                            );
+                          })}
+                        </div>
+                      )}
                       {item.notes && <p className="text-xs text-muted-foreground mt-0.5">{item.notes}</p>}
                     </div>
                   </div>
