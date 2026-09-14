@@ -1,10 +1,11 @@
 import { useNavigate } from 'react-router-dom';
 import { Company, Product } from '@/types/database';
-import { ArrowRight, Clock3, ShoppingBag, Star, Store as StoreIcon } from 'lucide-react';
+import { ArrowRight, Clock3, MessageCircle, ShoppingBag, Star, Store as StoreIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MediaImage } from '@/components/shared/MediaImage';
 import { getCompanyBannerImage, getCompanyLogoImage, getPrimaryProductImage } from '@/lib/media';
 import { getPrepTimeLabel, getStoreStatusLabel, isStoreOpenNow } from '@/lib/storeHours';
+import { buildWhatsAppLink, getWhatsAppOnlyStore } from '@/lib/whatsappStores';
 
 interface StoreTabCardProps {
   company: Company & { products: Product[]; rating?: number | null; cover_url?: string | null; category?: string | null; prep_time_min?: number | null; prep_time_max?: number | null };
@@ -20,6 +21,10 @@ export function StoreTabCard({ company }: StoreTabCardProps) {
   const isOpen = isStoreOpenNow(company);
   const statusLabel = getStoreStatusLabel(company);
   const prepLabel = getPrepTimeLabel(company);
+  const whatsappStore = getWhatsAppOnlyStore(company);
+  const whatsappDisplayNumber = whatsappStore
+    ? whatsappStore.displayPhone.replace(/^\+55\s*/, '')
+    : null;
 
   return (
     <button
@@ -141,6 +146,41 @@ export function StoreTabCard({ company }: StoreTabCardProps) {
                 </p>
               </div>
             ))
+          ) : whatsappStore ? (
+            <div className="premium-chip col-span-3 flex min-h-[112px] flex-col items-center justify-center gap-2 rounded-[24px] text-center">
+              <p className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
+                <MessageCircle className="h-4 w-4 text-[#25D366]" />
+                Pedir pelo WhatsApp
+              </p>
+              <p className="text-sm font-bold text-foreground">{whatsappDisplayNumber}</p>
+              <span
+                role="link"
+                tabIndex={0}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  window.open(
+                    buildWhatsAppLink(whatsappStore.phone, whatsappStore.defaultMessage),
+                    '_blank',
+                    'noopener,noreferrer'
+                  );
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    window.open(
+                      buildWhatsAppLink(whatsappStore.phone, whatsappStore.defaultMessage),
+                      '_blank',
+                      'noopener,noreferrer'
+                    );
+                  }
+                }}
+                className="mt-1 inline-flex cursor-pointer items-center gap-2 rounded-full bg-[#25D366] px-4 py-2 text-xs font-bold text-white shadow-sm transition-colors hover:bg-[#1fb857]"
+              >
+                <MessageCircle className="h-4 w-4" />
+                Chamar no WhatsApp
+              </span>
+            </div>
           ) : (
             <div className="premium-chip col-span-3 flex min-h-[112px] flex-col items-center justify-center rounded-[24px] text-center text-muted-foreground">
               <ShoppingBag className="mb-2 h-8 w-8 opacity-50" />
