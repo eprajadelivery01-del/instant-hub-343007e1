@@ -60,8 +60,13 @@ export default function Orders() {
           .limit(20);
 
         if (error) throw error;
-        console.log(`[Orders] Pedidos encontrados para ${user.id}:`, data?.length || 0);
         setOrders(data || []);
+        // Semente APENAS para a primeira pintura da tela de detalhes.
+        // Não é o pedido completo: endereço/itens/entrega continuam em
+        // carregamento até a consulta real terminar.
+        (data || []).forEach((o) => {
+          queryClient.setQueryData(['order-seed', o.id], o);
+        });
       } catch (error) {
         console.error("[Orders] Erro ao buscar pedidos:", error);
       } finally {
