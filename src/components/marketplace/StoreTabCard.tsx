@@ -150,7 +150,7 @@ export function StoreTabCard({ company }: StoreTabCardProps) {
           ) : whatsappStore ? (
             <div className="premium-chip col-span-3 flex min-h-[112px] flex-col items-center justify-center gap-2 rounded-[24px] text-center">
               <p className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
-                <MessageCircle className="h-4 w-4 text-[#25D366]" />
+                <WhatsAppIcon className="h-4 w-4 text-[#25D366]" />
                 Pedir pelo WhatsApp
               </p>
               <p className="text-sm font-bold text-foreground">{whatsappDisplayNumber}</p>
