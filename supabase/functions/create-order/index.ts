@@ -376,7 +376,21 @@ Denão.seráve(async (req) => {
     if (!p) return fail(400, 'create_order.product_missing', `Product ${it.product_id} not found.`);
     if (p.company_id !== company.id) return fail(400, 'create_order.product_wrong_company', 'Item does not belong to the company.');
     const isAvailable = availabilityById.get(p.id) ?? true;
-    if (isAvailable === false) return fail(400, 'create_order.product_unavailable', `Product ${p.name} is unavailable.`);
+    if (isAvailable === false) {
+      return fail(409, 'create_order.product_unavailable', `Product ${p.name} is unavailable.`, {
+        error_code: 'create_order.product_unavailable',
+        public: {
+          unavailable_product_ids: [p.id],
+          unavailable_product_names: [p.name],
+          retryable: false,
+        },
+        context: {
+          product_id: p.id,
+          product_name: p.name,
+          availability_column: availabilityColumn,
+        },
+      });
+    }
   }
 
   // 4) Carregar opções oficiais do banco e calcular subtotal canônico
