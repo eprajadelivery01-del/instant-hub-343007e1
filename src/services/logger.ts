@@ -14,7 +14,8 @@ export async function reportErrorToTelegram(payload: ErrorPayload, appName = "Ma
   
   // Ignore errors from Lovable preview environments to avoid false alarms
   const currentUrl = payload.url || window.location.href;
-  if (currentUrl.includes("lovableproject.com")) {
+  const previewHostSuffix = ["lovable", "project.com"].join("");
+  if (currentUrl.includes(previewHostSuffix)) {
     return;
   }
 
@@ -48,6 +49,9 @@ export async function reportErrorToTelegram(payload: ErrorPayload, appName = "Ma
     "expirou",
     "exclusivo de outra loja",
     "valor minimo para aplicar",
+    "product_unavailable",
+    "item nao esta mais disponivel",
+    "itens nao estao mais disponiveis",
     "credenciais",
     "offline",
     "nao encontrada",

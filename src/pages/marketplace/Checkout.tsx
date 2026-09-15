@@ -87,7 +87,7 @@ function mapServerError(msg: string, code?: string | null, details?: any): Mappe
 export default function Checkout() {
   const navigate = useNavigate();
   const { user, profile, isGuest, refreshProfile } = useAuth();
-  const { items, company, clearCart, appliedCoupon, discountAmount, subtotal } = useCart();
+  const { items, company, removeItem, clearCart, appliedCoupon, discountAmount, subtotal } = useCart();
   const { isLocked, acquireLock, releaseLock, generateIdempotencyKey, resetIdempotencyKey } = useOrderLock();
   
   const [selectedAddress, setSelectedAddress] = useState<string>(() => localStorage.getItem('@epraja_selected_address') || '');
@@ -386,6 +386,43 @@ export default function Checkout() {
       if (validItems.length === 0) {
         toast.error('Carrinho vazio ou itens inválidos.');
         setLoading(false);
+        return;
+      }
+
+      // A sacola persiste no aparelho e pode conter um produto que o lojista
+      // desativou depois. Confirma a disponibilidade atual antes de criar o
+      // pedido para não enviar repetidamente um item inválido à Edge Function.
+      const productIds = validItems.map((item) => item.product.id);
+      const { data: currentProducts, error: productsError } = await supabase
+        .from('products')
+        .select('id, active, is_active')
+        .in('id', productIds);
+
+      if (productsError) {
+        const err: any = new Error('Não foi possível atualizar sua sacola. Verifique sua conexão e tente novamente.');
+        err.retriable = true;
+        throw err;
+      }
+
+      const availableProductIds = new Set(
+        (currentProducts ?? [])
+          .filter((product: any) => product.active !== false && product.is_active !== false)
+          .map((product: any) => product.id),
+      );
+      const unavailableItems = validItems.filter((item) => !availableProductIds.has(item.product.id));
+
+      if (unavailableItems.length > 0) {
+        unavailableItems.forEach((item) => removeItem(item.id));
+        const unavailableNames = unavailableItems
+          .map((item) => item.product.name)
+          .filter(Boolean)
+          .join(', ');
+        toast.warning(
+          unavailableItems.length === 1
+            ? `${unavailableNames || 'Um item'} não está mais disponível e foi removido da sacola.`
+            : 'Alguns itens não estão mais disponíveis e foram removidos da sacola.',
+        );
+        setShowReviewModal(false);
         return;
       }
 
