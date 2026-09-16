@@ -290,6 +290,8 @@ export async function syncFcmTokenToDatabase(providedToken?: string) {
         deviceId: guestDeviceId,
         phone: savedPhone || null,
         platform: Capacitor.getPlatform(),
+        app: 'marketplace',
+        bundleId: 'br.com.epraja.appFma',
       });
     } catch (errReg) {
       console.warn('[FCM] Falha ao registrar token em device_tokens via send-push:', errReg);
@@ -313,6 +315,8 @@ export async function syncFcmTokenToDatabase(providedToken?: string) {
         customerId: customerId ?? null,
         phone: savedPhone || null,
         platform: Capacitor.getPlatform(),
+        app: 'marketplace',
+        bundleId: 'br.com.epraja.appFma',
       });
       console.log('[FCM] register_token (send-push):', reg);
       if (reg.stale) {

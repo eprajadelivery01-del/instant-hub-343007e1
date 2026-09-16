@@ -24,10 +24,16 @@ export async function callSendPush(body: Record<string, unknown>): Promise<SendP
     'apikey': SUPABASE_ANON_KEY,
   };
 
+  const payload = {
+    app: 'marketplace',
+    bundleId: 'br.com.epraja.appFma',
+    ...body,
+  };
+
   // 1. Tenta via Supabase Functions Client `send-push`
   try {
     const { data, error } = await supabase.functions.invoke('send-push', {
-      body,
+      body: payload,
       headers: authHeaders,
     });
 
