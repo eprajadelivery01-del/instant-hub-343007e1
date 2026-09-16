@@ -120,7 +120,8 @@ export default function StoreDetail() {
   const { data: storeData, isLoading: loading, isError: productsError, refetch: refetchStore, isFetching: refetchingStore } = useQuery({
     queryKey: ['store', id],
     enabled: !!id,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 30 * 1000,
+    refetchOnMount: 'always',
     refetchOnWindowFocus: false,
     retry: 1,
     initialData: () => {
@@ -307,27 +308,67 @@ export default function StoreDetail() {
   }, [products]);
 
   const categories = useMemo(() => {
-    const rawCategories = [...new Set(products.map((product) => product.category?.trim()).filter(Boolean))] as string[];
-    
-    // Suporte à ordenação manual do lojista
+    // 1. Obter as categorias reais existentes nos produtos visíveis (sem vazios, com trim)
+    const rawCategories: string[] = [];
+    const seen = new Set<string>();
+
+    products.forEach((product) => {
+      const cat = product.category?.trim();
+      if (cat && !seen.has(cat)) {
+        seen.add(cat);
+        rawCategories.push(cat);
+      }
+    });
+
+    if (rawCategories.length === 0) {
+      return products.length > 0 ? ['Destaques'] : [];
+    }
+
+    // 2. Ler company.category_order
     let customOrder: string[] = [];
     if (company?.category_order) {
       if (Array.isArray(company.category_order)) {
         customOrder = company.category_order;
       } else if (typeof company.category_order === 'string') {
-        try { customOrder = JSON.parse(company.category_order); } catch {}
+        try {
+          const parsed = JSON.parse(company.category_order);
+          if (Array.isArray(parsed)) customOrder = parsed;
+        } catch {}
       }
     }
 
+    // Helper de normalização para evitar mismatch de acentos, maiúsculas/minúsculas e espaços
+    const normalize = (str: string) =>
+      str
+        .trim()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase();
+
     let sortedCategories: string[];
     if (customOrder.length > 0) {
-      // 1. Categorias que estão na ordem manual e existem na loja
-      const ordered = customOrder.filter((cat) => rawCategories.includes(cat));
-      // 2. Categorias existentes na loja que não constam na ordem manual (novas) vão para o final
-      const remaining = rawCategories.filter((cat) => !customOrder.includes(cat));
+      const matchedFromRaw = new Set<string>();
+      const ordered: string[] = [];
+
+      // 3. Aplicar category_order mantendo o nome exato existente em rawCategories
+      customOrder.forEach((orderItem) => {
+        if (!orderItem || typeof orderItem !== 'string') return;
+        const normItem = normalize(orderItem);
+        const match =
+          rawCategories.find((rc) => rc === orderItem.trim()) ||
+          rawCategories.find((rc) => normalize(rc) === normItem);
+
+        if (match && !matchedFromRaw.has(match)) {
+          matchedFromRaw.add(match);
+          ordered.push(match);
+        }
+      });
+
+      // 4. Categorias existentes nos produtos que não constam na ordem manual (novas) vão para o final
+      const remaining = rawCategories.filter((rc) => !matchedFromRaw.has(rc));
       sortedCategories = [...ordered, ...remaining];
     } else {
-      // Fallback: comportamento original idêntico ao atual
+      // Fallback: ordem original
       sortedCategories = rawCategories;
     }
 
@@ -742,7 +783,11 @@ export default function StoreDetail() {
               ? (searchQuery 
                   ? featuredProductsList.filter(p => (p.name ?? '').toLowerCase().includes(searchQuery.toLowerCase()) || (p.description ?? '').toLowerCase().includes(searchQuery.toLowerCase()))
                   : featuredProductsList)
-              : filteredProducts.filter((product) => product.category === category);
+              : filteredProducts.filter((product) => {
+                  const pCat = product.category?.trim();
+                  if (!pCat) return false;
+                  return pCat === category || pCat.toLowerCase() === category.toLowerCase();
+                });
             if (categoryProducts.length === 0 && searchQuery) return null;
 
             return (
