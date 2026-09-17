@@ -42,16 +42,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     }
     metaStatusBar.setAttribute('content', theme === 'dark' ? 'black-translucent' : 'default');
 
-    // Dynamic Capacitor Native StatusBar styling for Android & iOS
+    // Dynamic Capacitor Native StatusBar styling: sempre fundo nativo oficial #0D0D0D com ícones claros
     if (Capacitor.isNativePlatform()) {
       try {
-        if (theme === 'dark') {
-          StatusBar.setStyle({ style: Style.Dark }).catch(() => {});
-          StatusBar.setBackgroundColor({ color: '#0D0D0D' }).catch(() => {});
-        } else {
-          StatusBar.setStyle({ style: Style.Light }).catch(() => {});
-          StatusBar.setBackgroundColor({ color: '#FFFFFF' }).catch(() => {});
-        }
+        StatusBar.setStyle({ style: Style.Dark }).catch(() => {});
+        StatusBar.setBackgroundColor({ color: '#0D0D0D' }).catch(() => {});
       } catch (e) {
         console.error('Error setting native status bar theme:', e);
       }
