@@ -461,11 +461,6 @@ export default function Home() {
                     : 'As melhores da cidade'}
               </p>
             </div>
-            <span className="rounded-full bg-secondary px-3 py-1 text-xs font-medium text-muted-foreground">
-              {filtered.length > 0
-                ? `${filtered.length} ${filtered.length === 1 ? 'loja' : 'lojas'}${filteredProducts.length > 0 ? ` • ${filteredProducts.length} prod.` : ''}`
-                : `${filteredProducts.length} ${filteredProducts.length === 1 ? 'produto' : 'produtos'}`}
-            </span>
           </div>
 
           {errorMsg ? (
@@ -487,21 +482,31 @@ export default function Home() {
             </div>
           ) : loading ? (
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {[1, 2, 3, 4, 5, 6].map((item) => (
-                <div key={item} className="premium-card rounded-[32px] p-4">
-                  <Skeleton className="h-52 rounded-[28px]" />
-                  <div className="mt-4 grid grid-cols-3 gap-3">
-                    <Skeleton className="h-24 rounded-[22px]" />
-                    <Skeleton className="h-24 rounded-[22px]" />
-                    <Skeleton className="h-24 rounded-[22px]" />
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <div
+                  key={i}
+                  className="rounded-[32px] border border-border/40 bg-card p-6 shadow-sm"
+                >
+                  <div className="flex items-center gap-4">
+                    <Skeleton className="h-16 w-16 rounded-[24px]" />
+                    <div className="flex-1 space-y-2">
+                      <Skeleton className="h-5 w-3/4 rounded-lg" />
+                      <Skeleton className="h-4 w-1/2 rounded-lg" />
+                    </div>
+                  </div>
+                  <div className="mt-6 flex gap-2">
+                    <Skeleton className="h-8 w-20 rounded-full" />
+                    <Skeleton className="h-8 w-24 rounded-full" />
                   </div>
                 </div>
               ))}
             </div>
           ) : filtered.length === 0 && filteredProducts.length === 0 ? (
             <div className="premium-card flex flex-col items-center rounded-[32px] px-6 py-14 text-center">
-              <Utensils className="h-12 w-12 text-muted-foreground/50" />
-              <h3 className="mt-4 text-lg font-semibold text-foreground">Nenhuma loja ou produto encontrado</h3>
+              <Store className="h-12 w-12 text-muted-foreground/40" />
+              <h3 className="mt-4 text-lg font-semibold text-foreground">
+                Nenhum resultado encontrado
+              </h3>
               <p className="mt-1.5 max-w-sm text-sm text-muted-foreground">Ajuste a busca ou troque a categoria para ver mais opções.</p>
             </div>
           ) : (
@@ -512,7 +517,7 @@ export default function Home() {
                   {(search || activeCategory) && filteredProducts.length > 0 && (
                     <div className="flex items-center justify-between px-1">
                       <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground">
-                        Lojas ({filtered.length})
+                        Lojas
                       </h3>
                     </div>
                   )}
@@ -533,7 +538,7 @@ export default function Home() {
                   {(search || activeCategory) && filtered.length > 0 && (
                     <div className="flex items-center justify-between px-1 pt-2">
                       <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground">
-                        Produtos ({filteredProducts.length})
+                        Produtos
                       </h3>
                     </div>
                   )}
