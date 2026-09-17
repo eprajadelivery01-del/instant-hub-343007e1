@@ -235,19 +235,15 @@ export function getPrepTimeLabel(company: {
   prep_time?: number | null;
   prep_time_min?: number | null;
   prep_time_max?: number | null;
-}): string {
-  if (company.prep_time_min != null && company.prep_time_max != null) {
-    return `${company.prep_time_min}-${company.prep_time_max} min`;
+}): string | null {
+  if (company.prep_time_min != null && company.prep_time_max != null && company.prep_time_max > 0) {
+    return `${company.prep_time_min}–${company.prep_time_max} min`;
   }
   if (company.prep_time != null && Number(company.prep_time) > 0) {
     const val = Math.round(Number(company.prep_time));
-    const min = Math.max(5, val - 5);
-    const max = val + 10;
-    return `${min}-${max} min`;
+    return `${val} min`;
   }
-  const min = company.prep_time_min ?? 25;
-  const max = company.prep_time_max ?? 45;
-  return `${min}-${max} min`;
+  return null;
 }
 
 export function sortStoresByOpenStatus<T extends StoreStatusInput>(companies: T[] | null | undefined): T[] {

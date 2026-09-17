@@ -2,6 +2,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "
 import { Company } from "@/types/database";
 import { Info, Clock, MapPin, Phone, Star, Store as StoreIcon, Calendar, CheckCircle2, XCircle } from "lucide-react";
 import { parseBusinessHours, getPrepTimeLabel, getStoreStatusLabel, isStoreOpenNow, WeekDay, WEEK_DAYS } from "@/lib/storeHours";
+import { DeliveryEstimateResult } from "@/services/deliveryEstimate";
 import { MediaImage } from "@/components/shared/MediaImage";
 import { getCompanyLogoImage } from "@/lib/media";
 import { cn } from "@/lib/utils";
@@ -10,6 +11,7 @@ interface StoreInfoSheetProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   company: Company | null;
+  estimate?: DeliveryEstimateResult | null;
 }
 
 const WEEKDAY_FULL_NAMES: Record<WeekDay, string> = {
@@ -22,7 +24,7 @@ const WEEKDAY_FULL_NAMES: Record<WeekDay, string> = {
   Sab: "Sábado",
 };
 
-export function StoreInfoSheet({ isOpen, onOpenChange, company }: StoreInfoSheetProps) {
+export function StoreInfoSheet({ isOpen, onOpenChange, company, estimate }: StoreInfoSheetProps) {
   if (!company) return null;
 
   const companyLogo = getCompanyLogoImage(company);
@@ -113,7 +115,7 @@ export function StoreInfoSheet({ isOpen, onOpenChange, company }: StoreInfoSheet
                 Tempo de Preparo
               </div>
               <p className="text-base font-black text-foreground">
-                {prepTimeLabel}
+                {prepTimeLabel || "Não informado"}
               </p>
               <p className="text-[10px] text-muted-foreground">
                 Média de produção
@@ -136,6 +138,21 @@ export function StoreInfoSheet({ isOpen, onOpenChange, company }: StoreInfoSheet
                 Base por região
               </p>
             </div>
+
+            {estimate && (
+              <div className="col-span-2 rounded-2xl border border-border/60 bg-muted/30 p-3.5 space-y-1">
+                <div className="flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider text-muted-foreground">
+                  <Clock className="h-3.5 w-3.5 text-primary" />
+                  Estimativa de Entrega
+                </div>
+                <p className="text-base font-black text-foreground">
+                  {estimate.formatted}
+                </p>
+                <p className="text-[10px] text-muted-foreground">
+                  Preparo da loja + trajeto estimado até seu endereço
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Seção Endereço e Contato */}

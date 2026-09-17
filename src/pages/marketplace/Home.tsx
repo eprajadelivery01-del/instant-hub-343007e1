@@ -6,12 +6,13 @@ import { Company, Product } from '@/types/database';
 import { useAddress } from '@/contexts/AddressContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
-import { getPrepTimeLabel, isStoreOpenNow, sortStoresByOpenStatus } from '@/lib/storeHours';
+import { isStoreOpenNow, sortStoresByOpenStatus } from '@/lib/storeHours';
 import { rankStores } from '@/lib/storeRanking';
 import MarketplaceLayout from '@/components/marketplace/MarketplaceLayout';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { StoreTabCard } from '@/components/marketplace/StoreTabCard';
+import { useStoreDeliveryEstimates } from '@/services/deliveryEstimate';
 import { MarketplaceMenu } from '@/components/marketplace/MarketplaceMenu';
 import { useStoresOpenStatus } from '@/hooks/useStoreOpenStatus';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -47,7 +48,7 @@ type MarketplaceCompany = Company & {
 };
 
 const COMPANY_LIST_COLUMNS =
-  'id, name, description, category, rating, is_open, active, is_active, delivery_fee, show_in_marketplace, city, state, banner_url, cover_url, logo_url, business_hours, prep_time, prep_time_min, prep_time_max, created_at, category_order';
+  'id, name, description, category, rating, is_open, active, is_active, delivery_fee, show_in_marketplace, city, state, banner_url, cover_url, logo_url, business_hours, prep_time, prep_time_min, prep_time_max, created_at, category_order, latitude, longitude, address';
 
 import { NotificationBanner } from '@/components/shared/NotificationBanner';
 import { ClientNotificationsPopover } from '@/components/marketplace/ClientNotificationsPopover';
@@ -212,6 +213,7 @@ export default function Home() {
 
   // Fonte da verdade do status: horário cadastrado pelo lojista, reavaliado a cada minuto, SEMPRE com abertas no topo!
   const companiesWithStatus = useStoresOpenStatus(companies);
+  const deliveryEstimates = useStoreDeliveryEstimates(companiesWithStatus, selectedAddress);
 
   const filtered = useMemo(() => {
     return companiesWithStatus.filter((company) => {
@@ -414,7 +416,9 @@ export default function Home() {
                     <Star className="h-3 w-3 fill-current" />
                     <span>{company.rating.toFixed(1)}</span>
                   </div>
-                  <span className="text-xs text-muted-foreground">{getPrepTimeLabel(company as any)}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {deliveryEstimates.get(company.id)?.formatted || 'Calculando prazo...'}
+                  </span>
                 </div>
               </button>
             ))}
@@ -516,7 +520,11 @@ export default function Home() {
                   )}
                   <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
                     {filtered.map((company) => (
-                      <StoreTabCard key={company.id} company={company} />
+                      <StoreTabCard
+                        key={company.id}
+                        company={company}
+                        estimate={deliveryEstimates.get(company.id)}
+                      />
                     ))}
                   </div>
                 </div>

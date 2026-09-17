@@ -8,7 +8,9 @@ import MarketplaceLayout from '@/components/marketplace/MarketplaceLayout';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Minus, Plus, Star, Clock, Store as StoreIcon, Share2, Utensils, Search, Info, Ticket, AlertCircle, Flame, RefreshCw, MessageCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { getPrepTimeLabel, getStoreStatusLabel } from '@/lib/storeHours';
+import { getStoreStatusLabel } from '@/lib/storeHours';
+import { useAddress } from '@/contexts/AddressContext';
+import { useDeliveryEstimate } from '@/services/deliveryEstimate';
 import { useStoreOpenStatus } from '@/hooks/useStoreOpenStatus';
 import { ProductDetailDialog } from '@/components/marketplace/ProductDetailDialog';
 import { MediaImage } from '@/components/shared/MediaImage';
@@ -61,6 +63,7 @@ export default function StoreDetail() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const { user } = useAuth();
+  const { selectedAddress } = useAddress();
   const [dynamicDeliveryFee, setDynamicDeliveryFee] = useState<number | null>(null);
   const [isOutOfRange, setIsOutOfRange] = useState(false);
   const [calculatingFee, setCalculatingFee] = useState(false);
@@ -139,7 +142,7 @@ export default function StoreDetail() {
 
       // 1. Busca dados da empresa com produtos embutidos em consulta única de alta velocidade
       try {
-        const COMPANY_QUERY = 'id, name, description, category, rating, is_open, active, is_active, delivery_fee, delivery_regions_pricing, show_in_marketplace, city, state, address, phone, banner_url, cover_url, logo_url, business_hours, prep_time, prep_time_min, prep_time_max, created_at, user_id, category_order, products(id, company_id, name, description, price, image_url, category, active, sort_order, is_featured, created_at)';
+        const COMPANY_QUERY = 'id, name, description, category, rating, is_open, active, is_active, delivery_fee, delivery_regions_pricing, show_in_marketplace, city, state, address, phone, banner_url, cover_url, logo_url, business_hours, prep_time, prep_time_min, prep_time_max, created_at, user_id, category_order, latitude, longitude, products(id, company_id, name, description, price, image_url, category, active, sort_order, is_featured, created_at)';
 
         let { data, error } = await supabase
           .from('companies')
@@ -149,7 +152,7 @@ export default function StoreDetail() {
 
         // Fallback defensivo caso a coluna category_order ainda não tenha sido criada no banco
         if (error && (error.message?.includes('category_order') || error.code === '42703')) {
-          const BASE_QUERY = 'id, name, description, category, rating, is_open, active, is_active, delivery_fee, delivery_regions_pricing, show_in_marketplace, city, state, address, phone, banner_url, cover_url, logo_url, business_hours, prep_time, prep_time_min, prep_time_max, created_at, user_id, products(id, company_id, name, description, price, image_url, category, active, sort_order, is_featured, created_at)';
+          const BASE_QUERY = 'id, name, description, category, rating, is_open, active, is_active, delivery_fee, delivery_regions_pricing, show_in_marketplace, city, state, address, phone, banner_url, cover_url, logo_url, business_hours, prep_time, prep_time_min, prep_time_max, created_at, user_id, latitude, longitude, products(id, company_id, name, description, price, image_url, category, active, sort_order, is_featured, created_at)';
           const retryRes = await supabase
             .from('companies')
             .select(BASE_QUERY)
@@ -168,7 +171,7 @@ export default function StoreDetail() {
         } else {
           const fallbackCompany = await supabase
             .from('companies')
-            .select('id, name, description, category, rating, is_open, active, is_active, delivery_fee, show_in_marketplace, city, state, address, phone, banner_url, cover_url, logo_url, business_hours, prep_time, prep_time_min, prep_time_max, user_id, category_order')
+            .select('id, name, description, category, rating, is_open, active, is_active, delivery_fee, show_in_marketplace, city, state, address, phone, banner_url, cover_url, logo_url, business_hours, prep_time, prep_time_min, prep_time_max, user_id, category_order, latitude, longitude')
             .or(`id.eq.${id},user_id.eq.${id}`)
             .maybeSingle();
           companyData = fallbackCompany.data;
@@ -207,6 +210,7 @@ export default function StoreDetail() {
       ? ({ ...storeData.company, is_open: isOpenNow } as Company)
       : null;
   }, [storeData?.company, isOpenNow]);
+  const deliveryEstimate = useDeliveryEstimate(company, selectedAddress);
   const products: Product[] = useMemo(() => {
     return (storeData?.products as Product[]) ?? [];
   }, [storeData?.products]);
@@ -641,7 +645,7 @@ export default function StoreDetail() {
             </div>
             <div className="flex items-center gap-1.5 rounded-xl bg-secondary/60 px-3 py-1.5">
               <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-              <span className="text-xs font-bold text-foreground">{getPrepTimeLabel(company as any)}</span>
+              <span className="text-xs font-bold text-foreground">{deliveryEstimate.formatted}</span>
             </div>
             <button
               onClick={() => setIsStoreInfoOpen(true)}
@@ -903,6 +907,7 @@ export default function StoreDetail() {
         isOpen={isStoreInfoOpen}
         onOpenChange={setIsStoreInfoOpen}
         company={company}
+        estimate={deliveryEstimate}
       />
 
       <WhatsAppOrderDialog
