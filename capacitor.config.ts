@@ -29,8 +29,8 @@ const config: CapacitorConfig = {
       sound: "default",
     },
     StatusBar: {
-      backgroundColor: '#0D0D0D',
-      style: 'DARK',
+      backgroundColor: '#FFFFFF',
+      style: 'DEFAULT',
       overlaysWebView: false,
     },
     SplashScreen: {
