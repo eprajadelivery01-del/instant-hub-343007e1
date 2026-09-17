@@ -25,14 +25,14 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     root.classList.toggle('light', theme === 'light');
     localStorage.setItem('theme', theme);
 
-    // Dynamic HTML Meta Theme-Color
+    // Dynamic HTML Meta Theme-Color: Sempre #0D0D0D oficial
     let metaThemeColor = document.querySelector('meta[name="theme-color"]');
     if (!metaThemeColor) {
       metaThemeColor = document.createElement('meta');
       metaThemeColor.setAttribute('name', 'theme-color');
       document.head.appendChild(metaThemeColor);
     }
-    metaThemeColor.setAttribute('content', theme === 'dark' ? '#0D0D0D' : '#FFFFFF');
+    metaThemeColor.setAttribute('content', '#0D0D0D');
 
     let metaStatusBar = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');
     if (!metaStatusBar) {
@@ -40,7 +40,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       metaStatusBar.setAttribute('name', 'apple-mobile-web-app-status-bar-style');
       document.head.appendChild(metaStatusBar);
     }
-    metaStatusBar.setAttribute('content', theme === 'dark' ? 'black-translucent' : 'default');
+    metaStatusBar.setAttribute('content', 'black-translucent');
 
     // Dynamic Capacitor Native StatusBar styling: sempre fundo nativo oficial #0D0D0D com ícones claros
     if (Capacitor.isNativePlatform()) {

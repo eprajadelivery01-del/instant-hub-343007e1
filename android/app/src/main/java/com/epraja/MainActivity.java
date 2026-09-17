@@ -14,6 +14,12 @@ public class MainActivity extends BridgeActivity {
         createNotificationChannel();
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        setupStatusBar();
+    }
+
     private void setupStatusBar() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             getWindow().setStatusBarContrastEnforced(false);
