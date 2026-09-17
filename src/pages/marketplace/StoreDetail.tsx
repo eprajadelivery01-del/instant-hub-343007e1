@@ -8,9 +8,8 @@ import MarketplaceLayout from '@/components/marketplace/MarketplaceLayout';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Minus, Plus, Star, Clock, Store as StoreIcon, Share2, Utensils, Search, Info, Ticket, AlertCircle, Flame, RefreshCw, MessageCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { getStoreStatusLabel } from '@/lib/storeHours';
+import { getPrepTimeLabel, getStoreStatusLabel } from '@/lib/storeHours';
 import { useAddress } from '@/contexts/AddressContext';
-import { useDeliveryEstimate } from '@/services/deliveryEstimate';
 import { useStoreOpenStatus } from '@/hooks/useStoreOpenStatus';
 import { ProductDetailDialog } from '@/components/marketplace/ProductDetailDialog';
 import { MediaImage } from '@/components/shared/MediaImage';
@@ -210,7 +209,7 @@ export default function StoreDetail() {
       ? ({ ...storeData.company, is_open: isOpenNow } as Company)
       : null;
   }, [storeData?.company, isOpenNow]);
-  const deliveryEstimate = useDeliveryEstimate(company, selectedAddress);
+  const prepTimeLabel = getPrepTimeLabel(company);
   const products: Product[] = useMemo(() => {
     return (storeData?.products as Product[]) ?? [];
   }, [storeData?.products]);
@@ -645,7 +644,7 @@ export default function StoreDetail() {
             </div>
             <div className="flex items-center gap-1.5 rounded-xl bg-secondary/60 px-3 py-1.5">
               <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-              <span className="text-xs font-bold text-foreground">{deliveryEstimate.formatted}</span>
+              <span className="text-xs font-bold text-foreground">{prepTimeLabel}</span>
             </div>
             <button
               onClick={() => setIsStoreInfoOpen(true)}
@@ -666,22 +665,10 @@ export default function StoreDetail() {
                 Cupons disponíveis
               </button>
             )}
-            {isOutOfRange ? (
+            {isOutOfRange && (
               <div className="flex items-center gap-1.5 rounded-lg bg-destructive/10 px-2.5 py-1.5 text-[10px] font-bold text-destructive border border-destructive/20">
                 <AlertCircle className="h-3 w-3" />
                 Fora da área de entrega
-              </div>
-            ) : calculatingFee ? (
-              <div className="flex items-center gap-1.5 rounded-lg bg-secondary/60 px-2.5 py-1.5 text-[10px] font-bold text-muted-foreground animate-pulse">
-                <Clock className="h-3 w-3" />
-                Calculando entrega...
-              </div>
-            ) : (
-              <div className="flex items-center gap-1.5 rounded-lg bg-secondary/60 px-2.5 py-1.5 text-[10px] font-bold text-muted-foreground">
-                <StoreIcon className="h-3 w-3" />
-                {dynamicDeliveryFee !== null 
-                  ? `Entrega ${dynamicDeliveryFee.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}` 
-                  : (company.delivery_fee ? `Entrega ${company.delivery_fee.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}` : 'Calcular entrega')}
               </div>
             )}
           </div>
@@ -907,7 +894,6 @@ export default function StoreDetail() {
         isOpen={isStoreInfoOpen}
         onOpenChange={setIsStoreInfoOpen}
         company={company}
-        estimate={deliveryEstimate}
       />
 
       <WhatsAppOrderDialog

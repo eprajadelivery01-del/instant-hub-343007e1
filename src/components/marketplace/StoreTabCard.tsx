@@ -5,21 +5,17 @@ import { WhatsAppIcon } from '@/components/marketplace/WhatsAppOrderDialog';
 import { cn } from '@/lib/utils';
 import { MediaImage } from '@/components/shared/MediaImage';
 import { getCompanyBannerImage, getCompanyLogoImage, getPrimaryProductImage } from '@/lib/media';
-import { getStoreStatusLabel, isStoreOpenNow } from '@/lib/storeHours';
+import { getPrepTimeLabel, getStoreStatusLabel, isStoreOpenNow } from '@/lib/storeHours';
 import { buildWhatsAppLink, getWhatsAppOnlyStore } from '@/lib/whatsappStores';
-import { useAddress } from '@/contexts/AddressContext';
-import { useDeliveryEstimate, DeliveryEstimateResult } from '@/services/deliveryEstimate';
 
 interface StoreTabCardProps {
   company: Company & { products: Product[]; rating?: number | null; cover_url?: string | null; category?: string | null; prep_time_min?: number | null; prep_time_max?: number | null };
-  estimate?: DeliveryEstimateResult;
+  estimate?: any;
 }
 
-export function StoreTabCard({ company, estimate }: StoreTabCardProps) {
+export function StoreTabCard({ company }: StoreTabCardProps) {
   const navigate = useNavigate();
-  const { selectedAddress } = useAddress();
-  const fallbackEstimate = useDeliveryEstimate(company, selectedAddress);
-  const deliveryEstimate = estimate || fallbackEstimate;
+  const prepTimeLabel = getPrepTimeLabel(company);
   const bannerImage = getCompanyBannerImage(company);
   const logoImage = getCompanyLogoImage(company);
   const featuredProducts = (company.products || []).slice(0, 3);
@@ -93,46 +89,12 @@ export function StoreTabCard({ company, estimate }: StoreTabCardProps) {
       </div>
 
       <div className="flex flex-1 flex-col gap-5 p-5">
-        {(() => {
-          const companyAny = company as any;
-          let pricing: any[] = [];
-          try {
-            if (typeof companyAny.delivery_regions_pricing === 'string') {
-              pricing = JSON.parse(companyAny.delivery_regions_pricing);
-            } else if (Array.isArray(companyAny.delivery_regions_pricing)) {
-              pricing = companyAny.delivery_regions_pricing;
-            }
-          } catch (e) {}
-
-          const prices = pricing
-            .map((p: any) => Number(String(p.customer_price ?? '').replace(',', '.')))
-            .filter((p: number) => !isNaN(p) && p >= 0);
-
-          let feeText: string | null = null;
-          if (prices.length >= 2) {
-            const min = Math.min(...prices);
-            const max = Math.max(...prices);
-            feeText = min === max ? `Entrega R$ ${min.toFixed(2).replace('.', ',')}` : `R$ ${min.toFixed(2).replace('.', ',')} a ${max.toFixed(2).replace('.', ',')}`;
-          } else if (prices.length === 1) {
-            feeText = `Entrega R$ ${prices[0].toFixed(2).replace('.', ',')}`;
-          } else if (company.delivery_fee != null && Number(company.delivery_fee) > 0) {
-            feeText = `Entrega R$ ${Number(company.delivery_fee).toFixed(2).replace('.', ',')}`;
-          }
-
-          return (
-            <div className={cn("grid gap-2 text-xs text-muted-foreground", feeText ? "grid-cols-2" : "grid-cols-1")}>
-              <div className="premium-chip flex items-center justify-center gap-2 rounded-full px-3 py-2">
-                <Clock3 className="h-3.5 w-3.5 text-primary shrink-0" />
-                <span className="truncate font-semibold">{deliveryEstimate.formatted}</span>
-              </div>
-              {feeText && (
-                <div className="premium-chip flex items-center justify-center rounded-full px-3 py-2">
-                  <span className="truncate font-semibold">{feeText}</span>
-                </div>
-              )}
-            </div>
-          );
-        })()}
+        <div className="grid grid-cols-1 gap-2 text-xs text-muted-foreground">
+          <div className="premium-chip flex items-center justify-center gap-2 rounded-full px-3 py-2">
+            <Clock3 className="h-3.5 w-3.5 text-primary shrink-0" />
+            <span className="truncate font-semibold">{prepTimeLabel}</span>
+          </div>
+        </div>
 
         <div className="grid grid-cols-3 gap-3">
           {featuredProducts.length > 0 ? (

@@ -231,19 +231,28 @@ export function getStoreStatusLabel(company: StoreStatusInput): string {
   return isStoreOpenNow(company) ? "Aberta agora" : "Fechada";
 }
 
-export function getPrepTimeLabel(company: {
+export function getPrepTimeLabel(company?: {
   prep_time?: number | null;
   prep_time_min?: number | null;
   prep_time_max?: number | null;
-}): string | null {
-  if (company.prep_time_min != null && company.prep_time_max != null && company.prep_time_max > 0) {
-    return `${company.prep_time_min}–${company.prep_time_max} min`;
+} | null): string {
+  if (!company) return "25–45 min";
+
+  const hasMin = company.prep_time_min != null && !isNaN(Number(company.prep_time_min)) && Number(company.prep_time_min) > 0;
+  const hasMax = company.prep_time_max != null && !isNaN(Number(company.prep_time_max)) && Number(company.prep_time_max) > 0;
+
+  if (hasMin && hasMax) {
+    const min = Math.round(Number(company.prep_time_min));
+    const max = Math.round(Number(company.prep_time_max));
+    return min === max ? `${min} min` : `${min}–${max} min`;
   }
-  if (company.prep_time != null && Number(company.prep_time) > 0) {
+
+  if (company.prep_time != null && !isNaN(Number(company.prep_time)) && Number(company.prep_time) > 0) {
     const val = Math.round(Number(company.prep_time));
     return `${val} min`;
   }
-  return null;
+
+  return "25–45 min";
 }
 
 export function sortStoresByOpenStatus<T extends StoreStatusInput>(companies: T[] | null | undefined): T[] {

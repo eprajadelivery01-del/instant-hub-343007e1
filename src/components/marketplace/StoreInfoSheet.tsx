@@ -2,7 +2,6 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "
 import { Company } from "@/types/database";
 import { Info, Clock, MapPin, Phone, Star, Store as StoreIcon, Calendar, CheckCircle2, XCircle } from "lucide-react";
 import { parseBusinessHours, getPrepTimeLabel, getStoreStatusLabel, isStoreOpenNow, WeekDay, WEEK_DAYS } from "@/lib/storeHours";
-import { DeliveryEstimateResult } from "@/services/deliveryEstimate";
 import { MediaImage } from "@/components/shared/MediaImage";
 import { getCompanyLogoImage } from "@/lib/media";
 import { cn } from "@/lib/utils";
@@ -11,7 +10,7 @@ interface StoreInfoSheetProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   company: Company | null;
-  estimate?: DeliveryEstimateResult | null;
+  estimate?: any;
 }
 
 const WEEKDAY_FULL_NAMES: Record<WeekDay, string> = {
@@ -108,51 +107,17 @@ export function StoreInfoSheet({ isOpen, onOpenChange, company, estimate }: Stor
           </div>
 
           {/* Seção Tempo de Preparo & Entrega */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="rounded-2xl border border-border/60 bg-muted/30 p-3.5 space-y-1">
-              <div className="flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider text-muted-foreground">
-                <Clock className="h-3.5 w-3.5 text-primary" />
-                Tempo de Preparo
-              </div>
-              <p className="text-base font-black text-foreground">
-                {prepTimeLabel || "Não informado"}
-              </p>
-              <p className="text-[10px] text-muted-foreground">
-                Média de produção
-              </p>
+          <div className="rounded-2xl border border-border/60 bg-muted/30 p-4 space-y-1">
+            <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-primary">
+              <Clock className="h-4 w-4" />
+              Tempo Estimado de Entrega
             </div>
-
-            <div className="rounded-2xl border border-border/60 bg-muted/30 p-3.5 space-y-1">
-              <div className="flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider text-muted-foreground">
-                <StoreIcon className="h-3.5 w-3.5 text-primary" />
-                Taxa de Entrega
-              </div>
-              <p className="text-base font-black text-foreground">
-                {company.delivery_fee != null
-                  ? Number(company.delivery_fee) === 0
-                    ? "Grátis"
-                    : Number(company.delivery_fee).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
-                  : "A calcular"}
-              </p>
-              <p className="text-[10px] text-muted-foreground">
-                Base por região
-              </p>
-            </div>
-
-            {estimate && (
-              <div className="col-span-2 rounded-2xl border border-border/60 bg-muted/30 p-3.5 space-y-1">
-                <div className="flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider text-muted-foreground">
-                  <Clock className="h-3.5 w-3.5 text-primary" />
-                  Estimativa de Entrega
-                </div>
-                <p className="text-base font-black text-foreground">
-                  {estimate.formatted}
-                </p>
-                <p className="text-[10px] text-muted-foreground">
-                  Preparo da loja + trajeto estimado até seu endereço
-                </p>
-              </div>
-            )}
+            <p className="text-lg font-black text-foreground pt-1">
+              {prepTimeLabel}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Tempo médio de preparo e envio configurado pelo estabelecimento
+            </p>
           </div>
 
           {/* Seção Endereço e Contato */}

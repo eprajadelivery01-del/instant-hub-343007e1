@@ -6,13 +6,12 @@ import { Company, Product } from '@/types/database';
 import { useAddress } from '@/contexts/AddressContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
-import { isStoreOpenNow, sortStoresByOpenStatus } from '@/lib/storeHours';
+import { getPrepTimeLabel, isStoreOpenNow, sortStoresByOpenStatus } from '@/lib/storeHours';
 import { rankStores } from '@/lib/storeRanking';
 import MarketplaceLayout from '@/components/marketplace/MarketplaceLayout';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { StoreTabCard } from '@/components/marketplace/StoreTabCard';
-import { useStoreDeliveryEstimates } from '@/services/deliveryEstimate';
 import { MarketplaceMenu } from '@/components/marketplace/MarketplaceMenu';
 import { useStoresOpenStatus } from '@/hooks/useStoreOpenStatus';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -213,7 +212,6 @@ export default function Home() {
 
   // Fonte da verdade do status: horário cadastrado pelo lojista, reavaliado a cada minuto, SEMPRE com abertas no topo!
   const companiesWithStatus = useStoresOpenStatus(companies);
-  const deliveryEstimates = useStoreDeliveryEstimates(companiesWithStatus, selectedAddress);
 
   const filtered = useMemo(() => {
     return companiesWithStatus.filter((company) => {
@@ -417,7 +415,7 @@ export default function Home() {
                     <span>{company.rating.toFixed(1)}</span>
                   </div>
                   <span className="text-xs text-muted-foreground">
-                    {deliveryEstimates.get(company.id)?.formatted || 'Calculando prazo...'}
+                    {getPrepTimeLabel(company)}
                   </span>
                 </div>
               </button>
@@ -523,7 +521,6 @@ export default function Home() {
                       <StoreTabCard
                         key={company.id}
                         company={company}
-                        estimate={deliveryEstimates.get(company.id)}
                       />
                     ))}
                   </div>
