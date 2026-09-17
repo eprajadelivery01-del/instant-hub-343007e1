@@ -37,7 +37,14 @@ const categories = [
   { icon: Store, label: 'Shopping', value: 'shopping' },
 ];
 
-type MarketplaceCompany = Company & { products: Product[]; rating: number; isPremium?: boolean };
+import { matchesCategoryFilter } from '@/lib/categoryMatching';
+
+type MarketplaceCompany = Company & {
+  products: Product[];
+  allProducts?: Product[];
+  rating: number;
+  isPremium?: boolean;
+};
 
 const COMPANY_LIST_COLUMNS =
   'id, name, description, category, rating, is_open, active, is_active, delivery_fee, show_in_marketplace, city, state, banner_url, cover_url, logo_url, business_hours, prep_time, prep_time_min, prep_time_max, created_at, category_order';
@@ -143,14 +150,15 @@ export default function Home() {
               ? (company as any).products
               : (extraProductsMap[company.id] || []);
 
+            const validProds = (rawProds || []).filter((p: any) => p.active !== false);
+
             return {
               ...company,
               name: company.name || 'Loja Parceira',
               is_open: isStoreOpenNow(company as any),
               active: company.active === true || (company as any).is_active === true,
-              products: (rawProds || [])
-                .filter((p: any) => p.active !== false)
-                .slice(0, 4), // Preview de 4 produtos na Home
+              products: validProds.slice(0, 4), // Preview de 4 produtos na Home
+              allProducts: validProds,
               rating: ratingValue,
             };
           })
@@ -206,10 +214,23 @@ export default function Home() {
   const companiesWithStatus = useStoresOpenStatus(companies);
 
   const filtered = useMemo(() => {
-    return companiesWithStatus.filter((company) =>
-      company.name.toLowerCase().includes(search.toLowerCase()) &&
-      (activeCategory === '' || (company.description?.toLowerCase().includes(activeCategory.toLowerCase())) || (company.category?.toLowerCase().includes(activeCategory.toLowerCase())))
-    );
+    return companiesWithStatus.filter((company) => {
+      const matchSearch = !search || (
+        company.name.toLowerCase().includes(search.toLowerCase()) ||
+        (company.description && company.description.toLowerCase().includes(search.toLowerCase())) ||
+        (company.category && company.category.toLowerCase().includes(search.toLowerCase())) ||
+        matchesCategoryFilter(search, company.category) ||
+        matchesCategoryFilter(search, company.name)
+      );
+
+      const matchCategory = !activeCategory || (
+        matchesCategoryFilter(activeCategory, company.category) ||
+        matchesCategoryFilter(activeCategory, company.description) ||
+        matchesCategoryFilter(activeCategory, company.name)
+      );
+
+      return matchSearch && matchCategory;
+    });
   }, [companiesWithStatus, search, activeCategory]);
 
   const filteredProducts = useMemo(() => {
@@ -217,7 +238,8 @@ export default function Home() {
     
     const allProducts: (Product & { company: MarketplaceCompany })[] = [];
     companiesWithStatus.forEach(c => {
-      (c.products || []).forEach(p => {
+      const prods = (c as any).allProducts || c.products || [];
+      prods.forEach((p: Product) => {
         if (p.active !== false && p.is_active !== false) {
           allProducts.push({ ...p, company: c });
         }
@@ -228,12 +250,18 @@ export default function Home() {
       const matchSearch = search ? (
         (p.name && p.name.toLowerCase().includes(search.toLowerCase())) || 
         (p.description && p.description.toLowerCase().includes(search.toLowerCase())) || 
-        (p.company.name && p.company.name.toLowerCase().includes(search.toLowerCase()))
+        (p.company.name && p.company.name.toLowerCase().includes(search.toLowerCase())) ||
+        matchesCategoryFilter(search, p.category) ||
+        matchesCategoryFilter(search, p.company.category)
       ) : true;
+
       const matchCategory = activeCategory ? (
-        (p.category && p.category.toLowerCase().includes(activeCategory.toLowerCase())) || 
-        (p.company.category && p.company.category.toLowerCase().includes(activeCategory.toLowerCase()))
+        matchesCategoryFilter(activeCategory, p.category) ||
+        matchesCategoryFilter(activeCategory, p.name) ||
+        matchesCategoryFilter(activeCategory, p.company.category) ||
+        matchesCategoryFilter(activeCategory, p.company.name)
       ) : true;
+
       return matchSearch && matchCategory;
     });
   }, [companiesWithStatus, search, activeCategory]);
@@ -241,7 +269,11 @@ export default function Home() {
   const featuredCompanies = useMemo(() => 
     companiesWithStatus.filter((company) => 
       company.isPremium && 
-      (activeCategory === '' || (company.description?.toLowerCase().includes(activeCategory.toLowerCase())) || (company.category?.toLowerCase().includes(activeCategory.toLowerCase())))
+      (activeCategory === '' || 
+        matchesCategoryFilter(activeCategory, company.category) || 
+        matchesCategoryFilter(activeCategory, company.description) || 
+        matchesCategoryFilter(activeCategory, company.name)
+      )
     ).slice(0, 5), 
   [companiesWithStatus, activeCategory]);
 
@@ -413,14 +445,24 @@ export default function Home() {
           <div className="mb-5 flex items-center justify-between gap-4 px-1">
             <div>
               <h2 className="text-2xl font-bold text-foreground">
-                {(search || activeCategory) ? 'Produtos' : 'Lojas'}
+                {search
+                  ? `Busca: "${search}"`
+                  : activeCategory
+                    ? (categories.find(c => c.value === activeCategory)?.label || 'Lojas')
+                    : 'Lojas'}
               </h2>
               <p className="mt-0.5 text-sm text-muted-foreground">
-                {(search || activeCategory) ? 'Encontrados para sua busca' : 'As melhores da cidade'}
+                {search
+                  ? 'Lojas e produtos encontrados'
+                  : activeCategory
+                    ? `Opções de ${categories.find(c => c.value === activeCategory)?.label || ''}`
+                    : 'As melhores da cidade'}
               </p>
             </div>
             <span className="rounded-full bg-secondary px-3 py-1 text-xs font-medium text-muted-foreground">
-              {(search || activeCategory) ? filteredProducts.length : filtered.length}
+              {filtered.length > 0
+                ? `${filtered.length} ${filtered.length === 1 ? 'loja' : 'lojas'}${filteredProducts.length > 0 ? ` • ${filteredProducts.length} prod.` : ''}`
+                : `${filteredProducts.length} ${filteredProducts.length === 1 ? 'produto' : 'produtos'}`}
             </span>
           </div>
 
@@ -438,7 +480,7 @@ export default function Home() {
                 }}
                 className="mt-5 h-11 rounded-2xl px-6 text-xs font-black uppercase tracking-widest"
               >
-                Tentar nãovamente
+                Tentar novamente
               </Button>
             </div>
           ) : loading ? (
@@ -454,83 +496,109 @@ export default function Home() {
                 </div>
               ))}
             </div>
-          ) : (search || activeCategory) && filteredProducts.length > 0 ? (
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-2">
-              {filteredProducts.map((product) => {
-                const qty = getItemQty(product.id);
-                return (
-                  <div
-                    key={product.id}
-                    className="group flex cursor-pointer gap-4 bg-background p-4 rounded-[32px] border border-border/50 shadow-sm hover:shadow-md transition-all active:scale-[0.99]"
-                    onClick={() => { setSelectedProduct(product); setSelectedProductCompany(product.company); }}
-                  >
-                    <div className="flex min-w-0 flex-1 flex-col justify-between py-0.5">
-                      <div>
-                        <p className="text-[10px] font-black uppercase text-muted-foreground mb-1 tracking-wider line-clamp-1">{product.company.name}</p>
-                        <h4 className="mb-1 text-[15px] font-bold leading-tight text-foreground group-hover:text-primary transition-colors">
-                          {product.name}
-                        </h4>
-                        {product.description && (
-                          <p className="line-clamp-2 text-[13px] font-medium leading-snug text-muted-foreground/80">
-                            {product.description}
-                          </p>
-                        )}
-                      </div>
-
-                      <div className="mt-3 flex items-center justify-between">
-                        <p className="text-[15px] font-extrabold text-foreground">
-                          {Number(product.price || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                        </p>
-
-                        {qty > 0 && (
-                          <div className="flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-2 py-1">
-                            <span className="text-[11px] font-bold text-primary">{qty} no carrinho</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="relative h-24 w-24 shrink-0">
-                      <div className="h-full w-full overflow-hidden rounded-xl bg-secondary/30">
-                        <MediaImage
-                          src={getPrimaryProductImage(product)}
-                          alt={product.name || 'Produto'}
-                          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                          fallback={
-                            <div className="flex h-full w-full items-center justify-center text-muted-foreground/30 text-2xl">
-                              🍛
-                            </div>
-                          }
-                        />
-                      </div>
-                      {qty === 0 && product.company.is_open && (
-                        <button
-                          onClick={(e) => { 
-                            e.stopPropagation(); 
-                            setSelectedProduct(product);
-                            setSelectedProductCompany(product.company);
-                          }}
-                          className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-background border border-border shadow-lg text-primary hover:scale-110 transition-transform"
-                        >
-                          <Plus className="h-4 w-4" />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (!search && !activeCategory) && filtered.length > 0 ? (
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {filtered.map((company) => (
-                <StoreTabCard key={company.id} company={company} />
-              ))}
-            </div>
-          ) : (
+          ) : filtered.length === 0 && filteredProducts.length === 0 ? (
             <div className="premium-card flex flex-col items-center rounded-[32px] px-6 py-14 text-center">
               <Utensils className="h-12 w-12 text-muted-foreground/50" />
               <h3 className="mt-4 text-lg font-semibold text-foreground">Nenhuma loja ou produto encontrado</h3>
               <p className="mt-1.5 max-w-sm text-sm text-muted-foreground">Ajuste a busca ou troque a categoria para ver mais opções.</p>
+            </div>
+          ) : (
+            <div className="space-y-8">
+              {/* Grid de Lojas Encontradas */}
+              {filtered.length > 0 && (
+                <div className="space-y-4">
+                  {(search || activeCategory) && filteredProducts.length > 0 && (
+                    <div className="flex items-center justify-between px-1">
+                      <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground">
+                        Lojas ({filtered.length})
+                      </h3>
+                    </div>
+                  )}
+                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    {filtered.map((company) => (
+                      <StoreTabCard key={company.id} company={company} />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Grid de Produtos Encontrados */}
+              {filteredProducts.length > 0 && (
+                <div className="space-y-4">
+                  {(search || activeCategory) && filtered.length > 0 && (
+                    <div className="flex items-center justify-between px-1 pt-2">
+                      <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground">
+                        Produtos ({filteredProducts.length})
+                      </h3>
+                    </div>
+                  )}
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-2">
+                    {filteredProducts.map((product) => {
+                      const qty = getItemQty(product.id);
+                      return (
+                        <div
+                          key={product.id}
+                          className="group flex cursor-pointer gap-4 bg-background p-4 rounded-[32px] border border-border/50 shadow-sm hover:shadow-md transition-all active:scale-[0.99]"
+                          onClick={() => { setSelectedProduct(product); setSelectedProductCompany(product.company); }}
+                        >
+                          <div className="flex min-w-0 flex-1 flex-col justify-between py-0.5">
+                            <div>
+                              <p className="text-[10px] font-black uppercase text-muted-foreground mb-1 tracking-wider line-clamp-1">{product.company.name}</p>
+                              <h4 className="mb-1 text-[15px] font-bold leading-tight text-foreground group-hover:text-primary transition-colors">
+                                {product.name}
+                              </h4>
+                              {product.description && (
+                                <p className="line-clamp-2 text-[13px] font-medium leading-snug text-muted-foreground/80">
+                                  {product.description}
+                                </p>
+                              )}
+                            </div>
+
+                            <div className="mt-3 flex items-center justify-between">
+                              <p className="text-[15px] font-extrabold text-foreground">
+                                {Number(product.price || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                              </p>
+
+                              {qty > 0 && (
+                                <div className="flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-2 py-1">
+                                  <span className="text-[11px] font-bold text-primary">{qty} no carrinho</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="relative h-24 w-24 shrink-0">
+                            <div className="h-full w-full overflow-hidden rounded-xl bg-secondary/30">
+                              <MediaImage
+                                src={getPrimaryProductImage(product)}
+                                alt={product.name || 'Produto'}
+                                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                fallback={
+                                  <div className="flex h-full w-full items-center justify-center text-muted-foreground/30 text-2xl">
+                                    🍛
+                                  </div>
+                                }
+                              />
+                            </div>
+                            {qty === 0 && product.company.is_open && (
+                              <button
+                                onClick={(e) => { 
+                                  e.stopPropagation(); 
+                                  setSelectedProduct(product);
+                                  setSelectedProductCompany(product.company);
+                                }}
+                                className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-background border border-border shadow-lg text-primary hover:scale-110 transition-transform"
+                              >
+                                <Plus className="h-4 w-4" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </section>

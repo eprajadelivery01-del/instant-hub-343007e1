@@ -13,6 +13,7 @@ import { Product, Company } from "@/types/database";
 import { isStoreOpenNow } from "@/lib/storeHours";
 import { useStoresOpenStatus } from "@/hooks/useStoreOpenStatus";
 import { SafeAreaHeader } from "@/components/shared/SafeAreaHeader";
+import { matchesCategoryFilter } from "@/lib/categoryMatching";
 
 export default function Search() {
   const [search, setSearch] = useState("");
@@ -25,20 +26,15 @@ export default function Search() {
 
   useEffect(() => {
     const delayDebounceFn = setTimeout(async () => {
-      if (search.length > 2) {
+      if (search.length > 1) {
         setLoading(true);
-        // Busca empresas com nome correspondente OU produtos com nome/descricao correspondente
-        // Para simplificar e garantir que pegue os produtos, vamos buscar todas as lojas ativas
-        // e filtrar os produtos no frontend, similar à Home.
         const { data } = await supabase
           .from("companies")
           .select("*, products(*)")
           .eq("active", true)
-          .eq("is_active", true); // Handle potential dual boolean flags
+          .eq("is_active", true);
 
-        // Se houver dados, combinamos as flags de active
         let activeCompanies = data || [];
-        // Fallback for missing is_active/active consistency
         if (activeCompanies.length === 0) {
            const { data: fallbackData } = await supabase
              .from("companies")
@@ -65,14 +61,12 @@ export default function Search() {
       } else {
         setResults([]);
       }
-    }, 500);
+    }, 400);
 
-    // Realtime subscription for search
     const channelName = `search-realtime-${Date.now()}_${Math.random().toString(36).substring(7)}`;
     const channel = supabase
       .channel(channelName)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'companies' }, () => {
-        // Just invalidate/refetch if needed, but here we wait for next search or keysteoke
       })
       .subscribe();
 
@@ -83,6 +77,19 @@ export default function Search() {
   }, [search]);
 
   const resultsWithStatus = useStoresOpenStatus(results);
+
+  const filteredCompanies = React.useMemo(() => {
+    if (!search || resultsWithStatus.length === 0) return [];
+    return resultsWithStatus.filter((company) => {
+      return (
+        company.name.toLowerCase().includes(search.toLowerCase()) ||
+        (company.description && company.description.toLowerCase().includes(search.toLowerCase())) ||
+        (company.category && company.category.toLowerCase().includes(search.toLowerCase())) ||
+        matchesCategoryFilter(search, company.category) ||
+        matchesCategoryFilter(search, company.name)
+      );
+    });
+  }, [resultsWithStatus, search]);
 
   const filteredProducts = React.useMemo(() => {
     if (!search || resultsWithStatus.length === 0) return [];
@@ -100,7 +107,9 @@ export default function Search() {
       return (
         (p.name && p.name.toLowerCase().includes(search.toLowerCase())) || 
         (p.description && p.description.toLowerCase().includes(search.toLowerCase())) || 
-        (p.company.name && p.company.name.toLowerCase().includes(search.toLowerCase()))
+        (p.company.name && p.company.name.toLowerCase().includes(search.toLowerCase())) ||
+        matchesCategoryFilter(search, p.category) ||
+        matchesCategoryFilter(search, p.company.category)
       );
     });
   }, [resultsWithStatus, search]);
@@ -133,7 +142,7 @@ export default function Search() {
             <Loader2 className="h-8 w-8 text-primary animate-spin mb-3" />
             <p className="text-sm text-muted-foreground">Buscando...</p>
           </div>
-        ) : search.length > 0 && results.length === 0 ? (
+        ) : search.length > 0 && filteredCompanies.length === 0 && filteredProducts.length === 0 ? (
           <div className="flex flex-col items-center py-16 text-center px-4">
             <div className="h-20 w-20 bg-secondary rounded-full flex items-center justify-center mb-4">
               <SearchIcon className="h-10 w-10 text-muted-foreground/40" />
@@ -170,70 +179,92 @@ export default function Search() {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {filteredProducts.map((product) => {
-              const qty = getItemQty(product.id);
-              return (
-                <div
-                  key={product.id}
-                  className="group flex cursor-pointer gap-4 bg-background p-4 rounded-[32px] border border-border/50 shadow-sm hover:shadow-md transition-all active:scale-[0.99]"
-                  onClick={() => { setSelectedProduct(product); setSelectedProductCompany(product.company); }}
-                >
-                  <div className="flex min-w-0 flex-1 flex-col justify-between py-0.5">
-                    <div>
-                      <p className="text-[10px] font-black uppercase text-muted-foreground mb-1 tracking-wider line-clamp-1">{product.company.name}</p>
-                      <h4 className="mb-1 text-[15px] font-bold leading-tight text-foreground group-hover:text-primary transition-colors">
-                        {product.name}
-                      </h4>
-                      {product.description && (
-                        <p className="line-clamp-2 text-[13px] font-medium leading-snug text-muted-foreground/80">
-                          {product.description}
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="mt-3 flex items-center justify-between">
-                      <p className="text-[15px] font-extrabold text-foreground">
-                        {Number(product.price || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                      </p>
-
-                      {qty > 0 && (
-                        <div className="flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-2 py-1">
-                          <span className="text-[11px] font-bold text-primary">{qty} no carrinho</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="relative h-24 w-24 shrink-0">
-                    <div className="h-full w-full overflow-hidden rounded-xl bg-secondary/30">
-                      <MediaImage
-                        src={getPrimaryProductImage(product)}
-                        alt={product.name || 'Produto'}
-                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                        fallback={
-                          <div className="flex h-full w-full items-center justify-center text-muted-foreground/30 text-2xl">
-                            🍛
-                          </div>
-                        }
-                      />
-                    </div>
-                    {qty === 0 && product.company.is_open && (
-                      <button
-                        onClick={(e) => { 
-                          e.stopPropagation(); 
-                          setSelectedProduct(product);
-                          setSelectedProductCompany(product.company);
-                        }}
-                        className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-background border border-border shadow-lg text-primary hover:scale-110 transition-transform"
-                      >
-                        <Plus className="h-4 w-4" />
-                      </button>
-                    )}
-                  </div>
+          <div className="space-y-8">
+            {filteredCompanies.length > 0 && (
+              <div className="space-y-3">
+                <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground px-1">
+                  Lojas ({filteredCompanies.length})
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {filteredCompanies.map((company) => (
+                    <StoreTabCard key={company.id} company={company} />
+                  ))}
                 </div>
-              );
-            })}
+              </div>
+            )}
+
+            {filteredProducts.length > 0 && (
+              <div className="space-y-3">
+                <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground px-1">
+                  Produtos ({filteredProducts.length})
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {filteredProducts.map((product) => {
+                    const qty = getItemQty(product.id);
+                    return (
+                      <div
+                        key={product.id}
+                        className="group flex cursor-pointer gap-4 bg-background p-4 rounded-[32px] border border-border/50 shadow-sm hover:shadow-md transition-all active:scale-[0.99]"
+                        onClick={() => { setSelectedProduct(product); setSelectedProductCompany(product.company); }}
+                      >
+                        <div className="flex min-w-0 flex-1 flex-col justify-between py-0.5">
+                          <div>
+                            <p className="text-[10px] font-black uppercase text-muted-foreground mb-1 tracking-wider line-clamp-1">{product.company.name}</p>
+                            <h4 className="mb-1 text-[15px] font-bold leading-tight text-foreground group-hover:text-primary transition-colors">
+                              {product.name}
+                            </h4>
+                            {product.description && (
+                              <p className="line-clamp-2 text-[13px] font-medium leading-snug text-muted-foreground/80">
+                                {product.description}
+                              </p>
+                            )}
+                          </div>
+
+                          <div className="mt-3 flex items-center justify-between">
+                            <p className="text-[15px] font-extrabold text-foreground">
+                              {Number(product.price || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                            </p>
+
+                            {qty > 0 && (
+                              <div className="flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-2 py-1">
+                                <span className="text-[11px] font-bold text-primary">{qty} no carrinho</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="relative h-24 w-24 shrink-0">
+                          <div className="h-full w-full overflow-hidden rounded-xl bg-secondary/30">
+                            <MediaImage
+                              src={getPrimaryProductImage(product)}
+                              alt={product.name || 'Produto'}
+                              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                              fallback={
+                                <div className="flex h-full w-full items-center justify-center text-muted-foreground/30 text-2xl">
+                                  🍛
+                                </div>
+                              }
+                            />
+                          </div>
+                          {qty === 0 && product.company.is_open && (
+                            <button
+                              onClick={(e) => { 
+                                e.stopPropagation(); 
+                                setSelectedProduct(product);
+                                setSelectedProductCompany(product.company);
+                              }}
+                              className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-background border border-border shadow-lg text-primary hover:scale-110 transition-transform"
+                            >
+                              <Plus className="h-4 w-4" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
