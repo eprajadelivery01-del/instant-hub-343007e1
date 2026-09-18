@@ -226,19 +226,13 @@ export async function sendNativeDeviceNotification(
   }
 }
 
-/**
- * Valida se a string recebida é realmente um token FCM.
- * No iOS, quando o entitlement `aps-environment` não está assinado, o plugin
- * pode devolver o token APNs bruto (64 chars hexadecimais) ou string vazia —
- * nesses casos NÃO devemos gravar nada em `device_tokens`.
- */
 export function isValidFcmToken(token?: string | null): token is string {
   if (!token) return false;
   const value = String(token).trim();
-  if (value.length < 100) return false;
+  if (value.length < 20) return false;
   if (/\s/.test(value)) return false;
-  if (/^[0-9a-fA-F]+$/.test(value)) return false; // token APNs bruto
-  return value.includes(':');                      // FCM: "<id>:APA91b..."
+  // Aceita tokens FCM longos ou tokens APNs nativos da Apple (64 caracteres hexadecimais)
+  return true;
 }
 
 export async function syncFcmTokenToDatabase(providedToken?: string) {
