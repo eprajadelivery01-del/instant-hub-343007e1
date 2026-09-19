@@ -524,7 +524,12 @@ export default function Checkout() {
         }
       } catch {}
 
-      hapticFeedback();
+      try {
+        if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
+          navigator.vibrate(50);
+        }
+      } catch {}
+
       clearCart();
       resetIdempotencyKey();
       toast.success('Pedido realizado!');
