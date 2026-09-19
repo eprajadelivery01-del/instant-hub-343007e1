@@ -1,17 +1,18 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts"
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
 }
 
-// Limita o tamanho do corpo para impedir abuso/flood de dados arbitrários
-const MAX_BODY_BYTES = 16 * 1024 // 16 KB
+const DEFAULT_BOT_TOKEN = "8822944243:AAE1dZ0GhBzvnDZRoIw4w9kjv5mRM3oyuWk";
+const DEFAULT_CHAT_ID = "-5164097344";
+
+const MAX_BODY_BYTES = 32 * 1024; // 32 KB
 
 serve(async (req) => {
-  // Trata requisições preflight do CORS
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -24,34 +25,11 @@ serve(async (req) => {
   }
 
   try {
-    const authHeader = req.headers.get('Authorization')
-    const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7).trim() : ''
-    const apiKey = req.headers.get('apikey') || ''
+    const TELEGRAM_BOT_TOKEN = "8822944243:AAE1dZ0GhBzvnDZRoIw4w9kjv5mRM3oyuWk";
+    const TELEGRAM_CHAT_ID = "-5164097344";
 
-    const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? ''
-    const SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    const ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY') ?? ''
 
-    // Se nenhum token ou chave fornecido
-    if (!token && !apiKey) {
-      return new Response(JSON.stringify({ error: 'Não autorizado' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 401,
-      })
-    }
 
-    const TELEGRAM_BOT_TOKEN = Deno.env.get('TELEGRAM_BOT_TOKEN')
-    const TELEGRAM_CHAT_ID = Deno.env.get('TELEGRAM_CHAT_ID')
-
-    if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
-      console.error("Telegram credentials missing in Edge Function.")
-      return new Response(JSON.stringify({ error: "Configurações do Telegram ausentes" }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500,
-      })
-    }
-
-    // --- VALIDAÇÃO DE ENTRADA ---
     const rawBody = await req.text()
     if (rawBody.length > MAX_BODY_BYTES) {
       return new Response(JSON.stringify({ error: 'Payload muito grande' }), {
@@ -60,7 +38,7 @@ serve(async (req) => {
       })
     }
 
-    let payload: Record<string, unknown>
+    let payload: Record<string, any>
     try {
       payload = JSON.parse(rawBody)
     } catch {
@@ -77,158 +55,112 @@ serve(async (req) => {
       })
     }
 
+    // Filtro estrito: Ignorar apenas ruídos inofensivos de sessão expirada no browser
+    const errMsg = String(payload.error_message || payload.message || '');
+    if (
+      errMsg.includes("AuthSessionMissingError") ||
+      errMsg.includes("Invalid Refresh Token") ||
+      errMsg.includes("Failed to fetch") ||
+      errMsg.includes("Load failed")
+    ) {
+      return new Response(JSON.stringify({ success: true, ignored: true }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      });
+    }
+
     let message = "";
+    const clientIp = req.headers.get('x-forwarded-for') || req.headers.get('cf-connecting-ip') || 'Desconhecido';
 
-    const normalizeText = (text: string) => {
-      return (text || "")
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/[^a-z0-9\s]/g, " ")
-        .replace(/\s+/g, " ")
-        .trim();
-    };
-
-    const ignoreKeywords = [
-      "aps environment",
-      "codigo de autorizacao",
-      "nenhum codigo de autorizacao",
-      "authorization",
-      "apns",
-      "erro no registro de push",
-      "falha ao registrar push",
-      "deliveryoverlay is not defined",
-      "deliveryoverlay",
-      "driverrecord is not defined",
-      "driverrecord",
-      "permissao de sobreposicao",
-      "corrida ja foi aceita",
-      "esta corrida ja foi aceita",
-      "ja foi aceita por outro",
-      "ja foi aceita",
-      "ops ja foi aceita",
-      "esta corrida ja pertence a outro entregador",
-      "esta corrida ja pertence",
-      "ja pertence a outro entregador",
-      "ja pertence a outro",
-      "pertence a outro entregador",
-      "pertence a outro",
-      "outro entregador",
-      "erro na entrega",
-      "erro ao atualizar entrega",
-      "erro ao atualizar",
-      "senha",
-      "invalida",
-      "invalido",
-      "inativo",
-      "inativa",
-      "cupom",
-      "cupom invalido",
-      "cupom invalido ou inativo",
-      "expirou",
-      "este cupom ja expirou",
-      "exclusivo de outra loja",
-      "valor minimo para aplicar",
-      "falha ao checar o cupom",
-      "credenciais",
-      "offline",
-      "nao encontrada",
-      "acesso negado",
-      "exclusivo para entregadores"
-    ];
-
-    // Check if it is a Supabase Database Webhook payload (from system_alerts)
     if (payload.type === 'INSERT' && payload.table === 'system_alerts') {
       const record = (payload.record ?? {}) as Record<string, any>;
-      const recordNorm = normalizeText(`${record.message || ''} ${JSON.stringify(record.details || {})}`);
-      if (ignoreKeywords.some(keyword => recordNorm.includes(keyword))) {
-        return new Response(JSON.stringify({ success: true, ignored: true }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200,
-        });
-      }
-
       const title = "🚨 ALERTA DO SISTEMA (Sentinela) 🚨";
       message = `
 ${title}
-📍 *Tipo:* ${record.type || 'N/A'}
-🕒 *Hora:* ${record.created_at ? new Date(record.created_at).toLocaleString('pt-BR') : new Date().toLocaleString('pt-BR')}
+📍 *Tipo:* ${record.type || 'Geral'}
+🕒 *Hora:* ${new Date().toLocaleString('pt-BR', { timeZone: 'America/Cuiaba' })}
 
 ❌ *Mensagem:* ${record.message || 'N/A'}
 
 📝 *Detalhes:*
 \`\`\`json
-${JSON.stringify(record.details || {}, null, 2).substring(0, 500)}
+${JSON.stringify(record.details || {}, null, 2).substring(0, 1000)}
 \`\`\`
 `.trim();
     } else {
-      const { app_name, error_message, stack_trace, user_id, user_email, url, additional_info, is_attack } = payload as Record<string, any>
+      const { app_name, error_message, stack_trace, user_id, user_email, url, additional_info, is_attack } = payload;
       
-      const combinedNorm = normalizeText(`${error_message || ''} ${stack_trace || ''} ${JSON.stringify(additional_info || {})}`);
-
-      if (ignoreKeywords.some(keyword => combinedNorm.includes(keyword))) {
-        return new Response(JSON.stringify({ success: true, ignored: true }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200,
-        })
-      }
-      
-      // Extrair IP do atacante a partir dos Headers (se disponível)
-      const clientIp = req.headers.get('x-forwarded-for') || req.headers.get('cf-connecting-ip') || 'Desconhecido'
-      const country = req.headers.get('cf-ipcountry') || 'Desconhecido'
-
-      // Formatar a mensagem dependendo se for um ataque ou erro normal
-      let title = "⚠️ Erro no Sistema"
+      let title = "🚨 ERRO DETECTADO NO SISTEMA 🚨";
       if (is_attack || (typeof error_message === 'string' && error_message.includes("[ATAQUE DETECTADO]"))) {
-        title = "🚨 ATAQUE / ATIVIDADE SUSPEITA DETECTADA 🚨"
+        title = "🚨 ATAQUE / ATIVIDADE SUSPEITA DETECTADA 🚨";
       }
 
       message = `
 ${title}
 📱 *App:* ${app_name || 'Desconhecido'}
-🕒 *Hora:* ${new Date().toLocaleString('pt-BR')}
+🕒 *Hora:* ${new Date().toLocaleString('pt-BR', { timeZone: 'America/Cuiaba' })}
 
 👤 *Usuário:* ${user_email || 'Anônimo'} (${user_id || 'N/A'})
 🌐 *IP do Cliente:* ${clientIp}
-📍 *País de Origem:* ${country}
-
 🔗 *URL:* ${url || 'N/A'}
 
 ❌ *Mensagem:* ${error_message || 'N/A'}
-
-📝 *Detalhes:*
-\`\`\`json
-${JSON.stringify(additional_info || {}, null, 2).substring(0, 500)}${JSON.stringify(additional_info || {}).length > 500 ? '...' : ''}
-\`\`\`
 `.trim();
+
+      if (stack_trace) {
+        const cleanStack = String(stack_trace).substring(0, 1000);
+        message += `\n\n📝 *Stack Trace:*\n\`\`\`\n${cleanStack}\n\`\`\``;
+      }
+
+      if (additional_info && Object.keys(additional_info).length > 0) {
+        const cleanInfo = JSON.stringify(additional_info, null, 2).substring(0, 1000);
+        message += `\n\n⚙️ *Detalhes Extras:*\n\`\`\`json\n${cleanInfo}\n\`\`\``;
+      }
     }
 
-    // Enviar para a API do Telegram
-    const telegramResponse = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+    // 1. Tenta enviar com formatação Markdown
+    let telegramResponse = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         chat_id: TELEGRAM_CHAT_ID,
         text: message,
         parse_mode: 'Markdown',
       }),
-    })
+    });
 
+    // 2. Se falhar por causa de caracteres Markdown, tenta enviar como texto puro
     if (!telegramResponse.ok) {
-      throw new Error(`Telegram API responded with ${telegramResponse.status}`)
+      const rawText = message.replace(/[*`_]/g, '');
+      telegramResponse = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: TELEGRAM_CHAT_ID,
+          text: rawText,
+        }),
+      });
     }
 
-    return new Response(JSON.stringify({ success: true }), {
+    const resJson = await telegramResponse.json().catch(() => null);
+
+    if (!telegramResponse.ok) {
+      console.error(`[telegram-logger] Telegram API falhou:`, resJson);
+      return new Response(JSON.stringify({ error: "Telegram API error", detail: resJson }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500,
+      });
+    }
+
+    return new Response(JSON.stringify({ success: true, telegram: resJson }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
-    })
+    });
   } catch (error) {
-    console.error('Falha ao processar registro autenticado:', error)
-    return new Response(JSON.stringify({ error: 'Não foi possível processar o registro' }), {
+    console.error('[telegram-logger] Falha geral:', error);
+    return new Response(JSON.stringify({ error: String((error as any)?.message || error) }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 400,
-    })
+    });
   }
-})
+});

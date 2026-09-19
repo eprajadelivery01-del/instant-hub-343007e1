@@ -2,3 +2,9 @@ project_id = "nptkxlrhrlssdsevpgqe"
 
 [functions.create-order]
 verify_jwt = true
+
+[functions.send-push]
+verify_jwt = false
+
+[functions.telegram-logger]
+verify_jwt = false
