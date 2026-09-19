@@ -14,12 +14,12 @@ export function ActiveOfferHighlight() {
         const { data } = await supabase
           .from('marketing_notifications')
           .select('*')
-          .or('target_audience.eq.customers,target_audience.is.null,target_audience.eq.all')
+          .in('target_audience', ['customers', 'all'])
           .order('created_at', { ascending: false })
           .limit(10);
 
         if (data && data.length > 0) {
-          const valid = data.find((d: any) => isCustomerNotification(d));
+          const valid = data.find((d: any) => isMarketplaceMarketingNotification(d));
           if (valid) {
             setLatestNotif(valid);
           }
@@ -42,7 +42,7 @@ export function ActiveOfferHighlight() {
           { event: 'INSERT', schema: 'public', table: 'marketing_notifications' },
           (payload) => {
             const raw = payload.new as any;
-            if (!raw || !isCustomerNotification(raw)) return;
+            if (!raw || !isMarketplaceMarketingNotification(raw)) return;
             setLatestNotif(raw);
           }
         )

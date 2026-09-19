@@ -43,7 +43,7 @@ export function useMarketingNotifications() {
         },
         (payload) => {
           const newNotif = payload.new as any;
-          if (!newNotif || !isCustomerNotification(newNotif)) return;
+          if (!isMarketplaceMarketingNotification(newNotif)) return;
           
           // Send broadcast receipt back to Admin Panel
           if (user) {

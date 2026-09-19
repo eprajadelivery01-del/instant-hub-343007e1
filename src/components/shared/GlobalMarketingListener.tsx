@@ -93,7 +93,13 @@ export function GlobalMarketingListener() {
         { event: 'INSERT', schema: 'public', table: 'marketing_notifications' },
         (payload) => {
           const newNotif = payload.new as any;
-          if (!newNotif || !isCustomerNotification(newNotif)) return;
+          const accepted = isMarketplaceMarketingNotification(newNotif);
+          console.log('[GLOBAL MARKETING CLIENT FILTER]', {
+            id: newNotif?.id,
+            targetAudience: newNotif?.target_audience,
+            accepted
+          });
+          if (!accepted) return;
 
           playNotificationAudio();
 

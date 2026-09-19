@@ -26,58 +26,15 @@ export type MarketingNotifItem = {
   target_audience?: string | null;
 };
 
-export const isCustomerNotification = (item: any): boolean => {
+export function isMarketplaceMarketingNotification(item: any): boolean {
   if (!item) return false;
   if (item.type === 'order_status') return true;
+  const audience = String(item.target_audience || '').trim().toLowerCase();
+  return audience === 'customers' || audience === 'all';
+}
 
-  const aud = String(item.target_audience || '').toLowerCase().trim();
-  
-  // 1. Trava estrita de audiência para entregadores e lojistas
-  if (
-    aud === 'drivers' || 
-    aud === 'driver' || 
-    aud === 'entregador' || 
-    aud === 'entregadores' || 
-    aud === 'motoboy' || 
-    aud === 'motoboys' || 
-    aud === 'stores' || 
-    aud === 'store' || 
-    aud === 'lojista' || 
-    aud === 'lojistas' || 
-    aud === 'merchants' ||
-    aud === 'merchant'
-  ) {
-    return false;
-  }
-
-  // 2. Se a audiência estiver explícita, só aceita se for para clientes
-  if (aud) {
-    return aud === 'customers' || aud === 'all' || aud === 'clientes' || aud === 'cliente';
-  }
-
-  // 3. Para notificações legadas sem target_audience, faz verificação estrita por conteúdo
-  const title = String(item.title || '').toLowerCase();
-  const msg = String(item.message || '').toLowerCase();
-
-  if (
-    title.includes('app novo') ||
-    title.includes('entregador') ||
-    title.includes('lojista') ||
-    title.includes('repasse') ||
-    title.includes('corrida') ||
-    title.includes('motoboy') ||
-    msg.includes('atualização disponivel') ||
-    msg.includes('atualizacao disponivel') ||
-    msg.includes('app entregador') ||
-    msg.includes('app lojista') ||
-    msg.includes('repasse') ||
-    msg.includes('corrida')
-  ) {
-    return false;
-  }
-
-  return true;
-};
+// Alias para compatibilidade retroativa com outros componentes
+export const isCustomerNotification = isMarketplaceMarketingNotification;
 
 const ORDER_STATUS_CONFIG: Record<string, { title: string; desc: string; emoji: string }> = {
   confirmed: { title: '✅ Pedido Confirmado!', desc: 'A loja aceitou o seu pedido.', emoji: '✅' },
@@ -144,12 +101,17 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
     };
   }, [isOpen]);
 
-  const STORAGE_KEY = '@epraja_notification_history';
+  const STORAGE_KEY = '@epraja_notification_history_v2';
   const FORTY_EIGHT_HOURS_MS = 48 * 60 * 60 * 1000;
 
   // --- Helpers para persistir histórico de notificações no localStorage ---
   const loadPersistedNotifications = (): MarketingNotifItem[] => {
     try {
+      // Descarta cache legado não segmentado v1
+      try {
+        localStorage.removeItem('@epraja_notification_history');
+      } catch {}
+
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return [];
       const parsed: (MarketingNotifItem & { target_audience?: string })[] = JSON.parse(raw);
@@ -169,7 +131,7 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
         if (isNaN(t) || (now - t) > FORTY_EIGHT_HOURS_MS || isPending) continue;
 
         // Trava estrita de segmentação: expurga itens que foram salvos para lojistas ou entregadores
-        if (!isCustomerNotification(n)) continue;
+        if (!isMarketplaceMarketingNotification(n)) continue;
 
         // Normaliza ID legado para chave canônica única por pedido e status
         let canonicalId = n.id;
@@ -256,7 +218,7 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
       return;
     }
     // Trava estrita de segmentação: nunca persiste notificação de lojista ou entregador
-    if (!isCustomerNotification(item)) return;
+    if (!isMarketplaceMarketingNotification(item)) return;
 
     const existing = loadPersistedNotifications();
     if (existing.some(n => n.id === item.id)) return;
@@ -275,7 +237,7 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
       if (isPending) return false;
 
       // Trava estrita de segmentação
-      if (!isCustomerNotification(item)) return false;
+      if (!isMarketplaceMarketingNotification(item)) return false;
       return true;
     });
     const existing = loadPersistedNotifications();
@@ -299,16 +261,18 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
         .from('marketing_notifications')
         .select('*')
         .gte('created_at', twoDaysAgoISO)
-        .or('target_audience.eq.customers,target_audience.is.null,target_audience.eq.all')
+        .in('target_audience', ['customers', 'all'])
         .order('created_at', { ascending: false })
         .limit(30);
 
       const marketingItems: MarketingNotifItem[] = (mData || [])
-        .filter((m: any) => isCustomerNotification(m))
+        .filter((m: any) => isMarketplaceMarketingNotification(m))
         .map((m: any) => ({
           ...m,
           type: 'marketing'
         }));
+
+      persistMultipleNotifications(marketingItems);
 
       persistMultipleNotifications(marketingItems);
 
@@ -421,7 +385,13 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
           { event: 'INSERT', schema: 'public', table: 'marketing_notifications' },
           (payload) => {
             const raw = payload.new as any;
-            if (!raw || !isCustomerNotification(raw)) return;
+            const accepted = isMarketplaceMarketingNotification(raw);
+            console.log('[MARKETING CLIENT FILTER]', {
+              id: raw?.id,
+              targetAudience: raw?.target_audience,
+              accepted
+            });
+            if (!accepted) return;
 
             const newNotif = { ...raw, type: 'marketing' } as MarketingNotifItem;
             persistNotification(newNotif);
@@ -622,7 +592,7 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
                 <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
                 <p className="text-xs">Carregando notificações...</p>
               </div>
-            ) : notifications.length === 0 ? (
+            ) : notifications.filter(isMarketplaceMarketingNotification).length === 0 ? (
               <div className="flex flex-col items-center justify-center h-64 text-center p-6 text-muted-foreground space-y-3">
                 <div className="p-4 bg-muted/30 rounded-full">
                   <Bell className="w-8 h-8 opacity-40" />
@@ -633,7 +603,7 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
                 </p>
               </div>
             ) : (
-              notifications.map((notif) => (
+              notifications.filter(isMarketplaceMarketingNotification).map((notif) => (
                 <div
                   key={notif.id}
                   className={cn(
