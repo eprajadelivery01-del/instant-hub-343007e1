@@ -13,7 +13,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { reportErrorToTelegram } from '@/services/logger';
-import { MapPin, Banknote, AlertCircle, ArrowLeft, Loader2, FileText, Smartphone, Bike, Ticket, Plus, User as UserIcon } from 'lucide-react';
+import { MapPin, Banknote, AlertCircle, ArrowLeft, Loader2, FileText, Smartphone, Bike, Ticket, Plus, User as UserIcon, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useOrderLock } from '@/hooks/useOrderLock';
 import { calculateDeliveryFee } from '@/utils/freight';
@@ -87,8 +87,53 @@ function mapServerError(msg: string, code?: string | null, details?: any): Mappe
 export default function Checkout() {
   const navigate = useNavigate();
   const { user, profile, isGuest, refreshProfile } = useAuth();
-  const { items, company, removeItem, clearCart, appliedCoupon, discountAmount, subtotal } = useCart();
+  const { items, company, removeItem, clearCart, appliedCoupon, applicableProductIds, setCouponData, removeCoupon, discountAmount, subtotal } = useCart();
   const { isLocked, acquireLock, releaseLock, generateIdempotencyKey, resetIdempotencyKey } = useOrderLock();
+  
+  const [couponCode, setCouponCode] = useState('');
+  const [validatingCoupon, setValidatingCoupon] = useState(false);
+
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim() || !company?.id) return;
+    setValidatingCoupon(true);
+    try {
+      const code = couponCode.trim().toUpperCase();
+      const { data, error } = await supabase.from('coupons').select('*').eq('code', code).eq('active', true).maybeSingle();
+      
+      if (error || !data) {
+        toast.error('Cupom inválido ou inativo.');
+        removeCoupon();
+        return;
+      }
+      if (data.expires_at && new Date(data.expires_at) < new Date()) {
+        toast.error('Este cupom já expirou.');
+        removeCoupon();
+        return;
+      }
+      if (data.min_order_value && subtotal < data.min_order_value) {
+        toast.error(`Valor mínimo para aplicar é de R$ ${data.min_order_value.toLocaleString('pt-BR')}`);
+        removeCoupon();
+        return;
+      }
+      if (data.company_id && data.company_id !== company?.id) {
+        toast.error('Este cupom é exclusivo de outra loja.');
+        removeCoupon();
+        return;
+      }
+      
+      // Fetch linked products
+      const { data: links } = await supabase.from('coupon_products').select('product_id').eq('coupon_id', data.id);
+      const pids = (links || []).map((l: any) => l.product_id);
+      
+      setCouponData(data, pids);
+      toast.success('🎉 Cupom aplicado com sucesso!');
+      setCouponCode('');
+    } catch (err) {
+      toast.error('Falha ao checar o cupom.');
+    } finally {
+      setValidatingCoupon(false);
+    }
+  };
   
   const [selectedAddress, setSelectedAddress] = useState<string>(() => localStorage.getItem('@epraja_selected_address') || '');
   
@@ -732,6 +777,49 @@ export default function Checkout() {
                   )}
                 </div>
               )}
+            </div>
+          )}
+        </div>
+
+        {/* Cupom de desconto */}
+        <div className="px-4 mb-6">
+          <div className="flex items-center gap-2 mb-3">
+            <Ticket className="h-5 w-5 text-foreground" />
+            <h3 className="font-bold text-sm text-foreground">Cupom de desconto</h3>
+          </div>
+          {appliedCoupon ? (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between bg-primary/10 border border-primary/20 rounded-xl p-3">
+                <div className="flex items-center gap-2 text-primary">
+                  <CheckCircle2 className="h-5 w-5" />
+                  <span className="font-bold text-sm uppercase">{appliedCoupon.code}</span>
+                </div>
+                <button onClick={removeCoupon} className="text-sm font-semibold text-primary">Remover</button>
+              </div>
+              <div className="p-3 bg-[#F4F1FB] rounded-xl flex items-center justify-between border border-[#E7DEFA]">
+                <div className="flex items-center gap-2 text-[#7B46E5] text-xs font-semibold">
+                  <span className="flex h-5 w-5 items-center justify-center rounded bg-[#7B46E5] text-white">♦</span>
+                  <span>Desconto aplicado: - R$ {discountAmount.toFixed(2).replace('.', ',')}</span>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <input 
+                type="text" 
+                placeholder="Digite o cupom" 
+                value={couponCode}
+                onChange={e => setCouponCode(e.target.value)}
+                className="flex-1 h-12 bg-background border border-border rounded-xl px-4 text-sm font-bold uppercase placeholder:normal-case placeholder:font-normal focus:outline-none focus:border-primary transition-colors"
+                disabled={validatingCoupon}
+              />
+              <button 
+                className="h-12 px-5 rounded-xl bg-primary text-primary-foreground font-bold text-sm disabled:opacity-50" 
+                disabled={!couponCode.trim() || validatingCoupon}
+                onClick={handleApplyCoupon}
+              >
+                {validatingCoupon ? '...' : 'Aplicar'}
+              </button>
             </div>
           )}
         </div>
