@@ -376,6 +376,11 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
   };
 
   useEffect(() => {
+    console.log("[BUILD VERSION]", {
+      commit: "3be2f76",
+      timestamp: new Date().toISOString()
+    });
+
     fetchNotifications();
 
     let mChannel: any = null;
@@ -390,6 +395,12 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
           { event: 'INSERT', schema: 'public', table: 'marketing_notifications' },
           (payload) => {
             const raw = payload.new as any;
+            console.log("[MARKETING REALTIME RAW]", {
+              id: raw?.id,
+              title: raw?.title,
+              target_audience: raw?.target_audience
+            });
+
             const accepted = isMarketplaceMarketingNotification(raw);
             console.log('[MARKETING CLIENT FILTER]', {
               id: raw?.id,
@@ -608,7 +619,15 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
                 </p>
               </div>
             ) : (
-              notifications.filter(isMarketplacePopoverItem).map((notif) => (
+              notifications.filter(isMarketplacePopoverItem).map((notif) => {
+                console.log("[MARKETING CARD RENDER]", {
+                  id: notif?.id,
+                  title: notif?.title,
+                  target_audience: notif?.target_audience,
+                  type: notif?.type
+                });
+
+                return (
                 <div
                   key={notif.id}
                   className={cn(
@@ -681,7 +700,8 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
                     </div>
                   )}
                 </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>
