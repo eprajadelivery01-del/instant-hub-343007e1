@@ -162,22 +162,33 @@ export default function OrderSummaryDialog({ orderId, open, onOpenChange }: Prop
             )}
 
             {/* Totais */}
-            <div className="border-t border-border pt-3 space-y-1.5">
-              <div className="flex justify-between text-muted-foreground">
-                <span>Subtotal</span>
-                <span>R$ {subtotal.toFixed(2).replace('.', ',')}</span>
-              </div>
-              <div className="flex justify-between text-muted-foreground">
-                <span>Taxa de entrega</span>
-                <span>R$ {deliveryFee.toFixed(2).replace('.', ',')}</span>
-              </div>
-              <div className="flex justify-between font-semibold text-base pt-1">
-                <span className="text-foreground">Total</span>
-                <span className="text-primary">
-                  R$ {total.toFixed(2).replace('.', ',')}
-                </span>
-              </div>
-            </div>
+            {(() => {
+              const discountAmount = Math.max(0, (subtotal + deliveryFee) - total);
+              return (
+                <div className="border-t border-border pt-3 space-y-1.5">
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>Subtotal</span>
+                    <span>R$ {subtotal.toFixed(2).replace('.', ',')}</span>
+                  </div>
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>Taxa de entrega</span>
+                    <span>{deliveryFee > 0 ? `R$ ${deliveryFee.toFixed(2).replace('.', ',')}` : 'Grátis'}</span>
+                  </div>
+                  {discountAmount > 0 && (
+                    <div className="flex justify-between text-primary font-medium">
+                      <span>Desconto (Cupom)</span>
+                      <span>- R$ {discountAmount.toFixed(2).replace('.', ',')}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between font-semibold text-base pt-1">
+                    <span className="text-foreground">Total</span>
+                    <span className="text-primary">
+                      R$ {total.toFixed(2).replace('.', ',')}
+                    </span>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         )}
       </DialogContent>
