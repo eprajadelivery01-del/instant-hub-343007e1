@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { Order, OrderItem, Delivery } from '@/types/database';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
 import { ArrowLeft, MessageCircle, MapPin, Banknote, Smartphone, AlertCircle } from 'lucide-react';
 import { OrderStoreChat } from '@/components/marketplace/OrderStoreChat';
 import MarketplaceLayout from '@/components/marketplace/MarketplaceLayout';
@@ -304,30 +305,18 @@ export default function OrderDetail() {
 
           {/* Notificações */}
           <div className="bg-background rounded-3xl p-5 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] border border-border">
-            <div className="flex justify-between items-center">
-              <div className="pr-4">
+            <div className="flex justify-between items-center gap-4">
+              <div className="flex-1 min-w-0 pr-2">
                 <h3 className="font-bold text-base mb-1">{notifTitle}</h3>
                 <p className="text-xs text-muted-foreground leading-relaxed">{notifText}</p>
               </div>
-              <button
-                onClick={handleToggleNotif}
+              <Switch
+                checked={notif.effectiveEnabled}
+                onCheckedChange={handleToggleNotif}
                 disabled={notif.loading || notif.unsupported || (notif.blocked && !notif.effectiveEnabled)}
                 aria-label={notif.effectiveEnabled ? 'Desativar notificações' : 'Ativar notificações'}
-                className={`relative w-12 h-6 rounded-full shrink-0 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-40 disabled:cursor-not-allowed ${
-                  notif.effectiveEnabled ? 'bg-[#00A868]' : 'bg-muted'
-                }`}
-              >
-                <span
-                  className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-300 ${
-                    notif.effectiveEnabled ? 'translate-x-[26px]' : 'translate-x-0.5'
-                  }`}
-                />
-                {notif.loading && (
-                  <span className="absolute inset-0 flex items-center justify-center">
-                    <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  </span>
-                )}
-              </button>
+                className="data-[state=checked]:bg-[#00A868] data-[state=unchecked]:bg-muted-foreground/30 shrink-0"
+              />
             </div>
           </div>
 
