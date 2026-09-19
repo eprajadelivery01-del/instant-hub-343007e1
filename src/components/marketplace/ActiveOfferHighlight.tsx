@@ -10,12 +10,13 @@ export function ActiveOfferHighlight() {
   useEffect(() => {
     const fetchLatestNotif = async () => {
       try {
-        const { data, error } = await supabase
+        const { data } = await supabase
           .from('marketing_notifications')
           .select('*')
+          .or('target_audience.eq.customers,target_audience.is.null,target_audience.eq.all')
           .order('created_at', { ascending: false })
           .limit(1)
-          .single();
+          .maybeSingle();
 
         if (data) {
           setLatestNotif(data);
@@ -37,7 +38,11 @@ export function ActiveOfferHighlight() {
           'postgres_changes',
           { event: 'INSERT', schema: 'public', table: 'marketing_notifications' },
           (payload) => {
-            setLatestNotif(payload.new);
+            const raw = payload.new as any;
+            if (!raw) return;
+            const aud = String(raw.target_audience || 'customers').toLowerCase();
+            if (aud !== 'customers' && aud !== 'all') return;
+            setLatestNotif(raw);
           }
         )
         .subscribe();

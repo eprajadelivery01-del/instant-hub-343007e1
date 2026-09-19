@@ -41,7 +41,12 @@ export function useMarketingNotifications() {
           table: 'marketing_notifications'
         },
         (payload) => {
-          const newNotif = payload.new as MarketingNotification;
+          const newNotif = payload.new as any;
+          if (!newNotif) return;
+
+          // Trava de segmentação: ignora notificações para lojistas ou entregadores
+          const aud = String(newNotif.target_audience || 'customers').toLowerCase();
+          if (aud !== 'customers' && aud !== 'all') return;
           
           // Send broadcast receipt back to Admin Panel
           if (user) {
@@ -65,7 +70,7 @@ export function useMarketingNotifications() {
             description: "Clique aqui para ver a oferta!",
             action: (
               <button 
-                onClick={() => setActiveNotification(newNotif)}
+                onClick={() => setActiveNotification(newNotif as MarketingNotification)}
                 className="bg-primary text-primary-foreground px-3 py-1 rounded-md text-xs font-bold"
               >
                 Abrir

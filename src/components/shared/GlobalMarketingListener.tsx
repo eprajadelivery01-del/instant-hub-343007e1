@@ -91,7 +91,15 @@ export function GlobalMarketingListener() {
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'marketing_notifications' },
         (payload) => {
-          const newNotif = payload.new;
+          const newNotif = payload.new as any;
+          if (!newNotif) return;
+
+          // Trava de segmentação: ignora se for para lojistas ou entregadores
+          const audience = String(newNotif.target_audience || 'customers').toLowerCase();
+          if (audience !== 'customers' && audience !== 'all') {
+            return;
+          }
+
           playNotificationAudio();
 
           // Notificação in-app (Toast/banner com imagem, cupom e botão fechar).

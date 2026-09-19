@@ -98,13 +98,13 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return [];
-      const parsed: MarketingNotifItem[] = JSON.parse(raw);
+      const parsed: (MarketingNotifItem & { target_audience?: string })[] = JSON.parse(raw);
       const now = Date.now();
       
       const seenCanonicalIds = new Set<string>();
       const rawFiltered: MarketingNotifItem[] = [];
 
-      // 1. Normaliza IDs legados (que continham -rt- ou timestamps no ID)
+      // 1. Normaliza IDs legados e expurga notificações que não sejam de clientes
       for (const n of parsed) {
         const t = new Date(n.created_at).getTime();
         const isPending =
@@ -113,6 +113,12 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
           (n.message && (n.message.toLowerCase().includes('solicitado') || n.message.toLowerCase().includes('aguardando confirmação')));
         
         if (isNaN(t) || (now - t) > FORTY_EIGHT_HOURS_MS || isPending) continue;
+
+        // Trava de segmentação: expurga itens que foram salvos para lojistas ou entregadores
+        if (n.type === 'marketing' && n.target_audience) {
+          const aud = String(n.target_audience).toLowerCase();
+          if (aud !== 'customers' && aud !== 'all') continue;
+        }
 
         // Normaliza ID legado para chave canônica única por pedido e status
         let canonicalId = n.id;
@@ -189,7 +195,7 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
     }
   };
 
-  const persistNotification = (item: MarketingNotifItem) => {
+  const persistNotification = (item: MarketingNotifItem & { target_audience?: string }) => {
     // Nunca persiste notificação do status 'pending' / solicitado
     if (
       item.id.includes('-pending') ||
@@ -197,6 +203,11 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
       (item.message && (item.message.toLowerCase().includes('solicitado') || item.message.toLowerCase().includes('aguardando confirmação')))
     ) {
       return;
+    }
+    // Trava de segmentação: nunca persiste notificação de lojista ou entregador
+    if (item.type === 'marketing' && item.target_audience) {
+      const aud = String(item.target_audience).toLowerCase();
+      if (aud !== 'customers' && aud !== 'all') return;
     }
     const existing = loadPersistedNotifications();
     if (existing.some(n => n.id === item.id)) return;
@@ -206,12 +217,21 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
     localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
   };
 
-  const persistMultipleNotifications = (items: MarketingNotifItem[]) => {
-    const validItems = items.filter(item => !(
-      item.id.includes('-pending') ||
-      (item.title && item.title.toLowerCase().includes('solicitado')) ||
-      (item.message && (item.message.toLowerCase().includes('solicitado') || item.message.toLowerCase().includes('aguardando confirmação')))
-    ));
+  const persistMultipleNotifications = (items: (MarketingNotifItem & { target_audience?: string })[]) => {
+    const validItems = items.filter(item => {
+      const isPending =
+        item.id.includes('-pending') ||
+        (item.title && item.title.toLowerCase().includes('solicitado')) ||
+        (item.message && (item.message.toLowerCase().includes('solicitado') || item.message.toLowerCase().includes('aguardando confirmação')));
+      if (isPending) return false;
+
+      // Trava de segmentação
+      if (item.type === 'marketing' && item.target_audience) {
+        const aud = String(item.target_audience).toLowerCase();
+        if (aud !== 'customers' && aud !== 'all') return false;
+      }
+      return true;
+    });
     const existing = loadPersistedNotifications();
     const existingIds = new Set(existing.map(n => n.id));
     const newItems = validItems.filter(n => !existingIds.has(n.id));
@@ -228,11 +248,12 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
 
       const twoDaysAgoISO = new Date(Date.now() - FORTY_EIGHT_HOURS_MS).toISOString();
 
-      // 1. Busca notificações de marketing e cupons dos últimos 2 dias (48 horas)
+      // 1. Busca notificações de marketing e cupons dos últimos 2 dias (48 horas) EXCLUSIVAS para clientes
       const { data: mData } = await supabase
         .from('marketing_notifications')
         .select('*')
         .gte('created_at', twoDaysAgoISO)
+        .or('target_audience.eq.customers,target_audience.is.null,target_audience.eq.all')
         .order('created_at', { ascending: false })
         .limit(20);
 
@@ -351,7 +372,14 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
           'postgres_changes',
           { event: 'INSERT', schema: 'public', table: 'marketing_notifications' },
           (payload) => {
-            const newNotif = { ...(payload.new as any), type: 'marketing' } as MarketingNotifItem;
+            const raw = payload.new as any;
+            if (!raw) return;
+
+            // Trava de segmentação: ignora se for para lojistas ou entregadores
+            const aud = String(raw.target_audience || 'customers').toLowerCase();
+            if (aud !== 'customers' && aud !== 'all') return;
+
+            const newNotif = { ...raw, type: 'marketing' } as MarketingNotifItem;
             persistNotification(newNotif);
             setNotifications((prev) => [newNotif, ...prev.filter(n => n.id !== newNotif.id)]);
             setUnreadCount((prev) => prev + 1);
