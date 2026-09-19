@@ -292,11 +292,19 @@ export async function syncFcmTokenToDatabase(providedToken?: string) {
     }
 
     if (resolvedTargetId) {
-      // 1. Atualização via cliente (se houver permissão)
+      // 1. Atualização via cliente (se houver permissão) com identidade explícita de app e bundle_id
       Promise.allSettled([
+        supabase.from("device_tokens" as any).upsert({
+          token,
+          user_id: userId || null,
+          customer_id: customerId || null,
+          phone: savedPhone || null,
+          platform: Capacitor.getPlatform(),
+          app: 'marketplace',
+          bundle_id: 'br.com.epraja.appFma',
+          updated_at: new Date().toISOString(),
+        } as any, { onConflict: "token" }),
         supabase.from("customers").update({ fcm_token: token, updated_at: new Date().toISOString() }).or(`user_id.eq.${resolvedTargetId},id.eq.${resolvedTargetId},phone.eq.${savedPhone}`),
-        supabase.from("profiles").update({ fcm_token: token, updated_at: new Date().toISOString() }).eq("id", resolvedTargetId),
-        supabase.from("users").update({ fcm_token: token, updated_at: new Date().toISOString() }).eq("id", resolvedTargetId),
       ]);
     }
 
