@@ -274,59 +274,76 @@ export async function syncFcmTokenToDatabase(providedToken?: string) {
       resolvedTargetId
     });
 
-    // REGISTRO OBRIGATÓRIO PARA USUÁRIOS LOGADOS E DESLOGADOS (GUEST)
+    const app = 'marketplace';
+    const bundle_id = 'br.com.epraja.appFma';
+    const platform = Capacitor.getPlatform();
+
+    console.log('[PUSH REGISTER]', {
+      platform,
+      app,
+      bundle_id,
+      hasToken: !!token
+    });
+
+    // 1. Atualização via cliente com identidade explícita de app e bundle_id
     try {
-      await callSendPush({
-        action: 'register_token',
+      await supabase.from('device_tokens' as any).upsert({
         token,
-        userId: userId ?? null,
-        customerId: customerId ?? null,
-        deviceId: guestDeviceId,
+        user_id: userId || null,
+        customer_id: customerId || null,
         phone: savedPhone || null,
-        platform: Capacitor.getPlatform(),
-        app: 'marketplace',
-        bundleId: 'br.com.epraja.appFma',
-      });
-    } catch (errReg) {
-      console.warn('[FCM] Falha ao registrar token em device_tokens via send-push:', errReg);
+        platform,
+        app,
+        bundle_id,
+        updated_at: new Date().toISOString(),
+      } as any, { onConflict: 'token' });
+    } catch (errDirect) {
+      console.warn('[PUSH REGISTER] Upsert cliente direto:', errDirect);
     }
 
     if (resolvedTargetId) {
-      // 1. Atualização via cliente (se houver permissão) com identidade explícita de app e bundle_id
-      Promise.allSettled([
-        supabase.from("device_tokens" as any).upsert({
-          token,
-          user_id: userId || null,
-          customer_id: customerId || null,
-          phone: savedPhone || null,
-          platform: Capacitor.getPlatform(),
-          app: 'marketplace',
-          bundle_id: 'br.com.epraja.appFma',
-          updated_at: new Date().toISOString(),
-        } as any, { onConflict: "token" }),
-        supabase.from("customers").update({ fcm_token: token, updated_at: new Date().toISOString() }).or(`user_id.eq.${resolvedTargetId},id.eq.${resolvedTargetId},phone.eq.${savedPhone}`),
-      ]);
+      supabase.from('customers').update({ fcm_token: token, updated_at: new Date().toISOString() }).or(`user_id.eq.${resolvedTargetId},id.eq.${resolvedTargetId},phone.eq.${savedPhone}`).then(() => {}).catch(() => {});
     }
 
-    // 2. Registro canônico do token na Edge Function send-push (service role, upsert em device_tokens)
+    // 2. Registro canônico via Edge Function send-push com Service Role
     try {
       const reg = await callSendPush({
         action: 'register_token',
         token,
         userId: userId ?? null,
         customerId: customerId ?? null,
+        deviceId: guestDeviceId,
         phone: savedPhone || null,
-        platform: Capacitor.getPlatform(),
-        app: 'marketplace',
-        bundleId: 'br.com.epraja.appFma',
+        platform,
+        app,
+        bundleId: bundle_id,
       });
-      console.log('[FCM] register_token (send-push):', reg);
-      if (reg.stale) {
-        console.warn('[FCM] Edge Function send-push publicada está desatualizada — refaça o deploy.');
-      }
+      console.log('[PUSH REGISTER] send-push outcome:', reg?.outcome || reg);
     } catch (errReg) {
-      console.warn('[FCM] Falha ao registrar token via send-push:', errReg);
+      console.warn('[PUSH REGISTER] Falha ao registrar via send-push:', errReg);
     }
+
+    // 3. Verificação pós-upsert para auditoria e confirmação da gravação
+    try {
+      const { data: checkData } = await supabase
+        .from('device_tokens' as any)
+        .select('id, user_id, platform, app, bundle_id, disabled_at, created_at, updated_at')
+        .eq('token', token)
+        .maybeSingle();
+
+      if (checkData) {
+        console.log('[PUSH REGISTER VERIFIED]', {
+          id: checkData.id,
+          user_id: checkData.user_id,
+          platform: checkData.platform,
+          app: checkData.app,
+          bundle_id: checkData.bundle_id,
+          disabled_at: checkData.disabled_at,
+          updated_at: checkData.updated_at,
+          hasToken: true
+        });
+      }
+    } catch (e) {}
 
     // 2. Invocação forçada com SERVICE_ROLE para garantir o salvamento do token FCM no banco
     let response = await supabase.functions.invoke('notify-customer', {
