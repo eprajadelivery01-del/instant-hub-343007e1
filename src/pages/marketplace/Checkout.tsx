@@ -634,7 +634,7 @@ export default function Checkout() {
           <ArrowLeft className="h-5 w-5 text-primary" />
         </button>
         <div className="flex-1 text-center pr-9">
-          <h1 className="font-bold text-sm tracking-widest text-foreground uppercase">SACOLA</h1>
+          <h1 className="font-bold text-sm tracking-widest text-foreground uppercase">FINALIZAR PEDIDO</h1>
         </div>
       </div>
 
@@ -903,6 +903,37 @@ export default function Checkout() {
             )}
           </div>
         )}
+
+        {/* Resumo de valores */}
+        <div className="px-4 space-y-3 mb-6">
+          <h3 className="font-bold text-base text-foreground mb-3">Resumo de valores</h3>
+          <div className="bg-secondary/30 border border-border/60 rounded-2xl p-4 space-y-2.5">
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Subtotal dos itens</span>
+              <span className="font-medium text-foreground">R$ {subtotal.toFixed(2).replace('.', ',')}</span>
+            </div>
+            <div className="flex justify-between text-sm items-center">
+              <span className="text-muted-foreground">Taxa de entrega</span>
+              <span className="font-medium text-foreground">
+                {fulfillmentMode === 'pickup'
+                  ? 'Grátis (Retirada)'
+                  : deliveryFee !== null && deliveryFee >= 0
+                  ? `R$ ${deliveryFee.toFixed(2).replace('.', ',')}`
+                  : 'A calcular'}
+              </span>
+            </div>
+            {discountAmount > 0 && (
+              <div className="flex justify-between text-sm text-[#7B46E5] font-semibold">
+                <span>Desconto ({appliedCoupon?.code || 'Cupom'})</span>
+                <span>- R$ {discountAmount.toFixed(2).replace('.', ',')}</span>
+              </div>
+            )}
+            <div className="border-t border-border/50 pt-2 flex justify-between font-bold text-base">
+              <span>Total a pagar</span>
+              <span className="text-primary">R$ {finalTotal.toFixed(2).replace('.', ',')}</span>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Sticky footer Checkout */}
