@@ -416,51 +416,69 @@ export default function OrderDetail() {
             </div>
 
             {/* Subtotais */}
-            <div className="space-y-2 mb-5 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Subtotal</span>
-                {detailsPending ? (
-                  <Skeleton className="h-4 w-16" />
-                ) : (
-                  <span className="font-medium text-foreground">R$ {itemsSubtotal.toFixed(2).replace('.', ',')}</span>
-                )}
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Taxa de entrega</span>
-                <span className="font-medium text-foreground">R$ {(order.delivery_fee || 0).toFixed(2).replace('.', ',')}</span>
-              </div>
-            </div>
+            {(() => {
+              const deliveryFee = Number(order.delivery_fee) || 0;
+              const orderTotal = order.total != null ? Number(order.total) : (itemsSubtotal + deliveryFee);
+              const discountAmount = Math.max(0, (itemsSubtotal + deliveryFee) - orderTotal);
 
-            {headerPartial ? (
-              <Skeleton className="h-10 w-2/3 mb-5" />
-            ) : (
-              <div className="flex gap-3 mb-5">
-                {order.payment_method === 'money' ? (
-                  <Banknote className="h-5 w-5 text-[#00A868] shrink-0 mt-0.5" />
-                ) : (
-                  <Smartphone className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                )}
-                <div>
-                  <p className="font-bold text-[15px] flex items-center gap-1">Pagamento na entrega <span className="text-[#00A868]">●</span> {order.payment_method === 'money' ? 'Dinheiro' : 'Máquina'}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {order.payment_method === 'money'
-                      ? (order.notes?.includes('Troco para R$')
-                          ? order.notes.split('Troco para R$')[1].split(' •')[0].trim() ? `Troco para R$ ${order.notes.split('Troco para R$')[1].split(' •')[0].trim()}` : 'Sem troco necessário'
-                          : 'Sem troco necessário')
-                      : ''}
-                  </p>
-                </div>
-              </div>
-            )}
+              return (
+                <>
+                  <div className="space-y-2 mb-5 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Subtotal</span>
+                      {detailsPending ? (
+                        <Skeleton className="h-4 w-16" />
+                      ) : (
+                        <span className="font-medium text-foreground">R$ {itemsSubtotal.toFixed(2).replace('.', ',')}</span>
+                      )}
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Taxa de entrega</span>
+                      <span className="font-medium text-foreground">
+                        {deliveryFee > 0 ? `R$ ${deliveryFee.toFixed(2).replace('.', ',')}` : 'Grátis'}
+                      </span>
+                    </div>
+                    {discountAmount > 0 && (
+                      <div className="flex justify-between text-primary font-medium">
+                        <span>Desconto (Cupom)</span>
+                        <span>- R$ {discountAmount.toFixed(2).replace('.', ',')}</span>
+                      </div>
+                    )}
+                  </div>
 
-            <div className="flex justify-between items-center font-bold text-base mb-6">
-              <span className="text-foreground">Total com entrega</span>
-              {detailsPending ? (
-                <Skeleton className="h-5 w-20" />
-              ) : (
-                <span>R$ {(itemsSubtotal + (order.delivery_fee || 0)).toFixed(2).replace('.', ',')}</span>
-              )}
-            </div>
+                  {headerPartial ? (
+                    <Skeleton className="h-10 w-2/3 mb-5" />
+                  ) : (
+                    <div className="flex gap-3 mb-5">
+                      {order.payment_method === 'money' ? (
+                        <Banknote className="h-5 w-5 text-[#00A868] shrink-0 mt-0.5" />
+                      ) : (
+                        <Smartphone className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                      )}
+                      <div>
+                        <p className="font-bold text-[15px] flex items-center gap-1">Pagamento na entrega <span className="text-[#00A868]">●</span> {order.payment_method === 'money' ? 'Dinheiro' : 'Máquina'}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {order.payment_method === 'money'
+                            ? (order.notes?.includes('Troco para R$')
+                                ? order.notes.split('Troco para R$')[1].split(' •')[0].trim() ? `Troco para R$ ${order.notes.split('Troco para R$')[1].split(' •')[0].trim()}` : 'Sem troco necessário'
+                                : 'Sem troco necessário')
+                            : ''}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex justify-between items-center font-bold text-base mb-6">
+                    <span className="text-foreground">Total com entrega</span>
+                    {detailsPending ? (
+                      <Skeleton className="h-5 w-20" />
+                    ) : (
+                      <span>R$ {orderTotal.toFixed(2).replace('.', ',')}</span>
+                    )}
+                  </div>
+                </>
+              );
+            })()}
 
             <div className="border-t border-border/50 pt-5 text-center flex flex-col gap-3">
               <button

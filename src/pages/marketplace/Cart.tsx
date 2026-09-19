@@ -390,12 +390,12 @@ export default function Cart() {
           </div>
           {appliedCoupon && (
             <div className="flex justify-between text-sm text-[#7B46E5] font-semibold">
-              <span>Total com desconto do cupom</span>
-              <span>R$ {total.toFixed(2).replace('.', ',')}</span>
+              <span>Desconto ({appliedCoupon.code})</span>
+              <span>- R$ {discountAmount.toFixed(2).replace('.', ',')}</span>
             </div>
           )}
           <div className="flex justify-between font-bold text-base pt-2">
-            <span>Total</span>
+            <span>Total da sacola</span>
             <span>R$ {total.toFixed(2).replace('.', ',')}</span>
           </div>
         </div>

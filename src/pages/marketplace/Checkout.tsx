@@ -345,8 +345,9 @@ export default function Checkout() {
 
     if (fulfillmentMode === 'delivery') {
       if (!selectedAddress) { toast.error('Selecione um endereço'); return; }
-      if (unavailable) { toast.error('Entrega não disponível'); return; }
-      if (loadingFee) { toast.error('Calculando entrega, aguarde'); return; }
+      if (unavailable) { toast.error('Entrega não disponível para este endereço'); return; }
+      if (loadingFee) { toast.error('Calculando taxa de entrega, aguarde...'); return; }
+      if (deliveryFee === null || isNaN(Number(deliveryFee))) { toast.error('Aguarde o cálculo da taxa de entrega.'); return; }
     }
     setShowReviewModal(true);
   };
@@ -373,81 +374,60 @@ export default function Checkout() {
       }
 
       const orderNotes = cpf ? `CPF na nota: ${cpf}` : null;
-
-      const ik = generateIdempotencyKey(
+      const idempotencyKey = generateIdempotencyKey(
         user.id,
         items,
         `${company.id}|${selectedAddress}|${appliedCoupon?.code ?? ''}|${paymentMethod}`,
       );
 
-      // Filtra itens inválidos para não quebrar a Edge Function
-      const validItems = items.filter(it => it && it.product && typeof it.product.id === 'string' && it.product.id.length > 10);
-      
+      // Pre-validation: filtrar itens válidos
+      const validItems = items.filter(i => i && i.product && typeof i.product.id === 'string' && i.product.id.length > 10);
       if (validItems.length === 0) {
         toast.error('Carrinho vazio ou itens inválidos.');
         setLoading(false);
         return;
       }
 
-      // A sacola persiste no aparelho e pode conter um produto que o lojista
-      // desativou depois. Confirma a disponibilidade atual antes de criar o
-      // pedido para não enviar repetidamente um item inválido à Edge Function.
-      const productIds = validItems.map((item) => item.product.id);
-      const { data: currentProducts, error: productsError } = await supabase
+      const productIds = validItems.map(i => i.product.id);
+      const { data: dbProducts, error: prodErr } = await supabase
         .from('products')
         .select('id, active, is_active')
         .in('id', productIds);
 
-      if (productsError) {
-        const err: any = new Error('Não foi possível atualizar sua sacola. Verifique sua conexão e tente novamente.');
+      if (prodErr) {
+        const err = new Error('Não foi possível atualizar sua sacola. Verifique sua conexão e tente novamente.') as any;
         err.retriable = true;
         throw err;
       }
 
-      const availableProductIds = new Set(
-        (currentProducts ?? [])
-          .filter((product: any) => product.active !== false && product.is_active !== false)
-          .map((product: any) => product.id),
+      const availableIds = new Set(
+        (dbProducts ?? [])
+          .filter(p => p.active !== false && p.is_active !== false)
+          .map(p => p.id)
       );
-      const unavailableItems = validItems.filter((item) => !availableProductIds.has(item.product.id));
 
-      if (unavailableItems.length > 0) {
-        unavailableItems.forEach((item) => removeItem(item.id));
-        const unavailableNames = unavailableItems
-          .map((item) => item.product.name)
-          .filter(Boolean)
-          .join(', ');
+      const removedItems = validItems.filter(i => !availableIds.has(i.product.id));
+      if (removedItems.length > 0) {
+        removedItems.forEach(i => removeItem(i.id));
+        const removedNames = removedItems.map(i => i.product.name).filter(Boolean).join(', ');
         toast.warning(
-          unavailableItems.length === 1
-            ? `${unavailableNames || 'Um item'} não está mais disponível e foi removido da sacola.`
-            : 'Alguns itens não estão mais disponíveis e foram removidos da sacola.',
+          removedItems.length === 1
+            ? `${removedNames || 'Um item'} não está mais disponível e foi removido da sacola.`
+            : 'Alguns itens não estão mais disponíveis e foram removidos da sacola.'
         );
         setShowReviewModal(false);
         return;
       }
 
-      const finalCustomerName =
-        nameInput.trim() ||
-        profile?.full_name?.trim() ||
-        localStorage.getItem('@epraja_customer_name') ||
-        localStorage.getItem('epraja_customer_name') ||
-        (user.user_metadata as any)?.full_name ||
-        null;
+      const finalCustomerName = nameInput.trim() || profile?.full_name?.trim() || localStorage.getItem('@epraja_customer_name') || localStorage.getItem('epraja_customer_name') || (user.user_metadata as any)?.full_name || null;
+      const finalCustomerPhone = profile?.phone || phoneInput || (user.user_metadata as any)?.phone || localStorage.getItem('@epraja_customer_phone') || localStorage.getItem('epraja_customer_phone') || null;
 
-      const finalCustomerPhone =
-        profile?.phone ||
-        phoneInput ||
-        (user.user_metadata as any)?.phone ||
-        localStorage.getItem('@epraja_customer_phone') ||
-        localStorage.getItem('epraja_customer_phone') ||
-        null;
-
-      const requestBody = {
-        items: validItems.map((it) => ({
-          product_id: it.product.id,
-          quantity: it.quantity,
-          notes: it.note || null,
-          options: it.options || [],
+      const orderPayload: any = {
+        items: validItems.map((item) => ({
+          product_id: item.product.id,
+          quantity: item.quantity,
+          notes: item.note || null,
+          options: item.options || [],
         })),
         company_id: company.id,
         address_id: fulfillmentMode === 'pickup' ? null : selectedAddress,
@@ -458,80 +438,74 @@ export default function Checkout() {
         notes: fulfillmentMode === 'pickup' ? `[RETIRADA NO LOCAL] ${orderNotes || ''}`.trim() : orderNotes,
         needs_change: paymentMethod === 'money' && needsChange,
         change_for: changeFor ? Number(changeFor) : null,
-        idempotency_key: ik,
+        idempotency_key: idempotencyKey,
       };
 
       // Route through the create-order edge function so subtotal, discount and
-      // delivery fee are recalculated server-side from canonical DB data. Client
-      // never supplies prices — prevents fee/total manipulation.
+      // delivery fee are recalculated authoritatively on the server.
       const { data, error: functionError } = await supabase.functions.invoke('create-order', {
         body: {
-          ...requestBody,
+          ...orderPayload,
           fulfillment_mode: fulfillmentMode,
         },
       });
 
       if (functionError) {
-        let errMessage = functionError.message;
-        let errCode: string | null = null;
-        let responseBody: any = null;
-        
-        // Se for um erro HTTP da Edge Function, tentamos ler a resposta real
-        if (functionError.name === 'FunctionsHttpError' || errMessage === 'Edge Function returned a nãon-2xx status code') {
+        let msg = functionError.message;
+        let errorCode: string | null = null;
+        let responseJson: any = null;
+
+        if (functionError.name === 'FunctionsHttpError' || msg === 'Edge Function returned a nãon-2xx status code') {
           try {
             const ctx = (functionError as any).context;
             if (ctx && typeof ctx.clone === 'function') {
               const text = await ctx.clone().text();
               try {
-                responseBody = JSON.parse(text);
+                responseJson = JSON.parse(text);
               } catch {
-                responseBody = { error: text };
+                responseJson = { error: text };
               }
-              if (responseBody?.error) errMessage = responseBody.error;
-              if (responseBody?.error_code) errCode = responseBody.error_code;
+              if (responseJson?.error) msg = responseJson.error;
+              if (responseJson?.error_code) errorCode = responseJson.error_code;
             } else if (ctx && typeof ctx.json === 'function') {
-              responseBody = await ctx.json();
-              if (responseBody?.error) errMessage = responseBody.error;
-              if (responseBody?.error_code) errCode = responseBody.error_code;
+              responseJson = await ctx.json();
+              if (responseJson?.error) msg = responseJson.error;
+              if (responseJson?.error_code) errorCode = responseJson.error_code;
             } else if (ctx && ctx.error) {
-              responseBody = ctx;
-              errMessage = ctx.error;
-              errCode = ctx.error_code ?? null;
+              responseJson = ctx;
+              msg = ctx.error;
+              errorCode = ctx.error_code ?? null;
             }
-          } catch (e) {
-            // falhou ao extrair, continua com fallback
-          }
-        }
-        
-        // Oculta a mensagem feia do banco de dados/sistema se não conseguimos ler o erro real
-        if (errMessage === 'Edge Function returned a nãon-2xx status code') {
-          errMessage = 'Erro de comunicação com o serávidor. Por favor, tente nãovamente.';
+          } catch {}
         }
 
-        const mapped = mapServerError(errMessage, errCode, responseBody);
-        
+        if (msg === 'Edge Function returned a nãon-2xx status code') {
+          msg = 'Erro de comunicação com o serávidor. Por favor, tente nãovamente.';
+        }
+
+        const friendly = mapServerError(msg, errorCode, responseJson);
         reportErrorToTelegram({
-          error_message: `[Checkout] Erro na Edge Function: ${mapped.message}`,
-          stack_trace: JSON.stringify(responseBody || {}),
+          error_message: `[Checkout] Erro na Edge Function: ${friendly.message}`,
+          stack_trace: JSON.stringify(responseJson || {}),
           url: window.location.href,
           additional_info: {
-            errorCode: errCode,
-            isUserFacingAlert: true
+            errorCode,
+            isUserFacingAlert: true,
           }
         });
-        
-        const err: any = new Error(mapped.message);
-        err.retriable = responseBody?.retryable ?? mapped.retriable;
-        err.errorCode = errCode ?? responseBody?.error_code ?? null;
-        err.requestId = responseBody?.request_id ?? null;
-        err.failureKind = responseBody?.failure_kind ?? null;
-        err.debugCode = responseBody?.debug_code ?? null;
+        const err = new Error(friendly.message) as any;
+        err.retriable = responseJson?.retryable ?? friendly.retriable;
+        err.errorCode = errorCode ?? responseJson?.error_code ?? null;
+        err.requestId = responseJson?.request_id ?? null;
+        err.failureKind = responseJson?.failure_kind ?? null;
+        err.debugCode = responseJson?.debug_code ?? null;
         throw err;
       }
+
       if (data?.error) {
-        const mapped = mapServerError(data.error, data.error_code ?? null, data);
-        const err: any = new Error(mapped.message);
-        err.retriable = data?.retryable ?? mapped.retriable;
+        const friendly = mapServerError(data.error, data.error_code ?? null, data);
+        const err = new Error(friendly.message) as any;
+        err.retriable = data?.retryable ?? friendly.retriable;
         err.errorCode = data?.error_code ?? null;
         err.requestId = data?.request_id ?? null;
         err.failureKind = data?.failure_kind ?? null;
@@ -548,27 +522,26 @@ export default function Checkout() {
           recent.push(orderId);
           localStorage.setItem('@epraja_recent_orders', JSON.stringify(recent));
         }
-      } catch (e) {}
+      } catch {}
 
-      syncFcmTokenToDatabase();
-
+      hapticFeedback();
       clearCart();
       resetIdempotencyKey();
       toast.success('Pedido realizado!');
       setShowReviewModal(false);
       navigate(`/marketplace/orders/${orderId}`);
     } catch (err: any) {
-      const message = err?.message || 'Erro ao criar pedido';
+      const msg = err?.message || 'Erro ao criar pedido';
       const retriable = err?.retriable !== false;
       console.warn('[Checkout][create-order] Falha ao finalizar pedido', {
-        message,
+        message: msg,
         retriable,
         error_code: err?.errorCode ?? null,
         request_id: err?.requestId ?? null,
         failure_kind: err?.failureKind ?? null,
         debug_code: err?.debugCode ?? null,
       });
-      toast.error(message, {
+      toast.error(msg, {
         id: 'checkout-create-order-error',
         description: err?.requestId ? `Código do erro: ${err.requestId}` : undefined,
         duration: 8000,
@@ -582,18 +555,32 @@ export default function Checkout() {
             }
           : undefined,
       } as any);
-    } finally { setLoading(false); releaseLock(); }
+    } finally {
+      setLoading(false);
+      releaseLock();
+    }
   };
 
-  if (!user) { navigate('/marketplace/login'); return null; }
-  if (items.length === 0) { navigate('/marketplace/cart'); return null; }
+  if (!user) {
+    navigate('/marketplace/login');
+    return null;
+  }
+
+  if (items.length === 0) {
+    navigate('/marketplace/cart');
+    return null;
+  }
 
   const selAddrObj = addresses.find(a => a.id === selectedAddress);
 
   return (
     <MarketplaceLayout hideNav>
+      {/* Header */}
       <div className="sticky top-0 z-30 flex items-center gap-3 border-b border-border bg-background px-4 pb-3 pt-[calc(env(safe-area-inset-top,0px)+0.75rem)]">
-        <button onClick={() => navigate(-1)} className="flex h-9 w-9 items-center justify-center rounded-full">
+        <button
+          onClick={() => navigate(-1)}
+          className="flex h-9 w-9 items-center justify-center rounded-full"
+        >
           <ArrowLeft className="h-5 w-5 text-primary" />
         </button>
         <div className="flex-1 text-center pr-9">
@@ -602,17 +589,25 @@ export default function Checkout() {
       </div>
 
       <div className="mx-auto max-w-lg px-0 py-4 pb-40">
-        {/* Fulfillment Mode Toggle */}
+        {/* Toggle Entrega / Retirada */}
         <div className="px-4 mb-6">
           <div className="bg-muted p-1 rounded-xl flex items-center">
             <button
-              className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${fulfillmentMode === 'delivery' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+              className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${
+                fulfillmentMode === 'delivery'
+                  ? 'bg-background shadow-sm text-foreground'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
               onClick={() => setFulfillmentMode('delivery')}
             >
               Entrega
             </button>
             <button
-              className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${fulfillmentMode === 'pickup' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+              className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${
+                fulfillmentMode === 'pickup'
+                  ? 'bg-background shadow-sm text-foreground'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
               onClick={() => setFulfillmentMode('pickup')}
             >
               Retirada
@@ -622,7 +617,7 @@ export default function Checkout() {
 
         {fulfillmentMode === 'delivery' && (
           <>
-            {/* Endereço estilo iFood */}
+            {/* Endereço de Entrega */}
             <div className="px-4 mb-6">
               <h3 className="text-base font-bold text-foreground mb-3">Entregar no endereço</h3>
               {loadingAddresses ? (
@@ -641,14 +636,12 @@ export default function Checkout() {
                       <p className="text-sm text-muted-foreground truncate">{selAddrObj?.neighborhood} - {selAddrObj?.complement || 'Casa'}</p>
                     </div>
                   </div>
-                  <button className="text-sm font-semibold text-primary shrink-0" onClick={() => setShowAddressModal(true)}>
-                    Trocar
-                  </button>
+                  <button className="text-sm font-semibold text-primary shrink-0" onClick={() => setShowAddressModal(true)}>Trocar</button>
                 </div>
               )}
             </div>
 
-            {/* Opções de entrega */}
+            {/* Opções de Entrega */}
             <div className="px-4 mb-8">
               <h3 className="text-base font-bold text-foreground mb-3 flex items-center gap-1">
                 Opções de entrega <AlertCircle className="h-4 w-4 text-muted-foreground" />
@@ -679,10 +672,10 @@ export default function Checkout() {
 
         <div className="h-2 w-full bg-secondary mb-6" />
 
-        {/* Formas de Pagamento restritas */}
+        {/* Forma de Pagamento na Entrega */}
         <div className="px-4 mb-6">
           <h3 className="text-base font-bold text-foreground mb-4">Pagamento na entrega</h3>
-          <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="space-y-3">
+          <RadioGroup value={paymentMethod} onValueChange={(val: any) => setPaymentMethod(val)} className="space-y-3">
             {[
               { value: 'money', icon: Banknote, label: 'Dinheiro', desc: 'Solicite troco se precisar' },
               { value: 'card', icon: Smartphone, label: 'Máquina', desc: 'Cartão de crédito, débito ou PIX na máquina' },
@@ -823,7 +816,7 @@ export default function Checkout() {
       <div className="fixed bottom-0 left-0 right-0 border-t border-border bg-card p-4 safe-area-bottom shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-40">
         <div className="mx-auto max-w-lg space-y-2">
           <p className="text-[13px] text-muted-foreground font-medium mb-2 px-1">
-            Total a pagar {deliveryFee === null && <span className="text-xs text-muted-foreground">(+ taxa de entrega)</span>}
+            Total a pagar {fulfillmentMode === 'delivery' && deliveryFee === null && <span className="text-xs text-muted-foreground">(+ taxa de entrega)</span>}
           </p>
           
           <div className="flex items-center gap-4">
@@ -836,7 +829,7 @@ export default function Checkout() {
             <Button 
               className="h-14 w-[60%] rounded-xl text-base font-bold bg-primary hover:bg-primary/90 text-primary-foreground" 
               onClick={handleOpenReview} 
-              disabled={unavailable || !selectedAddress || loadingFee}
+              disabled={unavailable || (fulfillmentMode === 'delivery' && (!selectedAddress || loadingFee || deliveryFee === null))}
             >
               Revisar pedido
             </Button>
@@ -898,18 +891,18 @@ export default function Checkout() {
       <Sheet open={showReviewModal} onOpenChange={setShowReviewModal}>
         <SheetContent side="bottom" className="h-auto max-h-[90vh] overflow-y-auto rounded-t-[32px] px-0 pb-0 pt-6">
           <div className="mx-auto w-12 h-1.5 rounded-full bg-muted mb-6" />
-          <SheetHeader className="px-6 mb-6">
+          <SheetHeader className="px-6 mb-4">
             <SheetTitle className="text-center text-xl font-bold">Revise o seu pedido</SheetTitle>
             <SheetDescription className="sr-only">
               Confira os itens, o endereço e o pagamento antes de confirmar
             </SheetDescription>
           </SheetHeader>
 
-          <div className="px-6 space-y-6">
+          <div className="px-6 space-y-4">
             <div className="flex items-start gap-4">
               <Bike className="h-6 w-6 text-foreground mt-0.5" />
               <div>
-                <p className="font-bold text-[15px]">Entrega hoje</p>
+                <p className="font-bold text-[15px]">{fulfillmentMode === 'pickup' ? 'Retirada no Local' : 'Entrega hoje'}</p>
                 <p className="text-sm text-muted-foreground">Hoje, 30 - 45 min</p>
               </div>
             </div>
@@ -931,18 +924,29 @@ export default function Checkout() {
               </div>
             </div>
 
-            {appliedCoupon && (
-              <div className="flex items-start gap-4">
-                <Ticket className="h-6 w-6 text-foreground mt-0.5" />
-                <div className="flex-1 flex justify-between items-center">
-                  <div>
-                    <p className="font-bold text-[15px]">Cupom aplicado</p>
-                    <p className="text-sm text-primary uppercase">{appliedCoupon.code}</p>
-                  </div>
-                  <span className="font-bold text-primary">- R$ {discountAmount.toFixed(2).replace('.', ',')}</span>
-                </div>
+            {/* Resumo detalhado dos valores */}
+            <div className="bg-muted/40 rounded-2xl p-4 space-y-2 text-sm border border-border/50">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Subtotal dos itens</span>
+                <span className="font-semibold text-foreground">R$ {subtotal.toFixed(2).replace('.', ',')}</span>
               </div>
-            )}
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Taxa de entrega</span>
+                <span className="font-semibold text-foreground">
+                  {fulfillmentMode === 'pickup' ? 'Grátis (Retirada)' : `R$ ${(deliveryFee ?? 0).toFixed(2).replace('.', ',')}`}
+                </span>
+              </div>
+              {appliedCoupon && (
+                <div className="flex justify-between text-primary font-bold">
+                  <span>Cupom ({appliedCoupon.code})</span>
+                  <span>- R$ {discountAmount.toFixed(2).replace('.', ',')}</span>
+                </div>
+              )}
+              <div className="border-t border-border/60 pt-2 flex justify-between items-center font-bold text-base">
+                <span className="text-foreground">Total a pagar</span>
+                <span className="text-primary text-lg">R$ {finalTotal.toFixed(2).replace('.', ',')}</span>
+              </div>
+            </div>
 
             <div className="flex items-start gap-4 pb-2 border-b border-border/50">
               <Banknote className="h-6 w-6 text-[#00A868] mt-0.5" />
@@ -950,7 +954,7 @@ export default function Checkout() {
                 <div>
                   <p className="font-bold text-[15px] flex items-center gap-1">Pagamento na entrega <span className="text-[#EA1D2C]">*</span></p>
                   <p className="text-sm text-muted-foreground">
-                    {paymentMethod === 'money' ? `Dinheiro${needsChange && changeFor ? ` - Troco para R$ ${Number(changeFor).toFixed(2).replace('.', ',')}` : ''}` : 'Máquina (Cartão/PIX)'}
+                    {paymentMethod === 'money' ? `Dinheiro${needsChange && changeFor ? ` - Troco para R$ ${Number(changeFor).toFixed(2).replace('.', ',')}` : ' (Sem troco)'}` : 'Máquina (Cartão/PIX)'}
                   </p>
                 </div>
                 <span className="font-bold text-base mt-0.5">R$ {finalTotal.toFixed(2).replace('.', ',')}</span>
@@ -960,15 +964,15 @@ export default function Checkout() {
 
           <div className="p-6 pt-4 pb-8 space-y-3 bg-background">
             <Button 
-              className="w-full h-14 rounded-xl text-base font-bold bg-primary hover:bg-primary/90 text-primary-foreground"
+              className="h-14 w-full rounded-xl text-base font-bold bg-primary hover:bg-primary/90 text-primary-foreground"
               onClick={handleSubmit}
               disabled={loading}
             >
-              {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Fazer pedido'}
+              {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : `Fazer pedido • R$ ${finalTotal.toFixed(2).replace('.', ',')}`}
             </Button>
             <Button 
               variant="ghost" 
-              className="w-full h-14 rounded-xl text-[15px] font-semibold text-[#EA1D2C] hover:bg-transparent hover:text-[#D11825]"
+              className="h-14 w-full rounded-xl text-[15px] font-semibold text-[#EA1D2C] hover:bg-transparent hover:text-[#D11825]"
               onClick={() => setShowReviewModal(false)}
             >
               Alterar pedido
