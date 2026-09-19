@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Sparkles, Ticket, Copy, Check, Megaphone, Flame } from 'lucide-react';
 import { toast } from 'sonner';
+import { isCustomerNotification } from '@/components/marketplace/ClientNotificationsPopover';
 
 export function ActiveOfferHighlight() {
   const [latestNotif, setLatestNotif] = useState<any>(null);
@@ -15,11 +16,13 @@ export function ActiveOfferHighlight() {
           .select('*')
           .or('target_audience.eq.customers,target_audience.is.null,target_audience.eq.all')
           .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
+          .limit(10);
 
-        if (data) {
-          setLatestNotif(data);
+        if (data && data.length > 0) {
+          const valid = data.find((d: any) => isCustomerNotification(d));
+          if (valid) {
+            setLatestNotif(valid);
+          }
         }
       } catch (e) {
         // Silently fail if table empty
@@ -39,9 +42,7 @@ export function ActiveOfferHighlight() {
           { event: 'INSERT', schema: 'public', table: 'marketing_notifications' },
           (payload) => {
             const raw = payload.new as any;
-            if (!raw) return;
-            const aud = String(raw.target_audience || 'customers').toLowerCase();
-            if (aud !== 'customers' && aud !== 'all') return;
+            if (!raw || !isCustomerNotification(raw)) return;
             setLatestNotif(raw);
           }
         )

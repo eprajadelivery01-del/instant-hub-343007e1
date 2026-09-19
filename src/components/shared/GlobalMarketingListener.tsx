@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Copy, X } from 'lucide-react';
 import { Capacitor } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
+import { isCustomerNotification } from '@/components/marketplace/ClientNotificationsPopover';
 
 const NOTIFICATION_AUDIO_URL = 'https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3';
 
@@ -92,13 +93,7 @@ export function GlobalMarketingListener() {
         { event: 'INSERT', schema: 'public', table: 'marketing_notifications' },
         (payload) => {
           const newNotif = payload.new as any;
-          if (!newNotif) return;
-
-          // Trava de segmentação: ignora se for para lojistas ou entregadores
-          const audience = String(newNotif.target_audience || 'customers').toLowerCase();
-          if (audience !== 'customers' && audience !== 'all') {
-            return;
-          }
+          if (!newNotif || !isCustomerNotification(newNotif)) return;
 
           playNotificationAudio();
 

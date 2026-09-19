@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { Capacitor } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
+import { isCustomerNotification } from '@/components/marketplace/ClientNotificationsPopover';
 
 export type MarketingNotification = {
   id: string;
@@ -42,11 +43,7 @@ export function useMarketingNotifications() {
         },
         (payload) => {
           const newNotif = payload.new as any;
-          if (!newNotif) return;
-
-          // Trava de segmentação: ignora notificações para lojistas ou entregadores
-          const aud = String(newNotif.target_audience || 'customers').toLowerCase();
-          if (aud !== 'customers' && aud !== 'all') return;
+          if (!newNotif || !isCustomerNotification(newNotif)) return;
           
           // Send broadcast receipt back to Admin Panel
           if (user) {

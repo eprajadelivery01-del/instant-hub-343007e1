@@ -23,6 +23,39 @@ export type MarketingNotifItem = {
   status?: string;
   type?: 'marketing' | 'order_status';
   order_id?: string;
+  target_audience?: string | null;
+};
+
+export const isCustomerNotification = (item: any): boolean => {
+  if (!item) return false;
+  if (item.type === 'order_status') return true;
+
+  const aud = String(item.target_audience || '').toLowerCase().trim();
+  if (aud === 'drivers' || aud === 'stores') return false;
+
+  const title = String(item.title || '').toLowerCase();
+  const msg = String(item.message || '').toLowerCase();
+
+  if (
+    title.includes('app novo') ||
+    title.includes('entregador') ||
+    title.includes('lojista') ||
+    title.includes('repasse') ||
+    title.includes('corrida') ||
+    msg.includes('atualização disponivel') ||
+    msg.includes('atualizacao disponivel') ||
+    msg.includes('app entregador') ||
+    msg.includes('app lojista') ||
+    msg.includes('repasse')
+  ) {
+    return false;
+  }
+
+  if (aud) {
+    return aud === 'customers' || aud === 'all';
+  }
+
+  return true;
 };
 
 const ORDER_STATUS_CONFIG: Record<string, { title: string; desc: string; emoji: string }> = {
@@ -114,11 +147,8 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
         
         if (isNaN(t) || (now - t) > FORTY_EIGHT_HOURS_MS || isPending) continue;
 
-        // Trava de segmentação: expurga itens que foram salvos para lojistas ou entregadores
-        if (n.type === 'marketing' && n.target_audience) {
-          const aud = String(n.target_audience).toLowerCase();
-          if (aud !== 'customers' && aud !== 'all') continue;
-        }
+        // Trava estrita de segmentação: expurga itens que foram salvos para lojistas ou entregadores
+        if (!isCustomerNotification(n)) continue;
 
         // Normaliza ID legado para chave canônica única por pedido e status
         let canonicalId = n.id;
@@ -204,11 +234,9 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
     ) {
       return;
     }
-    // Trava de segmentação: nunca persiste notificação de lojista ou entregador
-    if (item.type === 'marketing' && item.target_audience) {
-      const aud = String(item.target_audience).toLowerCase();
-      if (aud !== 'customers' && aud !== 'all') return;
-    }
+    // Trava estrita de segmentação: nunca persiste notificação de lojista ou entregador
+    if (!isCustomerNotification(item)) return;
+
     const existing = loadPersistedNotifications();
     if (existing.some(n => n.id === item.id)) return;
     const updated = [item, ...existing]
@@ -225,11 +253,8 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
         (item.message && (item.message.toLowerCase().includes('solicitado') || item.message.toLowerCase().includes('aguardando confirmação')));
       if (isPending) return false;
 
-      // Trava de segmentação
-      if (item.type === 'marketing' && item.target_audience) {
-        const aud = String(item.target_audience).toLowerCase();
-        if (aud !== 'customers' && aud !== 'all') return false;
-      }
+      // Trava estrita de segmentação
+      if (!isCustomerNotification(item)) return false;
       return true;
     });
     const existing = loadPersistedNotifications();
@@ -255,12 +280,14 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
         .gte('created_at', twoDaysAgoISO)
         .or('target_audience.eq.customers,target_audience.is.null,target_audience.eq.all')
         .order('created_at', { ascending: false })
-        .limit(20);
+        .limit(30);
 
-      const marketingItems: MarketingNotifItem[] = (mData || []).map((m: any) => ({
-        ...m,
-        type: 'marketing'
-      }));
+      const marketingItems: MarketingNotifItem[] = (mData || [])
+        .filter((m: any) => isCustomerNotification(m))
+        .map((m: any) => ({
+          ...m,
+          type: 'marketing'
+        }));
 
       persistMultipleNotifications(marketingItems);
 
@@ -373,11 +400,7 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
           { event: 'INSERT', schema: 'public', table: 'marketing_notifications' },
           (payload) => {
             const raw = payload.new as any;
-            if (!raw) return;
-
-            // Trava de segmentação: ignora se for para lojistas ou entregadores
-            const aud = String(raw.target_audience || 'customers').toLowerCase();
-            if (aud !== 'customers' && aud !== 'all') return;
+            if (!raw || !isCustomerNotification(raw)) return;
 
             const newNotif = { ...raw, type: 'marketing' } as MarketingNotifItem;
             persistNotification(newNotif);
