@@ -43,6 +43,12 @@ public class MainActivity extends BridgeActivity {
             getWindow().setStatusBarContrastEnforced(false);
             getWindow().setNavigationBarContrastEnforced(false);
         }
+        androidx.core.view.WindowInsetsControllerCompat insetsController = 
+            WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+        if (insetsController != null) {
+            insetsController.setAppearanceLightStatusBars(false); // false = dark bar, light icons
+            insetsController.setAppearanceLightNavigationBars(false);
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             View decorView = getWindow().getDecorView();
             int flags = decorView.getSystemUiVisibility();
