@@ -28,9 +28,14 @@ export type MarketingNotifItem = {
 
 export function isMarketplaceMarketingNotification(item: any): boolean {
   if (!item) return false;
-  if (item.type === 'order_status') return true;
   const audience = String(item.target_audience || '').trim().toLowerCase();
   return audience === 'customers' || audience === 'all';
+}
+
+export function isMarketplacePopoverItem(item: any): boolean {
+  if (!item) return false;
+  if (item.type === 'order_status') return true;
+  return isMarketplaceMarketingNotification(item);
 }
 
 // Alias para compatibilidade retroativa com outros componentes
@@ -131,7 +136,7 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
         if (isNaN(t) || (now - t) > FORTY_EIGHT_HOURS_MS || isPending) continue;
 
         // Trava estrita de segmentação: expurga itens que foram salvos para lojistas ou entregadores
-        if (!isMarketplaceMarketingNotification(n)) continue;
+        if (!isMarketplacePopoverItem(n)) continue;
 
         // Normaliza ID legado para chave canônica única por pedido e status
         let canonicalId = n.id;
@@ -197,7 +202,7 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
 
       const result = [...nonOrderItems, ...fixedOrderItems].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
       
-      // Persiste o resultado sanitizado no localStorage
+      // Persiste o resultado sanitizado no localStorage (garantindo que v2 fique limpo)
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(result));
       } catch {}
@@ -218,7 +223,7 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
       return;
     }
     // Trava estrita de segmentação: nunca persiste notificação de lojista ou entregador
-    if (!isMarketplaceMarketingNotification(item)) return;
+    if (!isMarketplacePopoverItem(item)) return;
 
     const existing = loadPersistedNotifications();
     if (existing.some(n => n.id === item.id)) return;
@@ -237,7 +242,7 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
       if (isPending) return false;
 
       // Trava estrita de segmentação
-      if (!isMarketplaceMarketingNotification(item)) return false;
+      if (!isMarketplacePopoverItem(item)) return false;
       return true;
     });
     const existing = loadPersistedNotifications();
@@ -592,7 +597,7 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
                 <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
                 <p className="text-xs">Carregando notificações...</p>
               </div>
-            ) : notifications.filter(isMarketplaceMarketingNotification).length === 0 ? (
+            ) : notifications.filter(isMarketplacePopoverItem).length === 0 ? (
               <div className="flex flex-col items-center justify-center h-64 text-center p-6 text-muted-foreground space-y-3">
                 <div className="p-4 bg-muted/30 rounded-full">
                   <Bell className="w-8 h-8 opacity-40" />
@@ -603,7 +608,7 @@ export function ClientNotificationsPopover({ className }: ClientNotificationsPop
                 </p>
               </div>
             ) : (
-              notifications.filter(isMarketplaceMarketingNotification).map((notif) => (
+              notifications.filter(isMarketplacePopoverItem).map((notif) => (
                 <div
                   key={notif.id}
                   className={cn(

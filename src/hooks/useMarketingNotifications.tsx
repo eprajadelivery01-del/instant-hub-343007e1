@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { Capacitor } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
-import { isCustomerNotification } from '@/components/marketplace/ClientNotificationsPopover';
+import { isMarketplaceMarketingNotification } from '@/components/marketplace/ClientNotificationsPopover';
 
 export type MarketingNotification = {
   id: string;
