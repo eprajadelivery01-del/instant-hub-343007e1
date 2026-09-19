@@ -31,8 +31,31 @@ export const isCustomerNotification = (item: any): boolean => {
   if (item.type === 'order_status') return true;
 
   const aud = String(item.target_audience || '').toLowerCase().trim();
-  if (aud === 'drivers' || aud === 'stores') return false;
+  
+  // 1. Trava estrita de audiência para entregadores e lojistas
+  if (
+    aud === 'drivers' || 
+    aud === 'driver' || 
+    aud === 'entregador' || 
+    aud === 'entregadores' || 
+    aud === 'motoboy' || 
+    aud === 'motoboys' || 
+    aud === 'stores' || 
+    aud === 'store' || 
+    aud === 'lojista' || 
+    aud === 'lojistas' || 
+    aud === 'merchants' ||
+    aud === 'merchant'
+  ) {
+    return false;
+  }
 
+  // 2. Se a audiência estiver explícita, só aceita se for para clientes
+  if (aud) {
+    return aud === 'customers' || aud === 'all' || aud === 'clientes' || aud === 'cliente';
+  }
+
+  // 3. Para notificações legadas sem target_audience, faz verificação estrita por conteúdo
   const title = String(item.title || '').toLowerCase();
   const msg = String(item.message || '').toLowerCase();
 
@@ -42,17 +65,15 @@ export const isCustomerNotification = (item: any): boolean => {
     title.includes('lojista') ||
     title.includes('repasse') ||
     title.includes('corrida') ||
+    title.includes('motoboy') ||
     msg.includes('atualização disponivel') ||
     msg.includes('atualizacao disponivel') ||
     msg.includes('app entregador') ||
     msg.includes('app lojista') ||
-    msg.includes('repasse')
+    msg.includes('repasse') ||
+    msg.includes('corrida')
   ) {
     return false;
-  }
-
-  if (aud) {
-    return aud === 'customers' || aud === 'all';
   }
 
   return true;
