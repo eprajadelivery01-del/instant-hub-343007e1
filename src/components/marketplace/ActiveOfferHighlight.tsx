@@ -19,7 +19,7 @@ export function ActiveOfferHighlight() {
           .limit(10);
 
         if (data && data.length > 0) {
-          const valid = data.find((d: any) => isMarketplaceMarketingNotification(d));
+          const valid = data.find((d: any) => isCustomerNotification(d));
           if (valid) {
             setLatestNotif(valid);
           }
@@ -42,7 +42,7 @@ export function ActiveOfferHighlight() {
           { event: 'INSERT', schema: 'public', table: 'marketing_notifications' },
           (payload) => {
             const raw = payload.new as any;
-            if (!raw || !isMarketplaceMarketingNotification(raw)) return;
+            if (!raw || !isCustomerNotification(raw)) return;
             setLatestNotif(raw);
           }
         )
