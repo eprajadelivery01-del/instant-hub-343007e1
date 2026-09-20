@@ -4,12 +4,20 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.graphics.Color;
+import android.view.Gravity;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.FrameLayout;
 import androidx.core.view.WindowCompat;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import com.getcapacitor.BridgeActivity;
 
 public class MainActivity extends BridgeActivity {
+    private static final int STATUS_BAR_COLOR = Color.rgb(90, 90, 90);
+    private View statusBarBackground;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -36,7 +44,7 @@ public class MainActivity extends BridgeActivity {
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
             getWindow().clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
             getWindow().clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION);
-            getWindow().setStatusBarColor(0xFF5A5A5A);
+            getWindow().setStatusBarColor(STATUS_BAR_COLOR);
             getWindow().setNavigationBarColor(0xFF0D0D0D);
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -59,6 +67,40 @@ public class MainActivity extends BridgeActivity {
             decorView.setSystemUiVisibility(flags);
         }
         WindowCompat.setDecorFitsSystemWindows(getWindow(), true);
+        installStatusBarBackground();
+    }
+
+    private void installStatusBarBackground() {
+        View decorView = getWindow().getDecorView();
+        if (!(decorView instanceof FrameLayout)) return;
+
+        FrameLayout decor = (FrameLayout) decorView;
+        if (statusBarBackground == null) {
+            statusBarBackground = new View(this);
+            statusBarBackground.setBackgroundColor(STATUS_BAR_COLOR);
+            statusBarBackground.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+            FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                0,
+                Gravity.TOP
+            );
+            decor.addView(statusBarBackground, params);
+        }
+
+        statusBarBackground.setBackgroundColor(STATUS_BAR_COLOR);
+        statusBarBackground.bringToFront();
+        ViewCompat.setOnApplyWindowInsetsListener(decorView, (view, insets) -> {
+            int statusBarHeight = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top;
+            FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) statusBarBackground.getLayoutParams();
+            if (params.height != statusBarHeight) {
+                params.height = statusBarHeight;
+                statusBarBackground.setLayoutParams(params);
+            }
+            statusBarBackground.setVisibility(statusBarHeight > 0 ? View.VISIBLE : View.GONE);
+            statusBarBackground.bringToFront();
+            return insets;
+        });
+        ViewCompat.requestApplyInsets(decorView);
     }
 
     private void createNotificationChannel() {
