@@ -25,14 +25,14 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     root.classList.toggle('light', theme === 'light');
     localStorage.setItem('theme', theme);
 
-    // Dynamic HTML Meta Theme-Color: Sempre #0D0D0D oficial travado em todos os seletores
+    // Mantém a barra superior cinza com ícones claros nos dois temas.
     const themeColorMetas = document.querySelectorAll('meta[name="theme-color"]');
     if (themeColorMetas.length > 0) {
-      themeColorMetas.forEach(meta => meta.setAttribute('content', '#0D0D0D'));
+      themeColorMetas.forEach(meta => meta.setAttribute('content', '#5A5A5A'));
     } else {
       const meta = document.createElement('meta');
       meta.setAttribute('name', 'theme-color');
-      meta.setAttribute('content', '#0D0D0D');
+      meta.setAttribute('content', '#5A5A5A');
       document.head.appendChild(meta);
     }
 
@@ -44,12 +44,12 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     }
     metaStatusBar.setAttribute('content', 'black-translucent');
 
-    // Dynamic Capacitor Native StatusBar styling: sempre fundo nativo oficial #0D0D0D com ícones claros
+    // A cor e os ícones da barra não acompanham a troca de tema.
     if (Capacitor.isNativePlatform()) {
       try {
         StatusBar.setOverlaysWebView({ overlay: false }).catch(() => {});
-        StatusBar.setStyle({ style: Style.Dark }).catch(() => {});
-        StatusBar.setBackgroundColor({ color: '#0D0D0D' }).catch(() => {});
+        StatusBar.setStyle({ style: Style.Light }).catch(() => {});
+        StatusBar.setBackgroundColor({ color: '#5A5A5A' }).catch(() => {});
       } catch (e) {
         console.error('Error setting native status bar theme:', e);
       }
