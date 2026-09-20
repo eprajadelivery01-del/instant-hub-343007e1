@@ -30,7 +30,7 @@ const config: CapacitorConfig = {
     },
     StatusBar: {
       backgroundColor: '#5B5B5B',
-      style: 'LIGHT',
+      style: 'DARK',
       overlaysWebView: false,
     },
     SplashScreen: {
