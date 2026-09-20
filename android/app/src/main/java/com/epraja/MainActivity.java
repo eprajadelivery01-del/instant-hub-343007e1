@@ -15,7 +15,8 @@ import androidx.core.view.WindowInsetsCompat;
 import com.getcapacitor.BridgeActivity;
 
 public class MainActivity extends BridgeActivity {
-    private static final int STATUS_BAR_COLOR = Color.rgb(92, 92, 92);
+    // Cor média da textura original enviada; a View sobreposta usa o PNG exato.
+    private static final int STATUS_BAR_COLOR = Color.rgb(91, 91, 91);
     private View statusBarBackground;
 
     @Override
