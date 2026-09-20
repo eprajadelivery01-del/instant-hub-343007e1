@@ -29,7 +29,7 @@ const config: CapacitorConfig = {
       sound: "default",
     },
     StatusBar: {
-      backgroundColor: '#5A5A5A',
+      backgroundColor: '#5C5C5C',
       style: 'LIGHT',
       overlaysWebView: false,
     },

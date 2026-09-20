@@ -25,14 +25,14 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     root.classList.toggle('light', theme === 'light');
     localStorage.setItem('theme', theme);
 
-    // Mantém a barra superior cinza com ícones claros nos dois temas.
+    // Mantém a barra superior igual ao acabamento nativo do tema escuro com ícones claros nos dois temas.
     const themeColorMetas = document.querySelectorAll('meta[name="theme-color"]');
     if (themeColorMetas.length > 0) {
-      themeColorMetas.forEach(meta => meta.setAttribute('content', '#5A5A5A'));
+      themeColorMetas.forEach(meta => meta.setAttribute('content', '#5C5C5C'));
     } else {
       const meta = document.createElement('meta');
       meta.setAttribute('name', 'theme-color');
-      meta.setAttribute('content', '#5A5A5A');
+      meta.setAttribute('content', '#5C5C5C');
       document.head.appendChild(meta);
     }
 
@@ -49,7 +49,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       try {
         StatusBar.setOverlaysWebView({ overlay: false }).catch(() => {});
         StatusBar.setStyle({ style: Style.Light }).catch(() => {});
-        StatusBar.setBackgroundColor({ color: '#5A5A5A' }).catch(() => {});
+        StatusBar.setBackgroundColor({ color: '#5C5C5C' }).catch(() => {});
       } catch (e) {
         console.error('Error setting native status bar theme:', e);
       }

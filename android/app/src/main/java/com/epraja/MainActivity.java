@@ -15,7 +15,7 @@ import androidx.core.view.WindowInsetsCompat;
 import com.getcapacitor.BridgeActivity;
 
 public class MainActivity extends BridgeActivity {
-    private static final int STATUS_BAR_COLOR = Color.rgb(90, 90, 90);
+    private static final int STATUS_BAR_COLOR = Color.rgb(92, 92, 92);
     private View statusBarBackground;
 
     @Override
@@ -77,7 +77,7 @@ public class MainActivity extends BridgeActivity {
         FrameLayout decor = (FrameLayout) decorView;
         if (statusBarBackground == null) {
             statusBarBackground = new View(this);
-            statusBarBackground.setBackgroundColor(STATUS_BAR_COLOR);
+            statusBarBackground.setBackgroundResource(R.drawable.status_bar_background);
             statusBarBackground.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
             FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT,
@@ -87,7 +87,7 @@ public class MainActivity extends BridgeActivity {
             decor.addView(statusBarBackground, params);
         }
 
-        statusBarBackground.setBackgroundColor(STATUS_BAR_COLOR);
+        statusBarBackground.setBackgroundResource(R.drawable.status_bar_background);
         statusBarBackground.bringToFront();
         ViewCompat.setOnApplyWindowInsetsListener(decorView, (view, insets) -> {
             int statusBarHeight = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top;
