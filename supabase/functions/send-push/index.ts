@@ -233,13 +233,31 @@ async function sendToToken(
           message: body,
           sound: "notification_sound.mp3",
           channel_id: "delivery-incoming-v9",
-          priority: "high"
+          priority: "high",
+          tag: notifTag
         },
         android: {
           priority: "HIGH",
           ttl: "45s",
           direct_boot_ok: true
-        }
+        },
+        apns: {
+          headers: {
+            "apns-priority": "10",
+            "apns-push-type": "alert",
+            "apns-topic": resolvedBundleId,
+          },
+          payload: {
+            aps: {
+              alert: { title, body },
+              sound: "notification_sound.mp3",
+              badge: 1,
+              "content-available": 1,
+              "mutable-content": 1,
+              category: notifTag
+            },
+          },
+        },
       }
     };
   } else {
