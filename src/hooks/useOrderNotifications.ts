@@ -302,7 +302,9 @@ export async function syncFcmTokenToDatabase(providedToken?: string) {
     }
 
     if (resolvedTargetId) {
-      supabase.from('customers').update({ fcm_token: token, updated_at: new Date().toISOString() }).or(`user_id.eq.${resolvedTargetId},id.eq.${resolvedTargetId},phone.eq.${savedPhone}`).then(() => {}).catch(() => {});
+      Promise.resolve(
+        supabase.from('customers').update({ fcm_token: token, updated_at: new Date().toISOString() }).or(`user_id.eq.${resolvedTargetId},id.eq.${resolvedTargetId},phone.eq.${savedPhone}`)
+      ).then(() => {}).catch(() => {});
     }
 
     // 2. Registro canônico via Edge Function send-push com Service Role
@@ -318,7 +320,7 @@ export async function syncFcmTokenToDatabase(providedToken?: string) {
         app,
         bundleId: bundle_id,
       });
-      console.log('[PUSH REGISTER] send-push outcome:', reg?.outcome || reg);
+      console.log('[PUSH REGISTER] send-push outcome:', reg.data?.outcome || reg);
     } catch (errReg) {
       console.warn('[PUSH REGISTER] Falha ao registrar via send-push:', errReg);
     }
