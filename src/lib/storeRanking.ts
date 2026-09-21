@@ -2,7 +2,6 @@ import { isStoreOpenNow, resolveTimezone, type StoreStatusInput } from './storeH
 
 export type DayPeriod =
   | 'MORNING'
-  | 'LATE_MORNING'
   | 'LUNCH'
   | 'AFTERNOON'
   | 'EVENING'
@@ -18,16 +17,20 @@ export interface DayPeriodConfig {
 }
 
 /**
- * Configuração centralizada e extensível dos períodos do dia.
+ * Configuração centralizada e rigorosa dos períodos do dia.
  * Horários locais (America/Cuiaba por padrão).
+ * - Manhã (05:00 - 10:00): Padarias, Cafés, Panificadoras, Café da Manhã.
+ * - Almoço / Perto do Almoço (10:00 - 14:30): Marmitarias, Marmitas, Comida Caseira, Prato Feito, Almoço.
+ * - Tarde (14:30 - 17:30): Lanches, Cafés, Docerias, Bolos, Salgados, Açaí, Sorvetes.
+ * - Noite (17:30 - 23:30): Lanches, Hamburguerias, Pizzarias, Espetarias/Espetos, Petiscarias, Conveniências, Bebidas.
+ * - Madrugada (23:30 - 05:00): Conveniências, Bebidas, Lanches 24h, Hamburguerias, Pizzarias.
  */
 export const DAY_PERIODS: readonly DayPeriodConfig[] = [
-  { period: 'MORNING', name: 'Manhã Cedo', startHour: 5, startMinute: 0, endHour: 9, endMinute: 0 },
-  { period: 'LATE_MORNING', name: 'Meio da Manhã', startHour: 9, startMinute: 0, endHour: 11, endMinute: 0 },
-  { period: 'LUNCH', name: 'Almoço', startHour: 11, startMinute: 0, endHour: 14, endMinute: 0 },
-  { period: 'AFTERNOON', name: 'Meio da Tarde', startHour: 14, startMinute: 0, endHour: 17, endMinute: 0 },
-  { period: 'EVENING', name: 'Noite', startHour: 17, startMinute: 0, endHour: 23, endMinute: 0 },
-  { period: 'NIGHT', name: 'Madrugada', startHour: 23, startMinute: 0, endHour: 5, endMinute: 0 },
+  { period: 'MORNING', name: 'Manhã', startHour: 5, startMinute: 0, endHour: 10, endMinute: 0 },
+  { period: 'LUNCH', name: 'Almoço', startHour: 10, startMinute: 0, endHour: 14, endMinute: 30 },
+  { period: 'AFTERNOON', name: 'Tarde', startHour: 14, startMinute: 30, endHour: 17, endMinute: 30 },
+  { period: 'EVENING', name: 'Noite', startHour: 17, startMinute: 30, endHour: 23, endMinute: 30 },
+  { period: 'NIGHT', name: 'Madrugada', startHour: 23, startMinute: 30, endHour: 5, endMinute: 0 },
 ] as const;
 
 /**
@@ -54,7 +57,7 @@ function safeMatchesKeyword(normalizedText: string, keyword: string): boolean {
   const normKw = normalizeText(keyword);
   if (!normKw) return false;
 
-  // Se o termo possui espaços (ex: "comida caseira", "bolo de pote"), usa includes direto
+  // Se o termo possui espaços (ex: "comida caseira", "bolo de pote", "prato feito"), usa includes direto
   if (normKw.includes(' ')) {
     return normalizedText.includes(normKw);
   }
@@ -99,188 +102,183 @@ export function resolveDayPeriod(
 
   const totalMinutes = hour * 60 + minute;
 
-  // 05:00 às 08:59:59 (300 a 539 min)
-  if (totalMinutes >= 5 * 60 && totalMinutes < 9 * 60) {
+  // 05:00 às 09:59:59 (300 a 599 min) -> Manhã (Padarias / Cafés)
+  if (totalMinutes >= 5 * 60 && totalMinutes < 10 * 60) {
     return 'MORNING';
   }
-  // 09:00 às 10:59:59 (540 a 659 min)
-  if (totalMinutes >= 9 * 60 && totalMinutes < 11 * 60) {
-    return 'LATE_MORNING';
-  }
-  // 11:00 às 13:59:59 (660 a 839 min)
-  if (totalMinutes >= 11 * 60 && totalMinutes < 14 * 60) {
+  // 10:00 às 14:29:59 (600 a 869 min) -> Almoço / Perto do Almoço (Marmitarias / Almoço)
+  if (totalMinutes >= 10 * 60 && totalMinutes < 14 * 60 + 30) {
     return 'LUNCH';
   }
-  // 14:00 às 16:59:59 (840 a 1019 min)
-  if (totalMinutes >= 14 * 60 && totalMinutes < 17 * 60) {
+  // 14:30 às 17:29:59 (870 a 1049 min) -> Tarde (Lanches / Bolos / Cafés)
+  if (totalMinutes >= 14 * 60 + 30 && totalMinutes < 17 * 60 + 30) {
     return 'AFTERNOON';
   }
-  // 17:00 às 22:59:59 (1020 a 1379 min)
-  if (totalMinutes >= 17 * 60 && totalMinutes < 23 * 60) {
+  // 17:30 às 23:29:59 (1050 a 1409 min) -> Noite (Lanches / Espetos / Hamburguerias / Pizzarias / Conveniências)
+  if (totalMinutes >= 17 * 60 + 30 && totalMinutes < 23 * 60 + 30) {
     return 'EVENING';
   }
-  // 23:00 às 04:59:59 (>= 1380 min ou < 300 min - Madrugada atravessando meia-noite)
+  // 23:30 às 04:59:59 (>= 1410 min ou < 300 min) -> Madrugada (Conveniências / Bebidas / Lanches)
   return 'NIGHT';
 }
 
 /**
- * Avalia um texto específico para determinar se pontua para o período dado.
+ * Regras semânticas de palavras-chave por período do dia
  */
-function evaluateTextForPeriod(text: string, period: DayPeriod): number {
-  if (!text) return 0;
-
-  switch (period) {
-    case 'MORNING': {
-      // 05:00 - 09:00:
-      // 1. Padarias, Panificadoras, Cafés, Cafeterias (+50)
-      // 2. Conveniências, Mercados, Empórios (+30)
-      // 3. Salgados, Lanches rápidos (+20)
-      if (matchesAnyKeyword(text, ['doceria', 'confeitaria', 'bolo', 'bolos', 'doces', 'tarde', 'sorvete', 'geladinho'])) {
-        return 0;
-      }
-
-      if (matchesAnyKeyword(text, ['marmitaria', 'hamburguer', 'burger', 'pizza', 'pizzaria'])) return 0;
-
-      const bakeryAndCoffeeKeywords = ['padaria', 'panificadora', 'cafeteria', 'cafe', 'pao', 'paes'];
-      if (matchesAnyKeyword(text, bakeryAndCoffeeKeywords)) return 50;
-
-      const convenienceAndMarketKeywords = ['conveniencia', 'mercado', 'emporio'];
-      if (matchesAnyKeyword(text, convenienceAndMarketKeywords)) return 30;
-
-      const breakfastSnacksKeywords = ['salgado', 'pastel', 'suco', 'lanche'];
-      if (matchesAnyKeyword(text, breakfastSnacksKeywords)) return 20;
-
-      return 0;
-    }
-
-    case 'LATE_MORNING': {
-      // 09:00 - 11:00: Padarias, Cafeterias, Mercados, Conveniências, Feirinhas
-      const strongKeywords = ['padaria', 'panificadora', 'cafeteria', 'cafe', 'mercado', 'conveniencia', 'hortifruti', 'feirinha'];
-      if (matchesAnyKeyword(text, strongKeywords)) return 50;
-
-      const moderateKeywords = ['marmitaria', 'restaurante', 'almoco', 'lanche', 'salgado'];
-      if (matchesAnyKeyword(text, moderateKeywords)) return 30;
-      return 0;
-    }
-
-    case 'LUNCH': {
-      // 11:00 - 14:00: Marmitarias, Restaurantes almoço, Comida Caseira, Self-service
-      const strongKeywords = ['marmitaria', 'comida caseira', 'almoco', 'marmita', 'prato feito', 'buffet', 'caseira'];
-      if (matchesAnyKeyword(text, strongKeywords)) return 50;
-
-      // Se for padaria, doceria, bolos, geladinho, sorvete, papelaria: não é almoço (+0)
-      if (matchesAnyKeyword(text, ['padaria', 'panificadora', 'doceria', 'bolo', 'bolos', 'geladinho', 'sorvete', 'papelaria', 'aviamentos'])) {
-        return 0;
-      }
-
-      const moderateKeywords = ['restaurante', 'lanches', 'lanche', 'petiscaria', 'espetaria', 'churrasco', 'assados', 'bebidas'];
-      if (matchesAnyKeyword(text, moderateKeywords)) return 30;
-      return 0;
-    }
-
-    case 'AFTERNOON': {
-      // 14:00 - 17:00: Padarias, Cafeterias, Docerias, Bolos, Lanches, Sorveterias, Geladinhos, Açaí
-      const strongKeywords = ['padaria', 'cafeteria', 'cafe', 'doceria', 'bolo', 'doces', 'lanches', 'lanche', 'sorvete', 'geladinho', 'acai', 'pastel'];
-      if (matchesAnyKeyword(text, strongKeywords)) return 50;
-
-      if (matchesAnyKeyword(text, ['marmitaria', 'marmita', 'almoco'])) return 0;
-
-      const moderateKeywords = ['mercado', 'conveniencia', 'bebidas'];
-      if (matchesAnyKeyword(text, moderateKeywords)) return 30;
-      return 0;
-    }
-
-    case 'EVENING': {
-      // 17:00 - 23:00: Hamburguerias, Pizzarias, Lanchonetes, Petiscarias, Espetarias, Janta, Açaí, Conveniências
-      const strongKeywords = ['hamburguer', 'burger', 'pizza', 'pizzaria', 'lanches', 'lanche', 'petiscaria', 'espetaria', 'espetinho', 'acai', 'conveniencia', 'chapa'];
-      if (matchesAnyKeyword(text, strongKeywords)) return 50;
-
-      if (matchesAnyKeyword(text, ['padaria', 'panificadora', 'marmitaria', 'marmita', 'almoco'])) return 0;
-
-      const moderateKeywords = ['restaurante', 'bebidas', 'cerveja', 'geladinho', 'doces', 'mercado'];
-      if (matchesAnyKeyword(text, moderateKeywords)) return 30;
-      return 0;
-    }
-
-    case 'NIGHT': {
-      // 23:00 - 05:00: Lanchonetes, Hamburguerias, Conveniências, Bebidas, Pizzarias abertas na madrugada
-      const strongKeywords = ['lanches', 'lanche', 'hamburguer', 'burger', 'conveniencia', 'bebidas', 'pizza', 'pizzaria', 'chapa'];
-      if (matchesAnyKeyword(text, strongKeywords)) return 50;
-
-      if (matchesAnyKeyword(text, ['padaria', 'panificadora', 'marmitaria', 'marmita', 'almoco', 'papelaria', 'aviamentos'])) return 0;
-
-      const moderateKeywords = ['restaurante', 'petiscaria'];
-      if (matchesAnyKeyword(text, moderateKeywords)) return 30;
-      return 0;
-    }
-
-    default:
-      return 0;
-  }
-}
+const PERIOD_RULES = {
+  MORNING: {
+    // 05:00 - 10:00 -> Padarias e Cafés em 1º lugar
+    strong: [
+      'padaria', 'panificadora', 'cafeteria', 'cafe', 'pao', 'paes',
+      'pao de queijo', 'salgado', 'salgados', 'cafe da manha', 'confeitaria'
+    ],
+    moderate: [
+      'mercado', 'conveniencia', 'hortifruti', 'feirinha', 'emporio'
+    ],
+    disqualify: [
+      'marmitaria', 'marmita', 'marmitas', 'marmitex', 'almoco', 'hamburguer', 'burger',
+      'pizza', 'pizzaria', 'chapa', 'espetaria', 'espeto', 'espetinho', 'espetos',
+      'petiscaria', 'petisco', 'papelaria', 'aviamentos', 'shopping', 'farmacia', 'drogaria'
+    ],
+  },
+  LUNCH: {
+    // 10:00 - 14:30 -> Marmitarias e Comida de Almoço em 1º lugar
+    strong: [
+      'marmitaria', 'marmita', 'marmitas', 'marmitex', 'almoco', 'comida caseira',
+      'prato feito', 'assados', 'galinhada', 'feijoada', 'peixaria', 'self service',
+      'buffet', 'caseira'
+    ],
+    moderate: [
+      'restaurante', 'churrasco', 'churrascaria', 'grelhados', 'comida',
+      'refeicao', 'tapioca'
+    ],
+    disqualify: [
+      'feirinha', 'hortifruti', 'bolo', 'bolos', 'doceria', 'confeitaria', 'doces',
+      'geladinho', 'geladinhos', 'sorvete', 'sorvetes', 'sorveteria', 'papelaria',
+      'aviamentos', 'shopping', 'farmacia', 'drogaria', 'suplemento', 'suplementos',
+      'hamburguer', 'burger', 'burgers', 'pizza', 'pizzaria', 'chapa', 'petiscaria',
+      'acai', 'cerveja', 'cervejas'
+    ],
+  },
+  AFTERNOON: {
+    // 14:30 - 17:30 -> Lanches, Cafés, Bolos, Docerias em 1º lugar
+    strong: [
+      'lanches', 'lanche', 'lanchonete', 'padaria', 'panificadora', 'cafeteria',
+      'cafe', 'doceria', 'confeitaria', 'bolo', 'bolos', 'doces', 'pastel',
+      'pastelaria', 'salgado', 'salgados', 'sorvete', 'sorvetes', 'sorveteria',
+      'geladinho', 'geladinhos', 'acai', 'tapioca', 'crepe', 'suco', 'sucos'
+    ],
+    moderate: [
+      'mercado', 'conveniencia', 'bebidas', 'emporio'
+    ],
+    disqualify: [
+      'marmitaria', 'marmita', 'marmitas', 'marmitex', 'almoco', 'prato feito',
+      'galinhada', 'feijoada', 'papelaria', 'aviamentos', 'shopping', 'farmacia',
+      'drogaria', 'suplemento'
+    ],
+  },
+  EVENING: {
+    // 17:30 - 23:30 -> Lanches, Espetos, Hamburguerias, Pizzarias e Conveniências em 1º lugar
+    strong: [
+      'lanches', 'lanche', 'lanchonete', 'hamburguer', 'hamburgueria', 'burger',
+      'burgers', 'pizza', 'pizzaria', 'espetaria', 'espetinho', 'espetinhos',
+      'espetos', 'espeto', 'petiscaria', 'petisco', 'petiscos', 'churrasco',
+      'porcao', 'porcoes', 'conveniencia', 'bebidas', 'cerveja', 'cervejas',
+      'distribuidora', 'chapa', 'acai', 'pasteis', 'pastel'
+    ],
+    moderate: [
+      'restaurante', 'sushi', 'japonesa', 'jantar', 'oriental', 'temaki',
+      'macarrao', 'massa'
+    ],
+    disqualify: [
+      'marmitaria', 'marmita', 'marmitas', 'marmitex', 'almoco', 'prato feito',
+      'padaria', 'panificadora', 'bolo', 'bolos', 'doceria', 'papelaria',
+      'aviamentos', 'shopping', 'farmacia', 'drogaria', 'feirinha', 'hortifruti'
+    ],
+  },
+  NIGHT: {
+    // 23:30 - 05:00 -> Conveniências, Bebidas, Lanches 24h e Pizzarias da madrugada
+    strong: [
+      'conveniencia', 'bebidas', 'distribuidora', 'cerveja', 'cervejas',
+      'lanches', 'lanche', 'hamburguer', 'burger', 'pizza', 'pizzaria', 'chapa'
+    ],
+    moderate: [
+      'petiscaria', 'petisco', 'petiscos', 'porcao'
+    ],
+    disqualify: [
+      'marmitaria', 'marmita', 'padaria', 'panificadora', 'almoco', 'bolo',
+      'papelaria', 'aviamentos', 'shopping', 'feirinha', 'hortifruti'
+    ],
+  },
+};
 
 /**
  * Calcula a pontuação de prioridade da loja para o período do dia.
- * Respeita ESTRITAMENTE a ordem de consulta do item 7:
- * 1º - company.category
- * 2º - company.name
- * 3º - company.description
- * 4º - company.products[].category
- *
  * Retorna:
- * +50 para forte relação com o horário
- * +30 para relação moderada
- * +0 para categoria neutra / sem prioridade
+ * +50 para forte relação com o horário (ex: Marmitarias no Almoço, Padarias de Manhã, Lanches/Espetos/Conveniências à Noite)
+ * +25 para relação moderada (ex: Restaurantes gerais no Almoço sem desqualificação)
+ * +0 para neutras / desqualificadas do horário
  */
 export function getStoreTimeScore(company: any, period: DayPeriod): number {
   if (!company) return 0;
 
-  // 1º - company.category
-  const normCategory = normalizeText(company.category);
-  const categoryScore = evaluateTextForPeriod(normCategory, period);
-  // Se a categoria direta já for forte (ex: lanches/mercado/bebidas), pode ser considerada
-  // Mas se for categoria ampla ("restaurante"), verificamos a especialização no nome/descrição
-  if (categoryScore === 50) {
-    return 50;
-  }
+  const rule = PERIOD_RULES[period] || PERIOD_RULES.LUNCH;
 
-  // 2º - informações já disponíveis do nome (company.name)
   const normName = normalizeText(company.name);
-  const nameScore = evaluateTextForPeriod(normName, period);
-  if (nameScore === 50) {
-    return 50;
-  }
-
-  // 3º - descrição já disponível (company.description)
+  const normCategory = normalizeText(company.category);
   const normDesc = normalizeText(company.description);
-  const descScore = evaluateTextForPeriod(normDesc, period);
-  if (descScore === 50) {
+
+  // Coleta produtos
+  const productTexts: string[] = [];
+  if (Array.isArray(company.products) && company.products.length > 0) {
+    for (const p of company.products) {
+      if (p?.name) productTexts.push(normalizeText(p.name));
+      if (p?.category) productTexts.push(normalizeText(p.category));
+    }
+  }
+  const allProductText = productTexts.join(' ');
+
+  // 1. Verificação de Desqualificação Rigorosa
+  // Se o nome da loja ou sua categoria tiver palavras desqualificadoras para este horário
+  // (ex: "FABIELLY BOLOS E DOCES" ou "EMPÓRIO DOS GELADINHOS" no horário de Almoço), zera o score.
+  if (matchesAnyKeyword(normName, rule.disqualify)) {
+    return 0;
+  }
+  if (matchesAnyKeyword(normCategory, rule.disqualify)) {
+    // Se a categoria for desqualificada, só permite se o nome tiver forte correspondência com o horário
+    if (!matchesAnyKeyword(normName, rule.strong)) {
+      return 0;
+    }
+  }
+
+  // 2. Pontuação Forte (+50)
+  // Prioriza se o Nome, Descrição, Categoria ou Produtos tiverem termo forte do horário
+  if (matchesAnyKeyword(normName, rule.strong)) {
+    return 50;
+  }
+  if (matchesAnyKeyword(normDesc, rule.strong)) {
+    return 50;
+  }
+  if (matchesAnyKeyword(normCategory, rule.strong)) {
+    return 50;
+  }
+  if (allProductText && matchesAnyKeyword(allProductText, rule.strong)) {
     return 50;
   }
 
-  // 4º - categorias dos produtos já carregados
-  if (Array.isArray(company.products) && company.products.length > 0) {
-    for (const p of company.products) {
-      const prodCategory = normalizeText(p?.category);
-      const prodScore = evaluateTextForPeriod(prodCategory, period);
-      if (prodScore === 50) {
-        return 50;
-      }
-    }
+  // 3. Pontuação Moderada (+25)
+  // Lojas de apoio (ex: restaurantes no almoço, sushi à noite, mercados de manhã)
+  if (matchesAnyKeyword(normName, rule.moderate)) {
+    return 25;
   }
-
-  // Se nenhum nível deu +50, verifica se algum nível obteve pontuação moderada (+30)
-  if (categoryScore === 30 || nameScore === 30 || descScore === 30) {
-    return 30;
+  if (matchesAnyKeyword(normCategory, rule.moderate)) {
+    return 25;
   }
-
-  if (Array.isArray(company.products) && company.products.length > 0) {
-    for (const p of company.products) {
-      const prodCategory = normalizeText(p?.category);
-      if (evaluateTextForPeriod(prodCategory, period) === 30) {
-        return 30;
-      }
-    }
+  if (matchesAnyKeyword(normDesc, rule.moderate)) {
+    return 25;
+  }
+  if (allProductText && matchesAnyKeyword(allProductText, rule.moderate)) {
+    return 25;
   }
 
   return 0;
@@ -318,15 +316,15 @@ export function getStoreCatalogTier(company: StoreStatusInput): number {
 }
 
 /**
- * Ordena as lojas de forma inteligente com a nova hierarquia:
+ * Ordena as lojas de forma inteligente com a hierarquia:
  * 1º - Grupo de Disponibilidade de Catálogo:
  *      1. Aberta + Com Produtos (Tier 4)
  *      2. Aberta + Sem Produtos (Tier 3)
  *      3. Fechada + Com Produtos (Tier 2)
  *      4. Fechada + Sem Produtos (Tier 1)
  *
- * 2º - Score de Prioridade por Horário (+50, +30, 0):
- *      (Dentro de "Aberta + Com Produtos", lojas relevantes ficam acima de neutras).
+ * 2º - Score de Prioridade por Horário (+50, +25, 0):
+ *      (Dentro de "Aberta + Com Produtos", lojas relevantes ao horário ficam no topo).
  *
  * 3º - Melhor Avaliação (rating) como critério de desempate secundário.
  *
@@ -353,7 +351,7 @@ export function rankStores<T extends StoreStatusInput>(
       return bTier - aTier;
     }
 
-    // 2º Critério: Score de Prioridade por Horário (+50, +30, 0)
+    // 2º Critério: Score de Prioridade por Horário (+50, +25, 0)
     const aScore = getStoreTimeScore(a, period);
     const bScore = getStoreTimeScore(b, period);
 

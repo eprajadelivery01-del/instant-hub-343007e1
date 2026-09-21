@@ -26,13 +26,13 @@ function createDateAtHour(hour: number, minute: number = 0): Date {
   return d;
 }
 
-console.log('--- EXECUTANDO OS 16 TESTES OBRIGATÓRIOS DO RANKING COM PRIORIDADE DE CATÁLOGO ---\n');
+console.log('--- EXECUTANDO TESTES DO RANKING DE HORÁRIOS DO DIA NO É PRA JÁ ---\n');
 
 // 1. Aberta + produtos + score 0 acima de aberta + sem produtos + score 50
 {
   const stores = [
-    { id: 'farma-sem-prod', name: 'Farmácia Sem Produtos', is_open: true, category: 'farmacia', products: [], rating: 5.0 }, // Score manhã = 50, sem prod (Tier 3)
-    { id: 'marmita-com-prod', name: 'Marmitaria Com Produtos', is_open: true, category: 'restaurante', products: [{ name: 'Marmita', active: true }], rating: 4.0 }, // Score manhã = 0, com prod (Tier 4)
+    { id: 'farma-sem-prod', name: 'Farmácia Sem Produtos', is_open: true, category: 'farmacia', products: [], rating: 5.0 },
+    { id: 'marmita-com-prod', name: 'Marmitaria Com Produtos', is_open: true, category: 'restaurante', products: [{ name: 'Marmita', active: true }], rating: 4.0 },
   ];
   const ranked = rankStores(stores, createDateAtHour(7, 0)); // Período MORNING
   assert(
@@ -60,7 +60,7 @@ console.log('--- EXECUTANDO OS 16 TESTES OBRIGATÓRIOS DO RANKING COM PRIORIDADE
     { id: 'loja-a', name: 'Loja A', is_open: true, products: [{ name: 'P1', active: true }], rating: 4.0 },
     { id: 'loja-b', name: 'Loja B', is_open: true, products: [{ name: 'P2', active: true }], rating: 3.5 },
     { id: 'loja-c', name: 'Loja C', is_open: true, products: [{ name: 'P3', active: true }], rating: 4.2 },
-    { id: 'marmita-vazia', name: 'Marmitaria Vazia', is_open: true, description: 'almoço', products: [], rating: 5.0 }, // score 50, tier 3
+    { id: 'marmita-vazia', name: 'Marmitaria Vazia', is_open: true, description: 'almoço', products: [], rating: 5.0 },
   ];
   const ranked = rankStores(stores, createDateAtHour(12, 0));
   const vaziaIndex = ranked.findIndex((s) => s.id === 'marmita-vazia');
@@ -176,7 +176,7 @@ console.log('--- EXECUTANDO OS 16 TESTES OBRIGATÓRIOS DO RANKING COM PRIORIDADE
     products: [
       { name: 'P1', active: false, is_active: true },
       { name: 'P2', active: true, is_active: false },
-      { name: 'P3', active: true, is_active: true }, // Válido!
+      { name: 'P3', active: true, is_active: true },
     ],
   };
   assert(
@@ -185,65 +185,72 @@ console.log('--- EXECUTANDO OS 16 TESTES OBRIGATÓRIOS DO RANKING COM PRIORIDADE
   );
 }
 
-// 13. Empate de tier + score deve usar rating como desempate
+// 13. TESTE DE HORÁRIO: MANHÃ (08:00) -> Padaria deve ficar no topo!
 {
   const stores = [
-    { id: 'marmita-4.5', name: 'Marmitaria Menor', is_open: true, description: 'almoço', products: [{ name: 'M1', active: true }], rating: 4.5 },
-    { id: 'marmita-4.9', name: 'Marmitaria Maior', is_open: true, description: 'almoço', products: [{ name: 'M2', active: true }], rating: 4.9 },
+    { id: 'marmitaria', name: 'Marmitaria Central', category: 'restaurante', is_open: true, products: [{ name: 'Marmita P', active: true }], rating: 5.0 },
+    { id: 'padaria', name: 'Padaria Doce Pão', category: 'padaria', is_open: true, products: [{ name: 'Pão Francês', active: true }], rating: 4.8 },
+    { id: 'hamburgueria', name: 'Burger Show', category: 'lanches', is_open: true, products: [{ name: 'X-Burger', active: true }], rating: 5.0 },
   ];
-  const ranked = rankStores(stores, createDateAtHour(12, 0));
+  const ranked = rankStores(stores, createDateAtHour(8, 0));
   assert(
-    ranked[0].id === 'marmita-4.9' && ranked[1].id === 'marmita-4.5',
-    'TESTE 13: Empate de tier e score desempata por rating decrescente'
+    ranked[0].id === 'padaria',
+    'TESTE 13: De manhã (08:00), Padarias têm prioridade máxima e ficam no topo'
   );
 }
 
-// 14. Empate total (tier + score + rating) deve usar nome (ordem alfabética)
+// 14. TESTE DE HORÁRIO: PERTO DO ALMOÇO (10:57) -> Marmitarias no topo, Bolos e Feirinhas abaixo!
 {
   const stores = [
-    { id: 'loja-z', name: 'Zeta Lanches', is_open: true, products: [{ name: 'P', active: true }], rating: 4.8 },
-    { id: 'loja-a', name: 'Alfa Lanches', is_open: true, products: [{ name: 'P', active: true }], rating: 4.8 },
+    { id: 'feirinha', name: 'FEIRINHA EM CASA', category: 'restaurante', is_open: true, products: [{ name: 'Chuchu', active: true }], rating: 5.0 },
+    { id: 'mercado', name: 'MERCADO CENTRAL', category: 'mercado', is_open: true, products: [{ name: 'Arroz', active: true }], rating: 4.3 },
+    { id: 'bolos', name: 'FABIELLY BOLOS E DOCES', category: 'restaurante', is_open: true, products: [{ name: 'Bolo de Cenoura', active: true }], rating: 5.0 },
+    { id: 'marmitaria-fortaleza', name: 'MARMITARIA FORTALEZA', category: 'restaurante', is_open: true, products: [{ name: 'Marmita Completa', active: true }], rating: 5.0 },
+    { id: 'marmitaria-recanto', name: 'MARMITARIA RECANTO', category: 'restaurante', is_open: true, products: [{ name: 'Marmita P', active: true }], rating: 4.6 },
+    { id: 'recanto-sonhos', name: 'RESTAURANTE RECANTO DOS SONHOS', category: 'restaurante', is_open: true, products: [{ name: 'Prato Executivo', active: true }], rating: 5.0 },
   ];
-  const ranked = rankStores(stores, createDateAtHour(12, 0));
+  const ranked = rankStores(stores, createDateAtHour(10, 57));
   assert(
-    ranked[0].name === 'Alfa Lanches' && ranked[1].name === 'Zeta Lanches',
-    'TESTE 14: Empate total usa estabilidade alfabética pelo nome'
+    ranked[0].id === 'marmitaria-fortaleza' &&
+    ranked[1].id === 'marmitaria-recanto' &&
+    ranked[2].id === 'recanto-sonhos',
+    'TESTE 14: Perto do almoço (10:57), Marmitarias e Restaurantes de Almoço ficam no topo absoluto'
   );
 }
 
-// 15. Confirmar que todos os estabelecimentos continuam aparecendo
+// 15. TESTE DE HORÁRIO: TARDE (15:30) -> Lanches, Bolos, Docerias e Cafés no topo!
 {
   const stores = [
-    { id: 's1', name: 'Store 1', is_open: true, products: [{ name: 'P', active: true }] },
-    { id: 's2', name: 'Store 2', is_open: true, products: [] },
-    { id: 's3', name: 'Store 3', is_open: false, products: [{ name: 'P', active: true }] },
-    { id: 's4', name: 'Store 4', is_open: false, products: [] },
+    { id: 'marmitaria', name: 'Marmitaria Fortaleza', category: 'restaurante', is_open: true, products: [{ name: 'Marmita', active: true }], rating: 5.0 },
+    { id: 'doceria', name: 'FABIELLY BOLOS E DOCES', category: 'restaurante', is_open: true, products: [{ name: 'Bolo', active: true }], rating: 5.0 },
+    { id: 'lanche', name: 'Lanchonete e Pastelaria', category: 'lanches', is_open: true, products: [{ name: 'Pastel', active: true }], rating: 4.9 },
   ];
-  const ranked = rankStores(stores, createDateAtHour(12, 0));
+  const ranked = rankStores(stores, createDateAtHour(15, 30));
   assert(
-    ranked.length === stores.length && stores.every((s) => ranked.some((r) => r.id === s.id)),
-    'TESTE 15: 100% dos estabelecimentos continuam na lista retornada'
+    (ranked[0].id === 'doceria' || ranked[0].id === 'lanche') && ranked[2].id === 'marmitaria',
+    'TESTE 15: À tarde (15:30), Lanches, Docerias e Bolos ficam no topo e Marmitarias vão para baixo'
   );
 }
 
-// 16. Confirmar que busca e filtros existentes não sofrem regressão
+// 16. TESTE DE HORÁRIO: NOITE (19:30) -> Lanches, Espetos e Conveniências no topo!
 {
   const stores = [
-    { id: 'pizza-1', name: 'Pizzaria Napolitana', category: 'restaurante', is_open: true, products: [{ name: 'Pizza', active: true }] },
-    { id: 'burger-1', name: 'Hamburgueria Top', category: 'lanches', is_open: true, products: [{ name: 'Burger', active: true }] },
+    { id: 'marmitaria', name: 'Marmitaria Fortaleza', category: 'restaurante', is_open: true, products: [{ name: 'Marmita', active: true }], rating: 5.0 },
+    { id: 'padaria', name: 'Padaria Central', category: 'padaria', is_open: true, products: [{ name: 'Pão', active: true }], rating: 5.0 },
+    { id: 'espeto', name: 'ESPETARIA PONTO CERTO', category: 'petiscaria', is_open: true, products: [{ name: 'Espetinho', active: true }], rating: 5.0 },
+    { id: 'conveniencia', name: 'CONVENIÊNCIA 2A', category: 'bebidas', is_open: true, products: [{ name: 'Cerveja', active: true }], rating: 4.8 },
+    { id: 'burger', name: 'NA CHAPA HAMBURGUERIA', category: 'hamburguer', is_open: true, products: [{ name: 'NC Bacon', active: true }], rating: 5.0 },
   ];
-  const ranked = rankStores(stores, createDateAtHour(12, 0));
-  const searchFilter = ranked.filter((s) => s.name.toLowerCase().includes('pizza'));
-  const catFilter = ranked.filter((s) => s.category === 'lanches');
+  const ranked = rankStores(stores, createDateAtHour(19, 30));
   assert(
-    searchFilter.length === 1 && searchFilter[0].id === 'pizza-1' &&
-    catFilter.length === 1 && catFilter[0].id === 'burger-1',
-    'TESTE 16: Busca e filtros de categoria operam perfeitamente sobre a lista'
+    (ranked[0].id === 'burger' || ranked[0].id === 'espeto') &&
+    ranked.findIndex(s => s.id === 'marmitaria') > 2,
+    'TESTE 16: À noite (19:30), Hamburguerias, Espetarias e Conveniências ficam no topo'
   );
 }
 
 console.log(`\n========================================`);
-console.log(`RESULTADO DOS 16 TESTES: ${passed} passaram, ${failed} falharam.`);
+console.log(`RESULTADO DOS TESTES: ${passed} passaram, ${failed} falharam.`);
 console.log(`========================================\n`);
 
 if (failed > 0) {

@@ -268,7 +268,7 @@ export default function Home() {
 
   const featuredCompanies = useMemo(() => 
     companiesWithStatus.filter((company) => 
-      company.isPremium && 
+      company.is_open === true && 
       (activeCategory === '' || 
         matchesCategoryFilter(activeCategory, company.category) || 
         matchesCategoryFilter(activeCategory, company.description) || 
