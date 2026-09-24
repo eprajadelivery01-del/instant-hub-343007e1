@@ -560,6 +560,8 @@ serve(async (req) => {
             },
             sound: 'default',
             badge: 1,
+            "content-available": 1,
+            contentAvailable: true,
             "mutable-content": 1
           }
         }
