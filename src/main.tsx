@@ -88,12 +88,45 @@ sonnerToast.error = function (message: any, options: any) {
   return originalError.call(this, text, toastOptions as any);
 };
 
+if (typeof window !== "undefined") {
+  window.addEventListener("vite:preloadError", (event: any) => {
+    event.preventDefault();
+    console.warn("[Vite] Módulo dinâmico desatualizado detectado após nova versão, recarregando aplicação...");
+    const sessionKey = "vite_preload_error_reload_ts";
+    const last = sessionStorage.getItem(sessionKey);
+    const now = Date.now();
+    if (!last || now - Number(last) > 10000) {
+      sessionStorage.setItem(sessionKey, String(now));
+      window.location.reload();
+    }
+  });
+}
+
 class GlobalErrorBoundary extends Component<{children: ReactNode}, {hasError: boolean, error: Error | null}> {
   constructor(props: {children: ReactNode}) {
     super(props);
     this.state = { hasError: false, error: null };
   }
   static getDerivedStateFromError(error: Error) {
+    const isChunkError =
+      error?.message?.includes("Failed to fetch dynamically imported module") ||
+      error?.message?.includes("Importing a module script failed") ||
+      error?.name === "ChunkLoadError";
+
+    if (isChunkError && typeof window !== "undefined") {
+      const sessionKey = "error_boundary_chunk_reload_ts";
+      const last = sessionStorage.getItem(sessionKey);
+      const now = Date.now();
+      if (!last || now - Number(last) > 10000) {
+        sessionStorage.setItem(sessionKey, String(now));
+        if ("caches" in window) {
+          caches.keys().then((names) => {
+            names.forEach((name) => caches.delete(name));
+          }).catch(() => {});
+        }
+        window.location.reload();
+      }
+    }
     return { hasError: true, error };
   }
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
@@ -101,22 +134,39 @@ class GlobalErrorBoundary extends Component<{children: ReactNode}, {hasError: bo
   }
   render() {
     if (this.state.hasError) {
-      return (
-        <div style={{ padding: '20px', background: 'white', color: 'red', height: '100vh', width: '100vw', overflow: 'auto', zIndex: 999999, position: 'fixed', top: 0, left: 0 }}>
-          <h2 style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '10px' }}>Ocorreu um Erro no App</h2>
-          <pre style={{ fontSize: '11px', whiteSpace: 'pre-wrap', fontFamily: 'monospace' }}>{this.state.error?.message}</pre>
-          <pre style={{ fontSize: '9px', marginTop: '10px', whiteSpace: 'pre-wrap', fontFamily: 'monospace' }}>{this.state.error?.stack}</pre>
-          
-          <div style={{ padding: '14px', background: '#fff3cd', color: '#856404', borderRadius: '8px', border: '1px solid #ffeeba', fontWeight: 'bold', margin: '16px 0', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            ⚠️ TIRE UM PRINT OU COPIE A TELA E ENVIE PARA A BONASOFT.
-          </div>
+      const isChunkError =
+        this.state.error?.message?.includes("Failed to fetch dynamically imported module") ||
+        this.state.error?.message?.includes("Importing a module script failed") ||
+        this.state.error?.name === "ChunkLoadError";
 
-          <button 
-            onClick={() => { localStorage.clear(); window.location.reload(); }}
-            style={{ marginTop: '10px', padding: '12px 24px', background: 'black', color: 'white', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}
-          >
-            Limpar Dados e Reiniciar
-          </button>
+      return (
+        <div style={{ padding: '20px', background: 'white', color: '#1f2937', height: '100vh', width: '100vw', overflow: 'auto', zIndex: 999999, position: 'fixed', top: 0, left: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
+          <div style={{ maxWidth: '420px', width: '100%', padding: '24px', borderRadius: '16px', background: '#f9fafb', border: '1px solid #e5e7eb', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}>
+            <h2 style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '8px', color: '#dc2626' }}>
+              {isChunkError ? "Nova Versão Disponível" : "Ocorreu um Erro no App"}
+            </h2>
+            <p style={{ fontSize: '13px', color: '#4b5563', marginBottom: '16px' }}>
+              {isChunkError 
+                ? "O aplicativo foi atualizado com melhorias. Clique no botão abaixo para carregar a versão mais recente." 
+                : (this.state.error?.message || "Algo inesperado ocorreu ao carregar a página.")}
+            </p>
+
+            <button 
+              onClick={() => {
+                if ("caches" in window) {
+                  caches.keys().then((names) => {
+                    names.forEach((name) => caches.delete(name));
+                  }).catch(() => {});
+                }
+                localStorage.removeItem("@epraja_cache_timestamp_v1");
+                sessionStorage.clear();
+                window.location.href = window.location.pathname + "?t=" + Date.now();
+              }}
+              style={{ width: '100%', padding: '14px 20px', background: '#e11d48', color: 'white', border: 'none', borderRadius: '12px', fontWeight: 'bold', fontSize: '15px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+            >
+              🔄 Atualizar e Continuar
+            </button>
+          </div>
         </div>
       );
     }

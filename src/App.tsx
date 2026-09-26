@@ -19,7 +19,34 @@ import { GlobalMarketingListener } from "@/components/shared/GlobalMarketingList
 
 import Home from "./pages/marketplace/Home";
 
-const lazyRoute = (path: string) => lazy(routeLoaders[path] as any);
+function lazyWithChunkRetry<T extends React.ComponentType<any>>(
+  importer: () => Promise<{ default: T } | any>
+) {
+  return lazy(async () => {
+    try {
+      return await importer();
+    } catch (err: any) {
+      const isChunkError =
+        err?.message?.includes("Failed to fetch dynamically imported module") ||
+        err?.message?.includes("Importing a module script failed") ||
+        err?.name === "ChunkLoadError";
+
+      if (isChunkError && typeof window !== "undefined") {
+        const sessionKey = "lazy_chunk_retry_" + window.location.pathname;
+        const last = sessionStorage.getItem(sessionKey);
+        const now = Date.now();
+        if (!last || now - Number(last) > 10000) {
+          sessionStorage.setItem(sessionKey, String(now));
+          window.location.reload();
+          return new Promise(() => {}); // Previne que o erro estoure na tela antes do reload
+        }
+      }
+      throw err;
+    }
+  });
+}
+
+const lazyRoute = (path: string) => lazyWithChunkRetry(routeLoaders[path] as any);
 
 const Login = lazyRoute("/marketplace/login");
 const Signup = lazyRoute("/marketplace/signup");
@@ -27,15 +54,15 @@ const StoreDetail = lazyRoute("/marketplace/store");
 const Cart = lazyRoute("/marketplace/cart");
 const Checkout = lazyRoute("/marketplace/checkout");
 const Orders = lazyRoute("/marketplace/orders");
-const OrderDetail = lazy(() => import("./pages/marketplace/OrderDetail"));
+const OrderDetail = lazyWithChunkRetry(() => import("./pages/marketplace/OrderDetail"));
 const Addresses = lazyRoute("/marketplace/addresses");
 const Profile = lazyRoute("/marketplace/profile");
 const Coupons = lazyRoute("/marketplace/coupons");
 const PrivacyPolicy = lazyRoute("/marketplace/privacy");
 const TermsOfService = lazyRoute("/marketplace/terms");
 const Search = lazyRoute("/marketplace/search");
-const PushDiagnostics = lazy(() => import("./pages/marketplace/PushDiagnostics"));
-const NotFound = lazy(() => import("./pages/NotFound"));
+const PushDiagnostics = lazyWithChunkRetry(() => import("./pages/marketplace/PushDiagnostics"));
+const NotFound = lazyWithChunkRetry(() => import("./pages/NotFound"));
 
 const RouteFallback = () => (
   <div className="flex min-h-[60vh] items-center justify-center">
