@@ -437,6 +437,20 @@ export function useOrderNotifications() {
         FirebaseMessaging.addListener("tokenReceived", ({ token }) => {
           persistToken(token);
         }),
+        FirebaseMessaging.addListener("apnsTokenReceived" as any, async (res: any) => {
+          const rawToken = res?.token;
+          try {
+            await new Promise((r) => setTimeout(r, 600));
+            const fcmRes = await FirebaseMessaging.getToken();
+            if (fcmRes?.token) {
+              persistToken(fcmRes.token);
+            } else if (rawToken) {
+              persistToken(rawToken);
+            }
+          } catch {
+            if (rawToken) persistToken(rawToken);
+          }
+        }),
         FirebaseMessaging.addListener("notificationReceived", ({ notification }) => {
           console.log("[PUSH_RECEIVED]", JSON.stringify(notification, null, 2));
           const title = notification.title || "Atualização de Pedido";
