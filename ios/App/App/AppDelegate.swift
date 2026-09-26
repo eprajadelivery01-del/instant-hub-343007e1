@@ -8,10 +8,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
     var window: UIWindow?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+        _ = CAPBridgeViewController.self
         // Configura o delegate de notificações para garantir apresentação mesmo em primeiro plano e central do iOS
         UNUserNotificationCenter.current().delegate = self
-        // Solicita o registro de notificações remotas no APNs da Apple na inicialização
+        // Solicita o registro de notificações remotas no APNs da Apple na inicialização (apenas em dispositivo físico)
+        #if !targetEnvironment(simulator)
         application.registerForRemoteNotifications()
+        #endif
         return true
     }
 
