@@ -36,32 +36,51 @@ const lastReportedToast = new Map<string, number>();
 sonnerToast.error = function (message: any, options: any) {
   const rawText = typeof message === "string" ? message : JSON.stringify(message);
   const lower = rawText?.toLowerCase() ?? "";
-  const { diagnãosticLogged, ...toastOptions } = options ?? {};
+  const { diagnosticLogged, ...toastOptions } = options ?? {};
 
   let text = rawText;
   if (lower.includes("failed to load products")) {
-    text = "Não foi possível validar sua sacola. Atualize a sacola ou tente nãovamente.";
+    text = "Não foi possível validar sua sacola. Atualize a sacola ou tente novamente.";
   } else if (lower.includes("failed to fetch") || lower.includes("network error")) {
-    text = "Falha de conexão. Verifique sua internet e tente nãovamente.";
+    text = "Falha de conexão. Verifique sua internet e tente novamente.";
   }
 
   const lowerNorm = lower.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-  if (
-    lowerNorm.includes("offline") ||
-    lowerNorm.includes("cupom") ||
-    lowerNorm.includes("expirou") ||
-    lowerNorm.includes("invalido") ||
-    lowerNorm.includes("invalida") ||
-    lowerNorm.includes("exclusivo de outra loja") ||
-    lowerNorm.includes("valor minimo para aplicar")
-  ) {
+  const ignorePatterns = [
+    "offline",
+    "cupom",
+    "expirou",
+    "invalido",
+    "invalida",
+    "exclusivo de outra loja",
+    "valor minimo para aplicar",
+    "ja esta em uso",
+    "ja cadastrado",
+    "ja existe",
+    "user already registered",
+    "email ou senha",
+    "senha incorreta",
+    "credenciais invalidas",
+    "invalid login",
+    "invalid_credentials",
+    "telefone valido",
+    "preencha todos os campos",
+    "senhas nao coincidem",
+    "minimo de 6 caracteres",
+    "campo obrigatorio",
+    "sessao expirada",
+    "codigo incorreto",
+    "digite um endereco"
+  ];
+
+  if (ignorePatterns.some(pattern => lowerNorm.includes(pattern))) {
     return originalError.call(this, text, toastOptions as any);
   }
 
-  // Erros do checkout com request_id já ficam registrados não audit_logs da
+  // Erros do checkout com request_id já ficam registrados nos audit_logs da
   // Edge Function; não reenviar o mesmo alerta ao Telegram evita spam sem
   // perder o diagnóstico técnico.
-  if (options?.id === "checkout-create-order-error" && diagnãosticLogged) {
+  if (options?.id === "checkout-create-order-error" && toastOptions?.diagnosticLogged) {
     return originalError.call(this, text, toastOptions as any);
   }
 

@@ -38,10 +38,22 @@ export default function Signup() {
       toast.success('Conta criada!');
       navigate('/marketplace');
     } catch (err: any) {
-      if (err.message === 'User already registered') {
-        toast.error('Este e-mail já está em uso.');
+      const errMsg = err?.message || '';
+      if (
+        errMsg === 'User already registered' ||
+        errMsg.toLowerCase().includes('already registered') ||
+        errMsg.toLowerCase().includes('already in use')
+      ) {
+        toast.error('Este e-mail já está em uso.', {
+          description: 'Você já possui cadastro. Faça login ou recupere sua senha.',
+          action: {
+            label: 'Entrar',
+            onClick: () => navigate('/marketplace/login'),
+          },
+          duration: 6000,
+        });
       } else {
-        toast.error(err.message || 'Erro ao cadastrar');
+        toast.error(errMsg || 'Erro ao cadastrar');
       }
     } finally {
       setLoading(false);
