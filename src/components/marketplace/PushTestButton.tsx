@@ -59,15 +59,17 @@ export function PushTestButton({ className }: { className?: string }) {
           });
         }
 
-        await LocalNotifications.createChannel({
-          id: 'marketplace_orders',
-          name: 'Atualizações de Pedidos',
-          description: 'Avisos em tempo real de pedidos',
-          importance: 5,
-          visibility: 1,
-          vibration: true,
-          sound: 'default',
-        });
+        if (Capacitor.getPlatform() === 'android') {
+          await LocalNotifications.createChannel({
+            id: 'marketplace_orders',
+            name: 'Atualizações de Pedidos',
+            description: 'Avisos em tempo real de pedidos',
+            importance: 5,
+            visibility: 1,
+            vibration: true,
+            sound: 'default',
+          });
+        }
 
         const notifId = Math.floor(Math.random() * 899999) + 100000;
         await LocalNotifications.schedule({

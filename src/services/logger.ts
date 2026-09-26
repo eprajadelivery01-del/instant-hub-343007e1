@@ -149,8 +149,16 @@ export function initializeGlobalErrorHandlers(appName: string) {
   // Intercept unhandled promise rejections
   window.onunhandledrejection = (event) => {
     const reason = event.reason;
-    const reasonMsg = reason?.message || String(reason);
+    const reasonMsg = reason?.message || (typeof reason === "object" ? JSON.stringify(reason) : String(reason));
     
+    if (
+      reasonMsg.includes("UNIMPLEMENTED") ||
+      reasonMsg.includes("not implemented") ||
+      reasonMsg.includes("implementation unavailable for")
+    ) {
+      return;
+    }
+
     reportErrorToTelegram({
       error_message: `Unhandled Rejection: ${reason?.message || reason}`,
       stack_trace: reason?.stack || "No stack trace available",
@@ -179,6 +187,15 @@ export function initializeGlobalErrorHandlers(appName: string) {
 
     // Skip nested reporting to prevent loops
     if (isReporting) return;
+
+    // Ignore benign platform-specific warnings or UNIMPLEMENTED plugin calls
+    if (
+      msg.includes("UNIMPLEMENTED") ||
+      msg.includes("not implemented") ||
+      msg.includes("implementation unavailable for")
+    ) {
+      return;
+    }
 
     reportErrorToTelegram({
       error_message: `[Console Error] ${msg.slice(0, 1000)}`,

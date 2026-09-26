@@ -69,26 +69,28 @@ export function triggerDeviceVibration(pattern: number[] = [500, 200, 500]) {
 export function requestNativeNotificationPermission() {
   if (Capacitor.isNativePlatform()) {
     // 1. Cria os canais nativos incondicionalmente no Android com prioridade máxima (5)
-    Promise.allSettled([
-      LocalNotifications.createChannel({
-        id: "default",
-        name: "Notificações do Marketplace",
-        description: "Avisos de novos pedidos e atualizações de entrega",
-        importance: 5,
-        visibility: 1,
-        vibration: true,
-        sound: "default",
-      }),
-      LocalNotifications.createChannel({
-        id: "marketplace_orders",
-        name: "Atualizações de Pedidos",
-        description: "Avisos em tempo real de pedidos",
-        importance: 5,
-        visibility: 1,
-        vibration: true,
-        sound: "default",
-      }),
-    ]).catch(() => {});
+    if (Capacitor.getPlatform() === 'android') {
+      Promise.allSettled([
+        LocalNotifications.createChannel({
+          id: "default",
+          name: "Notificações do Marketplace",
+          description: "Avisos de novos pedidos e atualizações de entrega",
+          importance: 5,
+          visibility: 1,
+          vibration: true,
+          sound: "default",
+        }),
+        LocalNotifications.createChannel({
+          id: "marketplace_orders",
+          name: "Atualizações de Pedidos",
+          description: "Avisos em tempo real de pedidos",
+          importance: 5,
+          visibility: 1,
+          vibration: true,
+          sound: "default",
+        }),
+      ]).catch(() => {});
+    }
 
     // 2. Solicita permissões de notificação nativa ao Android/iOS
     LocalNotifications.requestPermissions().catch((e) => {
@@ -134,25 +136,27 @@ export async function sendNativeDeviceNotification(
         }
       }
 
-      await LocalNotifications.createChannel({
-        id: "default",
-        name: "Notificações do Marketplace",
-        description: "Avisos de novos pedidos e atualizações de entrega",
-        importance: 5,
-        visibility: 1,
-        vibration: true,
-        sound: "default",
-      }).catch(() => {});
+      if (Capacitor.getPlatform() === 'android') {
+        await LocalNotifications.createChannel({
+          id: "default",
+          name: "Notificações do Marketplace",
+          description: "Avisos de novos pedidos e atualizações de entrega",
+          importance: 5,
+          visibility: 1,
+          vibration: true,
+          sound: "default",
+        }).catch(() => {});
 
-      await LocalNotifications.createChannel({
-        id: "marketplace_orders",
-        name: "Atualizações de Pedidos",
-        description: "Avisos em tempo real de pedidos",
-        importance: 5,
-        visibility: 1,
-        vibration: true,
-        sound: "default",
-      }).catch(() => {});
+        await LocalNotifications.createChannel({
+          id: "marketplace_orders",
+          name: "Atualizações de Pedidos",
+          description: "Avisos em tempo real de pedidos",
+          importance: 5,
+          visibility: 1,
+          vibration: true,
+          sound: "default",
+        }).catch(() => {});
+      }
 
       const notifId = Math.floor(Math.random() * 899999) + 100000;
 
