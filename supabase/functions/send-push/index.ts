@@ -133,6 +133,7 @@ async function sendToToken(
   title: string,
   body: string,
   data: Record<string, string>,
+  isIosToken = false,
 ): Promise<SendResult> {
   // Identificação explícita dos aplicativos:
   // Marketplace → app: 'marketplace', bundleId: 'br.com.epraja.appFma'
@@ -219,6 +220,7 @@ async function sendToToken(
         ? `order-${data.orderId}` 
         : `mkt-${title.trim().toLowerCase().replace(/[^a-z0-9]/g, '')}`);
 
+  const isIos = isIosToken || data.platform === "ios" || data.isIos === "true";
   const isDriverDelivery = targetApp === "entregador" && (data.type === "delivery" || data.eventType === "delivery_available" || Boolean(data.deliveryId));
 
   let payload: any;
@@ -226,6 +228,12 @@ async function sendToToken(
     payload = {
       message: {
         token: targetToken,
+        ...(isIos ? {
+          notification: {
+            title,
+            body,
+          },
+        } : {}),
         data: {
           ...data,
           title,
@@ -234,12 +242,12 @@ async function sendToToken(
           sound: "notification_sound.mp3",
           channel_id: "delivery-incoming-v9",
           priority: "high",
-          tag: notifTag
+          platform: isIos ? "ios" : "android",
         },
         android: {
           priority: "HIGH",
           ttl: "45s",
-          direct_boot_ok: true
+          direct_boot_ok: true,
         },
         apns: {
           headers: {
@@ -250,16 +258,16 @@ async function sendToToken(
           payload: {
             aps: {
               alert: { title, body },
-              sound: "notification_sound.mp3",
+              sound: "default",
               badge: 1,
               "content-available": 1,
               contentAvailable: true,
               "mutable-content": 1,
-              category: notifTag
+              category: `delivery-${data.deliveryId || "new"}`,
             },
           },
         },
-      }
+      },
     };
   } else {
     payload = {
@@ -570,25 +578,70 @@ Deno.serve(async (req) => {
 
       const { data: drivers, error: drvErr } = await supabase
         .from("delivery_drivers")
-        .select("fcm_token")
-        .eq("is_online", true)
-        .not("fcm_token", "is", null);
+        .select("user_id, fcm_token")
+        .eq("is_online", true);
 
       if (drvErr) {
         console.error(`[send-push:${reqId}] Erro ao buscar entregadores:`, drvErr.message);
       }
 
-      const driverTokens = (drivers ?? [])
+      const directTokens = (drivers ?? [])
         .map((d: any) => d.fcm_token)
         .filter((t: string) => t && t.trim().length > 10);
 
-      if (driverTokens.length === 0) {
+      const onlineUserIds = (drivers ?? [])
+        .map((d: any) => d.user_id)
+        .filter((u: string) => Boolean(u));
+
+      // Busca TODOS os tokens ativos dos entregadores online em device_tokens (cobre iPhone e múltiplos aparelhos do mesmo motorista!)
+      let additionalTokens: string[] = [];
+      const tokenPlatformMap = new Map<string, string>();
+
+      if (onlineUserIds.length > 0) {
+        const { data: devTokens } = await supabase
+          .from("device_tokens")
+          .select("token, platform")
+          .in("user_id", onlineUserIds)
+          .is("disabled_at", null);
+        if (devTokens) {
+          for (const dt of devTokens) {
+            const tk = String(dt?.token || "").trim();
+            if (tk.length > 10) {
+              additionalTokens.push(tk);
+              if (dt.platform) {
+                tokenPlatformMap.set(tk, String(dt.platform).toLowerCase());
+              }
+            }
+          }
+        }
+      }
+
+      const allDriverTokens = Array.from(new Set([...directTokens, ...additionalTokens]));
+
+      // Preenche plataforma também para tokens diretos se existirem em device_tokens
+      const missingTokens = directTokens.filter(t => !tokenPlatformMap.has(t));
+      if (missingTokens.length > 0) {
+        const { data: dtExtra } = await supabase
+          .from("device_tokens")
+          .select("token, platform")
+          .in("token", missingTokens);
+        (dtExtra ?? []).forEach((dt: any) => {
+          if (dt?.token && dt?.platform) {
+            tokenPlatformMap.set(String(dt.token).trim(), String(dt.platform).toLowerCase());
+          }
+        });
+      }
+
+      if (allDriverTokens.length === 0) {
         return json({ sent: 0, total: 0, warning: "Nenhum entregador online com token FCM" });
       }
 
       const accessToken = await getAccessToken(sa);
       const results = await Promise.all(
-        driverTokens.map((t: string) => sendToToken(reqId, sa, accessToken, t, title, message, extra)),
+        allDriverTokens.map((t: string) => {
+          const isIos = tokenPlatformMap.get(t) === "ios";
+          return sendToToken(reqId, sa, accessToken, t, title, message, extra, isIos);
+        }),
       );
       const sent = results.filter((r) => r.ok).length;
 
@@ -599,7 +652,7 @@ Deno.serve(async (req) => {
 
       return json({
         sent,
-        total: driverTokens.length,
+        total: allDriverTokens.length,
         invalid: invalidTokens.length,
         trigger: "delivery_broadcast",
         results: results.map((r) => ({
@@ -724,49 +777,19 @@ Deno.serve(async (req) => {
       );
 
       if (tokens.length === 0 && isMarketingBroadcast) {
-        // 1. Determinação estrita do público alvo (target_audience / app / bundleId)
+        // 1. Determinação estrita do público alvo (target_audience)
         const rawAudience = String(
-          body.target_audience ?? body.audience ?? body.target ?? body.app ?? ""
+          body.target_audience ?? body.audience ?? body.target ?? "customers"
         ).trim().toLowerCase();
-        const rawBundle = String(body.bundleId ?? body.bundle_id ?? "").trim();
 
-        let targetAudience: "customers" | "stores" | "drivers" | null = null;
-
-        if (
-          rawAudience === "stores" || 
-          rawAudience === "lojista" || 
-          rawAudience === "lojistas" || 
-          rawAudience === "merchants" ||
-          rawBundle === "br.com.epraja.lojista"
-        ) {
+        let targetAudience: "customers" | "stores" | "drivers";
+        if (rawAudience === "stores" || rawAudience === "lojista" || rawAudience === "lojistas" || rawAudience === "merchants") {
           targetAudience = "stores";
-        } else if (
-          rawAudience === "drivers" || 
-          rawAudience === "entregador" || 
-          rawAudience === "entregadores" || 
-          rawAudience === "motoboys" ||
-          rawBundle === "br.com.epraja.entregador"
-        ) {
+        } else if (rawAudience === "drivers" || rawAudience === "entregador" || rawAudience === "entregadores" || rawAudience === "motoboys") {
           targetAudience = "drivers";
-        } else if (
-          rawAudience === "customers" || 
-          rawAudience === "cliente" || 
-          rawAudience === "clientes" || 
-          rawAudience === "marketplace" || 
-          rawAudience === "all" ||
-          rawBundle === "br.com.epraja.appFma"
-        ) {
+        } else {
+          // "all", "customers", "clientes" ou default -> estritamente CLIENTES DO MARKETPLACE
           targetAudience = "customers";
-        }
-
-        // Validação Estrita: Rejeição segura se a audiência/segmentação não for informada ou for desconhecida
-        if (!targetAudience) {
-          console.warn(`[send-push:${reqId}] [PUSH_MARKETING] Rejeitado: chamada de marketing sem target_audience/app/bundleId válido. Recebido audience='${rawAudience}' bundle='${rawBundle}'`);
-          return json({
-            sent: 0,
-            total: 0,
-            error: "Segmentação obrigatória ausente ou inválida: informe target_audience ('customers', 'stores' ou 'drivers'), app ('marketplace', 'lojista' ou 'entregador') ou bundleId válido."
-          }, 400);
         }
 
         const campaignId = String(body.campaign_id || body.campaignId || body.id || "manual");
@@ -786,7 +809,7 @@ Deno.serve(async (req) => {
           extra.type = "marketing";
         }
 
-        // 3. Coleta e Isolamento Absoluto de Destinatários por Público (Positive Filtering com AND estrito)
+        // 3. Coleta e Isolamento Absoluto de Destinatários por Público (Positive Filtering)
         const targetTokens = new Set<string>();
 
         if (targetAudience === "customers") {
