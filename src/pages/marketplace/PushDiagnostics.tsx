@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Capacitor } from "@capacitor/core";
-import { LocalNotifications } from "@capacitor/local-notifications";
 import { FirebaseMessaging } from "@/lib/firebaseMessaging";
+import { LocalNotifications } from "@/lib/localNotifications";
 import { supabase } from "@/lib/supabase";
 import { callSendPush } from "@/lib/sendPush";
 import { Button } from "@/components/ui/button";

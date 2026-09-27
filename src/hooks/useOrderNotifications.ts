@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { Capacitor } from '@capacitor/core';
-import { LocalNotifications } from '@capacitor/local-notifications';
+import { LocalNotifications } from '@/lib/localNotifications';
 import { FirebaseMessaging } from '@/lib/firebaseMessaging';
 import { getMarketplaceStatus } from '@/utils/orderStatusResolver';
 import { callSendPush } from '@/lib/sendPush';
