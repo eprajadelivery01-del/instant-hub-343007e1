@@ -296,7 +296,7 @@ export default function Home() {
             {/* Centro: Logo Oficial do É Pra Já em destaque ampliado */}
             <div className="flex-1 flex items-center justify-center px-1">
               <img
-                src="/header-logo.png"
+                src="/header-logo.png?v=2"
                 alt="É Pra Já Delivery"
                 className="h-20 xs:h-22 max-h-[86px] w-auto max-w-[210px] object-contain drop-shadow-md select-none"
               />
@@ -366,7 +366,7 @@ export default function Home() {
           {/* DESKTOP HEADER */}
           <div className="hidden md:flex items-center justify-between gap-6 py-2">
             <div className="flex items-center gap-4">
-              <img src="/header-logo.png" alt="É Pra Já Delivery" className="h-14 w-auto object-contain" />
+              <img src="/header-logo.png?v=2" alt="É Pra Já Delivery" className="h-14 w-auto object-contain" />
               <button
                 onClick={() => navigate('/marketplace/addresses')}
                 className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/10 text-white hover:bg-white/15 border border-white/10 transition-all text-left"
