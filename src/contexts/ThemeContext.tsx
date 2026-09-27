@@ -1,6 +1,17 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { Capacitor } from '@capacitor/core';
-import { StatusBar, Style } from '@capacitor/status-bar';
+import { Capacitor, registerPlugin } from '@capacitor/core';
+
+// Registra o plugin nativo StatusBar diretamente pela ponte do Capacitor,
+// sem importar o pacote @capacitor/status-bar no bundle web. Isso evita
+// falhas de build quando o pacote é reinstalado, mantendo o mesmo
+// comportamento nativo (o plugin continua instalado no projeto Android/iOS).
+interface StatusBarPlugin {
+  setOverlaysWebView(options: { overlay: boolean }): Promise<void>;
+  setStyle(options: { style: string }): Promise<void>;
+  setBackgroundColor(options: { color: string }): Promise<void>;
+}
+const StatusBar = registerPlugin<StatusBarPlugin>('StatusBar');
+const STATUS_BAR_STYLE_DARK = 'DARK'; // ícones claros (equivale a Style.Dark)
 
 type Theme = 'light' | 'dark';
 
