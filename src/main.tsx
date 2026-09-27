@@ -25,6 +25,34 @@ if (typeof document !== "undefined" && typeof Node !== "undefined") {
       return null;
     };
   }
+
+  // Defesa global contra o erro clássico do React "The node to be removed is not a child of this node"
+  // causado por Google Tradutor, extensões de terceiros ou manipulação externa do DOM.
+  if (Node.prototype.removeChild) {
+    const originalRemoveChild = Node.prototype.removeChild;
+    Node.prototype.removeChild = function <T extends Node>(child: T): T {
+      if (child.parentNode !== this) {
+        if (typeof console !== "undefined") {
+          console.warn("[DOM Guard] Impedido crash do React: tentativa de removeChild em nó cujo parentNode não é este nó.", child, this);
+        }
+        return child;
+      }
+      return originalRemoveChild.apply(this, arguments as any) as T;
+    };
+  }
+
+  if (Node.prototype.insertBefore) {
+    const originalInsertBefore = Node.prototype.insertBefore;
+    Node.prototype.insertBefore = function <T extends Node>(newNode: T, referenceNode: Node | null): T {
+      if (referenceNode && referenceNode.parentNode !== this) {
+        if (typeof console !== "undefined") {
+          console.warn("[DOM Guard] Impedido crash do React: tentativa de insertBefore antes de nó cujo parentNode não é este nó.", referenceNode, this);
+        }
+        return newNode;
+      }
+      return originalInsertBefore.apply(this, arguments as any) as T;
+    };
+  }
 }
 
 // Patch sonner toast.error globally to automatically capture all user-facing errors.
@@ -132,13 +160,18 @@ class GlobalErrorBoundary extends Component<{children: ReactNode}, {hasError: bo
       error?.message?.includes("Importing a module script failed") ||
       error?.name === "ChunkLoadError";
 
-    if (isChunkError && typeof window !== "undefined") {
-      const sessionKey = "error_boundary_chunk_reload_ts";
+    const isDomNodeError =
+      error?.name === "NotFoundError" ||
+      error?.message?.includes("Failed to execute 'removeChild' on 'Node'") ||
+      error?.message?.includes("Failed to execute 'insertBefore' on 'Node'");
+
+    if ((isChunkError || isDomNodeError) && typeof window !== "undefined") {
+      const sessionKey = isDomNodeError ? "error_boundary_dom_reload_ts" : "error_boundary_chunk_reload_ts";
       const last = sessionStorage.getItem(sessionKey);
       const now = Date.now();
       if (!last || now - Number(last) > 10000) {
         sessionStorage.setItem(sessionKey, String(now));
-        if ("caches" in window) {
+        if (isChunkError && "caches" in window) {
           caches.keys().then((names) => {
             names.forEach((name) => caches.delete(name));
           }).catch(() => {});
