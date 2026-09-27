@@ -285,33 +285,46 @@ export default function Home() {
       <NotificationBanner />
       <SafeAreaHeader as="div" extraTopRem={0.85} className="border-b border-white/5 bg-gradient-to-b from-[#091D35] via-[#081A2F] to-[#071629] text-white rounded-b-[36px] shadow-xl overflow-hidden pb-6">
         <div className="mx-auto flex max-w-7xl flex-col px-4 pt-1 sm:px-6">
-          {/* MOBILE HEADER: 1 botão na esquerda (Notificações), Logo grande centralizada, 1 botão na direita (Perfil) */}
-          <div className="flex items-center justify-between gap-3 md:hidden">
-            {/* Esquerda: Central de Notificações com badge */}
-            <ClientNotificationsPopover className="h-11 w-11 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/20 text-white flex items-center justify-center transition-all active:scale-95 shadow-sm" />
+          {/* MOBILE HEADER: 2 botões na esquerda (empilhados), Logo grande centralizada, 2 botões na direita (empilhados) */}
+          <div className="flex items-center justify-between gap-2 md:hidden">
+            {/* Coluna Esquerda: Notificações em cima, Tema embaixo */}
+            <div className="flex flex-col gap-2 shrink-0 items-center justify-center">
+              <ClientNotificationsPopover className="h-10 w-10 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/20 text-white flex items-center justify-center transition-all active:scale-95 shadow-sm" />
+              <ThemeToggle className="h-10 w-10 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/20 text-white flex items-center justify-center transition-all active:scale-95 shadow-sm" />
+            </div>
 
             {/* Centro: Logo Oficial do É Pra Já em destaque ampliado */}
             <div className="flex-1 flex items-center justify-center px-1">
               <img
                 src="/header-logo.png"
                 alt="É Pra Já Delivery"
-                className="h-14 xs:h-16 max-h-[72px] w-auto max-w-[220px] object-contain drop-shadow-md select-none"
+                className="h-20 xs:h-22 max-h-[86px] w-auto max-w-[210px] object-contain drop-shadow-md select-none"
               />
             </div>
 
-            {/* Direita: Perfil do Usuário */}
-            <HeaderActionButton
-              onClick={() => navigate('/marketplace/profile')}
-              title="Meu perfil"
-              className="h-11 w-11 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/20 text-white flex items-center justify-center transition-all active:scale-95 shadow-sm overflow-hidden p-0"
-            >
-              <MediaImage
-                src={getAvatarImage(profile)}
-                alt="Foto do perfil"
-                className="h-full w-full object-cover"
-                fallback={<User className="h-5 w-5 text-white stroke-[2]" />}
-              />
-            </HeaderActionButton>
+            {/* Coluna Direita: Carrinho em cima, Perfil embaixo */}
+            <div className="flex flex-col gap-2 shrink-0 items-center justify-center">
+              <HeaderActionButton
+                onClick={() => navigate('/marketplace/cart')}
+                badge={itemCount}
+                title="Carrinho"
+                className="h-10 w-10 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/20 text-white flex items-center justify-center transition-all active:scale-95 shadow-sm"
+              >
+                <ShoppingBag className="h-5 w-5 text-white" />
+              </HeaderActionButton>
+              <HeaderActionButton
+                onClick={() => navigate('/marketplace/profile')}
+                title="Meu perfil"
+                className="h-10 w-10 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/20 text-white flex items-center justify-center transition-all active:scale-95 shadow-sm overflow-hidden p-0"
+              >
+                <MediaImage
+                  src={getAvatarImage(profile)}
+                  alt="Foto do perfil"
+                  className="h-full w-full object-cover"
+                  fallback={<User className="h-5 w-5 text-white stroke-[2]" />}
+                />
+              </HeaderActionButton>
+            </div>
           </div>
 
           {/* MOBILE: Endereço selecionado centralizado exatamente como no print da cliente */}
