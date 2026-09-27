@@ -8,10 +8,20 @@ export interface ErrorPayload {
 }
 
 let isReporting = false;
+const reportedErrorsMap = new Map<string, number>();
 
 export async function reportErrorToTelegram(payload: ErrorPayload, appName = "Marketplace Cliente") {
   if (isReporting) return;
   
+  // Throttle por tipo de erro para evitar tempestade de requisições de rede
+  const errorKey = `${payload.error_message || ""}|${appName}`;
+  const now = Date.now();
+  const lastReported = reportedErrorsMap.get(errorKey);
+  if (lastReported && now - lastReported < 30000) {
+    return;
+  }
+  reportedErrorsMap.set(errorKey, now);
+
   // Ignore errors from Lovable preview environments to avoid false alarms
   const currentUrl = payload.url || window.location.href;
   const previewHostSuffix = ["lovable", "project.com"].join("");

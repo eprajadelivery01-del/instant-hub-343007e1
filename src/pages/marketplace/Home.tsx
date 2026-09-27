@@ -122,7 +122,8 @@ export default function Home() {
           const { data: prodData } = await supabase
             .from('products')
             .select('id, company_id, name, description, price, image_url, category, active')
-            .in('company_id', companyIdsWithoutProducts);
+            .in('company_id', companyIdsWithoutProducts)
+            .limit(100);
 
           (prodData || []).forEach((p: any) => {
             if (p.active !== false) {
