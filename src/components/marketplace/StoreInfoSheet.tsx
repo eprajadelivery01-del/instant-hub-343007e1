@@ -1,7 +1,7 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Company } from "@/types/database";
 import { Info, Clock, MapPin, Phone, Star, Store as StoreIcon, Calendar, CheckCircle2, XCircle } from "lucide-react";
-import { parseBusinessHours, getPrepTimeLabel, getStoreStatusLabel, isStoreOpenNow, WeekDay, WEEK_DAYS } from "@/lib/storeHours";
+import { parseBusinessHours, getPrepTimeLabel, getStoreStatusLabel, isStoreOpenNow, formatPeriodsLabel, WeekDay, WEEK_DAYS } from "@/lib/storeHours";
 import { MediaImage } from "@/components/shared/MediaImage";
 import { getCompanyLogoImage } from "@/lib/media";
 import { cn } from "@/lib/utils";
@@ -198,7 +198,7 @@ export function StoreInfoSheet({ isOpen, onOpenChange, company, estimate }: Stor
                       <div className="text-right">
                         {isActive && entry ? (
                           <span className={cn(isToday ? "text-foreground font-bold" : "text-foreground")}>
-                            {entry.start} às {entry.end}
+                            {formatPeriodsLabel(entry.periods || [{ start: entry.start, end: entry.end }])}
                           </span>
                         ) : (
                           <span className="text-destructive/80 font-bold">

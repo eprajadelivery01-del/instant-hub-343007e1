@@ -8,7 +8,7 @@ import MarketplaceLayout from '@/components/marketplace/MarketplaceLayout';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Minus, Plus, Star, Clock, Store as StoreIcon, Share2, Utensils, Search, Info, Ticket, AlertCircle, Flame, RefreshCw, MessageCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { getPrepTimeLabel, getStoreStatusLabel } from '@/lib/storeHours';
+import { getPrepTimeLabel, getStoreStatusLabel, getNextOpenTimeInfo, parseBusinessHours, formatPeriodsLabel } from '@/lib/storeHours';
 import { useAddress } from '@/contexts/AddressContext';
 import { useStoreOpenStatus } from '@/hooks/useStoreOpenStatus';
 import { ProductDetailDialog } from '@/components/marketplace/ProductDetailDialog';
@@ -502,20 +502,15 @@ export default function StoreDetail() {
   const companyLogo = getCompanyLogoImage(company);
   const storeCategory = (company as any).category || categories[0] || 'Gastronãomia';
 
-  const formatBusinessHours = (hours: string | null) => {
+  const formatBusinessHours = (hours: any) => {
     if (!hours) return null;
-    if (hours.startsWith('[')) {
-      try {
-        const parsed = JSON.parse(hours);
-        const today = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'][new Date().getDay()];
-        const schedule = parsed.find((d: any) => d.day === today);
-        if (schedule) {
-          if (!schedule.active) return 'Fechado hoje';
-          return `${schedule.start} às ${schedule.end}`;
-        }
-      } catch (e) { return hours; }
-    }
-    return hours;
+    const schedule = parseBusinessHours(hours);
+    if (!schedule || schedule.length === 0) return typeof hours === 'string' ? hours : null;
+    const today = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'][new Date().getDay()];
+    const entry = schedule.find((d) => d.day === today);
+    if (!entry) return null;
+    if (!entry.active) return 'Fechado hoje';
+    return formatPeriodsLabel(entry.periods || [{ start: entry.start, end: entry.end }]);
   };
 
   const formattedHours = formatBusinessHours(company.business_hours);
@@ -764,7 +759,13 @@ export default function StoreDetail() {
                   </div>
                   <h3 className="text-lg font-black text-destructive uppercase tracking-tight">Loja Fechada</h3>
                   <p className="max-w-xs text-sm text-destructive/70 font-medium">
-                    {formattedHours ? `Esta loja atende das: ${formattedHours}` : 'Esta loja não está aceitando pedidos agora.'}
+                    {(() => {
+                      const nextOpen = getNextOpenTimeInfo(company.business_hours, new Date(), company.timezone);
+                      if (nextOpen) {
+                        return `${nextOpen} • Horário hoje: ${formattedHours || 'não informado'}`;
+                      }
+                      return formattedHours ? `Esta loja atende: ${formattedHours}` : 'Esta loja não está aceitando pedidos agora.';
+                    })()}
                   </p>
                 </div>
               </div>
