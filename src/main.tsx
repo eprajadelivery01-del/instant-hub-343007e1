@@ -10,6 +10,7 @@ import { toast as sonnerToast } from "sonner";
 initializeGlobalErrorHandlers("Marketplace Cliente");
 
 // Polyfill for Node.prototype.closest to prevent "t.closest is not a function"
+// (build refresh)
 // when events bubble from TextNodes (especially on iOS Safari with certain libraries like Radix/Vaul)
 if (typeof document !== "undefined" && typeof Node !== "undefined") {
   if (!(Node.prototype as any).closest) {
