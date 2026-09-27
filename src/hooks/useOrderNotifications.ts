@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { Capacitor } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
-import { FirebaseMessaging } from '@capacitor-firebase/messaging';
+import { FirebaseMessaging } from '@/lib/firebaseMessaging';
 import { getMarketplaceStatus } from '@/utils/orderStatusResolver';
 import { callSendPush } from '@/lib/sendPush';
 
@@ -441,8 +441,8 @@ export function useOrderNotifications() {
         FirebaseMessaging.addListener("tokenReceived", ({ token }) => {
           persistToken(token);
         }),
-        FirebaseMessaging.addListener("apnsTokenReceived" as any, async (res: any) => {
-          const rawToken = res?.token;
+        FirebaseMessaging.addListener("apnsTokenReceived", async (res) => {
+          const rawToken = res.token;
           try {
             await new Promise((r) => setTimeout(r, 600));
             const fcmRes = await FirebaseMessaging.getToken();
