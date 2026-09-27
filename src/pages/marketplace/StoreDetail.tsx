@@ -820,23 +820,23 @@ export default function StoreDetail() {
                   {categoryProducts.map((product) => {
                     const qty = getItemQty(product.id);
                     return (
-                        <div
+                      <div
                         key={product.id}
                         className={cn(
-                          "group flex cursor-pointer gap-4 p-4 transition-all active:scale-[0.99] rounded-xl",
+                          "group relative flex cursor-pointer justify-between gap-3 sm:gap-4 p-4 rounded-2xl transition-colors duration-150",
                           category === 'Destaques' 
-                            ? "bg-background border-2 border-orange-500/30 shadow-md hover:shadow-xl hover:border-orange-500/60 relative"
-                            : "bg-background hover:bg-secondary/20"
+                            ? "bg-card border-2 border-orange-500/40 shadow-sm hover:bg-orange-50/30 dark:hover:bg-orange-950/20 active:bg-orange-50/50"
+                            : "bg-white dark:bg-card border border-black/[0.08] dark:border-white/[0.08] shadow-[0_1px_3px_rgba(0,0,0,0.02)] hover:bg-[#F8F8F8] dark:hover:bg-neutral-900/60 active:bg-[#F0F0F0] dark:active:bg-neutral-800"
                         )}
                         onClick={() => setSelectedProduct(product)}
                       >
                         <div className="flex min-w-0 flex-1 flex-col justify-between py-0.5">
                           <div>
-                            <h4 className="mb-1 text-[15px] font-bold leading-tight text-foreground group-hover:text-primary transition-colors">
+                            <h4 className="mb-1 text-[15px] font-bold leading-tight text-foreground group-hover:text-primary transition-colors line-clamp-2">
                               {product.name}
                             </h4>
                             {product.description && (
-                              <p className="line-clamp-2 text-[13px] font-medium leading-snug text-muted-foreground">
+                              <p className="line-clamp-2 text-[13px] font-normal leading-snug text-muted-foreground mt-1">
                                 {product.description}
                               </p>
                             )}
@@ -848,7 +848,7 @@ export default function StoreDetail() {
                             </p>
 
                             {qty > 0 && (
-                              <div className="flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-2 py-1">
+                              <div className="flex items-center gap-1.5 rounded-lg border border-primary/20 bg-primary/5 px-2 py-0.5">
                                 <span className="text-[11px] font-bold text-primary">{qty} no carrinho</span>
                               </div>
                             )}
@@ -856,7 +856,7 @@ export default function StoreDetail() {
                         </div>
 
                         <div className="relative h-24 w-24 shrink-0">
-                          <div className="h-full w-full overflow-hidden rounded-xl bg-secondary/30">
+                          <div className="h-full w-full overflow-hidden rounded-xl bg-neutral-100 dark:bg-neutral-800 border border-black/[0.04]">
                             <MediaImage
                               src={getPrimaryProductImage(product)}
                               alt={product.name || 'Produto'}
@@ -874,7 +874,8 @@ export default function StoreDetail() {
                                 e.stopPropagation(); 
                                 setSelectedProduct(product);
                               }}
-                              className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-background border border-border shadow-lg text-primary hover:scale-110 transition-transform"
+                              className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-white dark:bg-card border border-neutral-200 dark:border-neutral-700 shadow-md text-primary hover:scale-105 active:scale-95 transition-all"
+                              title="Adicionar ao pedido"
                             >
                               <Plus className="h-4 w-4" />
                             </button>
