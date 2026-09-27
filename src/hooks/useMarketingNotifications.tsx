@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { Capacitor } from '@capacitor/core';
-import { LocalNotifications } from '@capacitor/local-notifications';
+import { LocalNotifications } from '@/lib/localNotifications';
 import { isMarketplaceMarketingNotification } from '@/components/marketplace/ClientNotificationsPopover';
 
 export type MarketingNotification = {
