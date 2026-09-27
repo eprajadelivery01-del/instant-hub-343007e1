@@ -6,7 +6,7 @@ import { Company, Product } from '@/types/database';
 import { useCart } from '@/contexts/CartContext';
 import MarketplaceLayout from '@/components/marketplace/MarketplaceLayout';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Minus, Plus, Star, Clock, Store as StoreIcon, Share2, Utensils, Search, Info, Ticket, AlertCircle, Flame, RefreshCw, MessageCircle } from 'lucide-react';
+import { ArrowLeft, Minus, Plus, Star, Clock, Store as StoreIcon, Utensils, Search, Info, Ticket, AlertCircle, Flame, RefreshCw, MessageCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getPrepTimeLabel, getStoreStatusLabel, getNextOpenTimeInfo, parseBusinessHours, formatPeriodsLabel } from '@/lib/storeHours';
 import { useAddress } from '@/contexts/AddressContext';
@@ -557,9 +557,6 @@ export default function StoreDetail() {
             </span>
           </div>
         </div>
-        <button className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-secondary">
-          <Share2 className="h-5 w-5 text-foreground" />
-        </button>
       </SafeAreaHeader>
 
       <div className="relative group">
@@ -586,15 +583,6 @@ export default function StoreDetail() {
             >
               <ArrowLeft className="h-6 w-6 shadow-sm" />
             </button>
-            
-            <div className="flex gap-3 ml-auto">
-              <button className="flex h-11 w-11 items-center justify-center rounded-full bg-white/20 backdrop-blur-md transition-transform hover:scale-110 active:scale-95 text-white">
-                <Search className="h-5 w-5 shadow-sm" />
-              </button>
-              <button className="flex h-11 w-11 items-center justify-center rounded-full bg-white/20 backdrop-blur-md transition-transform hover:scale-110 active:scale-95 text-white">
-                <Share2 className="h-5 w-5 shadow-sm" />
-              </button>
-            </div>
           </div>
         </div>
 
