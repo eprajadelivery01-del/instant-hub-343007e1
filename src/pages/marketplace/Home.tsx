@@ -337,7 +337,7 @@ export default function Home() {
                 <MapPin className="h-6 w-6 text-white fill-white shrink-0 drop-shadow-sm" />
               </div>
               <div className="flex flex-col">
-                <span className="text-[12px] font-normal text-white/80 leading-none">
+                <span className="text-[12px] font-medium text-white/90 leading-none">
                   Entregar em
                 </span>
                 <div className="flex items-center gap-1 mt-1">
