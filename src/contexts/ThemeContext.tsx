@@ -59,7 +59,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     if (Capacitor.isNativePlatform()) {
       try {
         StatusBar.setOverlaysWebView({ overlay: false }).catch(() => {});
-        StatusBar.setStyle({ style: Style.Dark }).catch(() => {});
+        StatusBar.setStyle({ style: STATUS_BAR_STYLE_DARK }).catch(() => {});
         StatusBar.setBackgroundColor({ color: '#5B5B5B' }).catch(() => {});
       } catch (e) {
         console.error('Error setting native status bar theme:', e);
