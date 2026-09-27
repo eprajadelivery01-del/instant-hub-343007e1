@@ -467,6 +467,12 @@ export default function Checkout() {
       const finalCustomerName = nameInput.trim() || profile?.full_name?.trim() || localStorage.getItem('@epraja_customer_name') || localStorage.getItem('epraja_customer_name') || (user.user_metadata as any)?.full_name || null;
       const finalCustomerPhone = profile?.phone || phoneInput || (user.user_metadata as any)?.phone || localStorage.getItem('@epraja_customer_phone') || localStorage.getItem('epraja_customer_phone') || null;
 
+      let finalOrderNotes = fulfillmentMode === 'pickup' ? `[RETIRADA NO LOCAL] ${orderNotes || ''}`.trim() : (orderNotes || '');
+      if (appliedCoupon && discountAmount > 0) {
+        const couponNote = `🎟️ CUPOM: ${appliedCoupon.code.toUpperCase()} (-R$ ${discountAmount.toFixed(2).replace('.', ',')})`;
+        finalOrderNotes = finalOrderNotes ? `${finalOrderNotes} • ${couponNote}` : couponNote;
+      }
+
       const orderPayload: any = {
         items: validItems.map((item) => ({
           product_id: item.product.id,
@@ -480,7 +486,7 @@ export default function Checkout() {
         coupon_code: appliedCoupon?.code ?? null,
         customer_name: finalCustomerName,
         customer_phone: finalCustomerPhone,
-        notes: fulfillmentMode === 'pickup' ? `[RETIRADA NO LOCAL] ${orderNotes || ''}`.trim() : orderNotes,
+        notes: finalOrderNotes || null,
         needs_change: paymentMethod === 'money' && needsChange,
         change_for: changeFor ? Number(changeFor) : null,
         idempotency_key: idempotencyKey,

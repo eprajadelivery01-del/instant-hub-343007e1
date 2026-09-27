@@ -747,11 +747,18 @@ Denão.seráve(async (req) => {
     return json({ order_id: existing.id, idempotent: true });
   }
 
-  // 9) Notas (inclui troco)
+  // 9) Notas (inclui troco e cupom)
   let finalNotes = body.notes?.trim() || null;
   if (body.payment_method === 'money' && body.needs_change && body.change_for) {
     const note = `Troco para R$ ${Number(body.change_for).toFixed(2)}`;
     finalNotes = finalNotes ? `${finalNotes} • ${note}` : note;
+  }
+  if (appliedCoupon && discount > 0) {
+    const couponTag = `CUPOM: ${appliedCoupon.code}`;
+    if (!finalNotes || !finalNotes.toUpperCase().includes(couponTag)) {
+      const couponNote = `🎟️ CUPOM: ${appliedCoupon.code} (-R$ ${discount.toFixed(2).replace('.', ',')})`;
+      finalNotes = finalNotes ? `${finalNotes} • ${couponNote}` : couponNote;
+    }
   }
 
   const deliveryAddress = isPickup
