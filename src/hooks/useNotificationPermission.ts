@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Capacitor } from '@capacitor/core';
+import { FirebaseMessaging } from '@/lib/firebaseMessaging';
 
 /**
  * Hook fino de UI — apenas LÊ o estado de permissão de notificação e permite
@@ -33,7 +34,6 @@ function writePreference(value: boolean) {
 
 async function readNativePermission(): Promise<NativePermissionState> {
   try {
-    const { FirebaseMessaging } = await import('@capacitor-firebase/messaging');
     const result = await FirebaseMessaging.checkPermissions();
     const receive = String(result?.receive ?? 'prompt');
     if (receive === 'granted') return 'granted';
@@ -86,7 +86,6 @@ export function useNotificationPermission() {
       if (isNative) {
         if (permission !== 'granted') {
           try {
-            const { FirebaseMessaging } = await import('@capacitor-firebase/messaging');
             const res = await FirebaseMessaging.requestPermissions();
             next = res?.receive === 'granted' ? 'granted' : 'denied';
           } catch {
