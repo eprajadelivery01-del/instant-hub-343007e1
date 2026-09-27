@@ -188,11 +188,15 @@ export function initializeGlobalErrorHandlers(appName: string) {
     // Skip nested reporting to prevent loops
     if (isReporting) return;
 
-    // Ignore benign platform-specific warnings or UNIMPLEMENTED plugin calls
+    // Ignore benign platform-specific warnings, UNIMPLEMENTED plugin calls or React dev warnings
     if (
       msg.includes("UNIMPLEMENTED") ||
       msg.includes("not implemented") ||
-      msg.includes("implementation unavailable for")
+      msg.includes("implementation unavailable for") ||
+      msg.startsWith("Warning:") ||
+      msg.includes("Warning: ") ||
+      msg.includes("React.forwardRef") ||
+      msg.includes("validateDOMNesting")
     ) {
       return;
     }

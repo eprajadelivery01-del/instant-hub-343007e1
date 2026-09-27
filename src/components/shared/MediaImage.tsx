@@ -1,11 +1,14 @@
-import { ImgHTMLAttributes, ReactNode, useEffect, useState } from 'react';
+import { ImgHTMLAttributes, ReactNode, useEffect, useState, forwardRef } from 'react';
 
-interface MediaImageProps extends Omit<ImgHTMLAttributes<HTMLImageElement>, 'src'> {
+export interface MediaImageProps extends Omit<ImgHTMLAttributes<HTMLImageElement>, 'src'> {
   src?: string | null;
   fallback?: ReactNode;
 }
 
-export function MediaImage({ src, fallback, onError, loading, decoding, ...props }: MediaImageProps) {
+export const MediaImage = forwardRef<HTMLImageElement, MediaImageProps>(function MediaImage(
+  { src, fallback, onError, loading, decoding, ...props },
+  ref
+) {
   const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
@@ -18,6 +21,7 @@ export function MediaImage({ src, fallback, onError, loading, decoding, ...props
 
   return (
     <img
+      ref={ref}
       {...props}
       src={src}
       loading={loading ?? 'lazy'}
@@ -28,4 +32,7 @@ export function MediaImage({ src, fallback, onError, loading, decoding, ...props
       }}
     />
   );
-}
+});
+
+MediaImage.displayName = 'MediaImage';
+
