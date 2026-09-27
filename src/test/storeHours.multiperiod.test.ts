@@ -56,11 +56,25 @@ describe("storeHours - Multi-period and automated open/close", () => {
     expect(isStoreOpenBySchedule(multiPeriodSchedule, mondayLate, "America/Cuiaba")).toBe(false);
   });
 
-  it("handles midnight-crossing shift correctly", () => {
+  it("handles midnight-crossing shift correctly into dawn of next day", () => {
     // Wednesday 18:00 to Thursday 02:00
     // Thursday 01:00 Cuiaba = 2025-01-09T05:00:00Z
     const thursdayDawn = new Date("2025-01-09T05:00:00Z");
     expect(isStoreOpenBySchedule(multiPeriodSchedule, thursdayDawn, "America/Cuiaba")).toBe(true);
+  });
+
+  it("is NOT open before Wednesday shift starts when Tuesday was closed", () => {
+    // Wednesday 01:00 Cuiaba = 2025-01-08T05:00:00Z (Tuesday was closed, Wednesday shift starts at 18:00)
+    const wednesdayDawn = new Date("2025-01-08T05:00:00Z");
+    expect(isStoreOpenBySchedule(multiPeriodSchedule, wednesdayDawn, "America/Cuiaba")).toBe(false);
+  });
+
+  it("treats 00:00 to 00:00 as closed", () => {
+    const zeroSchedule = [
+      { day: "Seg", active: true, start: "00:00", end: "00:00", periods: [{ start: "00:00", end: "00:00" }] }
+    ];
+    const mondayNoon = new Date("2025-01-06T16:00:00Z"); // 12:00 Cuiaba
+    expect(isStoreOpenBySchedule(zeroSchedule, mondayNoon, "America/Cuiaba")).toBe(false);
   });
 
   it("returns next opening time when closed during interval", () => {

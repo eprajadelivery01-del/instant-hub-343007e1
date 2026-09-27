@@ -235,6 +235,25 @@ export default function StoreDetail() {
   }, [loading, company, whatsAppConfig, products.length]);
 
   useEffect(() => {
+    if (!id) return;
+    const channelName = `store-detail-company-${id}-${Date.now()}`;
+    const channel = supabase
+      .channel(channelName)
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'companies', filter: `id=eq.${id}` },
+        () => {
+          refetchStore();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [id, refetchStore]);
+
+  useEffect(() => {
     if (!user?.id || !company?.id) return;
 
     const checkDeliveryFee = async () => {
