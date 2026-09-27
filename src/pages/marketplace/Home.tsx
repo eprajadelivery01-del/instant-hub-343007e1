@@ -360,6 +360,16 @@ export default function Home() {
                 onChange={(e) => setSearch(e.target.value)}
                 className="h-full w-full border-0 bg-transparent p-0 text-[15px] font-normal text-gray-800 placeholder:text-gray-400 focus-visible:ring-0 focus-visible:ring-offset-0"
               />
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => setSearch('')}
+                  className="flex h-7 w-7 items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 hover:text-gray-800 transition-all shrink-0 ml-2"
+                  aria-label="Limpar pesquisa"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
             </div>
           </div>
 
@@ -383,14 +393,24 @@ export default function Home() {
             </div>
 
             <div className="relative flex-1 max-w-xl">
-              <div className="relative flex items-center w-full rounded-full bg-white shadow-md overflow-hidden">
+              <div className="relative flex items-center w-full rounded-full bg-white shadow-md overflow-hidden pr-3">
                 <Search className="absolute left-4 h-4.5 w-4.5 text-gray-400 pointer-events-none" />
                 <Input
                   placeholder="O que você deseja pedir hoje?"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="h-11 w-full rounded-full border-0 bg-white pl-11 pr-4 text-sm font-semibold text-gray-800 placeholder:text-gray-400 focus-visible:ring-0"
+                  className="h-11 w-full rounded-full border-0 bg-white pl-11 pr-2 text-sm font-semibold text-gray-800 placeholder:text-gray-400 focus-visible:ring-0"
                 />
+                {search && (
+                  <button
+                    type="button"
+                    onClick={() => setSearch('')}
+                    className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 hover:text-gray-800 transition-all shrink-0 ml-1"
+                    aria-label="Limpar pesquisa"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                )}
               </div>
             </div>
 
