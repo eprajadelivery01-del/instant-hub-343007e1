@@ -17,7 +17,7 @@ import { useStoresOpenStatus } from '@/hooks/useStoreOpenStatus';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MediaImage } from '@/components/shared/MediaImage';
 import { HeaderActionButton } from '@/components/shared/HeaderActionButton';
-import { Search, Star, ChevronDown, Store, Utensils, Coffee, Pizza, Cake, Sandwich, Pill, ShoppingCart, User, PanelLeft, X, Dog, Beer, Plus, Croissant, Sparkles, Flame, Beef, Leaf, Package, IceCream, Wine, UtensilsCrossed, GlassWater, Scissors, Ruler } from 'lucide-react';
+import { Search, Star, ChevronDown, Store, Utensils, Coffee, Pizza, Cake, Sandwich, Pill, ShoppingCart, ShoppingBag, MapPin, User, PanelLeft, X, Dog, Beer, Plus, Croissant, Sparkles, Flame, Beef, Leaf, Package, IceCream, Wine, UtensilsCrossed, GlassWater, Scissors, Ruler } from 'lucide-react';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { getAvatarImage, getCompanyBannerImage, getCompanyLogoImage, getPrimaryProductImage } from '@/lib/media';
@@ -73,7 +73,7 @@ export default function Home() {
   const [selectedProductCompany, setSelectedProductCompany] = useState<MarketplaceCompany | null>(null);
   const { selectedAddress } = useAddress();
   const { profile } = useAuth();
-  const { items, addItem } = useCart();
+  const { items, addItem, itemCount } = useCart();
   const navigate = useNavigate();
 
   const fetchCompanies = async () => {
@@ -283,68 +283,133 @@ export default function Home() {
   return (
     <MarketplaceLayout>
       <NotificationBanner />
-      <SafeAreaHeader as="div" extraTopRem={0.85} className="border-b border-border bg-background">
-        <div className="mx-auto flex max-w-7xl flex-col gap-5 px-4 pb-4 sm:px-6">
-          <div className="flex items-center justify-between gap-3 md:hidden">
-            <div className="flex min-w-0 flex-1 items-center gap-2.5">
-              <MarketplaceMenu onSelectCategory={setActiveCategory} onOpenPartnership={setPartnershipType}>
-                <button className="premium-card flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-muted-foreground transition-all hover:text-foreground">
-                  <PanelLeft className="h-4 w-4" />
-                </button>
-              </MarketplaceMenu>
-
-              <div className="min-w-0 flex-1">
-                <span className="mb-0.5 block text-[10px] font-bold text-primary leading-none">É Pra Já</span>
-                <button onClick={() => navigate('/marketplace/addresses')} className="group flex items-center gap-1 outline-none max-w-full">
-                  <span className="max-w-[110px] xs:max-w-[150px] sm:max-w-[200px] truncate text-xs font-semibold text-foreground">
-                    {selectedAddress ? `${selectedAddress.street}, ${selectedAddress.number}` : 'Definir endereço'}
-                  </span>
-                  <ChevronDown className="h-3 w-3 text-primary transition-transform group-hover:translate-y-0.5 shrink-0" />
-                </button>
-              </div>
+      <SafeAreaHeader as="div" extraTopRem={0.85} className="border-b border-white/5 bg-[#0C1729] text-white rounded-b-[32px] shadow-xl overflow-hidden">
+        <div className="mx-auto flex max-w-7xl flex-col px-4 pb-5 pt-1 sm:px-6">
+          {/* MOBILE HEADER: 2 botões na esquerda (empilhados), Logo centralizada, 2 botões na direita (empilhados) */}
+          <div className="flex items-center justify-between gap-2 md:hidden">
+            {/* Coluna Esquerda: Notificações em cima, Tema embaixo */}
+            <div className="flex flex-col gap-2 shrink-0 items-center justify-center">
+              <ClientNotificationsPopover className="h-10 w-10 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/15 text-white flex items-center justify-center transition-all active:scale-95 shadow-none" />
+              <ThemeToggle className="h-10 w-10 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/15 text-white flex items-center justify-center transition-all active:scale-95 shadow-none" />
             </div>
 
-            <div className="flex items-center gap-2 shrink-0 ml-auto">
-              <ClientNotificationsPopover />
-              <ThemeToggle />
+            {/* Centro: Logo Oficial do É Pra Já */}
+            <div className="flex-1 flex items-center justify-center px-1">
+              <img
+                src="/header-logo.png"
+                alt="É Pra Já Delivery"
+                className="h-20 xs:h-24 max-h-[96px] w-auto max-w-[190px] xs:max-w-[220px] object-contain drop-shadow-md select-none"
+              />
+            </div>
+
+            {/* Coluna Direita: Carrinho em cima, Perfil embaixo */}
+            <div className="flex flex-col gap-2 shrink-0 items-center justify-center">
+              <HeaderActionButton
+                onClick={() => navigate('/marketplace/cart')}
+                badge={itemCount}
+                title="Carrinho"
+                className="h-10 w-10 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/15 text-white flex items-center justify-center transition-all active:scale-95 shadow-none"
+              >
+                <ShoppingBag className="h-5 w-5 text-white" />
+              </HeaderActionButton>
               <HeaderActionButton
                 onClick={() => navigate('/marketplace/profile')}
                 title="Meu perfil"
-                className="overflow-hidden p-0"
+                className="h-10 w-10 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/15 text-white flex items-center justify-center transition-all active:scale-95 shadow-none overflow-hidden p-0"
               >
                 <MediaImage
                   src={getAvatarImage(profile)}
                   alt="Foto do perfil"
                   className="h-full w-full object-cover"
-                  fallback={<User className="h-5 w-5 text-muted-foreground" />}
+                  fallback={<User className="h-5 w-5 text-white" />}
                 />
               </HeaderActionButton>
             </div>
           </div>
 
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-             {/* Show Address Selector on Desktop too, but styled better */}
-             <div className="hidden md:flex items-center gap-2">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                  <ChevronDown className="h-5 w-5" />
-                </div>
-                <button onClick={() => navigate('/marketplace/addresses')} className="text-left group outline-none">
-                  <span className="block text-[10px] font-black uppercase tracking-wider text-muted-foreground/60 leading-none mb-1">Entregar em:</span>
-                  <span className="block max-w-[300px] truncate text-sm font-bold text-foreground group-hover:text-primary transition-colors">
+          {/* MOBILE: Endereço selecionado centralizado */}
+          <div className="flex items-center justify-center pt-2.5 md:hidden">
+            <button
+              onClick={() => navigate('/marketplace/addresses')}
+              className="group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/15 border border-white/10 text-white text-xs font-medium transition-all max-w-[92%]"
+            >
+              <MapPin className="h-3.5 w-3.5 text-white shrink-0" />
+              <span className="text-white/80 text-[11px] shrink-0">Entregar em:</span>
+              <span className="font-bold text-white truncate max-w-[160px] xs:max-w-[220px]">
+                {selectedAddress ? `${selectedAddress.street}, ${selectedAddress.number}` : 'Definir endereço'}
+              </span>
+              <ChevronDown className="h-3 w-3 text-white/80 group-hover:translate-y-0.5 transition-transform shrink-0" />
+            </button>
+          </div>
+
+          {/* Barra de Pesquisa Arredondada Branca Mobile */}
+          <div className="relative mt-3 md:hidden">
+            <div className="relative flex items-center w-full rounded-full bg-white shadow-md overflow-hidden">
+              <Search className="absolute left-4 h-5 w-5 text-gray-400 pointer-events-none" />
+              <Input
+                placeholder="O que você deseja pedir hoje?"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="h-12 w-full rounded-full border-0 bg-white pl-11 pr-4 text-sm font-semibold text-gray-800 placeholder:text-gray-400 focus-visible:ring-0 focus-visible:ring-offset-0"
+              />
+            </div>
+          </div>
+
+          {/* DESKTOP HEADER */}
+          <div className="hidden md:flex items-center justify-between gap-6 py-2">
+            <div className="flex items-center gap-4">
+              <img src="/header-logo.png" alt="É Pra Já Delivery" className="h-14 w-auto object-contain" />
+              <button
+                onClick={() => navigate('/marketplace/addresses')}
+                className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/10 text-white hover:bg-white/15 border border-white/10 transition-all text-left"
+              >
+                <MapPin className="h-4 w-4 text-white shrink-0" />
+                <div>
+                  <span className="block text-[10px] uppercase font-bold text-white/70 leading-none">Entregar em</span>
+                  <span className="block text-xs font-bold text-white truncate max-w-[200px]">
                     {selectedAddress ? `${selectedAddress.street}, ${selectedAddress.number}` : 'Definir endereço'}
                   </span>
-                </button>
-             </div>
+                </div>
+                <ChevronDown className="h-3.5 w-3.5 text-white/80 shrink-0" />
+              </button>
+            </div>
 
-             <div className="premium-card relative rounded-[26px] p-1 flex-1 md:max-w-xl">
-               <Search className="absolute left-5 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-muted-foreground" />
-               <Input
-                 placeholder="O que você deseja pedir hoje?"
-                 value={search}
-                 onChange={(e) => setSearch(e.target.value)}
-                 className="h-14 rounded-[22px] border-0 bg-transparent pl-12 text-sm font-bold placeholder:text-muted-foreground focus-visible:ring-0"
-               />
-             </div>
+            <div className="relative flex-1 max-w-xl">
+              <div className="relative flex items-center w-full rounded-full bg-white shadow-md overflow-hidden">
+                <Search className="absolute left-4 h-4.5 w-4.5 text-gray-400 pointer-events-none" />
+                <Input
+                  placeholder="O que você deseja pedir hoje?"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="h-11 w-full rounded-full border-0 bg-white pl-11 pr-4 text-sm font-semibold text-gray-800 placeholder:text-gray-400 focus-visible:ring-0"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2.5">
+              <ClientNotificationsPopover className="h-10 w-10 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/15 text-white flex items-center justify-center" />
+              <ThemeToggle className="h-10 w-10 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/15 text-white flex items-center justify-center" />
+              <HeaderActionButton
+                onClick={() => navigate('/marketplace/cart')}
+                badge={itemCount}
+                title="Carrinho"
+                className="h-10 w-10 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/15 text-white flex items-center justify-center"
+              >
+                <ShoppingBag className="h-5 w-5 text-white" />
+              </HeaderActionButton>
+              <HeaderActionButton
+                onClick={() => navigate('/marketplace/profile')}
+                title="Meu perfil"
+                className="h-10 w-10 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/15 text-white flex items-center justify-center overflow-hidden p-0"
+              >
+                <MediaImage
+                  src={getAvatarImage(profile)}
+                  alt="Foto do perfil"
+                  className="h-full w-full object-cover"
+                  fallback={<User className="h-5 w-5 text-white" />}
+                />
+              </HeaderActionButton>
+            </div>
           </div>
         </div>
       </SafeAreaHeader>
