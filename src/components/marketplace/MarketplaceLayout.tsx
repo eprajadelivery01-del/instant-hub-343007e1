@@ -10,12 +10,7 @@ import { Home, Search, ShoppingBag, ClipboardList, User, Store } from 'lucide-re
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
 import { OrderRatingModal } from './OrderRatingModal';
-import { ThemeToggle } from '../shared/ThemeToggle';
 import { SmartAppBanner } from './SmartAppBanner';
-import { ClientNotificationsPopover } from './ClientNotificationsPopover';
-import { HeaderActionButton } from '../shared/HeaderActionButton';
-import { MediaImage } from '../shared/MediaImage';
-import { getAvatarImage } from '@/lib/media';
 import { ActiveOrderChatFab } from './ActiveOrderChatFab';
 
 const navItems = [
@@ -265,30 +260,6 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
                 </Link>
               ))}
             </nav>
-
-            <div className="flex items-center gap-3">
-              <ClientNotificationsPopover />
-              <ThemeToggle />
-              <HeaderActionButton
-                onClick={() => navigate('/marketplace/cart')}
-                title="Sacola"
-                badge={itemCount}
-              >
-                <ShoppingBag className="h-5 w-5" strokeWidth={1.75} />
-              </HeaderActionButton>
-              <HeaderActionButton
-                onClick={() => navigate('/marketplace/profile')}
-                title="Meu perfil"
-                className="overflow-hidden p-0"
-              >
-                <MediaImage
-                  src={getAvatarImage(profile)}
-                  alt="Perfil"
-                  className="h-full w-full object-cover"
-                  fallback={<User className="h-5 w-5 text-muted-foreground" />}
-                />
-              </HeaderActionButton>
-            </div>
           </div>
         </header>
       )}
