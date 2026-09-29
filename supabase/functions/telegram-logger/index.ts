@@ -55,13 +55,19 @@ serve(async (req) => {
       })
     }
 
-    // Filtro estrito: Ignorar apenas ruídos inofensivos de sessão expirada no browser
-    const errMsg = String(payload.error_message || payload.message || '');
+    // Filtro estrito: Ignorar apenas ruídos inofensivos de sessão expirada no browser ou plugins não implementados no Capacitor (ex: iOS/macOS)
+    const errMsg = String(payload.error_message || payload.message || '').toLowerCase();
+    const rawPayloadStr = rawBody.toLowerCase();
     if (
-      errMsg.includes("AuthSessionMissingError") ||
-      errMsg.includes("Invalid Refresh Token") ||
-      errMsg.includes("Failed to fetch") ||
-      errMsg.includes("Load failed")
+      errMsg.includes("authsessionmissingerror") ||
+      errMsg.includes("invalid refresh token") ||
+      errMsg.includes("failed to fetch") ||
+      errMsg.includes("load failed") ||
+      errMsg.includes("unimplemented") ||
+      errMsg.includes("not implemented") ||
+      errMsg.includes("implementation unavailable") ||
+      rawPayloadStr.includes('"code":"unimplemented"') ||
+      rawPayloadStr.includes('"message":"not implemented"')
     ) {
       return new Response(JSON.stringify({ success: true, ignored: true }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

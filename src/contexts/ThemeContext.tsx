@@ -58,11 +58,13 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     // A cor e os ícones da barra não acompanham a troca de tema.
     if (Capacitor.isNativePlatform()) {
       try {
-        StatusBar.setOverlaysWebView({ overlay: false }).catch(() => {});
+        if (Capacitor.getPlatform() === 'android') {
+          StatusBar.setOverlaysWebView({ overlay: false }).catch(() => {});
+          StatusBar.setBackgroundColor({ color: '#091D35' }).catch(() => {});
+        }
         StatusBar.setStyle({ style: STATUS_BAR_STYLE_DARK }).catch(() => {});
-        StatusBar.setBackgroundColor({ color: '#091D35' }).catch(() => {});
       } catch (e) {
-        console.error('Error setting native status bar theme:', e);
+        // Silenciosamente ignora chamadas não suportadas na plataforma
       }
     }
   }, [theme]);

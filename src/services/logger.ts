@@ -96,7 +96,13 @@ export async function reportErrorToTelegram(payload: ErrorPayload, appName = "Ma
     "importing a module script failed",
     "failed to fetch dynamically imported module",
     "chunkloaderror",
-    "loading chunk"
+    "loading chunk",
+    "unimplemented",
+    "not implemented",
+    "implementation unavailable",
+    "status-bar",
+    "statusbar",
+    "code\":\"unimplemented\""
   ];
 
   if (ignoreKeywords.some(keyword => combined.includes(keyword))) {
@@ -140,8 +146,16 @@ export function initializeGlobalErrorHandlers(appName: string) {
 
   // Intercept standard window exception errors
   window.onerror = (message, source, linenão, colnão, error) => {
-    const errorMsg = String(message);
-    if (errorMsg === 'Script error.') return false;
+    const errorMsg = String(message || "");
+    const lower = errorMsg.toLowerCase();
+    if (lower === 'script error.') return false;
+    if (
+      lower.includes("unimplemented") ||
+      lower.includes("not implemented") ||
+      lower.includes("implementation unavailable")
+    ) {
+      return false;
+    }
 
     reportErrorToTelegram({
       error_message: errorMsg,
@@ -160,11 +174,12 @@ export function initializeGlobalErrorHandlers(appName: string) {
   window.onunhandledrejection = (event) => {
     const reason = event.reason;
     const reasonMsg = reason?.message || (typeof reason === "object" ? JSON.stringify(reason) : String(reason));
+    const lowerReason = (reasonMsg || "").toLowerCase();
     
     if (
-      reasonMsg.includes("UNIMPLEMENTED") ||
-      reasonMsg.includes("not implemented") ||
-      reasonMsg.includes("implementation unavailable for")
+      lowerReason.includes("unimplemented") ||
+      lowerReason.includes("not implemented") ||
+      lowerReason.includes("implementation unavailable")
     ) {
       return;
     }
@@ -198,11 +213,13 @@ export function initializeGlobalErrorHandlers(appName: string) {
     // Skip nested reporting to prevent loops
     if (isReporting) return;
 
+    const lowerMsg = (msg || "").toLowerCase();
+
     // Ignore benign platform-specific warnings, UNIMPLEMENTED plugin calls or React dev warnings
     if (
-      msg.includes("UNIMPLEMENTED") ||
-      msg.includes("not implemented") ||
-      msg.includes("implementation unavailable for") ||
+      lowerMsg.includes("unimplemented") ||
+      lowerMsg.includes("not implemented") ||
+      lowerMsg.includes("implementation unavailable") ||
       msg.startsWith("Warning:") ||
       msg.includes("Warning: ") ||
       msg.includes("React.forwardRef") ||
