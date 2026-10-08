@@ -12,7 +12,8 @@ Write-Host "Building Android Debug APK..."
 cd android
 .\gradlew.bat assembleDebug
 
-Write-Host "Copying APK to the root folder..."
+Write-Host "Copying APK to apk-output folder..."
+Copy-Item "app\build\outputs\apk\debug\app-debug.apk" -Destination "..\..\apk-output\epraja-marketplace-debug.apk" -Force
 Copy-Item "app\build\outputs\apk\debug\app-debug.apk" -Destination "..\..\epraja-debug.apk" -Force
 
-Write-Host "APK Build finished successfully! The APK is named epraja-debug.apk in the scratch directory."
+Write-Host "APK Build finished successfully! The APK is saved in apk-output/epraja-marketplace-debug.apk."

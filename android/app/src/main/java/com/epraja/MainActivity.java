@@ -5,19 +5,14 @@ import android.app.NotificationManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.graphics.Color;
-import android.view.Gravity;
 import android.view.View;
 import android.view.WindowManager;
-import android.widget.FrameLayout;
 import androidx.core.view.WindowCompat;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 import com.getcapacitor.BridgeActivity;
 
 public class MainActivity extends BridgeActivity {
-    // Cor média da textura original enviada; a View sobreposta usa o PNG exato.
-    private static final int STATUS_BAR_COLOR = Color.rgb(91, 91, 91);
-    private View statusBarBackground;
+    // Cor oficial do topo do app (Marketplace header): #091D35
+    private static final int STATUS_BAR_COLOR = Color.parseColor("#091D35");
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,53 +50,19 @@ public class MainActivity extends BridgeActivity {
         androidx.core.view.WindowInsetsControllerCompat insetsController = 
             WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
         if (insetsController != null) {
-            insetsController.setAppearanceLightStatusBars(false); // false = dark bar, light icons
+            insetsController.setAppearanceLightStatusBars(false); // false = dark bar, light/white icons (sempre visíveis)
             insetsController.setAppearanceLightNavigationBars(false);
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             View decorView = getWindow().getDecorView();
             int flags = decorView.getSystemUiVisibility();
-            flags &= ~View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+            flags &= ~View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR; // Ícones brancos/claros sempre visíveis
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 flags &= ~View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
             }
             decorView.setSystemUiVisibility(flags);
         }
         WindowCompat.setDecorFitsSystemWindows(getWindow(), true);
-        installStatusBarBackground();
-    }
-
-    private void installStatusBarBackground() {
-        View decorView = getWindow().getDecorView();
-        if (!(decorView instanceof FrameLayout)) return;
-
-        FrameLayout decor = (FrameLayout) decorView;
-        if (statusBarBackground == null) {
-            statusBarBackground = new View(this);
-            statusBarBackground.setBackgroundResource(R.drawable.status_bar_background);
-            statusBarBackground.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
-            FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
-                FrameLayout.LayoutParams.MATCH_PARENT,
-                0,
-                Gravity.TOP
-            );
-            decor.addView(statusBarBackground, params);
-        }
-
-        statusBarBackground.setBackgroundResource(R.drawable.status_bar_background);
-        statusBarBackground.bringToFront();
-        ViewCompat.setOnApplyWindowInsetsListener(decorView, (view, insets) -> {
-            int statusBarHeight = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top;
-            FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) statusBarBackground.getLayoutParams();
-            if (params.height != statusBarHeight) {
-                params.height = statusBarHeight;
-                statusBarBackground.setLayoutParams(params);
-            }
-            statusBarBackground.setVisibility(statusBarHeight > 0 ? View.VISIBLE : View.GONE);
-            statusBarBackground.bringToFront();
-            return insets;
-        });
-        ViewCompat.requestApplyInsets(decorView);
     }
 
     private void createNotificationChannel() {
