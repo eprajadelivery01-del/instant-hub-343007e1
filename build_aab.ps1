@@ -17,5 +17,6 @@ cd android
 
 Write-Host "Copying AAB to the target folder..."
 Copy-Item "app\build\outputs\bundle\release\app-release.aab" -Destination "..\..\apk-output\epraja-RELEASE.aab" -Force
+Copy-Item "app\build\outputs\bundle\release\app-release.aab" -Destination "..\..\apk-output\epraja-marketplace.aab" -Force
 
-Write-Host "AAB Build finished successfully!"
+Write-Host "AAB Build finished successfully! Saved to apk-output/epraja-RELEASE.aab and epraja-marketplace.aab"
