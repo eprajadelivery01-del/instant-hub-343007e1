@@ -5,9 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { Company, Product } from '@/types/database';
 import { useCart } from '@/contexts/CartContext';
 import MarketplaceLayout from '@/components/marketplace/MarketplaceLayout';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft, Minus, Plus, Star, Clock, Store as StoreIcon, Utensils, Search, Info, Ticket, AlertCircle, Flame, RefreshCw, MessageCircle } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { ArrowLeft, Minus, Plus, Star, Clock, Store as StoreIcon, Utensils, Search, Info, Ticket, AlertCircle, Flame, RefreshCw, MessageCircle, Share2 } from 'lucide-react';
 import { getPrepTimeLabel, getStoreStatusLabel, getNextOpenTimeInfo, parseBusinessHours, formatPeriodsLabel } from '@/lib/storeHours';
 import { useAddress } from '@/contexts/AddressContext';
 import { useStoreOpenStatus } from '@/hooks/useStoreOpenStatus';
@@ -223,6 +221,49 @@ export default function StoreDetail() {
   useEffect(() => {
     hasAutoOpenedWhatsAppModalRef.current = false;
   }, [company?.id]);
+
+  // Atualização dinâmica de metatags e título da página para compartilhamento
+  useEffect(() => {
+    if (company?.name) {
+      document.title = `${company.name} | É Pra Já Delivery`;
+      const metaTitle = document.querySelector('meta[property="og:title"]');
+      if (metaTitle) metaTitle.setAttribute('content', `${company.name} | É Pra Já Delivery`);
+      const metaDesc = document.querySelector('meta[property="og:description"]');
+      if (metaDesc) metaDesc.setAttribute('content', `Peça online na loja ${company.name} pelo É Pra Já Delivery!`);
+      const twTitle = document.querySelector('meta[name="twitter:title"]');
+      if (twTitle) twTitle.setAttribute('content', `${company.name} | É Pra Já Delivery`);
+    }
+    return () => {
+      document.title = 'É Pra Já - Marketplace | Peça Comida e Produtos Online';
+    };
+  }, [company?.name]);
+
+  const handleShareStore = async () => {
+    if (!company) return;
+    const shareUrl = window.location.href;
+    const shareTitle = `${company.name} | É Pra Já Delivery`;
+    const shareText = `Confira o cardápio e faça seu pedido na ${company.name} pelo É Pra Já Delivery! 🚀\n${shareUrl}`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: shareTitle,
+          text: `Confira o cardápio e faça seu pedido na ${company.name} pelo É Pra Já Delivery!`,
+          url: shareUrl,
+        });
+        return;
+      } catch (err: any) {
+        if (err?.name === 'AbortError') return;
+      }
+    }
+
+    try {
+      await navigator.clipboard.writeText(shareText);
+      toast.success('Link da loja copiado com sucesso!');
+    } catch {
+      toast.info(`Link: ${shareUrl}`);
+    }
+  };
 
   useEffect(() => {
     if (!loading && company && whatsAppConfig) {
@@ -557,6 +598,13 @@ export default function StoreDetail() {
             </span>
           </div>
         </div>
+        <button
+          onClick={handleShareStore}
+          className="ml-3 p-2 rounded-full hover:bg-muted text-foreground transition-colors"
+          title="Compartilhar loja"
+        >
+          <Share2 className="h-5 w-5" />
+        </button>
       </SafeAreaHeader>
 
       <div className="relative group">
@@ -574,14 +622,22 @@ export default function StoreDetail() {
           <div className="hero-image-overlay absolute inset-0" />
 
           <div
-            className="absolute left-6 right-6 z-20 flex justify-between"
+            className="absolute left-6 right-6 z-20 flex justify-between items-center"
             style={{ top: safeAreaTopValue(1) }}
           >
             <button
               onClick={() => navigate('/marketplace')}
-              className="flex h-11 w-11 items-center justify-center rounded-full bg-white/20 backdrop-blur-md transition-transform hover:scale-110 active:scale-95 text-white"
+              className="flex h-11 w-11 items-center justify-center rounded-full bg-black/40 backdrop-blur-md transition-transform hover:scale-110 active:scale-95 text-white border border-white/20 shadow-md"
+              title="Voltar"
             >
               <ArrowLeft className="h-6 w-6 shadow-sm" />
+            </button>
+            <button
+              onClick={handleShareStore}
+              className="flex h-11 w-11 items-center justify-center rounded-full bg-black/40 backdrop-blur-md transition-transform hover:scale-110 active:scale-95 text-white border border-white/20 shadow-md"
+              title="Compartilhar loja"
+            >
+              <Share2 className="h-5 w-5 shadow-sm" />
             </button>
           </div>
         </div>
