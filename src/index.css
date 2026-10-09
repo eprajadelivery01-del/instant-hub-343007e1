@@ -126,8 +126,13 @@
     height: 100%;
   }
 
+  html {
+    background-color: #091D35 !important;
+  }
+
   body {
-    @apply bg-background text-foreground;
+    background-color: #091D35;
+    color: hsl(var(--foreground));
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     -webkit-font-smoothing: antialiased;
   }
@@ -223,9 +228,7 @@
 
   .app-shell {
     position: relative;
-    background:
-      radial-gradient(ellipse at top, rgba(255, 90, 31, 0.08), transparent 55%),
-      radial-gradient(circle at top, #1A1A1A 0%, #0D0D0D 70%);
+    background-color: #091D35;
     min-height: 100vh;
     min-height: 100dvh;
     isolation: isolate;
