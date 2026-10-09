@@ -7,8 +7,8 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
 }
 
-const DEFAULT_BOT_TOKEN = "8822944243:AAE1dZ0GhBzvnDZRoIw4w9kjv5mRM3oyuWk";
-const DEFAULT_CHAT_ID = "-5164097344";
+const DEFAULT_BOT_TOKEN = Deno.env.get("TELEGRAM_BOT_TOKEN") || "";
+const DEFAULT_CHAT_ID = Deno.env.get("TELEGRAM_CHAT_ID") || "";
 
 const MAX_BODY_BYTES = 32 * 1024; // 32 KB
 
@@ -25,8 +25,16 @@ serve(async (req) => {
   }
 
   try {
-    const TELEGRAM_BOT_TOKEN = "8822944243:AAE1dZ0GhBzvnDZRoIw4w9kjv5mRM3oyuWk";
-    const TELEGRAM_CHAT_ID = "-5164097344";
+    const TELEGRAM_BOT_TOKEN = Deno.env.get("TELEGRAM_BOT_TOKEN") || DEFAULT_BOT_TOKEN;
+    const TELEGRAM_CHAT_ID = Deno.env.get("TELEGRAM_CHAT_ID") || DEFAULT_CHAT_ID;
+
+    if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
+      console.warn('[telegram-logger] TELEGRAM_BOT_TOKEN ou TELEGRAM_CHAT_ID não configurados nas variáveis de ambiente.');
+      return new Response(JSON.stringify({ error: 'Telegram não configurado' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500,
+      });
+    }
 
 
 

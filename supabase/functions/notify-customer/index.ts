@@ -2,20 +2,18 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import admin from "npm:firebase-admin@11.11.1";
 
-const serviceAccount = {
-  type: "service_account",
-  project_id: "e-pra-ja-a410d",
-  private_key_id: "d8038724009d7230ce8cddb3840d9d856ca987e3",
-  private_key: "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDEM97wrIbbPEij\n8b51daQwbYH2NTEcAFRxPlPKZo/jguHmXo2R9kB88vb+vcgQW/EAJqJF3LeoT1dv\n7Utm03U2s927sr0ZMgRaqVvDmPx62q/b7XkYxfjwKZ05NIyRuyYneUtkfGKvVOea\nDOvRJ48I8QY9fNo540HLHaoeJw962NcLqlOP/EXlkN8aJc6bGb7BPu6BkPdwv/NS\nZIk2lulHbKBaryOyUKFY8YAxqN30Vi4J7aO8a7Vudtr72LZAM+wlAniSGyyJ04Mk\nWXt3SQCJ5CVxHkeYkCuKpCcs5iCEXAtRo1g4xEDA+Api8fy8AqCUdEd4G42VwZxj\n06aCkci9AgMBAAECggEAASu8vWAuAXYpccOuvf+nrSG8c1UQ4dD9vDQH0x7ctT6g\nX4gvTJIFxn803/D22Rrn7ToQ16aNx+1leXfyVfXAzUS4d+HB5PDVzel2cExUzWLi\nUwRIG5/hrZ2aVwS4W1zyBg7B3WvKsylAmMKCscA3HLrhlPxCLqccY3NLuclKjb0Q\nSN67bgbN+3l/yg2Ru9fx7oWlUppzys1wxY1AdaXaMk2eyEgAZ7YhbIGMwI77LimD\ntxH1C76ez+oq/drrK54eSG+cudLxFZ8JEMsdZflGW8FqkU0OuiUHbmcFX2Gqw1y7\n+yy751Xuhnl9hO+q1/sMptW9paR2MOePauzrt1Z+gQKBgQDkLE071kNtSiVO/q7X\nK3aREWjXbBYkCwdyQmxQDqmQAmg8VNWsIbKzKyx3NWovUEzVn+i9mJ1zYR8xMxOR\nUSx3rnTUL3JKGT+5/I3pdKR6cPx2geC+JbflRRxv5Nao5TC5l7bdbjtNOaTj0/sy\nlmvAAt/MnO3UIebGq8Gdi7WtYQKBgQDcIW7pqHzGiF8r6HQ1EdaxosWj9yyEVss0\nU5/hOnzFS/6Zc1XqlVjUy3n23e9ekIFuOXvMnqW3Hp+qRJL5kWRoKYHQ9CFC0r85\nQvtqZcJiswhjMHG6eLVkaURJVJiVVr9G8EipIGw9ul8Hy3+1RmtK7zUYe1pYJi+X\n9v/hFZSc3QKBgQCxFYzvhrAX7vabo1+wkQPZPMjAgBuC56hkzhZf37FLmgKp6DFZ\nAWI+WaCN+D+r7sdi+FNaakqwlEzwEzL5kiVP0W7MivJJfeUOhGrjJ+rLOEtH8i6p\nhH5/iq6yTMkolY/GSm/a1MVjfvxw8UFAlquTfueQVq7h91mzEPQYQKjEoQKBgAEO\n3BSdbbQalbKFVIGoy0phSOfn2Tvtmt5uhHc1q8HbAqdEKaaN/zZOoBBysqLWuPiJ\nqDGslYlSyVutJrOyYjQp9ujFM5+5mZex3bl+Mbf9uk2XvwQxblXEN8LOeElHeHXj\n08WUVVDao3hLHxsE8qESk0PB3AZOcK4fTs2LKAK1AoGBANTLECrr29ud64EZlEXh\nYF7zc8A0dl+v4lUFiJVxfdLL5USkh6RBmlp2Wtq+whi1SEHT1Eo6/Pk1I4mTVvED\nSSs9ZGIBzdP7R/3qftyrRu6Z//LI5RUZg7fQNAyz05tpGDFvL9Xfg13vWiibUgat\nDV0Y5xzSFP9S3ijgdNKLjM8Z\n-----END PRIVATE KEY-----\n",
-  client_email: "firebase-adminsdk-fbsvc@e-pra-ja-a410d.iam.gserviceaccount.com"
-};
-
-try {
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount)
-  });
-} catch (e) {
-  // Already initialized
+const rawSa = Deno.env.get("FIREBASE_SERVICE_ACCOUNT_JSON") || Deno.env.get("FIREBASE_SERVICE_ACCOUNT") || "";
+if (rawSa) {
+  try {
+    const serviceAccount = JSON.parse(rawSa);
+    if (!admin.apps.length) {
+      admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount)
+      });
+    }
+  } catch (e) {
+    console.warn('[notify-customer] Aviso ao inicializar Firebase Admin via env:', e);
+  }
 }
 
 const statusMessages: Record<string, { title: string; description: string }> = {
@@ -104,6 +102,7 @@ serve(async (req) => {
   try {
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL') || '';
     const SERVICE_ROLE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
+    const ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY') || '';
 
     if (!SUPABASE_URL || !SERVICE_ROLE) {
       return new Response(JSON.stringify({ error: 'Missing Supabase vars' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
@@ -112,6 +111,23 @@ serve(async (req) => {
     const adminClient = createClient(SUPABASE_URL, SERVICE_ROLE, {
       auth: { autoRefreshToken: false, persistSession: false },
     });
+
+    // Extrai e valida o token JWT do usuário chamador para evitar vulnerabilidades de IDOR
+    const authHeader = req.headers.get('Authorization') || '';
+    const bearerToken = authHeader.replace(/^Bearer\s+/i, '');
+    let authenticatedUserId: string | null = null;
+
+    if (bearerToken && ANON_KEY && bearerToken !== ANON_KEY && bearerToken !== SERVICE_ROLE) {
+      try {
+        const authClient = createClient(SUPABASE_URL, ANON_KEY, {
+          global: { headers: { Authorization: `Bearer ${bearerToken}` } }
+        });
+        const { data: userData } = await authClient.auth.getUser();
+        authenticatedUserId = userData?.user?.id || null;
+      } catch (e) {
+        console.warn('[notify-customer] Falha ao verificar autenticação do chamador:', e);
+      }
+    }
 
     const payload = await req.json();
     console.log("Customer Push Webhook payload received:", payload);
@@ -123,6 +139,28 @@ serve(async (req) => {
       console.log(`[notify-customer] RESTAURANDO PEDIDO #${cleanId} PARA STATUS ${targetStatus}`);
       const isUUID = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(cleanId);
       if (isUUID) {
+        if (authenticatedUserId) {
+          const { data: targetOrder } = await adminClient
+            .from('orders')
+            .select('id, company_id')
+            .eq('id', cleanId)
+            .maybeSingle();
+
+          if (targetOrder?.company_id) {
+            const { data: storeOwner } = await adminClient
+              .from('companies')
+              .select('user_id')
+              .eq('id', targetOrder.company_id)
+              .maybeSingle();
+            if (storeOwner?.user_id !== authenticatedUserId) {
+              return new Response(JSON.stringify({ error: 'Acesso negado: apenas o lojista responsável pode restaurar este pedido.' }), {
+                status: 403,
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+              });
+            }
+          }
+        }
+
         await Promise.allSettled([
           adminClient.from('orders').update({ status: targetStatus, updated_at: new Date().toISOString() }).eq('id', cleanId),
           adminClient.from('deliveries').update({ status: targetStatus, updated_at: new Date().toISOString() }).eq('order_id', cleanId),
@@ -271,6 +309,38 @@ serve(async (req) => {
           const matched = foundOrders?.find((o: any) => o.id.toLowerCase().endsWith(cleanId.toLowerCase()) || o.id.toLowerCase().startsWith(cleanId.toLowerCase()));
           if (matched) actualOrderId = matched.id;
         }
+
+        // Validação de Autorização (Prevenção de IDOR):
+        // Se a chamada veio de um cliente autenticado (e não de webhook do banco de dados), valida a titularidade
+        if (authenticatedUserId && !payload.table) {
+          const { data: targetOrder } = await adminClient
+            .from('orders')
+            .select('id, user_id, customer_id, company_id')
+            .eq('id', actualOrderId)
+            .maybeSingle();
+
+          if (targetOrder) {
+            let isStoreOwner = false;
+            if (targetOrder.company_id) {
+              const { data: storeOwner } = await adminClient
+                .from('companies')
+                .select('user_id')
+                .eq('id', targetOrder.company_id)
+                .maybeSingle();
+              if (storeOwner?.user_id === authenticatedUserId) isStoreOwner = true;
+            }
+
+            const isOrderCustomer = targetOrder.user_id === authenticatedUserId || targetOrder.customer_id === authenticatedUserId;
+            if (!isOrderCustomer && !isStoreOwner) {
+              console.warn(`[notify-customer] IDOR BLOQUEADO: Usuário ${authenticatedUserId} tentou cancelar pedido ${actualOrderId}`);
+              return new Response(JSON.stringify({ error: 'Acesso negado: Você não possui autorização para cancelar este pedido.' }), {
+                status: 403,
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+              });
+            }
+          }
+        }
+
         await Promise.allSettled([
           adminClient.from('orders').update({ status: 'cancelled', updated_at: new Date().toISOString() }).eq('id', actualOrderId),
           adminClient.from('deliveries').update({ status: 'cancelled', updated_at: new Date().toISOString() }).eq('order_id', actualOrderId),
