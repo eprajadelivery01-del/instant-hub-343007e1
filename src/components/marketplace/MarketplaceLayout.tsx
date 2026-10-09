@@ -235,34 +235,7 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
         onClose={clearNotification} 
       />
       
-      {/* Desktop Header */}
-      {!hideNav && (
-        <header className="hidden md:block sticky top-0 z-[100] w-full border-b border-border/50 bg-[#091D35] backdrop-blur-xl pt-[env(safe-area-inset-top,0px)]">
-          <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6">
-            <Link to="/marketplace" className="flex items-center gap-2 outline-none">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-white shadow-lg shadow-primary/20 overflow-hidden">
-                <img src="/icon.png" alt="App Icon" className="w-full h-full object-cover" />
-              </div>
-              <span className="text-xl font-black tracking-tighter text-white">É Pra Já</span>
-            </Link>
 
-            <nav className="flex items-center gap-8">
-              {navItems.map((item) => (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className={cn(
-                    "text-sm font-bold transition-all hover:text-primary",
-                    location.pathname === item.path ? "text-primary" : "text-white/80"
-                  )}
-                >
-                  {item.label}
-                </Link>
-              ))}
-            </nav>
-          </div>
-        </header>
-      )}
 
       <main className={cn(
         'flex flex-1 flex-col transition-all duration-300 bg-background', 
