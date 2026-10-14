@@ -55,13 +55,20 @@ import { ActiveOfferHighlight } from '@/components/marketplace/ActiveOfferHighli
 
 import { getCachedCompanies } from '@/lib/offlinePrecache';
 
+let memoryMarketplaceCompanies: MarketplaceCompany[] | null = null;
+let lastMarketplaceFetchTimestamp = 0;
+
 export default function Home() {
   const [companies, setCompanies] = useState<MarketplaceCompany[]>(() => {
+    if (memoryMarketplaceCompanies && memoryMarketplaceCompanies.length > 0) {
+      return memoryMarketplaceCompanies;
+    }
     const cached = getCachedCompanies();
     if (!cached) return [];
     return rankStores(cached as any[]) as any[];
   });
   const [loading, setLoading] = useState(() => {
+    if (memoryMarketplaceCompanies && memoryMarketplaceCompanies.length > 0) return false;
     const cached = getCachedCompanies();
     return !cached || cached.length === 0;
   });
@@ -166,6 +173,8 @@ export default function Home() {
       ).map((company, index) => ({ ...company, isPremium: index < 5 }));
 
       if (processed.length > 0) {
+        memoryMarketplaceCompanies = processed;
+        lastMarketplaceFetchTimestamp = Date.now();
         setCompanies(processed);
       }
       setLoading(false);
@@ -180,7 +189,10 @@ export default function Home() {
   };
 
   useEffect(() => {
-    fetchCompanies();
+    // Se ainda não carregou ou se o cache tem mais de 90 segundos, busca dados atualizados
+    if (!memoryMarketplaceCompanies || memoryMarketplaceCompanies.length === 0 || Date.now() - lastMarketplaceFetchTimestamp > 90_000) {
+      fetchCompanies();
+    }
 
     // Debounce realtime refetch para evitar avalanches de re-query
     let refetchTimer: ReturnType<typeof setTimeout> | null = null;
@@ -198,7 +210,8 @@ export default function Home() {
       .subscribe();
 
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
+      // Evita travar o app recarregando tudo ao alternar de tela: só busca se tiver passado pelo menos 3 minutos
+      if (document.visibilityState === 'visible' && Date.now() - lastMarketplaceFetchTimestamp > 180_000) {
         fetchCompanies();
       }
     };

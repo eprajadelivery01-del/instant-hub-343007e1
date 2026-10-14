@@ -258,7 +258,7 @@
     padding-bottom: calc(180px + env(safe-area-inset-bottom, 0px));
   }
 
-  /* Floating particles overlay (kept and visible across both dark and light themes) */
+  /* Floating particles overlay (kept static across both dark and light themes for 60fps performance) */
   .app-shell::after {
     content: '';
     position: fixed;
@@ -276,7 +276,7 @@
     background-size: 480px 480px;
     background-repeat: repeat;
     opacity: 0.85;
-    animation: particle-drift 60s linear infinite;
+    will-change: auto;
   }
 
   .light .app-shell::after {
@@ -300,16 +300,16 @@
     background: rgba(255, 255, 255, 0.045);
     border: 1px solid rgba(255, 255, 255, 0.08);
     box-shadow: 0 12px 36px rgba(0, 0, 0, 0.55);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
   }
 
   .premium-card {
     background: rgba(255, 255, 255, 0.04);
     border: 1px solid rgba(255, 255, 255, 0.08);
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
   }
 
   .dark .premium-card {

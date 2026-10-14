@@ -120,8 +120,7 @@ export default function StoreDetail() {
   const { data: storeData, isLoading: loading, isError: productsError, refetch: refetchStore, isFetching: refetchingStore } = useQuery({
     queryKey: ['store', id],
     enabled: !!id,
-    staleTime: 30 * 1000,
-    refetchOnMount: 'always',
+    staleTime: 60 * 1000,
     refetchOnWindowFocus: false,
     retry: 1,
     initialData: () => {
@@ -135,8 +134,6 @@ export default function StoreDetail() {
       let companyData: any = null;
       let productsData: any[] = [];
 
-      await ensureAuthenticated();
-
       // 1. Busca dados da empresa com produtos embutidos em consulta única de alta velocidade
       try {
         const COMPANY_QUERY = 'id, name, description, category, rating, is_open, active, is_active, delivery_fee, delivery_regions_pricing, show_in_marketplace, city, state, address, phone, banner_url, cover_url, logo_url, business_hours, prep_time, prep_time_min, prep_time_max, created_at, user_id, category_order, latitude, longitude, products(id, company_id, name, description, price, image_url, category, active, sort_order, is_featured, created_at)';
@@ -146,6 +143,18 @@ export default function StoreDetail() {
           .select(COMPANY_QUERY)
           .or(`id.eq.${id},user_id.eq.${id}`)
           .maybeSingle();
+
+        // Fallback RLS defensivo se o acesso anonimo for negado pelo servidor (42501)
+        if (error && (error.code === '42501' || error.message?.includes('permission denied'))) {
+          await ensureAuthenticated();
+          const retryRes = await supabase
+            .from('companies')
+            .select(COMPANY_QUERY)
+            .or(`id.eq.${id},user_id.eq.${id}`)
+            .maybeSingle();
+          data = retryRes.data as typeof data;
+          error = retryRes.error;
+        }
 
         // Fallback defensivo caso a coluna category_order ainda não tenha sido criada no banco
         if (error && (error.message?.includes('category_order') || error.code === '42703')) {
