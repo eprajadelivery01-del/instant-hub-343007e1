@@ -774,13 +774,15 @@ Deno.serve(async (req) => {
           body.target_audience ?? body.audience ?? body.target ?? "customers"
         ).trim().toLowerCase();
 
-        let targetAudience: "customers" | "stores" | "drivers";
+        let targetAudience: "customers" | "stores" | "drivers" | "all";
         if (rawAudience === "stores" || rawAudience === "lojista" || rawAudience === "lojistas" || rawAudience === "merchants") {
           targetAudience = "stores";
         } else if (rawAudience === "drivers" || rawAudience === "entregador" || rawAudience === "entregadores" || rawAudience === "motoboys") {
           targetAudience = "drivers";
+        } else if (rawAudience === "all" || rawAudience === "todos" || rawAudience === "geral") {
+          targetAudience = "all";
         } else {
-          // "all", "customers", "clientes" ou default -> estritamente CLIENTES DO MARKETPLACE
+          // "customers", "clientes" ou default -> estritamente CLIENTES DO MARKETPLACE
           targetAudience = "customers";
         }
 
@@ -801,116 +803,104 @@ Deno.serve(async (req) => {
           extra.type = "marketing";
         }
 
-        // 3. Coleta e Isolamento Absoluto de Destinatários por Público (Positive Filtering)
+        // 3. Coleta e Isolamento de Destinatários por Público
         const targetTokens = new Set<string>();
 
-        if (targetAudience === "customers") {
-          // ── PÚBLICO: CLIENTES (MARKETPLACE - br.com.epraja.appFma) ──
-          console.log(`[send-push:${reqId}] [PUSH_MARKETING] Coletando tokens exclusivos de 'customers' (Marketplace)...`);
+        if (targetAudience === "all") {
+          // ── PÚBLICO: GERAL / TODOS (Clientes + Lojistas + Entregadores) ──
+          console.log(`[send-push:${reqId}] [PUSH_MARKETING] Coletando tokens para público GERAL (all)...`);
+          const [custTableRes, devCustRes, storeTableRes, devStoreRes, drvTableRes, devDrvRes] = await Promise.all([
+            supabase.from("customers").select("fcm_token").not("fcm_token", "is", null),
+            supabase.from("device_tokens").select("token").is("disabled_at", null).or("app.eq.marketplace,bundle_id.eq.br.com.epraja.appFma,customer_id.not.is.null"),
+            supabase.from("companies").select("fcm_token").not("fcm_token", "is", null),
+            supabase.from("device_tokens").select("token").is("disabled_at", null).or("app.eq.lojista,bundle_id.eq.br.com.epraja.lojista"),
+            supabase.from("delivery_drivers").select("fcm_token").not("fcm_token", "is", null),
+            supabase.from("device_tokens").select("token").is("disabled_at", null).or("app.eq.entregador,bundle_id.eq.br.com.epraja.entregador")
+          ]);
+          (custTableRes.data ?? []).forEach((c: any) => c?.fcm_token && targetTokens.add(String(c.fcm_token).trim()));
+          (devCustRes.data ?? []).forEach((t: any) => t?.token && targetTokens.add(String(t.token).trim()));
+          (storeTableRes.data ?? []).forEach((s: any) => s?.fcm_token && targetTokens.add(String(s.fcm_token).trim()));
+          (devStoreRes.data ?? []).forEach((t: any) => t?.token && targetTokens.add(String(t.token).trim()));
+          (drvTableRes.data ?? []).forEach((d: any) => d?.fcm_token && targetTokens.add(String(d.fcm_token).trim()));
+          (devDrvRes.data ?? []).forEach((t: any) => t?.token && targetTokens.add(String(t.token).trim()));
 
-          // 3.1. Tokens em device_tokens filtrados ESTRITAMENTE com AND: app = 'marketplace' AND bundle_id = 'br.com.epraja.appFma'
+        } else if (targetAudience === "customers") {
+          // ── PÚBLICO: CLIENTES (MARKETPLACE - br.com.epraja.appFma) ──
+          console.log(`[send-push:${reqId}] [PUSH_MARKETING] Coletando tokens de 'customers' (Marketplace)...`);
+
+          // 3.1. Tokens em device_tokens do Marketplace
           const { data: devCustTokens, error: errDev } = await supabase
             .from("device_tokens")
             .select("token")
             .is("disabled_at", null)
-            .eq("app", "marketplace")
-            .eq("bundle_id", "br.com.epraja.appFma");
+            .or("app.eq.marketplace,bundle_id.eq.br.com.epraja.appFma,customer_id.not.is.null");
           if (errDev) console.error(`[send-push:${reqId}] device_tokens customers error: ${errDev.message}`);
           (devCustTokens ?? []).forEach((t: any) => t?.token && targetTokens.add(String(t.token).trim()));
 
-          // 3.2. Proteção Adicional de Expurgo Cruzado (Safety Net)
-          const [storeTokensRes, driverTokensRes, otherAppDevTokens] = await Promise.all([
-            supabase.from("companies").select("fcm_token").not("fcm_token", "is", null),
-            supabase.from("delivery_drivers").select("fcm_token").not("fcm_token", "is", null),
-            supabase.from("device_tokens").select("token").or("app.eq.lojista,app.eq.entregador,bundle_id.eq.br.com.epraja.lojista,bundle_id.eq.br.com.epraja.entregador")
-          ]);
-          const excludedTokens = new Set<string>();
-          (storeTokensRes.data ?? []).forEach((s: any) => s?.fcm_token && excludedTokens.add(String(s.fcm_token).trim()));
-          (driverTokensRes.data ?? []).forEach((d: any) => d?.fcm_token && excludedTokens.add(String(d.fcm_token).trim()));
-          (otherAppDevTokens.data ?? []).forEach((d: any) => d?.token && excludedTokens.add(String(d.token).trim()));
+          // 3.2. Tokens na tabela customers
+          const { data: custTableTokens, error: errCust } = await supabase
+            .from("customers")
+            .select("fcm_token")
+            .not("fcm_token", "is", null);
+          if (errCust) console.error(`[send-push:${reqId}] customers table error: ${errCust.message}`);
+          (custTableTokens ?? []).forEach((c: any) => c?.fcm_token && targetTokens.add(String(c.fcm_token).trim()));
 
-          let excludedCount = 0;
-          for (const exc of excludedTokens) {
-            if (targetTokens.has(exc)) {
-              targetTokens.delete(exc);
-              excludedCount++;
+          // 3.3. Proteção: Remove apenas tokens estritamente exclusivos de motorista que nunca foram de cliente
+          const { data: exclusiveDriverTokens } = await supabase
+            .from("device_tokens")
+            .select("token")
+            .is("disabled_at", null)
+            .eq("app", "entregador")
+            .is("customer_id", null);
+
+          const customerTokensSet = new Set((custTableTokens ?? []).map((c: any) => String(c?.fcm_token).trim()));
+          (exclusiveDriverTokens ?? []).forEach((dt: any) => {
+            const tk = String(dt?.token || "").trim();
+            // Só exclui se NÃO estiver registrado explicitamente como cliente
+            if (tk && !customerTokensSet.has(tk)) {
+              targetTokens.delete(tk);
             }
-          }
-          if (excludedCount > 0) {
-            console.log(`[send-push:${reqId}] [PUSH_MARKETING] Expurgo cruzado removeu ${excludedCount} token(s) incompatíveis da campanha customers`);
-          }
+          });
 
         } else if (targetAudience === "stores") {
           // ── PÚBLICO: LOJISTAS (br.com.epraja.lojista) ──
           console.log(`[send-push:${reqId}] [PUSH_MARKETING] Coletando tokens exclusivos de 'stores' (Lojista)...`);
 
-          // 3.1. Tokens em device_tokens filtrados ESTRITAMENTE com AND: app = 'lojista' AND bundle_id = 'br.com.epraja.lojista'
+          // 3.1. Tokens em device_tokens filtrados por app ou bundle do lojista
           const { data: devStoreTokens, error: errDevStore } = await supabase
             .from("device_tokens")
             .select("token")
             .is("disabled_at", null)
-            .eq("app", "lojista")
-            .eq("bundle_id", "br.com.epraja.lojista");
+            .or("app.eq.lojista,bundle_id.eq.br.com.epraja.lojista");
           if (errDevStore) console.error(`[send-push:${reqId}] device_tokens stores error: ${errDevStore.message}`);
           (devStoreTokens ?? []).forEach((t: any) => t?.token && targetTokens.add(String(t.token).trim()));
 
-          // 3.2. Proteção Adicional de Expurgo Cruzado (Safety Net)
-          const [custTokensRes, driverTokensRes, otherAppDevTokens] = await Promise.all([
-            supabase.from("customers").select("fcm_token").not("fcm_token", "is", null),
-            supabase.from("delivery_drivers").select("fcm_token").not("fcm_token", "is", null),
-            supabase.from("device_tokens").select("token").or("app.eq.marketplace,app.eq.entregador,bundle_id.eq.br.com.epraja.appFma,bundle_id.eq.br.com.epraja.entregador")
-          ]);
-          const excludedTokens = new Set<string>();
-          (custTokensRes.data ?? []).forEach((c: any) => c?.fcm_token && excludedTokens.add(String(c.fcm_token).trim()));
-          (driverTokensRes.data ?? []).forEach((d: any) => d?.fcm_token && excludedTokens.add(String(d.fcm_token).trim()));
-          (otherAppDevTokens.data ?? []).forEach((d: any) => d?.token && excludedTokens.add(String(d.token).trim()));
-
-          let excludedCount = 0;
-          for (const exc of excludedTokens) {
-            if (targetTokens.has(exc)) {
-              targetTokens.delete(exc);
-              excludedCount++;
-            }
-          }
-          if (excludedCount > 0) {
-            console.log(`[send-push:${reqId}] [PUSH_MARKETING] Expurgo cruzado removeu ${excludedCount} token(s) incompatíveis da campanha stores`);
-          }
+          // 3.2. Tokens na tabela companies
+          const { data: compTokens } = await supabase
+            .from("companies")
+            .select("fcm_token")
+            .not("fcm_token", "is", null);
+          (compTokens ?? []).forEach((c: any) => c?.fcm_token && targetTokens.add(String(c.fcm_token).trim()));
 
         } else if (targetAudience === "drivers") {
           // ── PÚBLICO: ENTREGADORES (br.com.epraja.entregador) ──
           console.log(`[send-push:${reqId}] [PUSH_MARKETING] Coletando tokens exclusivos de 'drivers' (Entregador)...`);
 
-          // 3.1. Tokens em device_tokens filtrados ESTRITAMENTE com AND: app = 'entregador' AND bundle_id = 'br.com.epraja.entregador'
+          // 3.1. Tokens em device_tokens do entregador
           const { data: devDriverTokens, error: errDevDrv } = await supabase
             .from("device_tokens")
             .select("token")
             .is("disabled_at", null)
-            .eq("app", "entregador")
-            .eq("bundle_id", "br.com.epraja.entregador");
+            .or("app.eq.entregador,bundle_id.eq.br.com.epraja.entregador");
           if (errDevDrv) console.error(`[send-push:${reqId}] device_tokens drivers error: ${errDevDrv.message}`);
           (devDriverTokens ?? []).forEach((t: any) => t?.token && targetTokens.add(String(t.token).trim()));
 
-          // 3.2. Proteção Adicional de Expurgo Cruzado (Safety Net)
-          const [custTokensRes, compTokensRes, otherAppDevTokens] = await Promise.all([
-            supabase.from("customers").select("fcm_token").not("fcm_token", "is", null),
-            supabase.from("companies").select("fcm_token").not("fcm_token", "is", null),
-            supabase.from("device_tokens").select("token").or("app.eq.marketplace,app.eq.lojista,bundle_id.eq.br.com.epraja.appFma,bundle_id.eq.br.com.epraja.lojista")
-          ]);
-          const excludedTokens = new Set<string>();
-          (custTokensRes.data ?? []).forEach((c: any) => c?.fcm_token && excludedTokens.add(String(c.fcm_token).trim()));
-          (compTokensRes.data ?? []).forEach((s: any) => s?.fcm_token && excludedTokens.add(String(s.fcm_token).trim()));
-          (otherAppDevTokens.data ?? []).forEach((d: any) => d?.token && excludedTokens.add(String(d.token).trim()));
-
-          let excludedCount = 0;
-          for (const exc of excludedTokens) {
-            if (targetTokens.has(exc)) {
-              targetTokens.delete(exc);
-              excludedCount++;
-            }
-          }
-          if (excludedCount > 0) {
-            console.log(`[send-push:${reqId}] [PUSH_MARKETING] Expurgo cruzado removeu ${excludedCount} token(s) incompatíveis da campanha drivers`);
-          }
+          // 3.2. Tokens na tabela delivery_drivers
+          const { data: driverTokens } = await supabase
+            .from("delivery_drivers")
+            .select("fcm_token")
+            .not("fcm_token", "is", null);
+          (driverTokens ?? []).forEach((d: any) => d?.fcm_token && targetTokens.add(String(d.fcm_token).trim()));
         }
 
         tokens = Array.from(targetTokens);
