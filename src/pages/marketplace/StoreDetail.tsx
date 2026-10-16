@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { Company, Product } from '@/types/database';
 import { useCart } from '@/contexts/CartContext';
+import { cn } from '@/lib/utils';
 import MarketplaceLayout from '@/components/marketplace/MarketplaceLayout';
 import { ArrowLeft, Minus, Plus, Star, Clock, Store as StoreIcon, Utensils, Search, Info, Ticket, AlertCircle, Flame, RefreshCw, MessageCircle, Share2 } from 'lucide-react';
 import { getPrepTimeLabel, getStoreStatusLabel, getNextOpenTimeInfo, parseBusinessHours, formatPeriodsLabel } from '@/lib/storeHours';
