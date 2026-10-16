@@ -183,6 +183,17 @@ class GlobalErrorBoundary extends Component<{children: ReactNode}, {hasError: bo
   }
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("Uncaught error:", error, errorInfo);
+    try {
+      reportErrorToTelegram({
+        error_message: `[Crash Fatal do React / ErrorBoundary] ${error?.message || String(error)}`,
+        stack_trace: error?.stack || String(errorInfo?.componentStack || ""),
+        url: typeof window !== "undefined" ? window.location.href : "",
+        additional_info: {
+          componentStack: errorInfo?.componentStack ? String(errorInfo.componentStack).slice(0, 800) : "",
+          isFatalReactCrash: true
+        }
+      }, "Marketplace Cliente").catch(() => {});
+    } catch {}
   }
   render() {
     if (this.state.hasError) {

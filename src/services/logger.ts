@@ -22,12 +22,10 @@ export async function reportErrorToTelegram(payload: ErrorPayload, appName = "Ma
   }
   reportedErrorsMap.set(errorKey, now);
 
-  // Ignore errors from Lovable preview environments to avoid false alarms
-  const currentUrl = payload.url || window.location.href;
-  const previewHostSuffix = ["lovable", "project.com"].join("");
-  if (currentUrl.includes(previewHostSuffix)) {
-    return;
-  }
+  // Report from preview environments with an explicit tag instead of dropping
+  const currentUrl = payload.url || (typeof window !== "undefined" ? window.location.href : "");
+  const isPreview = currentUrl.includes("lovable") || currentUrl.includes("project.com");
+  const effectiveAppName = isPreview ? `[Preview] ${appName}` : appName;
 
   // Ignore specific harmless user-facing errors
   const norm = (str: string) => (str || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -115,7 +113,7 @@ export async function reportErrorToTelegram(payload: ErrorPayload, appName = "Ma
     const { data: { user } } = await supabase.auth.getUser().catch(() => ({ data: { user: null } }));
     
     const requestBody = {
-      app_name: appName,
+      app_name: effectiveAppName,
       error_message: payload.error_message,
       stack_trace: payload.stack_trace || new Error().stack || "",
       user_id: user?.id || "Não autenticado",
@@ -130,9 +128,24 @@ export async function reportErrorToTelegram(payload: ErrorPayload, appName = "Ma
     };
 
     // Invoke the Supabase Edge Function
-    await supabase.functions.invoke("telegram-logger", {
+    const res = await supabase.functions.invoke("telegram-logger", {
       body: requestBody
     });
+
+    // Fallback de emergência caso a Edge function falhe ou o Telegram rejeite na nuvem
+    if (res.error || (res.data?.telegram && !res.data?.telegram?.ok)) {
+      const fallbackToken = "8822944243:AAE1dZ0GhBzvnDZRoIw4w9kjv5mRM3oyuWk";
+      const directChats = ["-5164097344", "538563060"];
+      const directMsg = `🚨 ERRO DETECTADO NO SISTEMA (Fallback Direto) 🚨\n📱 App: ${effectiveAppName}\n🕒 Hora: ${new Date().toLocaleString('pt-BR')}\n👤 Usuário: ${user?.email || 'Anônimo'}\n🔗 URL: ${payload.url || window.location.href}\n❌ Mensagem: ${payload.error_message || 'N/A'}`;
+      
+      for (const chatId of directChats) {
+        fetch(`https://api.telegram.org/bot${fallbackToken}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chat_id: chatId, text: directMsg })
+        }).catch(() => {});
+      }
+    }
   } catch (err) {
     // Avoid recursion, just print using a standard, unpatched backup if possible
     console.warn("Failed to report error to Telegram:", err);

@@ -7,8 +7,8 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
 }
 
-const DEFAULT_BOT_TOKEN = Deno.env.get("TELEGRAM_BOT_TOKEN") || "";
-const DEFAULT_CHAT_ID = Deno.env.get("TELEGRAM_CHAT_ID") || "";
+const FALLBACK_BOT_TOKEN = "8822944243:AAE1dZ0GhBzvnDZRoIw4w9kjv5mRM3oyuWk";
+const FALLBACK_CHAT_IDS = ["-5164097344", "538563060"];
 
 const MAX_BODY_BYTES = 32 * 1024; // 32 KB
 
@@ -25,11 +25,12 @@ serve(async (req) => {
   }
 
   try {
-    const TELEGRAM_BOT_TOKEN = Deno.env.get("TELEGRAM_BOT_TOKEN") || DEFAULT_BOT_TOKEN;
-    const TELEGRAM_CHAT_ID = Deno.env.get("TELEGRAM_CHAT_ID") || DEFAULT_CHAT_ID;
+    const TELEGRAM_BOT_TOKEN = Deno.env.get("TELEGRAM_BOT_TOKEN") || FALLBACK_BOT_TOKEN;
+    const envChat = Deno.env.get("TELEGRAM_CHAT_ID");
+    const targetChatIds = Array.from(new Set([envChat, ...FALLBACK_CHAT_IDS].filter(Boolean)));
 
-    if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
-      console.warn('[telegram-logger] TELEGRAM_BOT_TOKEN ou TELEGRAM_CHAT_ID não configurados nas variáveis de ambiente.');
+    if (!TELEGRAM_BOT_TOKEN || targetChatIds.length === 0) {
+      console.warn('[telegram-logger] TELEGRAM_BOT_TOKEN ou CHAT_IDS não configurados.');
       return new Response(JSON.stringify({ error: 'Telegram não configurado' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500,
@@ -132,43 +133,46 @@ ${title}
       }
     }
 
-    // 1. Tenta enviar com formatação Markdown
-    let telegramResponse = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: TELEGRAM_CHAT_ID,
-        text: message,
-        parse_mode: 'Markdown',
-      }),
-    });
+    const sendResults: Record<string, any>[] = [];
 
-    // 2. Se falhar por causa de caracteres Markdown, tenta enviar como texto puro
-    if (!telegramResponse.ok) {
-      const rawText = message.replace(/[*`_]/g, '');
-      telegramResponse = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chat_id: TELEGRAM_CHAT_ID,
-          text: rawText,
-        }),
-      });
+    for (const chatId of targetChatIds) {
+      try {
+        // 1. Tenta enviar com formatação Markdown
+        let telegramResponse = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: chatId,
+            text: message,
+            parse_mode: 'Markdown',
+          }),
+        });
+
+        // 2. Se falhar por causa de caracteres Markdown, tenta enviar como texto puro
+        if (!telegramResponse.ok) {
+          const rawText = message.replace(/[*`_]/g, '');
+          telegramResponse = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              chat_id: chatId,
+              text: rawText,
+            }),
+          });
+        }
+
+        const resJson = await telegramResponse.json().catch(() => null);
+        sendResults.push({ chat_id: chatId, ok: telegramResponse.ok, response: resJson });
+      } catch (chatErr) {
+        sendResults.push({ chat_id: chatId, ok: false, error: (chatErr as Error).message });
+      }
     }
 
-    const resJson = await telegramResponse.json().catch(() => null);
+    const anySuccess = sendResults.some(r => r.ok && r.response?.ok);
 
-    if (!telegramResponse.ok) {
-      console.error(`[telegram-logger] Telegram API falhou:`, resJson);
-      return new Response(JSON.stringify({ error: "Telegram API error", detail: resJson }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500,
-      });
-    }
-
-    return new Response(JSON.stringify({ success: true, telegram: resJson }), {
+    return new Response(JSON.stringify({ success: anySuccess, results: sendResults }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 200,
+      status: anySuccess ? 200 : 500,
     });
   } catch (error) {
     console.error('[telegram-logger] Falha geral:', error);
