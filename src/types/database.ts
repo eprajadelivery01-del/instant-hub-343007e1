@@ -45,6 +45,7 @@ export interface Company {
   delivery_regions_pricing?: Array<{ region_id: string; customer_price: string | number }> | string | null;
   /** JSON array of custom ordered category names set by the merchant */
   category_order?: string[] | string | null;
+  timezone?: string | null;
 }
 
 export interface Product {
