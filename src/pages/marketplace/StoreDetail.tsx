@@ -253,13 +253,13 @@ export default function StoreDetail() {
     if (!company) return;
     const shareUrl = window.location.href;
     const shareTitle = `${company.name} | É Pra Já Delivery`;
-    const shareText = `Confira o cardápio e faça seu pedido na ${company.name} pelo É Pra Já Delivery! 🚀\n${shareUrl}`;
+    const shareText = `Confira o cardápio e faça seu pedido na ${company.name} pelo É Pra Já Delivery! 🚀\n\n${shareUrl}`;
 
     if (navigator.share) {
       try {
         await navigator.share({
           title: shareTitle,
-          text: `Confira o cardápio e faça seu pedido na ${company.name} pelo É Pra Já Delivery!`,
+          text: `Confira o cardápio e faça seu pedido na ${company.name} pelo É Pra Já Delivery! 🚀\n\n${shareUrl}`,
           url: shareUrl,
         });
         return;

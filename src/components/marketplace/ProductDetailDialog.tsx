@@ -1,7 +1,7 @@
 import { Product } from '@/types/database';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Minus, Plus, X, ChevronLeft, ChevronRight, MessageSquare } from 'lucide-react';
+import { Minus, Plus, X, ChevronLeft, ChevronRight, MessageSquare, Share2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { MediaImage } from '@/components/shared/MediaImage';
@@ -301,6 +301,34 @@ export function ProductDetailDialog({ product, isOpen, onClose, onAddToCart, ini
     setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
   };
 
+  const handleShareProduct = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!product) return;
+    const shareUrl = window.location.href;
+    const shareTitle = `${product.name} | É Pra Já Delivery`;
+    const shareText = `Olha o que encontrei no É Pra Já Delivery: *${product.name}* por apenas ${Number(product.price || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}! 😋\n\nPeça aqui:\n${shareUrl}`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: shareTitle,
+          text: `Olha o que encontrei no É Pra Já Delivery: ${product.name}! 😋\n\n${shareUrl}`,
+          url: shareUrl,
+        });
+        return;
+      } catch (err: any) {
+        if (err?.name === 'AbortError') return;
+      }
+    }
+
+    try {
+      await navigator.clipboard.writeText(shareText);
+      toast.success('Link do produto copiado com sucesso!');
+    } catch {
+      toast.info(`Link: ${shareUrl}`);
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent
@@ -336,9 +364,18 @@ export function ProductDetailDialog({ product, isOpen, onClose, onAddToCart, ini
             
             <button
               onClick={onClose}
-              className="absolute left-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-background/90 text-foreground shadow-lg transition-transform active:scale-90 z-50"
+              className="absolute left-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-background/90 text-foreground shadow-lg transition-transform active:scale-90 z-50 hover:bg-background"
+              title="Fechar"
             >
               <X className="h-5 w-5" />
+            </button>
+
+            <button
+              onClick={handleShareProduct}
+              className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-background/90 text-foreground shadow-lg transition-transform active:scale-90 z-50 hover:bg-background"
+              title="Compartilhar Produto no WhatsApp"
+            >
+              <Share2 className="h-5 w-5" />
             </button>
           </div>
 
