@@ -21,6 +21,8 @@ interface CartItemInput {
 
 interface CreateOrderBody {
   items: CartItemInput[];
+  customer_name?: string | null;
+  customer_phone?: string | null;
   company_id: string;
   address_id: string | null;
   fulfillment_mode?: 'delivery' | 'pickup';
@@ -334,7 +336,7 @@ Deno.serve(async (req) => {
   let availabilityColumn: string | null = null;
   try {
     const availability = await loadProductAvailability(adminClient, productIds);
-    availabilityById = availability.availabilityById;
+    availabilityById = availability.availabilityById as Map<string, boolean>;
     availabilityColumn = availability.checkedColumn;
 
     if (!availabilityColumn) {
