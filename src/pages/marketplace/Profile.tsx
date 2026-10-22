@@ -399,12 +399,12 @@ export default function Profile() {
             </button>
 
             {/* Footer */}
-            <div className="py-8 flex flex-col items-center opacity-20 hover:opacity-100 active:opacity-100 transition-opacity duration-200">
+            <div className="py-8 flex flex-col items-center">
               <a
                 href={`https://wa.me/5566992734632?text=${encodeURIComponent("Olá! Conheci a BonaSoft através do aplicativo É Pra Já e gostaria de conhecer melhor os serviços de desenvolvimento de aplicativos e sistemas. Podemos conversar?")}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[10px] font-display font-bold tracking-[1em] text-foreground ml-3 cursor-pointer"
+                className="text-[10px] font-display font-bold tracking-[1em] text-foreground opacity-20 hover:opacity-100 active:opacity-100 transition-opacity duration-200 ml-3 cursor-pointer inline-block"
               >
                 BONASOFT
               </a>
@@ -772,12 +772,12 @@ export default function Profile() {
           </div>
 
           {/* Footer */}
-          <div className="py-8 flex flex-col items-center opacity-20 hover:opacity-100 active:opacity-100 transition-opacity duration-200">
+          <div className="py-8 flex flex-col items-center">
             <a
               href={`https://wa.me/5566992734632?text=${encodeURIComponent("Olá! Conheci a BonaSoft através do aplicativo É Pra Já e gostaria de conhecer melhor os serviços de desenvolvimento de aplicativos e sistemas. Podemos conversar?")}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-[10px] font-display font-bold tracking-[1em] text-foreground ml-3 cursor-pointer"
+              className="text-[10px] font-display font-bold tracking-[1em] text-foreground opacity-20 hover:opacity-100 active:opacity-100 transition-opacity duration-200 ml-3 cursor-pointer inline-block"
             >
               BONASOFT
             </a>
