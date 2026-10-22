@@ -722,7 +722,14 @@ export default function Home() {
         </section>
 
         <div className="mt-16 text-center">
-          <p className="text-[11px] font-black uppercase tracking-[0.6em] text-muted-foreground/30 ml-2">BONASOFT</p>
+          <a
+            href={`https://wa.me/5566992734632?text=${encodeURIComponent("Olá! Conheci a BonaSoft através do aplicativo É Pra Já e gostaria de conhecer melhor os serviços de desenvolvimento de aplicativos e sistemas. Podemos conversar?")}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[11px] font-black uppercase tracking-[0.6em] text-muted-foreground/30 ml-2 cursor-pointer inline-block"
+          >
+            BONASOFT
+          </a>
         </div>
       </div>
 

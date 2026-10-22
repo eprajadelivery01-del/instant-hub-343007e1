@@ -400,7 +400,14 @@ export default function Profile() {
 
             {/* Footer */}
             <div className="py-8 flex flex-col items-center opacity-20">
-              <p className="text-[10px] font-display font-bold tracking-[1em] text-foreground ml-3">BONASOFT</p>
+              <a
+                href={`https://wa.me/5566992734632?text=${encodeURIComponent("Olá! Conheci a BonaSoft através do aplicativo É Pra Já e gostaria de conhecer melhor os serviços de desenvolvimento de aplicativos e sistemas. Podemos conversar?")}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[10px] font-display font-bold tracking-[1em] text-foreground ml-3 cursor-pointer"
+              >
+                BONASOFT
+              </a>
             </div>
           </div>
         </div>
@@ -766,7 +773,14 @@ export default function Profile() {
 
           {/* Footer */}
           <div className="py-8 flex flex-col items-center opacity-20">
-            <p className="text-[10px] font-display font-bold tracking-[1em] text-foreground ml-3">BONASOFT</p>
+            <a
+              href={`https://wa.me/5566992734632?text=${encodeURIComponent("Olá! Conheci a BonaSoft através do aplicativo É Pra Já e gostaria de conhecer melhor os serviços de desenvolvimento de aplicativos e sistemas. Podemos conversar?")}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[10px] font-display font-bold tracking-[1em] text-foreground ml-3 cursor-pointer"
+            >
+              BONASOFT
+            </a>
           </div>
         </div>
 
