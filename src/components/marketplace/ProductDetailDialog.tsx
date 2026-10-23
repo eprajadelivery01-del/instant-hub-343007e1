@@ -135,7 +135,6 @@ export function ProductDetailDialog({ product, isOpen, onClose, onAddToCart, ini
       const finalGroups = Array.from(groupMap.values());
 
       if (finalGroups.length > 0) {
-        setGroups(finalGroups);
         let { data: optionsData, error: optionsError } = await supabase
           .from('product_options')
           .select('*')
@@ -159,7 +158,11 @@ export function ProductDetailDialog({ product, isOpen, onClose, onAddToCart, ini
           } catch { /* silent */ }
         }
         
-        setOptions(optionsData || []);
+        const validOptions = optionsData || [];
+        setOptions(validOptions);
+        // Exibe apenas grupos que possuem ao menos 1 opção ativa cadastrada (evita travar o cliente em grupos vazios/órfãos)
+        const activeGroups = finalGroups.filter(g => validOptions.some((opt: any) => opt.group_id === g.id));
+        setGroups(activeGroups);
       } else {
         setGroups([]);
         setOptions([]);
@@ -228,6 +231,8 @@ export function ProductDetailDialog({ product, isOpen, onClose, onAddToCart, ini
   const isGroupSatisfied = (group: Group): boolean => {
     const isReq = Boolean(group.required);
     if (!isReq) return true; // REGRA #8: Grupos opcionais NUNCA bloqueiam
+    const groupOptions = options.filter(o => o.group_id === group.id);
+    if (groupOptions.length === 0) return true; // Grupo sem opções ativas cadastradas nunca pode travar o cliente
     const total = getGroupTotalSelected(group.id);
     const minRequired = Math.max(1, group.min_options ?? 1);
     return total >= minRequired;
@@ -394,13 +399,14 @@ export function ProductDetailDialog({ product, isOpen, onClose, onAddToCart, ini
             <div className="mt-6 flex flex-col gap-6">
               {/* Option Groups */}
               {groups.map((group) => {
+                const groupOptions = options.filter(o => o.group_id === group.id);
+                if (groupOptions.length === 0) return null;
                 const totalInGroup = getGroupTotalSelected(group.id);
                 const isReq = Boolean(group.required);
                 const minOptions = isReq ? Math.max(1, group.min_options ?? 1) : 0;
                 const maxOptions = Math.max(minOptions, group.max_options ?? 1);
                 const isSingleChoice = maxOptions === 1;
                 const isSatisfied = isGroupSatisfied(group);
-                const groupOptions = options.filter(o => o.group_id === group.id);
 
                 let instructionText = "";
                 if (!isReq) {
