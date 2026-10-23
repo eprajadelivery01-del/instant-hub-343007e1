@@ -162,7 +162,7 @@ export default function Home() {
 
             return {
               ...company,
-              name: company.name || 'Loja Parceira',
+              name: company.name || (company.id === 'd96dcc95-f348-4975-90ce-fd472d7a0d81' ? 'Loja De Teste' : (company.name || 'Loja')),
               is_open: isStoreOpenNow(company as any),
               active: company.active === true || (company as any).is_active === true,
               products: validProds.slice(0, 4), // Preview de 4 produtos na Home
