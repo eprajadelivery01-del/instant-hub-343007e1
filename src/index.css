@@ -258,7 +258,7 @@
     padding-bottom: calc(180px + env(safe-area-inset-bottom, 0px));
   }
 
-  /* Floating particles overlay (kept static across both dark and light themes for 60fps performance) */
+  /* Floating particles overlay (com movimento suave contínuo e visível em todos os temas) */
   .app-shell::after {
     content: '';
     position: fixed;
@@ -276,7 +276,8 @@
     background-size: 480px 480px;
     background-repeat: repeat;
     opacity: 0.85;
-    will-change: auto;
+    animation: particle-drift 60s linear infinite;
+    will-change: background-position;
   }
 
   .light .app-shell::after {
