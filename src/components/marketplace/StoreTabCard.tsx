@@ -17,6 +17,7 @@ export function StoreTabCard({ company }: StoreTabCardProps) {
   const navigate = useNavigate();
   const prepTimeLabel = getPrepTimeLabel(company);
   const bannerImage = getCompanyBannerImage(company);
+  const logoImage = getCompanyLogoImage(company);
   const validFeatured = (company.products || []).filter(p => Number(p.price || 0) >= 1);
   const featuredProducts = (validFeatured.length > 0 ? validFeatured : company.products || []).slice(0, 3);
   const rating = Number(company.rating || 5.0);
