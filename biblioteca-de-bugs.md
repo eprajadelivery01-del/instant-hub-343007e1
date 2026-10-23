@@ -80,3 +80,34 @@ Uma modificação feita por IA adicionou um `throw companyResponse.error;` na co
 
 **Arquivos Afetados:**
 - `src/pages/marketplace/StoreDetail.tsx`
+
+---
+
+## 🐛 Bug: Exibição Indevida de Preço de 1 Centavo (R$ 0,01) para Produtos Sob Encomenda / Customizáveis
+
+**Data do Registro:** 23 de Outubro de 2026
+**Severidade:** Alta
+**Onde Ocorria:** No Marketplace Cliente (Card de Loja na Home, Detalhe da Loja, Modal de Produto e Carrinho).
+
+### Descrição do Problema
+Lojas de encomendas e confeitarias (como a **FABIELLY BOLOS E DOCES**) cadastraram um produto base com valor simbólico de **R$ 0,01** para poder listar suas opções de bolos sob encomenda (cenoura, fubá, milho, mesclado, etc., que variam de R$ 22,00 a R$ 32,00) via complementos (`product_options`).
+O aplicativo exibia cru na capa da loja e na lista o texto `R$ 0,01`, e no checkout somava o 1 centavo com as opções, cobrando R$ 22,01 em vez de R$ 22,00.
+
+### Causa Raiz
+1. Ausência de tratamento para preços simbólicos (`price < 1.00`).
+2. Soma direta do preço base com opções sem neutralizar o centavo simbólico quando opções pagas eram selecionadas.
+
+### Solução Aplicada
+1. **Formatação "Sob Encomenda":** Qualquer produto com valor `< 1.00` agora é exibido como **`Sob Encomenda`** no card da Home, busca, lista de produtos e modal.
+2. **Neutralização do Centavo Simbólico:** No cálculo do item (`CartContext`, `ProductDetailDialog`, `Cart` e `create-order`), se o preço base for `< 1.00` e houver opções selecionadas, o preço base é considerado `0`, garantindo a cobrança exata do valor das opções (R$ 22,00).
+
+**Arquivos Afetados:**
+- `src/components/marketplace/StoreTabCard.tsx`
+- `src/pages/marketplace/StoreDetail.tsx`
+- `src/pages/marketplace/Home.tsx`
+- `src/pages/marketplace/Search.tsx`
+- `src/components/marketplace/ProductDetailDialog.tsx`
+- `src/contexts/CartContext.tsx`
+- `src/pages/marketplace/Cart.tsx`
+- `supabase/functions/create-order/index.ts`
+
