@@ -838,6 +838,27 @@ Deno.serve(async (req) => {
   // Delivery will be created automatically by the database trigger
   // 'handle_order_ready_automation' once the store accepts the order.
 
+  // 14) Notifica o lojista via Push Notification nativo (FCM)
+  try {
+    fetch(`${SUPABASE_URL}/functions/v1/send-push`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${SERVICE_ROLE}`,
+      },
+      body: JSON.stringify({
+        type: 'new_order',
+        isNewOrder: true,
+        orderId: order.id,
+        companyId: company.id,
+        target: 'merchant',
+        forMerchant: true,
+      }),
+    }).catch((e) => console.warn('[create-order] Falha assíncrona ao invocar send-push:', e));
+  } catch (pushErr) {
+    console.warn('[create-order] Erro ao disparar send-push:', pushErr);
+  }
+
   await audit(
     'create_order.success',
     {
