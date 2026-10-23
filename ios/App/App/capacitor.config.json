@@ -31,7 +31,7 @@
 			"sound": "default"
 		},
 		"StatusBar": {
-			"backgroundColor": "#5B5B5B",
+			"backgroundColor": "#091D35",
 			"style": "DARK",
 			"overlaysWebView": false
 		},

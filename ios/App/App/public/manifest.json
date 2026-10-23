@@ -3,8 +3,8 @@
   "short_name": "EPJ Cliente",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0D0D0D",
-  "theme_color": "#FF7A00",
+  "background_color": "#091D35",
+  "theme_color": "#091D35",
   "icons": [
     {
       "src": "/icon-192x192.png?v=8",
