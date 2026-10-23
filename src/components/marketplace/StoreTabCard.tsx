@@ -115,9 +115,7 @@ export function StoreTabCard({ company }: StoreTabCardProps) {
                 </div>
                 <p className="truncate text-xs font-medium text-foreground">{product.name}</p>
                 <p className="mt-0.5 text-xs font-semibold text-primary">
-                  {Number(product.price || 0) < 1
-                    ? 'Sob Encomenda'
-                    : `R$ ${Number(product.price || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                  R$ {Number(product.price || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </p>
               </div>
             ))

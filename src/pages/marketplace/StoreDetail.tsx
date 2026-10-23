@@ -24,6 +24,7 @@ import { useActiveCoupons } from '@/services/coupons';
 import { SafeAreaHeader, safeAreaTopValue } from '@/components/shared/SafeAreaHeader';
 import { WhatsAppOrderDialog, WhatsAppIcon } from '@/components/marketplace/WhatsAppOrderDialog';
 import { getWhatsAppOnlyStore } from '@/lib/whatsappStores';
+import { FABIELLY_COMPANY_ID, FABIELLY_PRODUCTS } from '@/data/fabiellyCatalog';
 
 import { getCachedStoreData } from '@/lib/offlinePrecache';
 
@@ -206,6 +207,13 @@ export default function StoreDetail() {
         } catch (e) {
           console.warn('[StoreDetail] Exceção ao consultar produtos secundários:', e);
         }
+      }
+
+      if (
+        (companyData?.id === FABIELLY_COMPANY_ID || id === FABIELLY_COMPANY_ID) &&
+        (productsData.length <= 1 || productsData.every((p: any) => Number(p.price || 0) < 1))
+      ) {
+        productsData = FABIELLY_PRODUCTS;
       }
 
       return { company: companyData, products: productsData };
@@ -899,9 +907,7 @@ export default function StoreDetail() {
 
                           <div className="mt-3 flex items-center justify-between">
                             <p className="text-[15px] font-extrabold text-foreground">
-                              {Number(product.price || 0) < 1
-                                ? 'Sob Encomenda'
-                                : Number(product.price || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                              {Number(product.price || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                             </p>
 
                             {qty > 0 && (

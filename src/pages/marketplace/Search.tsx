@@ -222,9 +222,7 @@ export default function Search() {
 
                           <div className="mt-3 flex items-center justify-between">
                             <p className="text-[15px] font-extrabold text-foreground">
-                              {Number(product.price || 0) < 1
-                                ? 'Sob Encomenda'
-                                : Number(product.price || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                              {Number(product.price || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                             </p>
 
                             {qty > 0 && (

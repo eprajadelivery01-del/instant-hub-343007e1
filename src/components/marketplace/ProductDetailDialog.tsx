@@ -313,10 +313,7 @@ export function ProductDetailDialog({ product, isOpen, onClose, onAddToCart, ini
     if (!product) return;
     const shareUrl = window.location.href;
     const shareTitle = `${product.name} | É Pra Já Delivery`;
-    const priceText = Number(product.price || 0) < 1
-      ? 'sob encomenda'
-      : `por apenas ${Number(product.price || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}!`;
-    const shareText = `Olha o que encontrei no É Pra Já Delivery: *${product.name}* ${priceText} 😋\n\nPeça aqui:\n${shareUrl}`;
+    const shareText = `Olha o que encontrei no É Pra Já Delivery: *${product.name}* por apenas ${Number(product.price || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}! 😋\n\nPeça aqui:\n${shareUrl}`;
 
     if (navigator.share) {
       try {
@@ -398,9 +395,7 @@ export function ProductDetailDialog({ product, isOpen, onClose, onAddToCart, ini
               </p>
             )}
             <p className="mt-4 text-xl font-bold text-foreground">
-              {Number(product.price || 0) < 1
-                ? 'Sob Encomenda'
-                : Number(product.price || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+              {Number(product.price || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
             </p>
 
             <div className="mt-6 flex flex-col gap-6">

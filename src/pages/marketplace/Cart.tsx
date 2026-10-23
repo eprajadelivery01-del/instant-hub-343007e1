@@ -84,7 +84,7 @@ function CartItemRow({ item, companyId, updateQuantity, updateNote, navigate }: 
               }, 0) || 0;
               const effectiveBase = (base < 1 && optionsTotal > 0) ? 0 : base;
               const total = effectiveBase + optionsTotal;
-              return total < 1 ? 'Sob Encomenda' : `R$ ${total.toFixed(2).replace('.', ',')}`;
+              return `R$ ${total.toFixed(2).replace('.', ',')}`;
             })()}
           </div>
         </div>
@@ -330,9 +330,7 @@ export default function Cart() {
                   </div>
                   <h4 className="text-xs font-medium text-foreground line-clamp-2 min-h-[32px]">{prod.name}</h4>
                   <p className="text-xs font-bold mt-1">
-                    {Number(prod.price || 0) < 1
-                      ? 'Sob Encomenda'
-                      : `R$ ${Number(prod.price || 0).toFixed(2).replace('.', ',')}`}
+                    R$ {Number(prod.price || 0).toFixed(2).replace('.', ',')}
                   </p>
                 </div>
               ))}

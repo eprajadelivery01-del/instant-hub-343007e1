@@ -25,6 +25,7 @@ import { useCart } from '@/contexts/CartContext';
 import { ProductDetailDialog } from '@/components/marketplace/ProductDetailDialog';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
 import { SafeAreaHeader } from '@/components/shared/SafeAreaHeader';
+import { FABIELLY_COMPANY_ID, FABIELLY_PRODUCTS } from '@/data/fabiellyCatalog';
 
 const categories = [
   { icon: Utensils, label: 'Todos', value: '' },
@@ -158,7 +159,11 @@ export default function Home() {
               ? (company as any).products
               : (extraProductsMap[company.id] || []);
 
-            const validProds = (rawProds || []).filter((p: any) => p.active !== false);
+            let validProds = (rawProds || []).filter((p: any) => p.active !== false);
+
+            if (company.id === FABIELLY_COMPANY_ID && (validProds.length <= 1 || validProds.every((p: any) => Number(p.price || 0) < 1))) {
+              validProds = FABIELLY_PRODUCTS;
+            }
 
             return {
               ...company,
@@ -673,9 +678,7 @@ export default function Home() {
 
                             <div className="mt-3 flex items-center justify-between">
                               <p className="text-[15px] font-extrabold text-foreground">
-                                {Number(product.price || 0) < 1
-                                  ? 'Sob Encomenda'
-                                  : Number(product.price || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                                {Number(product.price || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                               </p>
 
                               {qty > 0 && (
