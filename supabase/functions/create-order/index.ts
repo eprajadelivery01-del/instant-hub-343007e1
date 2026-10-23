@@ -840,7 +840,7 @@ Deno.serve(async (req) => {
 
   // 14) Notifica o lojista via Push Notification nativo (FCM)
   try {
-    fetch(`${SUPABASE_URL}/functions/v1/send-push`, {
+    const pushPromise = fetch(`${SUPABASE_URL}/functions/v1/send-push`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -855,6 +855,12 @@ Deno.serve(async (req) => {
         forMerchant: true,
       }),
     }).catch((e) => console.warn('[create-order] Falha assíncrona ao invocar send-push:', e));
+
+    // Aguarda até 2.5s para garantir que o pacote HTTP seja disparado com sucesso antes do runtime encerrar
+    await Promise.race([
+      pushPromise,
+      new Promise((resolve) => setTimeout(resolve, 2500)),
+    ]);
   } catch (pushErr) {
     console.warn('[create-order] Erro ao disparar send-push:', pushErr);
   }
