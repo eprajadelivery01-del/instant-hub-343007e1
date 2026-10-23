@@ -17,8 +17,8 @@ export function StoreTabCard({ company }: StoreTabCardProps) {
   const navigate = useNavigate();
   const prepTimeLabel = getPrepTimeLabel(company);
   const bannerImage = getCompanyBannerImage(company);
-  const logoImage = getCompanyLogoImage(company);
-  const featuredProducts = (company.products || []).slice(0, 3);
+  const validFeatured = (company.products || []).filter(p => Number(p.price || 0) >= 1);
+  const featuredProducts = (validFeatured.length > 0 ? validFeatured : company.products || []).slice(0, 3);
   const rating = Number(company.rating || 5.0);
   const subtitle = company.category || company.description || 'Gastronomia de alto nível';
   const isOpen = isStoreOpenNow(company);
@@ -114,7 +114,9 @@ export function StoreTabCard({ company }: StoreTabCardProps) {
                 </div>
                 <p className="truncate text-xs font-medium text-foreground">{product.name}</p>
                 <p className="mt-0.5 text-xs font-semibold text-primary">
-                  R$ {Number(product.price || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  {Number(product.price || 0) < 1
+                    ? 'Sob Encomenda'
+                    : `R$ ${Number(product.price || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                 </p>
               </div>
             ))

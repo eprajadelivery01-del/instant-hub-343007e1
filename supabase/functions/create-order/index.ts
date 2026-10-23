@@ -485,7 +485,8 @@ Deno.serve(async (req) => {
       }
     }
 
-    const itemUnitPrice = basePrice + optionsTotalPerItem;
+    const effectiveBasePrice = (basePrice < 1 && optionsTotalPerItem > 0) ? 0 : basePrice;
+    const itemUnitPrice = effectiveBasePrice + optionsTotalPerItem;
     const itemQuantity = Math.max(1, Math.floor(Number(it.quantity) || 1));
 
     return {

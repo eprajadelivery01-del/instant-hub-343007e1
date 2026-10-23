@@ -148,16 +148,18 @@ export function CartProvider({ children }: { children: ReactNode }) {
   };
 
   const calculateItemPrice = (item: CartItem) => {
-    let price = Number(item.product?.price || 0);
+    let base = Number(item.product?.price || 0);
+    let optionsTotal = 0;
     if (item.options) {
       item.options.forEach(opt => {
         if (opt) {
           const qty = Number(opt.quantity) > 0 ? Number(opt.quantity) : 1;
-          price += (Number(opt.price) || 0) * qty;
+          optionsTotal += (Number(opt.price) || 0) * qty;
         }
       });
     }
-    return price;
+    const effectiveBase = (base < 1 && optionsTotal > 0) ? 0 : base;
+    return effectiveBase + optionsTotal;
   };
 
   const subtotal = items.reduce(

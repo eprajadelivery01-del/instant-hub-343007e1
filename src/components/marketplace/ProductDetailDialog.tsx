@@ -243,17 +243,19 @@ export function ProductDetailDialog({ product, isOpen, onClose, onAddToCart, ini
   };
 
   const calculateTotalPrice = () => {
-    let total = Number(product.price || 0);
+    let base = Number(product.price || 0);
+    let optionsTotal = 0;
     for (const group of groups) {
       const groupSelections = selectedOptions[group.id] || {};
       for (const [optId, qty] of Object.entries(groupSelections)) {
         if (qty > 0) {
           const opt = options.find(o => o.id === optId);
-          if (opt) total += (Number(opt.price) || 0) * qty;
+          if (opt) optionsTotal += (Number(opt.price) || 0) * qty;
         }
       }
     }
-    return total * quantity;
+    const effectiveBase = (base < 1 && optionsTotal > 0) ? 0 : base;
+    return (effectiveBase + optionsTotal) * quantity;
   };
 
   const handleAdd = () => {
@@ -311,7 +313,10 @@ export function ProductDetailDialog({ product, isOpen, onClose, onAddToCart, ini
     if (!product) return;
     const shareUrl = window.location.href;
     const shareTitle = `${product.name} | É Pra Já Delivery`;
-    const shareText = `Olha o que encontrei no É Pra Já Delivery: *${product.name}* por apenas ${Number(product.price || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}! 😋\n\nPeça aqui:\n${shareUrl}`;
+    const priceText = Number(product.price || 0) < 1
+      ? 'sob encomenda'
+      : `por apenas ${Number(product.price || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}!`;
+    const shareText = `Olha o que encontrei no É Pra Já Delivery: *${product.name}* ${priceText} 😋\n\nPeça aqui:\n${shareUrl}`;
 
     if (navigator.share) {
       try {
@@ -393,7 +398,9 @@ export function ProductDetailDialog({ product, isOpen, onClose, onAddToCart, ini
               </p>
             )}
             <p className="mt-4 text-xl font-bold text-foreground">
-              {Number(product.price || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+              {Number(product.price || 0) < 1
+                ? 'Sob Encomenda'
+                : Number(product.price || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
             </p>
 
             <div className="mt-6 flex flex-col gap-6">
