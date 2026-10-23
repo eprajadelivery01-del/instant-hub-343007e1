@@ -404,6 +404,16 @@ export default function Profile() {
                 href={`https://wa.me/5566992734632?text=${encodeURIComponent("Olá! Conheci a BonaSoft através do aplicativo É Pra Já e gostaria de conhecer melhor os serviços de desenvolvimento de aplicativos e sistemas. Podemos conversar?")}`}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={(e) => {
+                  if (typeof window !== "undefined") {
+                    const url = `https://wa.me/5566992734632?text=${encodeURIComponent("Olá! Conheci a BonaSoft através do aplicativo É Pra Já e gostaria de conhecer melhor os serviços de desenvolvimento de aplicativos e sistemas. Podemos conversar?")}`;
+                    try {
+                      window.open(url, "_system") || (window.location.href = url);
+                    } catch {
+                      window.location.href = url;
+                    }
+                  }
+                }}
                 className="text-[10px] font-display font-bold tracking-[1em] text-foreground opacity-20 hover:opacity-100 active:opacity-100 transition-opacity duration-200 ml-3 cursor-pointer inline-block"
               >
                 BONASOFT
@@ -777,6 +787,16 @@ export default function Profile() {
               href={`https://wa.me/5566992734632?text=${encodeURIComponent("Olá! Conheci a BonaSoft através do aplicativo É Pra Já e gostaria de conhecer melhor os serviços de desenvolvimento de aplicativos e sistemas. Podemos conversar?")}`}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={(e) => {
+                if (typeof window !== "undefined") {
+                  const url = `https://wa.me/5566992734632?text=${encodeURIComponent("Olá! Conheci a BonaSoft através do aplicativo É Pra Já e gostaria de conhecer melhor os serviços de desenvolvimento de aplicativos e sistemas. Podemos conversar?")}`;
+                  try {
+                    window.open(url, "_system") || (window.location.href = url);
+                  } catch {
+                    window.location.href = url;
+                  }
+                }
+              }}
               className="text-[10px] font-display font-bold tracking-[1em] text-foreground opacity-20 hover:opacity-100 active:opacity-100 transition-opacity duration-200 ml-3 cursor-pointer inline-block"
             >
               BONASOFT
