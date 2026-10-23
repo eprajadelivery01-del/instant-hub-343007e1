@@ -416,7 +416,7 @@ export default function Profile() {
                 }}
                 className="text-[10px] font-display font-bold tracking-[1em] text-foreground opacity-20 hover:opacity-100 active:opacity-100 transition-opacity duration-200 ml-3 cursor-pointer inline-block"
               >
-                BONASOFT
+                B O N A S O F T
               </a>
             </div>
           </div>
@@ -799,7 +799,7 @@ export default function Profile() {
               }}
               className="text-[10px] font-display font-bold tracking-[1em] text-foreground opacity-20 hover:opacity-100 active:opacity-100 transition-opacity duration-200 ml-3 cursor-pointer inline-block"
             >
-              BONASOFT
+              B O N A S O F T
             </a>
           </div>
         </div>
