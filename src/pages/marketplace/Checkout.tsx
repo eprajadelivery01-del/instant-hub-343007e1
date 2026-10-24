@@ -567,6 +567,50 @@ export default function Checkout() {
       const orderId = data?.order_id || data?.id;
       if (!orderId) throw new Error('Falha ao obter ID do pedido.');
 
+      // Dispara Push Notification nativo (FCM) e Realtime Broadcast para notificar o lojista imediatamente
+      if (company?.id) {
+        supabase.functions.invoke('send-push', {
+          body: {
+            type: 'new_order',
+            isNewOrder: true,
+            orderId: orderId,
+            companyId: company.id,
+            target: 'merchant',
+            forMerchant: true,
+          },
+        }).catch((e) => console.warn('[Checkout] send-push falha suave:', e));
+
+        try {
+          const companyAlertChannel = supabase.channel(`company-order-alerts-${company.id}`);
+          companyAlertChannel.subscribe((status) => {
+            if (status === 'SUBSCRIBED') {
+              companyAlertChannel.send({
+                type: 'broadcast',
+                event: 'new_order',
+                payload: { orderId, companyId: company.id, total: finalTotal },
+              }).finally(() => {
+                supabase.removeChannel(companyAlertChannel);
+              });
+            }
+          });
+
+          const adminAlertChannel = supabase.channel('admin-order-alerts');
+          adminAlertChannel.subscribe((status) => {
+            if (status === 'SUBSCRIBED') {
+              adminAlertChannel.send({
+                type: 'broadcast',
+                event: 'new_order',
+                payload: { orderId, companyId: company.id, total: finalTotal },
+              }).finally(() => {
+                supabase.removeChannel(adminAlertChannel);
+              });
+            }
+          });
+        } catch (e) {
+          console.warn('[Checkout] Realtime broadcast falha suave:', e);
+        }
+      }
+
       try {
         const recent = JSON.parse(localStorage.getItem('@epraja_recent_orders') || '[]');
         if (!recent.includes(orderId)) {
