@@ -11,6 +11,7 @@ import { SupportChat } from '@/components/chat/SupportChat';
 import { OrderStoreChat } from '@/components/marketplace/OrderStoreChat';
 import HelpCenterSheet from '@/components/marketplace/HelpCenterSheet';
 import { cn } from '@/lib/utils';
+import { BonaSoftWatermark } from '@/components/marketplace/BonaSoftWatermark';
 import {
   LogOut, MapPin, ChevronRight, Loader2,
   Bike, FileText, ShieldCheck, Moon, Sun,
@@ -399,26 +400,7 @@ export default function Profile() {
             </button>
 
             {/* Footer */}
-            <div className="py-8 flex flex-col items-center">
-              <a
-                href={`https://wa.me/5566992734632?text=${encodeURIComponent("Olá! Conheci a BonaSoft através do aplicativo É Pra Já e gostaria de conhecer melhor os serviços de desenvolvimento de aplicativos e sistemas. Podemos conversar?")}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => {
-                  if (typeof window !== "undefined") {
-                    const url = `https://wa.me/5566992734632?text=${encodeURIComponent("Olá! Conheci a BonaSoft através do aplicativo É Pra Já e gostaria de conhecer melhor os serviços de desenvolvimento de aplicativos e sistemas. Podemos conversar?")}`;
-                    try {
-                      window.open(url, "_system") || (window.location.href = url);
-                    } catch {
-                      window.location.href = url;
-                    }
-                  }
-                }}
-                className="text-[10px] font-display font-bold tracking-[1em] text-foreground opacity-20 hover:opacity-100 active:opacity-100 transition-opacity duration-200 ml-3 cursor-pointer inline-block"
-              >
-                B O N A S O F T
-              </a>
-            </div>
+            <BonaSoftWatermark containerClassName="py-8" />
           </div>
         </div>
 
@@ -782,26 +764,7 @@ export default function Profile() {
           </div>
 
           {/* Footer */}
-          <div className="py-8 flex flex-col items-center">
-            <a
-              href={`https://wa.me/5566992734632?text=${encodeURIComponent("Olá! Conheci a BonaSoft através do aplicativo É Pra Já e gostaria de conhecer melhor os serviços de desenvolvimento de aplicativos e sistemas. Podemos conversar?")}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => {
-                if (typeof window !== "undefined") {
-                  const url = `https://wa.me/5566992734632?text=${encodeURIComponent("Olá! Conheci a BonaSoft através do aplicativo É Pra Já e gostaria de conhecer melhor os serviços de desenvolvimento de aplicativos e sistemas. Podemos conversar?")}`;
-                  try {
-                    window.open(url, "_system") || (window.location.href = url);
-                  } catch {
-                    window.location.href = url;
-                  }
-                }
-              }}
-              className="text-[10px] font-display font-bold tracking-[1em] text-foreground opacity-20 hover:opacity-100 active:opacity-100 transition-opacity duration-200 ml-3 cursor-pointer inline-block"
-            >
-              B O N A S O F T
-            </a>
-          </div>
+          <BonaSoftWatermark containerClassName="py-8" />
         </div>
 
         <input
