@@ -111,3 +111,28 @@ O aplicativo exibia cru na capa da loja e na lista o texto `R$ 0,01`, e no check
 - `src/pages/marketplace/Cart.tsx`
 - `supabase/functions/create-order/index.ts`
 
+---
+
+## 🐛 Bug: Notificação de Novo Pedido Disparando para Todas as Lojas (Broadcast Indevido)
+
+**Data do Registro:** 24 de Outubro de 2026  
+**Severidade:** Crítica  
+**Onde Ocorria:** Edge Function `send-push` e celulares de lojistas de teste ou não relacionados ao pedido.
+
+### Descrição do Problema
+Ao chegar um novo pedido de um cliente no Marketplace, a notificação push de novo pedido (`📦 NOVO PEDIDO RECEBIDO! 🔔`) era entregue para **todos os aparelhos com o aplicativo do lojista instalado no banco de dados inteiro**, em vez de ser entregue apenas para o restaurante que recebeu o pedido. Lojistas de teste e lojas terceiras recebiam o push mas não encontravam pedidos novos em seus painéis.
+
+### Causa Raiz
+Na função `supabase/functions/send-push/index.ts`, a busca na tabela `device_tokens` era feita globalmente sem filtro de usuário ou empresa:
+`.from("device_tokens").select("token").is("disabled_at", null).or("app.eq.lojista,bundle_id.eq.br.com.epraja.lojista")`.
+Isso selecionava todos os dispositivos da plataforma sem discriminar a loja alvo.
+
+### Solução Aplicada
+1. **Filtro Estrito por Loja Alvo:** A busca em `device_tokens` agora exige obrigatoriamente `.in("user_id", Array.from(storeUserIds))` onde `storeUserIds` é composto estritamente pelo proprietário da loja em `companies` (`comp.user_id`) e seus operadores cadastrados em `profiles` (`company_id = companyId`).
+2. **Separação Rígida de Ramos:** Isolamento com `if (isTargetMerchant) { ... } else { ... }` para impedir contaminação entre tokens de lojista e tokens de clientes.
+3. **Formatação de Texto Segura:** Prevenção de espaço duplo quando o número do pedido ainda não estiver disponível.
+
+**Arquivos Afetados:**
+- `supabase/functions/send-push/index.ts`
+
+
