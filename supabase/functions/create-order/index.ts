@@ -846,6 +846,7 @@ Deno.serve(async (req) => {
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${SERVICE_ROLE}`,
+        apikey: SERVICE_ROLE,
       },
       body: JSON.stringify({
         type: 'new_order',
