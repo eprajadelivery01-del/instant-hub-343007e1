@@ -4,12 +4,10 @@ import { ArrowUpRight, Ticket, Copy, Check, Flame } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { isCustomerNotification, type MarketingNotifItem } from '@/components/marketplace/ClientNotificationsPopover';
-import acaiCampaign from '@/assets/offers/acai-campaign.jpg';
 
 export function ActiveOfferHighlight() {
   const [latestNotif, setLatestNotif] = useState<MarketingNotifItem | null>(null);
   const [copied, setCopied] = useState(false);
-  const [failedImage, setFailedImage] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchLatestNotif = async () => {
@@ -77,39 +75,26 @@ export function ActiveOfferHighlight() {
     }
   };
 
-  const isAcaiCampaign = /a[cç]a[ií]/i.test(`${latestNotif.title} ${latestNotif.message}`);
-  const suppliedImage = latestNotif.image_url && latestNotif.image_url !== failedImage
-    ? latestNotif.image_url : null;
-  const campaignImage = suppliedImage || (isAcaiCampaign ? acaiCampaign : null);
-
   return (
-    <section aria-label="Oferta em destaque" className="w-full">
-      <div className="relative isolate min-h-[236px] overflow-hidden rounded-lg bg-offer text-offer-foreground sm:min-h-[300px] lg:min-h-[340px]">
-        {campaignImage && (
-          <>
-            <img
-              src={campaignImage}
-              alt={suppliedImage ? 'Imagem da campanha em destaque' : ''}
-              width={1536}
-              height={1024}
-              fetchPriority="high"
-              decoding="async"
-              onError={() => setFailedImage(campaignImage)}
-              className="absolute inset-0 -z-20 h-full w-full object-cover object-right"
-            />
-            <div className="offer-readability pointer-events-none absolute inset-0 -z-10" />
-          </>
-        )}
-        <div className={`relative flex min-h-[236px] flex-col items-start justify-center px-5 py-6 sm:min-h-[300px] sm:px-9 sm:py-8 lg:min-h-[340px] ${campaignImage ? 'w-[66%] sm:w-[58%]' : 'w-full sm:w-3/4'}`}>
-          <p className="mb-3 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-normal text-offer-muted sm:mb-4 sm:text-xs">
+    <section aria-label="Oferta em destaque" className="-mx-4 w-[calc(100%+2rem)] sm:-mx-6 sm:w-[calc(100%+3rem)]">
+      <div className="offer-card-fill relative isolate overflow-hidden border-y border-offer-foreground/20 text-offer-foreground">
+        <div className="offer-card-lines" aria-hidden="true" />
+        <div className="relative mx-auto flex max-w-7xl items-start gap-4 px-5 py-6 sm:gap-6 sm:px-9 sm:py-8">
+          {latestNotif.emoji && (
+            <div aria-hidden="true" className="mt-1 flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-offer-foreground/30 bg-offer-foreground/15 text-3xl sm:h-16 sm:w-16 sm:text-4xl">
+              {latestNotif.emoji}
+            </div>
+          )}
+          <div className="min-w-0 flex-1">
+          <p className="mb-3 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-normal text-offer-muted sm:text-xs">
             <Flame className="h-3.5 w-3.5 shrink-0 fill-current" aria-hidden="true" />
             Oferta em destaque
           </p>
-          <h2 className="w-full break-words font-sans text-2xl font-extrabold leading-[1.08] [overflow-wrap:anywhere] sm:text-4xl lg:text-5xl">
+          <h2 className="w-full max-w-3xl break-words font-sans text-xl font-extrabold leading-tight [overflow-wrap:anywhere] sm:text-3xl">
             {latestNotif.title}
           </h2>
           {latestNotif.message && (
-            <p className="mt-3 w-full break-words text-xs font-medium leading-relaxed text-offer-muted sm:text-base">
+            <p className="mt-2 w-full max-w-3xl break-words text-sm font-medium leading-relaxed text-offer-muted sm:text-base">
               {latestNotif.message}
             </p>
           )}
@@ -134,6 +119,7 @@ export function ActiveOfferHighlight() {
               <a href="#lojas-em-destaque">Ver lojas <ArrowUpRight aria-hidden="true" /></a>
             </Button>
           )}
+          </div>
         </div>
       </div>
     </section>

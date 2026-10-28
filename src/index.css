@@ -39,7 +39,9 @@
     --offer-muted: 35 100% 94%;
     --offer-action: 0 0% 100%;
     --offer-action-foreground: 17 95% 32%;
-    --offer-readability: linear-gradient(90deg, hsl(var(--offer-background)) 0%, hsl(var(--offer-background) / 0.98) 36%, hsl(var(--offer-background) / 0.88) 51%, hsl(var(--offer-background) / 0.3) 66%, transparent 80%);
+    --offer-deep: 17 96% 46%;
+    --offer-bright: 34 100% 56%;
+    --offer-card-fill: linear-gradient(112deg, hsl(var(--offer-deep)), hsl(var(--offer-background)) 58%, hsl(var(--offer-bright)));
 
     --success: 142 70% 45%;
     --success-foreground: 0 0% 100%;
@@ -147,8 +149,35 @@
 }
 
 @layer utilities {
-  .offer-readability {
-    background: var(--offer-readability);
+  .offer-card-fill {
+    background: var(--offer-card-fill);
+  }
+
+  .offer-card-lines {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .offer-card-lines::before,
+  .offer-card-lines::after {
+    content: '';
+    position: absolute;
+    right: -65px;
+    top: -90px;
+    width: 190px;
+    height: 380px;
+    transform: rotate(28deg);
+    border: 1px solid hsl(var(--offer-foreground) / 0.22);
+    border-radius: 24px;
+    background: hsl(var(--offer-foreground) / 0.04);
+  }
+
+  .offer-card-lines::after {
+    right: -15px;
+    top: -110px;
+    background: transparent;
   }
 
   .scrollbar-hide {
