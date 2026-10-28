@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { ArrowUpRight, Ticket, Copy, Check, Flame } from 'lucide-react';
+import { Ticket, Copy, Check, Flame } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { isCustomerNotification, type MarketingNotifItem } from '@/components/marketplace/ClientNotificationsPopover';
@@ -98,7 +98,7 @@ export function ActiveOfferHighlight() {
               {latestNotif.message}
             </p>
           )}
-          {latestNotif.coupon_code ? (
+          {latestNotif.coupon_code && (
             <Button
               type="button"
               variant="secondary"
@@ -109,14 +109,6 @@ export function ActiveOfferHighlight() {
               <Ticket aria-hidden="true" />
               <span className="min-w-0 break-all font-mono whitespace-normal">{latestNotif.coupon_code}</span>
               {copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
-            </Button>
-          ) : (
-            <Button
-              asChild
-              variant="secondary"
-              className="mt-5 rounded-full bg-offer-action px-4 text-xs font-bold text-offer-action-foreground hover:bg-offer-action/90 sm:px-5 sm:text-sm"
-            >
-              <a href="#lojas-em-destaque">Ver lojas <ArrowUpRight aria-hidden="true" /></a>
             </Button>
           )}
           </div>
