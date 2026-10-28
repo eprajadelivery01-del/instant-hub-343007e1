@@ -33,6 +33,14 @@
 
     --radius: 0.75rem;
 
+    /* Campaign colors remain consistent in both app themes. */
+    --offer-background: 28 100% 50%;
+    --offer-foreground: 0 0% 100%;
+    --offer-muted: 35 100% 94%;
+    --offer-action: 0 0% 100%;
+    --offer-action-foreground: 17 95% 32%;
+    --offer-readability: linear-gradient(90deg, hsl(var(--offer-background)) 0%, hsl(var(--offer-background) / 0.98) 36%, hsl(var(--offer-background) / 0.88) 51%, hsl(var(--offer-background) / 0.3) 66%, transparent 80%);
+
     --success: 142 70% 45%;
     --success-foreground: 0 0% 100%;
     --warning: 38 92% 55%;
@@ -139,6 +147,10 @@
 }
 
 @layer utilities {
+  .offer-readability {
+    background: var(--offer-readability);
+  }
+
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;
