@@ -95,7 +95,7 @@ export function ActiveOfferHighlight() {
               fetchPriority="high"
               decoding="async"
               onError={() => setFailedImage(campaignImage)}
-              className="absolute inset-0 -z-20 h-full w-full object-cover object-right"
+              className="absolute inset-0 -z-20 h-full w-full object-cover object-right lg:object-contain"
             />
             <div className="offer-readability pointer-events-none absolute inset-0 -z-10" />
           </>

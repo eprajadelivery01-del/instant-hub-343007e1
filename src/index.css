@@ -39,7 +39,7 @@
     --offer-muted: 35 100% 94%;
     --offer-action: 0 0% 100%;
     --offer-action-foreground: 17 95% 32%;
-    --offer-readability: linear-gradient(90deg, hsl(var(--offer-background)) 0%, hsl(var(--offer-background) / 0.95) 30%, hsl(var(--offer-background) / 0.55) 51%, transparent 72%);
+    --offer-readability: linear-gradient(90deg, hsl(var(--offer-background)) 0%, hsl(var(--offer-background) / 0.98) 36%, hsl(var(--offer-background) / 0.88) 51%, hsl(var(--offer-background) / 0.3) 66%, transparent 80%);
 
     --success: 142 70% 45%;
     --success-foreground: 0 0% 100%;
