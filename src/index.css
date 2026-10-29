@@ -299,17 +299,9 @@
     padding-bottom: calc(180px + env(safe-area-inset-bottom, 0px));
   }
 
-  /* Floating particles — ficam no fundo, atrás dos cards */
+  /* Partículas flutuantes: camada de fundo do próprio app —
+     visíveis sobre o fundo e sempre ATRÁS dos cards (que são filhos). */
   .app-shell {
-    isolation: isolate;
-  }
-
-  .app-shell::after {
-    content: '';
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    z-index: -1;
     background-image:
       radial-gradient(circle at 12% 18%, rgba(255, 122, 61, 0.95) 0%, transparent 2.2px),
       radial-gradient(circle at 78% 32%, rgba(255, 255, 255, 0.85) 0%, transparent 2.2px),
@@ -320,13 +312,12 @@
       radial-gradient(circle at 50% 45%, rgba(255, 90, 31, 0.85) 0%, transparent 2.2px);
     background-size: 480px 480px;
     background-repeat: repeat;
-    opacity: 0.85;
+    background-position: 0 0;
     animation: particle-drift 60s linear infinite;
     will-change: background-position;
   }
 
-  .light .app-shell::after {
-    opacity: 0.9;
+  .light .app-shell {
     background-image:
       radial-gradient(circle at 12% 18%, rgba(255, 0, 0, 0.85) 0%, transparent 2.4px),
       radial-gradient(circle at 78% 32%, rgba(255, 140, 0, 0.85) 0%, transparent 2.4px),
@@ -335,11 +326,6 @@
       radial-gradient(circle at 22% 88%, rgba(0, 130, 255, 0.85) 0%, transparent 2.4px),
       radial-gradient(circle at 60% 12%, rgba(75, 0, 200, 0.85) 0%, transparent 2.4px),
       radial-gradient(circle at 50% 45%, rgba(180, 0, 220, 0.85) 0%, transparent 2.4px);
-  }
-
-  .app-shell > * {
-    position: relative;
-    z-index: 1;
   }
 
   .premium-panel {
