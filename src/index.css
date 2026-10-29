@@ -299,13 +299,17 @@
     padding-bottom: calc(180px + env(safe-area-inset-bottom, 0px));
   }
 
-  /* Floating particles overlay (com movimento suave contínuo e visível em todos os temas) */
+  /* Floating particles — ficam no fundo, atrás dos cards */
+  .app-shell {
+    isolation: isolate;
+  }
+
   .app-shell::after {
     content: '';
     position: fixed;
     inset: 0;
     pointer-events: none;
-    z-index: 30;
+    z-index: -1;
     background-image:
       radial-gradient(circle at 12% 18%, rgba(255, 122, 61, 0.95) 0%, transparent 2.2px),
       radial-gradient(circle at 78% 32%, rgba(255, 255, 255, 0.85) 0%, transparent 2.2px),
