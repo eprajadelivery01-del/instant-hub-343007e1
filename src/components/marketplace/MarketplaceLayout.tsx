@@ -238,7 +238,7 @@ export default function MarketplaceLayout({ children, hideNav }: { children: Rea
 
 
       <main className={cn(
-        'flex flex-1 flex-col transition-all duration-300 bg-background', 
+        'flex flex-1 flex-col transition-all duration-300 bg-background epj-particles', 
         !hideNav && (showCartFab ? 'pb-marketplace-nav-with-cart' : 'pb-marketplace-nav'),
         'md:pb-0' // No bottom padding on desktop
       )}>
