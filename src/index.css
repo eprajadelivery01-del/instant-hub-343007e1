@@ -299,9 +299,10 @@
     padding-bottom: calc(180px + env(safe-area-inset-bottom, 0px));
   }
 
-  /* Partículas flutuantes: camada de fundo do próprio app —
-     visíveis sobre o fundo e sempre ATRÁS dos cards (que são filhos). */
-  .app-shell {
+  /* Partículas flutuantes: camada de fundo (acima da cor do fundo,
+     sempre ATRÁS dos cards, que têm fundo próprio e as cobrem). */
+  .app-shell,
+  .epj-particles {
     background-image:
       radial-gradient(circle at 12% 18%, rgba(255, 122, 61, 0.95) 0%, transparent 2.2px),
       radial-gradient(circle at 78% 32%, rgba(255, 255, 255, 0.85) 0%, transparent 2.2px),
