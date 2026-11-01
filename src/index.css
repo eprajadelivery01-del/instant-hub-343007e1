@@ -33,6 +33,16 @@
 
     --radius: 0.75rem;
 
+    /* Campaign colors remain consistent in both app themes. */
+    --offer-background: 28 100% 50%;
+    --offer-foreground: 0 0% 100%;
+    --offer-muted: 35 100% 94%;
+    --offer-action: 0 0% 100%;
+    --offer-action-foreground: 17 95% 32%;
+    --offer-deep: 17 96% 46%;
+    --offer-bright: 34 100% 56%;
+    --offer-card-fill: linear-gradient(112deg, hsl(var(--offer-deep)), hsl(var(--offer-background)) 58%, hsl(var(--offer-bright)));
+
     --success: 142 70% 45%;
     --success-foreground: 0 0% 100%;
     --warning: 38 92% 55%;
@@ -139,6 +149,37 @@
 }
 
 @layer utilities {
+  .offer-card-fill {
+    background: var(--offer-card-fill);
+  }
+
+  .offer-card-lines {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .offer-card-lines::before,
+  .offer-card-lines::after {
+    content: '';
+    position: absolute;
+    right: -65px;
+    top: -90px;
+    width: 190px;
+    height: 380px;
+    transform: rotate(28deg);
+    border: 1px solid hsl(var(--offer-foreground) / 0.22);
+    border-radius: 24px;
+    background: hsl(var(--offer-foreground) / 0.04);
+  }
+
+  .offer-card-lines::after {
+    right: -15px;
+    top: -110px;
+    background: transparent;
+  }
+
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;
@@ -258,13 +299,10 @@
     padding-bottom: calc(180px + env(safe-area-inset-bottom, 0px));
   }
 
-  /* Floating particles overlay (com movimento suave contínuo e visível em todos os temas) */
-  .app-shell::after {
-    content: '';
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    z-index: 30;
+  /* Partículas flutuantes: camada de fundo (acima da cor do fundo,
+     sempre ATRÁS dos cards, que têm fundo próprio e as cobrem). */
+  .app-shell,
+  .epj-particles {
     background-image:
       radial-gradient(circle at 12% 18%, rgba(255, 122, 61, 0.95) 0%, transparent 2.2px),
       radial-gradient(circle at 78% 32%, rgba(255, 255, 255, 0.85) 0%, transparent 2.2px),
@@ -275,13 +313,13 @@
       radial-gradient(circle at 50% 45%, rgba(255, 90, 31, 0.85) 0%, transparent 2.2px);
     background-size: 480px 480px;
     background-repeat: repeat;
-    opacity: 0.85;
+    background-position: 0 0;
     animation: particle-drift 60s linear infinite;
     will-change: background-position;
   }
 
-  .light .app-shell::after {
-    opacity: 0.9;
+  .light .app-shell,
+  .light .epj-particles {
     background-image:
       radial-gradient(circle at 12% 18%, rgba(255, 0, 0, 0.85) 0%, transparent 2.4px),
       radial-gradient(circle at 78% 32%, rgba(255, 140, 0, 0.85) 0%, transparent 2.4px),
@@ -290,11 +328,6 @@
       radial-gradient(circle at 22% 88%, rgba(0, 130, 255, 0.85) 0%, transparent 2.4px),
       radial-gradient(circle at 60% 12%, rgba(75, 0, 200, 0.85) 0%, transparent 2.4px),
       radial-gradient(circle at 50% 45%, rgba(180, 0, 220, 0.85) 0%, transparent 2.4px);
-  }
-
-  .app-shell > * {
-    position: relative;
-    z-index: 1;
   }
 
   .premium-panel {

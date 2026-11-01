@@ -14,6 +14,13 @@ export default {
     },
     extend: {
       colors: {
+        offer: {
+          DEFAULT: "hsl(var(--offer-background))",
+          foreground: "hsl(var(--offer-foreground))",
+          muted: "hsl(var(--offer-muted))",
+          action: "hsl(var(--offer-action))",
+          "action-foreground": "hsl(var(--offer-action-foreground))",
+        },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",

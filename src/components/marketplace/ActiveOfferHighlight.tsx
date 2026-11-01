@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Sparkles, Ticket, Copy, Check, Megaphone, Flame } from 'lucide-react';
+import { Ticket, Copy, Check, Flame } from 'lucide-react';
 import { toast } from 'sonner';
-import { isCustomerNotification } from '@/components/marketplace/ClientNotificationsPopover';
+import { Button } from '@/components/ui/button';
+import { isCustomerNotification, type MarketingNotifItem } from '@/components/marketplace/ClientNotificationsPopover';
 
 export function ActiveOfferHighlight() {
-  const [latestNotif, setLatestNotif] = useState<any>(null);
+  const [latestNotif, setLatestNotif] = useState<MarketingNotifItem | null>(null);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -60,79 +61,60 @@ export function ActiveOfferHighlight() {
 
   if (!latestNotif) return null;
 
-  const handleCopy = (e?: React.MouseEvent) => {
-    if (e) e.stopPropagation();
-    if (latestNotif.coupon_code) {
-      navigator.clipboard.writeText(latestNotif.coupon_code);
+  const handleCopy = async () => {
+    if (!latestNotif.coupon_code) return;
+    try {
+      await navigator.clipboard.writeText(latestNotif.coupon_code);
       setCopied(true);
       toast.success(`Cupom ${latestNotif.coupon_code} copiado!`, {
         description: 'Cole na finalização do pedido para resgatar o desconto.'
       });
       setTimeout(() => setCopied(false), 3000);
+    } catch {
+      toast.error('Não foi possível copiar. Use o código exibido na oferta.');
     }
   };
 
   return (
-    <div className="w-full mx-auto my-2">
-      <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-r from-orange-600 via-amber-600 to-orange-500 p-4 sm:p-5 text-white shadow-xl shadow-orange-500/15 border border-white/20">
-        {/* Glow & decorative circles */}
-        <div className="absolute -right-8 -top-8 w-36 h-36 bg-white/15 rounded-full blur-2xl pointer-events-none" />
-        <div className="absolute -left-8 -bottom-8 w-28 h-28 bg-black/10 rounded-full blur-xl pointer-events-none" />
-
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative z-10 w-full">
-          {/* Main info container */}
-          <div className="flex items-start gap-3.5 min-w-0 flex-1 w-full">
-            {latestNotif.emoji ? (
-              <div className="h-12 w-12 shrink-0 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-2xl shadow-inner border border-white/25">
-                <span className="leading-none">{latestNotif.emoji}</span>
-              </div>
-            ) : (
-              <div className="h-12 w-12 shrink-0 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center shadow-inner border border-white/25">
-                <Sparkles className="w-6 h-6 text-white" />
-              </div>
-            )}
-
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2">
-                <span className="inline-flex items-center gap-1 bg-white/25 backdrop-blur-md text-[10px] sm:text-[11px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full text-white shadow-sm border border-white/10">
-                  <Flame className="w-3 h-3 fill-amber-300 text-amber-300" />
-                  Oferta em Destaque
-                </span>
-              </div>
-
-              <h3 className="font-extrabold text-sm sm:text-base leading-snug mt-1.5 text-white break-words drop-shadow-sm">
-                {latestNotif.title}
-              </h3>
-
-              {latestNotif.message && (
-                <p className="text-xs sm:text-sm text-white/95 mt-1 leading-relaxed break-words line-clamp-3">
-                  {latestNotif.message}
-                </p>
-              )}
-            </div>
-          </div>
-
-          {/* Coupon action button */}
-          {latestNotif.coupon_code && (
-            <div className="w-full sm:w-auto shrink-0 flex items-center justify-start sm:justify-end pt-1 sm:pt-0">
-              <button
-                type="button"
-                onClick={handleCopy}
-                className="w-full sm:w-auto px-4 py-2.5 bg-white text-orange-600 hover:bg-orange-50 active:bg-orange-100 font-extrabold text-xs rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-black/10 transition-all active:scale-95 border border-white/50"
-              >
-                <Ticket className="w-4 h-4 text-orange-500" />
-                <span className="font-mono tracking-wider font-black">{latestNotif.coupon_code}</span>
-                {copied ? (
-                  <Check className="w-3.5 h-3.5 text-green-600 stroke-[3]" />
-                ) : (
-                  <Copy className="w-3.5 h-3.5 text-orange-600" />
-                )}
-              </button>
+    <section aria-label="Oferta em destaque" className="-mx-4 w-[calc(100%+2rem)] sm:-mx-6 sm:w-[calc(100%+3rem)]">
+      <div className="offer-card-fill relative isolate overflow-hidden border-y border-offer-foreground/20 text-offer-foreground">
+        <div className="offer-card-lines" aria-hidden="true" />
+        <div className="relative mx-auto flex max-w-7xl items-start gap-4 px-5 py-6 sm:gap-6 sm:px-9 sm:py-8">
+          {latestNotif.emoji && (
+            <div aria-hidden="true" className="mt-1 flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-offer-foreground/30 bg-offer-foreground/15 text-3xl sm:h-16 sm:w-16 sm:text-4xl">
+              {latestNotif.emoji}
             </div>
           )}
+          <div className="min-w-0 flex-1">
+          <p className="mb-3 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-normal text-offer-muted sm:text-xs">
+            <Flame className="h-3.5 w-3.5 shrink-0 fill-current" aria-hidden="true" />
+            Oferta em destaque
+          </p>
+          <h2 className="w-full max-w-3xl break-words font-sans text-xl font-extrabold leading-tight [overflow-wrap:anywhere] sm:text-3xl">
+            {latestNotif.title}
+          </h2>
+          {latestNotif.message && (
+            <p className="mt-2 w-full max-w-3xl break-words text-sm font-medium leading-relaxed text-offer-muted sm:text-base">
+              {latestNotif.message}
+            </p>
+          )}
+          {latestNotif.coupon_code && (
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={handleCopy}
+              aria-label={`Copiar cupom ${latestNotif.coupon_code}`}
+              className="mt-5 h-auto min-h-10 max-w-full flex-wrap rounded-full bg-offer-action px-4 py-2.5 text-xs font-bold text-offer-action-foreground hover:bg-offer-action/90 sm:text-sm"
+            >
+              <Ticket aria-hidden="true" />
+              <span className="min-w-0 break-all font-mono whitespace-normal">{latestNotif.coupon_code}</span>
+              {copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
+            </Button>
+          )}
+          </div>
         </div>
       </div>
-    </div>
+    </section>
   );
 }
 

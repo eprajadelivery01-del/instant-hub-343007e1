@@ -464,7 +464,7 @@ export default function Home() {
       <div className="mx-auto max-w-7xl space-y-10 px-4 pb-32 pt-6 sm:px-6">
         <ActiveOfferHighlight />
 
-        <section className="space-y-4">
+        <section id="lojas-em-destaque" className="space-y-4 scroll-mt-6">
           <div className="flex items-end justify-between gap-4 px-1">
             <div>
               <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Destaques</p>
