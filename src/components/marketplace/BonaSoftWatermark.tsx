@@ -1,59 +1,44 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { Capacitor } from '@capacitor/core';
+import { BonaParticleAtom } from './BonaParticleAtom';
 
-export const BONASOFT_WHATSAPP_PHONE = '5566992734632';
-export const BONASOFT_DEFAULT_MESSAGE =
-  'Olá! Conheci a BonaSoft através do aplicativo É Pra Já e gostaria de conhecer melhor os serviços de desenvolvimento de aplicativos e sistemas. Podemos conversar?';
-
-/**
- * Retorna a URL oficial do WhatsApp com a mensagem formatada.
- */
-export function getBonaSoftWhatsAppUrl(): string {
-  const encoded = encodeURIComponent(BONASOFT_DEFAULT_MESSAGE).replace(/!/g, '%21');
-  return `https://wa.me/${BONASOFT_WHATSAPP_PHONE}?text=${encoded}`;
-}
+export const BONASOFT_WEBSITE_URL = 'https://bonasoftmt.com';
 
 /**
  * Manipulador de clique universal compatível com Web, Android (Capacitor/WebView) e iOS (Capacitor/WKWebView).
- * No Capacitor, window.location.href aciona o Bridge.launchIntent nativo, abrindo o WhatsApp do aparelho.
+ * Abre o novo site oficial da BonaSoft (https://bonasoftmt.com).
  */
-export function openBonaSoftWhatsApp(e?: React.SyntheticEvent) {
+export function openBonaSoftWebsite(e?: React.SyntheticEvent) {
   if (e) {
     e.preventDefault();
     e.stopPropagation();
   }
 
-  const phone = BONASOFT_WHATSAPP_PHONE;
-  const encoded = encodeURIComponent(BONASOFT_DEFAULT_MESSAGE).replace(/!/g, '%21');
-  const webUrl = `https://wa.me/${phone}?text=${encoded}`;
+  const url = BONASOFT_WEBSITE_URL;
 
   try {
     const isNative =
       typeof window !== 'undefined' &&
       (Capacitor.isNativePlatform() || /Capacitor|Cordova/i.test(navigator.userAgent));
 
-    const isMobile =
-      typeof navigator !== 'undefined' &&
-      /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-
-    if (isNative || isMobile) {
-      // No app nativo (Android/iOS) ou celular:
-      // window.location.href aciona o Bridge.launchIntent do Capacitor,
-      // disparando o Intent nativo do Android / openURL do iOS sem bloqueio de popups.
-      window.location.href = webUrl;
+    if (isNative) {
+      window.open(url, '_system') || (window.location.href = url);
       return;
     }
 
-    // No desktop: abre em nova aba
-    const win = window.open(webUrl, '_blank', 'noopener,noreferrer');
+    const win = window.open(url, '_blank', 'noopener,noreferrer');
     if (!win || win.closed || typeof win.closed === 'undefined') {
-      window.location.href = webUrl;
+      window.location.href = url;
     }
   } catch {
-    window.location.href = webUrl;
+    window.location.href = url;
   }
 }
+
+// Mantido para compatibilidade de importações existentes, redirecionando para o site
+export const openBonaSoftWhatsApp = openBonaSoftWebsite;
+export const getBonaSoftWhatsAppUrl = () => BONASOFT_WEBSITE_URL;
 
 interface BonaSoftWatermarkProps {
   className?: string;
@@ -61,29 +46,29 @@ interface BonaSoftWatermarkProps {
 }
 
 /**
- * Marca d'água oficial da BonaSoft com tipografia padrão idêntica à do aplicativo mobile
- * e toque/clique que encaminha diretamente para o WhatsApp comercial.
+ * Marca d'água oficial da BonaSoft com o átomo de partículas luminosas idêntico ao novo site,
+ * com tipografia e tracking precisos, direcionando para o site oficial (https://bonasoftmt.com).
  */
 export function BonaSoftWatermark({ className, containerClassName }: BonaSoftWatermarkProps) {
-  const whatsappUrl = getBonaSoftWhatsAppUrl();
-
   return (
-    <div className={cn('text-center', containerClassName)}>
+    <div className={cn('text-center select-none', containerClassName)}>
       <a
-        href={whatsappUrl}
-        onClick={openBonaSoftWhatsApp}
+        href={BONASOFT_WEBSITE_URL}
+        onClick={openBonaSoftWebsite}
         role="button"
         tabIndex={0}
-        title="BonaSoft - Desenvolvimento de Aplicativos e Sistemas"
-        aria-label="Falar com a BonaSoft no WhatsApp"
+        title="BonaSoft — Desenvolvimento de Sistemas (Acessar site oficial)"
+        aria-label="Acessar o site oficial da BonaSoft"
         className={cn(
-          'inline-flex items-center justify-center py-3 px-5 -my-2 -mx-3 cursor-pointer select-none',
-          'text-[11px] font-black uppercase tracking-[0.6em] text-muted-foreground/30',
-          'hover:text-muted-foreground/80 active:text-foreground active:scale-95 transition-all duration-200 ml-2',
+          'inline-flex items-center gap-2.5 py-3 px-5 -my-2 -mx-3 cursor-pointer group',
+          'opacity-75 hover:opacity-100 transition-all duration-300 hover:scale-105 active:scale-95',
           className
         )}
       >
-        BONASOFT
+        <BonaParticleAtom className="h-6 w-6 text-emerald-400 shrink-0" />
+        <span className="font-sans font-light tracking-[0.24em] text-sm sm:text-base leading-none text-zinc-800 dark:text-zinc-200 uppercase transition-colors">
+          BONASOFT
+        </span>
       </a>
     </div>
   );
