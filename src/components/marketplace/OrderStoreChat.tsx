@@ -308,6 +308,9 @@ export function OrderStoreChat({ orderId, companyId, companyName, fullHeight, cl
       {/* Campo de Digitação PINNED NA BASE */}
       <form onSubmit={send} className="shrink-0 p-3 pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))] border-t border-border bg-card flex gap-2 items-center shadow-lg z-20">
         <Input
+          id="store-chat-message-input"
+          name="store_message"
+          autoComplete="off"
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder="Digite sua mensagem para a loja..."

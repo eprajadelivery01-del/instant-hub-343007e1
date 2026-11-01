@@ -80,21 +80,24 @@ export default function Signup() {
 
         <form onSubmit={handleSubmit} className="space-y-3 flex-1">
           <div className="space-y-1.5">
-            <Label className="text-sm font-medium text-foreground ml-1">Nome completo</Label>
-            <Input value={fullName} onChange={e => setFullName(e.target.value)} required placeholder="João Silva" className="h-12 rounded-xl bg-card border-border" />
+            <Label htmlFor="signup-fullname" className="text-sm font-medium text-foreground ml-1">Nome completo</Label>
+            <Input id="signup-fullname" name="name" autoComplete="name" value={fullName} onChange={e => setFullName(e.target.value)} required placeholder="João Silva" className="h-12 rounded-xl bg-card border-border" />
           </div>
           <div className="space-y-1.5">
-            <Label className="text-sm font-medium text-foreground ml-1">Telefone</Label>
-            <Input value={phone} onChange={e => setPhone(e.target.value)} required placeholder="(11) 99999-9999" className="h-12 rounded-xl bg-card border-border" />
+            <Label htmlFor="signup-phone" className="text-sm font-medium text-foreground ml-1">Telefone</Label>
+            <Input id="signup-phone" name="tel" autoComplete="tel" value={phone} onChange={e => setPhone(e.target.value)} required placeholder="(11) 99999-9999" className="h-12 rounded-xl bg-card border-border" />
           </div>
           <div className="space-y-1.5">
-            <Label className="text-sm font-medium text-foreground ml-1">Email</Label>
-            <Input type="email" value={email} onChange={e => setEmail(e.target.value)} required placeholder="seu@email.com" className="h-12 rounded-xl bg-card border-border" />
+            <Label htmlFor="signup-email" className="text-sm font-medium text-foreground ml-1">Email</Label>
+            <Input id="signup-email" name="email" autoComplete="email" type="email" value={email} onChange={e => setEmail(e.target.value)} required placeholder="seu@email.com" className="h-12 rounded-xl bg-card border-border" />
           </div>
           <div className="space-y-1.5">
-            <Label className="text-sm font-medium text-foreground ml-1">Senha</Label>
+            <Label htmlFor="signup-password" className="text-sm font-medium text-foreground ml-1">Senha</Label>
             <div className="relative">
               <Input 
+                id="signup-password"
+                name="new-password"
+                autoComplete="new-password"
                 type={showPassword ? "text" : "password"} 
                 value={password} 
                 onChange={e => setPassword(e.target.value)} 
@@ -109,9 +112,12 @@ export default function Signup() {
             </div>
           </div>
           <div className="space-y-1.5">
-            <Label className="text-sm font-medium text-foreground ml-1">Confirmar senha</Label>
+            <Label htmlFor="signup-confirm-password" className="text-sm font-medium text-foreground ml-1">Confirmar senha</Label>
             <div className="relative">
               <Input 
+                id="signup-confirm-password"
+                name="confirm-password"
+                autoComplete="new-password"
                 type={showConfirmPassword ? "text" : "password"} 
                 value={confirmPassword} 
                 onChange={e => setConfirmPassword(e.target.value)} 

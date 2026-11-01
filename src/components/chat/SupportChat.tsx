@@ -277,6 +277,9 @@ export function SupportChat({ topic, title, companyId = null, onClose }: Support
       {/* Input de mensagem */}
       <form onSubmit={handleSend} className="px-4 py-3 bg-card border-t flex items-center gap-2 z-10 shrink-0">
         <input
+          id="support-message-input"
+          name="support_message"
+          autoComplete="off"
           type="text"
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}

@@ -54,10 +54,13 @@ export function RequirePhoneModal({
         <form onSubmit={onSubmit} className="space-y-4">
           {needsName && (
             <div>
-              <label className="text-xs font-black text-muted-foreground uppercase tracking-widest block mb-2 px-1">
+              <label htmlFor="customer-fullname" className="text-xs font-black text-muted-foreground uppercase tracking-widest block mb-2 px-1">
                 Seu Nome Completo
               </label>
               <input
+                id="customer-fullname"
+                name="name"
+                autoComplete="name"
                 type="text"
                 autoFocus
                 required
@@ -70,10 +73,13 @@ export function RequirePhoneModal({
           )}
 
           <div>
-            <label className="text-xs font-black text-muted-foreground uppercase tracking-widest block mb-2 px-1">
+            <label htmlFor="customer-phone" className="text-xs font-black text-muted-foreground uppercase tracking-widest block mb-2 px-1">
               Telefone WhatsApp com DDD
             </label>
             <input
+              id="customer-phone"
+              name="tel"
+              autoComplete="tel"
               type="tel"
               autoFocus={!needsName}
               required
