@@ -6,7 +6,7 @@ import { BonaParticleAtom } from './BonaParticleAtom';
 export const BONASOFT_WEBSITE_URL = 'https://bonasoftmt.com';
 
 /**
- * Manipulador de clique universal compatível com Web, Android (Capacitor/WebView) e iOS (Capacitor/WKWebView).
+ * Manipulador de clique universal compatível com Web, Android (Capacitor/WebView) e iOS.
  * Abre o novo site oficial da BonaSoft (https://bonasoftmt.com).
  */
 export function openBonaSoftWebsite(e?: React.SyntheticEvent) {
@@ -36,7 +36,6 @@ export function openBonaSoftWebsite(e?: React.SyntheticEvent) {
   }
 }
 
-// Mantido para compatibilidade de importações existentes, redirecionando para o site
 export const openBonaSoftWhatsApp = openBonaSoftWebsite;
 export const getBonaSoftWhatsAppUrl = () => BONASOFT_WEBSITE_URL;
 
@@ -66,7 +65,7 @@ export function BonaSoftWatermark({ className, containerClassName }: BonaSoftWat
         )}
       >
         <BonaParticleAtom className="h-6 w-6 text-emerald-400 shrink-0" />
-        <span className="font-sans font-light tracking-[0.24em] text-sm sm:text-base leading-none text-zinc-800 dark:text-zinc-200 uppercase transition-colors">
+        <span className="font-sans font-light tracking-[0.28em] text-[10px] leading-none text-zinc-800 dark:text-zinc-200 uppercase transition-colors">
           BONASOFT
         </span>
       </a>
