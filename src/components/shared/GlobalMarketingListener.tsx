@@ -239,57 +239,7 @@ export function GlobalMarketingListener() {
           }
         }
       )
-      // D) Atualizações nas Entregas dos Entregadores na tabela 'deliveries'
-      .on(
-        'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'deliveries' },
-        (payload) => {
-          const delivery = payload.new as any;
-          
-          let myOrderIds: string[] = [];
-          try {
-            myOrderIds = JSON.parse(localStorage.getItem('@epraja_recent_orders') || '[]');
-          } catch {}
 
-          const isMyDelivery =
-            Boolean(delivery.order_id) &&
-            (myOrderIds.includes(delivery.order_id) || userOrderIdsRef.current.has(delivery.order_id));
-
-          if (!isMyDelivery) return;
-
-          const newStatus = delivery.status;
-          if (!newStatus || !delivery.order_id) return;
-
-          const notifKey = `${delivery.order_id}_${newStatus}`;
-          const lastStatus = notifiedOrdersMap.get(delivery.order_id);
-          const lastTime = lastNotificationTimeMap.get(notifKey) || 0;
-          const now = Date.now();
-
-          if (lastStatus === newStatus || (now - lastTime < 60000)) {
-            return;
-          }
-
-          notifiedOrdersMap.set(delivery.order_id, newStatus);
-          lastNotificationTimeMap.set(notifKey, now);
-
-          const msg = statusMessages[newStatus];
-          if (msg) {
-            playNotificationAudio();
-
-            triggerNativeNotification({
-              title: msg.title,
-              message: msg.description,
-              emoji: msg.icon
-            }, swRegRef.current);
-
-            toast.info(msg.title, {
-              id: `order-status-${delivery.order_id}`,
-              description: msg.description,
-              duration: 5000,
-            });
-          }
-        }
-      )
       .subscribe();
 
     return () => {

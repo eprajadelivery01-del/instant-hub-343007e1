@@ -24,16 +24,6 @@ const statusMessages: Record<string, { title: string; description: string; icon:
     description: 'Seu pedido está pronto e aguardando a saída para entrega.',
     icon: '📦',
   },
-  accepted: {
-    title: '🏍️ Entregador a caminho!',
-    description: 'Um entregador aceitou seu pedido e está indo à loja.',
-    icon: '🏍️',
-  },
-  collecting: {
-    title: '🏬 Entregador na loja!',
-    description: 'O entregador chegou à loja e está retirando seu pedido.',
-    icon: '🏬',
-  },
   in_route: {
     title: '🛵 Saiu para entrega!',
     description: 'O entregador está a caminho do seu endereço com seu pedido.',

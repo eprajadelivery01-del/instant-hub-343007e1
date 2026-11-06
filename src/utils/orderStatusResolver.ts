@@ -10,15 +10,17 @@ export interface ComputedOrderStatus {
 
 /**
  * FUNÇÃO ÚNICA E CENTRALIZADA DE RESOLUÇÃO DE STATUS DO MARKETPLACE
- * REGRA ESTREITA E RIGOROSA DE STATUS PERMITIDOS:
+ * REGRA ESTREITA E RIGOROSA DE STATUS COMERCIAIS:
  * 1. ✅ Pedido confirmado
  * 2. 👨‍🍳 Preparando seu pedido
  * 3. 📦 Seu pedido está pronto!
- * 4. 🚚 Saiu para entrega (Apenas após o lojista clicar em "Chamar Entregador")
+ * 4. 🚚 Saiu para entrega (Apenas após o lojista liberar / chamar entregador ou entrega entrar em trânsito)
  * 5. 🎉 Pedido entregue
  * 6. ❌ Pedido cancelado
  *
- * STATUS "pending" / "Aguardando confirmação" E NOTIFICAÇÃO DE "SOLICITADO" SÃO REMOVIDOS.
+ * REGRA INVIOLÁVEL: Estados operacionais internos de `deliveries` como
+ * `accepted`, `collecting`, `broadcasted` ou `pending`, e a presença de `driver_id`
+ * pertencem estritamente à logística interna e NUNCA antecipam "Saiu para entrega" para o cliente.
  */
 export function getMarketplaceStatus(orderOrPayload: any): ComputedOrderStatus {
   const orderId = orderOrPayload?.id || orderOrPayload?.order?.id;
@@ -59,6 +61,7 @@ export function getMarketplaceStatus(orderOrPayload: any): ComputedOrderStatus {
   const deliveryStatus = deliveryObj?.status;
   const orderStatus = orderOrPayload?.status || orderOrPayload?.order?.status || 'pending';
   const deliveryRequested = orderOrPayload?.delivery_requested || orderOrPayload?.order?.delivery_requested;
+  const marketplaceStatus = orderOrPayload?.marketplace_status || orderOrPayload?.order?.marketplace_status;
 
   // 1. Pedido Entregue / Concluído / Cancelado -> Histórico
   if (
@@ -88,12 +91,17 @@ export function getMarketplaceStatus(orderOrPayload: any): ComputedOrderStatus {
   }
 
   // 2. 🚚 SAIU PARA ENTREGA:
-  // APARECE QUANDO O ENTREGADOR ACEITAR A CORRIDA, TIVER MOTORISTA ATRIBUÍDO, ESTIVER EM ROTA OU CHAMADO PELO LOJISTA
+  // APARECE EXCLUSIVAMENTE QUANDO:
+  // - O pedido estiver oficialmente em rota/delivering (orders.status in ('delivering', 'in_route', 'in_transit') ou marketplace_status === 'out_for_delivery')
+  // - OU o lojista tiver acionado "Chamar Entregador" / liberado o pedido (delivery_requested === true)
+  // - OU a entrega estiver de fato em rota com o entregador (deliveries.status in ('in_transit', 'in_route', 'delivering'))
+  // REGRA INVIOLÁVEL: Estados internos como 'accepted', 'collecting', 'broadcasted', 'pending' ou a presença de 'driver_id'
+  // NUNCA alteram o status para 'delivering' enquanto o pedido não for liberado/iniciado para entrega.
   if (
     deliveryRequested ||
-    ['delivering', 'in_route', 'in_transit'].includes(orderStatus) ||
-    ['accepted', 'collecting', 'in_transit', 'in_route', 'delivering'].includes(deliveryStatus) ||
-    Boolean(deliveryObj?.driver_id)
+    marketplaceStatus === 'out_for_delivery' ||
+    ['delivering', 'in_route', 'in_transit', 'out_for_delivery'].includes(orderStatus) ||
+    ['in_transit', 'in_route', 'delivering'].includes(deliveryStatus)
   ) {
     return {
       statusKey: 'delivering',
