@@ -40,6 +40,15 @@ export const WHATSAPP_ONLY_STORES: Record<string, WhatsAppStoreConfig> = {
     displayPhone: '+55 65 99659-0987',
     defaultMessage: DEFAULT_WHATSAPP_ORDER_MESSAGE,
   },
+
+  // 4. Multicar Auto Center
+  'multicar-auto-center': {
+    id: 'multicar-auto-center',
+    name: 'Multicar Auto Center',
+    phone: '5565933371241',
+    displayPhone: '+55 65 93337-1241',
+    defaultMessage: DEFAULT_WHATSAPP_ORDER_MESSAGE,
+  },
 };
 
 /**
@@ -61,12 +70,18 @@ export function getWhatsAppOnlyStore(company: any): WhatsAppStoreConfig | null {
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '');
 
+  if (!normName) return null;
+
   for (const store of Object.values(WHATSAPP_ONLY_STORES)) {
     const storeNorm = store.name
       .toLowerCase()
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '');
-    if (storeNorm === normName) {
+    if (
+      storeNorm === normName ||
+      (storeNorm.length >= 6 && normName.includes(storeNorm)) ||
+      (normName.length >= 6 && storeNorm.includes(normName))
+    ) {
       return store;
     }
   }
