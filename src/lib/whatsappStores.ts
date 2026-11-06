@@ -45,8 +45,8 @@ export const WHATSAPP_ONLY_STORES: Record<string, WhatsAppStoreConfig> = {
   'multicar-auto-center': {
     id: 'multicar-auto-center',
     name: 'Multicar Auto Center',
-    phone: '5565933371241',
-    displayPhone: '+55 65 93337-1241',
+    phone: '556533371241',
+    displayPhone: '+55 65 3337-1241',
     defaultMessage: DEFAULT_WHATSAPP_ORDER_MESSAGE,
   },
 };
