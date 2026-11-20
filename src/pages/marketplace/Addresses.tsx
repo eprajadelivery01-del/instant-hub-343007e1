@@ -80,7 +80,20 @@ export default function Addresses() {
             .select('id')
             .single();
 
-          if (createError) throw createError;
+          if (createError) {
+            // 23505: o cadastro já foi criado por outra parte do app ao mesmo tempo.
+            if (createError.code === '23505') {
+              const { data: existing } = await supabase
+                .from('customers')
+                .select('id')
+                .eq('user_id', user.id)
+                .maybeSingle();
+              if (existing) setCustomerId(existing.id);
+              fetchAddresses(user.id);
+              return;
+            }
+            throw createError;
+          }
           if (newCustomer) {
             setCustomerId(newCustomer.id);
             fetchAddresses(user.id);

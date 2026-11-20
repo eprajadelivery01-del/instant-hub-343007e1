@@ -58,6 +58,7 @@ export async function reportErrorToTelegram(payload: ErrorPayload, appName = "Ma
     "exclusivo de outra loja",
     "valor minimo para aplicar",
     "product_unavailable",
+    "preencha os campos obrigatorios",
     "item nao esta mais disponivel",
     "itens nao estao mais disponiveis",
     "credenciais",
